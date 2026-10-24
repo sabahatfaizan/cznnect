@@ -393,7 +393,7 @@ input[type="checkbox"] {
   stroke: var(--accent);
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
-  animation: splash-draw 2.4s ease-in-out 0.2s forwards;
+  animation: splash-draw 2.4s ease-in-out 0s forwards;
 }
 .splash-still {
   animation: none;

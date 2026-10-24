@@ -38,13 +38,16 @@ export default function Splash({ onSkip }: { onSkip?: () => void }) {
           </>
         ) : (
           <>
-            <circle r="10" className="fill-ink stroke-page" strokeWidth="3" opacity="0">
-              <set attributeName="opacity" to="1" begin="2.6s" fill="freeze" />
-              <animateMotion dur="3s" begin="2.6s" repeatCount="indefinite" path={LOOP} />
+            {/* Both dots start with the loop and the progress strip. The first rides the tip of the
+                line as it draws; the second follows half a second behind. Then they keep circling. */}
+            <circle r="10" className="fill-ink stroke-page" strokeWidth="3">
+              <animateMotion id="dot-a" dur="2.4s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.42 0 0.58 1" path={LOOP} />
+              <animateMotion dur="3s" begin="dot-a.end" repeatCount="indefinite" path={LOOP} />
             </circle>
             <circle r="10" className="fill-accent stroke-page" strokeWidth="3" opacity="0">
-              <set attributeName="opacity" to="1" begin="2.6s" fill="freeze" />
-              <animateMotion dur="3s" begin="1.9s" repeatCount="indefinite" path={LOOP} />
+              <set attributeName="opacity" to="1" begin="0.5s" fill="freeze" />
+              <animateMotion id="dot-b" dur="2.4s" begin="0.5s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.42 0 0.58 1" path={LOOP} />
+              <animateMotion dur="3s" begin="dot-b.end" repeatCount="indefinite" path={LOOP} />
             </circle>
           </>
         )}

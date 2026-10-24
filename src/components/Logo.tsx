@@ -1,4 +1,4 @@
-// The Cznnect mark: a "C" made of three connected people. The wordmark highlights CZN.
+// The Cznnect mark: a "C" made of three connected people. The wordmark highlights Czn.
 export function Mark({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" className={className} fill="currentColor">
@@ -24,7 +24,7 @@ export default function Logo({ big = false }: { big?: boolean }) {
     >
       <Mark className="size-[1.15em] flex-none text-accent-text" />
       <span aria-hidden="true">
-        <span className="text-accent-text">CZN</span>nect
+        <span className="text-accent-text">Czn</span>nect
       </span>
     </div>
   )

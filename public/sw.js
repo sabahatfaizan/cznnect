@@ -1,6 +1,6 @@
 // Offline support. Pages load from the network first, so updates show up right away.
 // Built files and fonts are cached after the first visit. Supabase calls are never cached.
-const V = 'cznnect-v7';
+const V = 'cznnect-v8';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(

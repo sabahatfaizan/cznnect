@@ -29,6 +29,7 @@ docs/PLAN.md              architecture, data model, stages
 5. Run `supabase/02_member_management.sql` the same way (new query, paste, Run). It adds the owner tools: remove a member, leave a family, and get a new invite code.
 6. Run `supabase/03_family_settings.sql` the same way. It enables owner-only family-name changes and checks permissions in the database.
 7. Run `supabase/04_family_tree.sql` the same way. It adds the family tree.
+8. Run `supabase/05_places.sql` the same way. It adds places, the map and ratings.
 
 **2. Put the keys in the app**
 
@@ -62,11 +63,12 @@ npm run typecheck
 - **Owner** (the person who created the family): rename the family, remove members, and get a new invite code. The owner cannot be removed and cannot leave.
 - **Member**: see everyone in the family, edit their own profile, leave the family.
 - **Family tree:** every member can add and edit people, link relatives, and merge duplicates. Anyone can delete an entry or link they created; the owner can delete any. Each cousin can link their account to their own spot ("Add me" or "I am already here").
+- **Explore (places, map, restaurants):** every member can add, edit and rate places. Each person has one rating per place and can change or remove their own. Anyone can remove a place they added; the owner can remove any. Searching an address uses OpenStreetMap's free search, and the map uses OpenStreetMap tiles. No account or key is needed.
 - Adding people to the family is done with the invite code. A removed person can only rejoin with the code, so get a new one after removing someone.
 
 ## Next
 
-Stage 2 (the shared family tree) is in. Stage 3 is places and the map. Profile photos come after storage is set up.
+Stages 2 (family tree) and 3 (places, map, restaurants) are in. Stage 4 is polls to pick the next spot, and bucket lists. Profile photos come after storage is set up.
 
 ## Themes
 

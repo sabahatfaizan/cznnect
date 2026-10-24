@@ -3,6 +3,7 @@ import type { Family } from '../types'
 import Home from '../pages/Home'
 import Profile from '../pages/Profile'
 import ComingSoon from '../pages/ComingSoon'
+import Explore from '../pages/Explore'
 import Tree from '../pages/Tree'
 import { Icon, type IconName } from './Icons'
 
@@ -33,14 +34,7 @@ export default function Shell({
       <main className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
-        {tab === 'explore' && (
-          <ComingSoon
-            title="Explore"
-            stage={3}
-            blurb="Places you have been, and where to eat next."
-            items={['Map of places with ratings, photos and notes', 'Restaurant guide and food ratings', 'Polls to pick the next spot']}
-          />
-        )}
+        {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && (
           <ComingSoon
             title="Plans"

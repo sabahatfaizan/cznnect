@@ -389,17 +389,44 @@ function makeClusters(index: TreeIndex, gen: Map<string, number>): Cluster[][] {
 const width = (c: Cluster) => c.members.length * SLOT
 const center = (c: Cluster) => c.start + width(c) / 2
 
-function place(row: Cluster[], desired: (c: Cluster) => number | null) {
+// Space kept between two neighbours in a row. Single brothers and sisters sit close.
+// A couple sits clearly apart from their brother's or sister's family, and different
+// branches sit further apart still, so an uncle and aunt never look like they belong
+// to the family next to them.
+const GAP_SIBLINGS = 24 // single brothers and sisters, side by side
+const GAP_COUPLES = 80 // a couple next to their brother's or sister's family
+const GAP_BRANCHES = 150 // families from different branches
+type Gap = (a: Cluster, b: Cluster) => number
+
+function place(row: Cluster[], desired: (c: Cluster) => number | null, gap: Gap) {
   const wanted = new Map<Cluster, number>()
   for (const c of row) wanted.set(c, desired(c) ?? center(c))
   // Sort by where each cluster wants to be; ties keep their earlier order.
   const order = new Map<Cluster, number>(row.map((c, i) => [c, i]))
   row.sort((a, b) => (wanted.get(a) as number) - (wanted.get(b) as number) || (order.get(a) as number) - (order.get(b) as number))
+  // Clusters that want the very same spot (brothers and sisters under one couple) are
+  // centred on it together, instead of the first one taking the spot and the rest sliding right.
   let edge = -Infinity
-  for (const c of row) {
-    const left = (wanted.get(c) as number) - width(c) / 2
-    c.start = Math.max(left, edge)
-    edge = c.start + width(c)
+  let prev: Cluster | null = null
+  let k = 0
+  while (k < row.length) {
+    const target = wanted.get(row[k]) as number
+    let m = k + 1
+    while (m < row.length && Math.abs((wanted.get(row[m]) as number) - target) < 0.5) m++
+    const group = row.slice(k, m)
+    let total = 0
+    group.forEach((c, i) => {
+      total += width(c) + (i > 0 ? gap(group[i - 1], c) : 0)
+    })
+    let x = Math.max(target - total / 2, prev ? edge + gap(prev, group[0]) : -Infinity)
+    group.forEach((c, i) => {
+      if (i > 0) x += gap(group[i - 1], c)
+      c.start = x
+      x += width(c)
+    })
+    prev = group[group.length - 1]
+    edge = prev.start + width(prev)
+    k = m
   }
 }
 
@@ -409,14 +436,23 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   const gen = computeGenerations(index)
   const rows = makeClusters(index, gen)
 
+  const shareParent = (a: Cluster, b: Cluster) => {
+    const parentsOfA = new Set(a.members.flatMap((id) => get(index.parentsOf, id)))
+    return b.members.some((id) => get(index.parentsOf, id).some((p) => parentsOfA.has(p)))
+  }
+  const gap: Gap = (a, b) => {
+    if (!shareParent(a, b)) return GAP_BRANCHES
+    return a.members.length > 1 || b.members.length > 1 ? GAP_COUPLES : GAP_SIBLINGS
+  }
+
   // First guess: each row left to right, oldest first.
   for (const row of rows) {
     row.sort((a, b) => byAgeThenName(index.byId.get(a.members[0]) as Person, index.byId.get(b.members[0]) as Person))
     let x = 0
-    for (const c of row) {
-      c.start = x
-      x += width(c)
-    }
+    row.forEach((c, i) => {
+      c.start = i === 0 ? 0 : x + gap(row[i - 1], c)
+      x = c.start + width(c)
+    })
   }
 
   const clusterOf = new Map<string, Cluster>()
@@ -434,10 +470,10 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
 
   // Pull children under their parents, then parents over their children, a few times.
   for (let pass = 0; pass < 3; pass++) {
-    for (let g = 1; g < rows.length; g++) place(rows[g], fromParents)
-    for (let g = rows.length - 2; g >= 0; g--) place(rows[g], fromChildren)
+    for (let g = 1; g < rows.length; g++) place(rows[g], fromParents, gap)
+    for (let g = rows.length - 2; g >= 0; g--) place(rows[g], fromChildren, gap)
   }
-  for (let g = 1; g < rows.length; g++) place(rows[g], fromParents)
+  for (let g = 1; g < rows.length; g++) place(rows[g], fromParents, gap)
 
   let minX = Infinity
   let maxX = -Infinity
@@ -466,22 +502,61 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   }
 
   const edges: TreeEdge[] = []
+  const partnerPairs = new Map<string, Link>()
+  for (const l of links) if (l.kind === 'partner') partnerPairs.set([l.a_id, l.b_id].sort().join('|'), l)
+
   for (const l of links) {
+    if (l.kind !== 'partner') continue
     const a = at.get(l.a_id)
     const b = at.get(l.b_id)
     if (!a || !b) continue
-    if (l.kind === 'parent') {
-      const x1 = a.x + NODE_W / 2
-      const y1 = a.y + NODE_H
-      const x2 = b.x + NODE_W / 2
-      const y2 = b.y
-      const mid = y1 + (y2 - y1) / 2
-      edges.push({ id: l.id, kind: 'parent', d: `M${x1} ${y1}V${mid}H${x2}V${y2}` })
-    } else {
-      const [left, right] = a.x <= b.x ? [a, b] : [b, a]
-      const y = left.y + NODE_H / 2
-      edges.push({ id: l.id, kind: 'partner', d: `M${left.x + NODE_W} ${y}H${right.x}` })
+    const [left, right] = a.x <= b.x ? [a, b] : [b, a]
+    const y = left.y + NODE_H / 2
+    edges.push({ id: l.id, kind: 'partner', d: `M${left.x + NODE_W} ${y}H${right.x}` })
+  }
+
+  // Children of a couple hang from one stem that starts on the line between the two
+  // partners, so it is clear they are that couple's children and nobody else's.
+  // A child with one known parent, or with parents who are not a couple, hangs from each parent.
+  const byChild = new Map<string, string[]>()
+  for (const l of links) {
+    if (l.kind !== 'parent') continue
+    const list = byChild.get(l.b_id)
+    if (list) list.push(l.a_id)
+    else byChild.set(l.b_id, [l.a_id])
+  }
+  const stems = new Map<string, { sx: number; sy: number; kids: TreeNode[] }>()
+  for (const [childId, parentIds] of byChild) {
+    const child = at.get(childId)
+    if (!child) continue
+    const nodes2 = parentIds.map((p) => at.get(p)).filter((n): n is TreeNode => !!n)
+    const sources: { key: string; sx: number; sy: number }[] = []
+    const used = new Set<string>()
+    for (const p of nodes2) {
+      if (used.has(p.id)) continue
+      const mate = nodes2.find((q) => q.id !== p.id && !used.has(q.id) && partnerPairs.has([p.id, q.id].sort().join('|')) && q.y === p.y)
+      if (mate) {
+        const [l, r] = p.x <= mate.x ? [p, mate] : [mate, p]
+        used.add(p.id)
+        used.add(mate.id)
+        sources.push({ key: [p.id, mate.id].sort().join('|'), sx: (l.x + NODE_W + r.x) / 2, sy: l.y + NODE_H / 2 })
+      } else {
+        used.add(p.id)
+        sources.push({ key: p.id, sx: p.x + NODE_W / 2, sy: p.y + NODE_H })
+      }
     }
+    for (const src of sources) {
+      const stem = stems.get(src.key)
+      if (stem) stem.kids.push(child)
+      else stems.set(src.key, { sx: src.sx, sy: src.sy, kids: [child] })
+    }
+  }
+  for (const [key, stem] of stems) {
+    const top = Math.min(...stem.kids.map((k) => k.y))
+    const mid = stem.sy + (top - stem.sy) / 2
+    const parts = [`M${stem.sx} ${stem.sy}V${mid}`]
+    for (const k of stem.kids) parts.push(`M${stem.sx} ${mid}H${k.x + NODE_W / 2}V${k.y}`)
+    edges.push({ id: `stem:${key}`, kind: 'parent', d: parts.join('') })
   }
 
   return {

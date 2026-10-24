@@ -5,6 +5,7 @@ import { getThemePref, setThemePref, type ThemePref } from '../theme'
 const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'light', label: 'Light', hint: 'Clean and bright' },
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
+  { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]
 
@@ -56,7 +57,7 @@ export default function Profile({ userId }: { userId: string }) {
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-display text-lg font-bold">Appearance</h2>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {THEMES.map((t) => (
             <button
               key={t.id}

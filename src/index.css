@@ -52,6 +52,24 @@
   color-scheme: dark;
 }
 
+/* Midnight: black and deep blue, with the same shapes as Light. */
+:root[data-theme="midnight"] {
+  --page: #05070d;
+  --surface: #0b1224;
+  --surface-2: #111b36;
+  --ink: #e6ecfa;
+  --muted: #8b98b8;
+  --line: #1d2c52;
+  --accent: #4f8cff;
+  --accent-ink: #04101f;
+  --accent-soft: #12234a;
+  --accent-text: #7fabff;
+  --ok: #5fd39a;
+  --danger: #ff7b7b;
+  --shadow-card: 0 1px 0 rgb(79 140 255 / 0.08);
+  color-scheme: dark;
+}
+
 /* Lets Tailwind classes like bg-surface and text-muted follow the tokens above. */
 @theme inline {
   --color-page: var(--page);
@@ -340,6 +358,9 @@ input[type="checkbox"] {
   outline: 3px solid var(--accent);
   outline-offset: -3px;
   cursor: crosshair;
+}
+:root[data-theme="midnight"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(200deg) brightness(0.8) contrast(0.95) saturate(0.7);
 }
 :root[data-theme="tactical"] .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);

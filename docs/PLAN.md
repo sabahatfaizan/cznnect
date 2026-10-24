@@ -48,9 +48,9 @@ One private Supabase Storage bucket, with files stored as `family_id/...`. Stora
 ## Stages
 
 1. **Accounts and family space.** Sign up, sign in, create a family, join with an invite code, member list, profile editing, installable app shell. *(done)*
-2. **Family tree.** People, relationships, interactive tree with zoom, search, generations. *(this repo, now)*
+2. **Family tree.** People, relationships, interactive tree with zoom, search, generations. *(done)*
 3. **Places and map.** Add places, map, restaurant guide with ratings. *(this repo, now; photos come later)*
-4. **Restaurant guide and polls.**
+4. **Polls** to pick the next spot.
 5. **Bucket lists and to-dos.**
 6. **Feed, albums, memories.**
 7. **Extras.** Calendar, birthdays, trips, challenges, branch groups.

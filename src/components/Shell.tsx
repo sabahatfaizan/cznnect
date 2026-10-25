@@ -203,7 +203,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       </main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
-          {TABS.map((t) => <button key={t.id} onClick={() => setTab(t.id)} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
+          {TABS.map((t) => <button key={t.id} onClick={() => { setScoreboardRequested(false); setTab(t.id) }} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
         </div>
       </nav>
     </div>

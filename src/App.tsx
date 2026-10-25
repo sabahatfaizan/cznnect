@@ -14,6 +14,15 @@ const MAINTENANCE_PIN = '4124'
 function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () => void }) {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
+  const [showPinUnlock, setShowPinUnlock] = useState(false)
+  const [logoTaps, setLogoTaps] = useState(0)
+
+  function handleLogoTap() {
+    if (!onUnlock || showPinUnlock) return
+    const next = logoTaps + 1
+    setLogoTaps(next)
+    if (next >= 5) setShowPinUnlock(true)
+  }
 
   function submitPin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -28,13 +37,15 @@ function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () =
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-6 p-6">
-      <Logo big />
+      <button type="button" className="mx-auto block cursor-default rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" aria-label="Cznnect logo" onClick={handleLogoTap}>
+        <Logo big />
+      </button>
       <div className="card">
         <p className="eyebrow">Service notice</p>
         <h1 className="mt-2 font-display text-2xl font-bold">Cznnect is getting an update</h1>
         <p className="mt-3 text-muted">{message}</p>
         <p className="mt-4 text-sm text-muted">Thanks for your patience.</p>
-        {onUnlock && (
+        {onUnlock && showPinUnlock && (
           <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
             <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>
             <input

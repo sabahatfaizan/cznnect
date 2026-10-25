@@ -293,19 +293,19 @@ export default function TreeCanvas({
         >
           <defs>
             <linearGradient id="family-root-gradient" x1="0" y1="0" x2={layout.width} y2={layout.height} gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#ff4f9a" />
-              <stop offset="46%" stopColor="#9d75ff" />
-              <stop offset="100%" stopColor="#45e4ff" />
+              <stop offset="0%" stopColor="#2478ff" />
+              <stop offset="48%" stopColor="#36dfff" />
+              <stop offset="100%" stopColor="#b8ffff" />
             </linearGradient>
             <linearGradient id="family-partner-gradient" x1="0" y1="0" x2={layout.width} y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#ff73b7" />
-              <stop offset="50%" stopColor="#b59aff" />
-              <stop offset="100%" stopColor="#68eaff" />
+              <stop offset="0%" stopColor="#398dff" />
+              <stop offset="50%" stopColor="#62eaff" />
+              <stop offset="100%" stopColor="#d7ffff" />
             </linearGradient>
             <filter id="family-root-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3.2" result="softGlow" />
+              <feGaussianBlur stdDeviation="5.5" result="wideGlow" />
               <feMerge>
-                <feMergeNode in="softGlow" />
+                <feMergeNode in="wideGlow" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
@@ -343,9 +343,9 @@ export default function TreeCanvas({
                 <path
                   d={e.d}
                   fill="none"
-                  stroke="#7e65ff"
-                  strokeWidth={9}
-                  strokeOpacity={familyFocus ? 0.07 : 0.28}
+                  stroke="#075dff"
+                  strokeWidth={13}
+                  strokeOpacity={familyFocus ? 0.1 : 0.42}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -354,8 +354,8 @@ export default function TreeCanvas({
                 d={e.d}
                 fill="none"
                 stroke={e.kind === 'partner' ? 'url(#family-partner-gradient)' : 'url(#family-root-gradient)'}
-                strokeWidth={e.kind === 'partner' ? 3 : 5.5}
-                strokeOpacity={familyFocus ? 0.2 : e.kind === 'partner' ? 0.95 : 0.98}
+                strokeWidth={e.kind === 'partner' ? 3 : 6.5}
+                strokeOpacity={familyFocus ? 0.25 : e.kind === 'partner' ? 0.95 : 1}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 filter={e.kind === 'parent' ? 'url(#family-root-glow)' : undefined}
@@ -365,9 +365,9 @@ export default function TreeCanvas({
                 <path
                   d={e.d}
                   fill="none"
-                  stroke="#fff4ff"
-                  strokeWidth={1.1}
-                  strokeOpacity={familyFocus ? 0.12 : 0.42}
+                  stroke="#e4ffff"
+                  strokeWidth={1.6}
+                  strokeOpacity={familyFocus ? 0.18 : 0.78}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />

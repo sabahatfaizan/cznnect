@@ -628,7 +628,7 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
       const bend = Math.max(16, Math.abs(childX - stem.sx) * 0.32)
       parts.push(`M${stem.sx} ${mid} C${stem.sx} ${mid + bend}, ${childX} ${mid + bend}, ${childX} ${k.y}`)
     }
-    edges.push({ id: `stem:${key}`, kind: 'parent', d: parts.join('') })
+    edges.push({ id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`, kind: 'parent', d: parts.join('') })
   }
 
   return {

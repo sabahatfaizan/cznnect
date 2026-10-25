@@ -157,8 +157,14 @@ export default function TreeCanvas({
   }, [layout.nodes, links])
 
   const focusedMembers = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
+  // Keep the tree compact: show the oldest generation and their children/partners.
+  // A glossy bubble on a second-generation person reveals that person's descendants.
+  const visibleIds = useMemo(() => {
+    const expanded = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
+    return new Set(layout.nodes.filter((node) => node.gen <= 1 || (expanded?.has(node.id) ?? false)).map((node) => node.id))
+  }, [layout.nodes, familyFocus, familyMembers])
   const focusNodes = focusedMembers
-    ? layout.nodes.filter((node) => focusedMembers.has(node.id))
+    ? layout.nodes.filter((node) => focusedMembers.has(node.id) && visibleIds.has(node.id))
     : []
   const focusBounds = focusNodes.length ? {
     x: Math.min(...focusNodes.map((node) => node.x)) - 30,
@@ -272,7 +278,7 @@ export default function TreeCanvas({
         ref={box}
         tabIndex={0}
         role="group"
-        aria-label="Family tree. Drag to move, pinch to zoom. Use the People tab for a list."
+        aria-label="Family tree. Tap a glossy bubble to reveal that branch. Drag to move and pinch to zoom."
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -310,17 +316,17 @@ export default function TreeCanvas({
               </text>
             </g>
           )}
-          {layout.edges.map((e) => (
+          {layout.edges.filter((e) => {\n            const ids = e.id.startsWith('stem:') ? [] : e.id.split('|')\n            if (e.id.startsWith('stem:')) return visibleIds.has(e.id.slice(5).split('|')[0]) || visibleIds.size > 0\n            return ids.length < 2 || (visibleIds.has(ids[0]) && visibleIds.has(ids[1]))\n          }).map((e) => (
             <path
               key={e.id}
               d={e.d}
               className={e.kind === 'partner' ? 'fill-none stroke-accent' : 'fill-none stroke-muted'}
               strokeWidth={e.kind === 'partner' ? 3 : 1.5}
-              strokeOpacity={familyFocus ? 0.14 : e.kind === 'partner' ? 0.7 : 0.55}
+              strokeOpacity={familyFocus ? 0.22 : e.kind === 'partner' ? 0.7 : 0.55}
               style={{ filter: familyFocus ? 'blur(0.6px)' : undefined }}
             />
           ))}
-          {layout.nodes.map((n) => {
+          {layout.nodes.filter((n) => visibleIds.has(n.id)).map((n) => {
             const p = people.get(n.id)
             if (!p) return null
             const sub = p.nickname ? `“${clip(p.nickname, 12)}”` : p.birth_date ? p.birth_date.slice(0, 4) : ''
@@ -358,7 +364,7 @@ export default function TreeCanvas({
               </g>
             )
           })}
-          {clusterRoots.map((node) => {
+          {clusterRoots.filter((node) => node.gen === 1 && (familyMembers.get(node.id)?.size ?? 1) > 1).map((node) => {
             const person = people.get(node.id)
             if (!person) return null
             const isActive = familyFocus === node.id
@@ -379,9 +385,10 @@ export default function TreeCanvas({
                   }
                 }}
               >
-                <circle r={13} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />
-                <text x={0} y={4.5} textAnchor="middle" fill="var(--accent-ink)" fontSize={15} fontWeight={800}>
-                  ⌂
+                <circle r={15} fill="var(--glass-regular, var(--surface))" stroke="var(--accent)" strokeWidth={1.8} style={{ filter: 'drop-shadow(0 3px 8px color-mix(in srgb, var(--accent) 35%, transparent))' }} />
+                <circle r={10} fill="var(--accent)" fillOpacity={0.16} />
+                <text x={0} y={4} textAnchor="middle" fill="var(--accent-text)" fontSize={12} fontWeight={800}>
+                  {isActive ? '−' : '+'}
                 </text>
               </g>
             )
@@ -392,9 +399,7 @@ export default function TreeCanvas({
       <div className="absolute bottom-3 right-3 flex flex-col gap-2">
         {centerButton('+', () => zoomAt(size.w / 2, size.h / 2, 1.25))}
         {centerButton('−', () => zoomAt(size.w / 2, size.h / 2, 1 / 1.25))}
-        {familyFocus && centerButton('Whole tree', () => setFamilyFocus(null))}
         {centerButton('Fit', fit)}
-        {meId && centerButton('Me', () => centerOn(meId, 1))}
       </div>
     </div>
   )

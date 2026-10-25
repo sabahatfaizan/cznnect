@@ -848,6 +848,11 @@ input[type="checkbox"] {
   border-radius: 34px;
 }
 :root[data-theme="glass"] .app-nav > div { padding: 6px; }
+/* Content scrolls behind the bar, so it needs a dense fill and a heavy blur to stay readable. */
+:root[data-theme="glass"] .app-nav {
+  background: linear-gradient(150deg, rgb(26 38 70 / 0.94), rgb(10 16 32 / 0.96));
+  --glass-blur: blur(36px) saturate(180%) brightness(1.05);
+}
 :root[data-theme="glass"] .tab { border-radius: 26px; }
 :root[data-theme="glass"] .tab-active {
   color: var(--accent-text);

@@ -452,7 +452,7 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   for (const row of rows) for (const c of row) for (const id of c.members) clusterOf.set(id, c)
 
   const parentVotes = new Map<Cluster, Map<Cluster, number>>()
-  for (const child of [...clusterOf.values()]) {
+  for (const child of rows.flat()) {
     if (!parentVotes.has(child)) parentVotes.set(child, new Map())
   }
   for (const link of links) {
@@ -507,7 +507,7 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     return result
   }
 
-  const roots = [...clusterOf.values()]
+  const roots = rows.flat()
     .filter((cluster) => !primaryParent.has(cluster))
     .sort(clusterOrder)
   const positioned = new Set<Cluster>()

@@ -23,6 +23,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scoreboardRequested, setScoreboardRequested] = useState(false)
+  const [scoreboardRequestId, setScoreboardRequestId] = useState(0)
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
@@ -151,7 +153,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <button
               type="button"
               className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-3 text-left font-semibold transition hover:bg-surface/70"
-              onClick={() => { setTab('irl'); setMenuOpen(false); window.setTimeout(() => window.dispatchEvent(new CustomEvent('cznnect:show-scoreboard')), 0) }}
+              onClick={() => { setScoreboardRequested(true); setScoreboardRequestId((id) => id + 1); setTab('irl'); setMenuOpen(false) }}
             >
               <span className="flex items-center gap-3"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0zM7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4" /></svg>Scoreboard</span>
               <span aria-hidden="true" className="text-muted">›</span>
@@ -180,7 +182,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </aside>
         </div>
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-        {tab === 'irl' && <Irl family={family} userId={userId} />}
+        {tab === 'irl' && <Irl key={scoreboardRequestId} family={family} userId={userId} initialView={scoreboardRequested ? 'board' : 'meet'} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}

@@ -334,8 +334,8 @@ export function initials(name: string): string {
 
 export const NODE_W = 112
 export const NODE_H = 60
-const SLOT = 132
-const ROW_H = 120
+const SLOT = 156
+const ROW_H = 156
 const PAD = 28
 
 export type TreeNode = { id: string; x: number; y: number; gen: number }
@@ -393,9 +393,9 @@ const center = (c: Cluster) => c.start + width(c) / 2
 // A couple sits clearly apart from their brother's or sister's family, and different
 // branches sit further apart still, so an uncle and aunt never look like they belong
 // to the family next to them.
-const GAP_SIBLINGS = 24 // single brothers and sisters, side by side
-const GAP_COUPLES = 80 // a couple next to their brother's or sister's family
-const GAP_BRANCHES = 150 // families from different branches
+const GAP_SIBLINGS = 36 // keep sibling cards and their connector lanes distinct
+const GAP_COUPLES = 112 // separate a couple from a sibling's family
+const GAP_BRANCHES = 220 // leave room between unrelated family branches
 type Gap = (a: Cluster, b: Cluster) => number
 
 function place(row: Cluster[], desired: (c: Cluster) => number | null, gap: Gap) {

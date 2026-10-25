@@ -1,4 +1,4 @@
-// Pure helpers for IRL Connect: reading QR text, ranking, achievements, dates.
+// Pure helpers for Convoy: reading QR text, ranking, achievements, dates.
 // No network and no screens in here, so they can be tested alone.
 // The database decides every point. Nothing here can award or change points.
 

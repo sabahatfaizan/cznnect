@@ -1,4 +1,4 @@
--- Cznnect, IRL Connect: meet cousins in person, confirm it, earn points, climb the scoreboard.
+-- Cznnect, Convoy: meet cousins in person, confirm it, earn points, climb the scoreboard.
 -- Run this after 01 to 06. Paste it into Supabase > SQL Editor > New query, then Run.
 -- Safe to run again.
 --

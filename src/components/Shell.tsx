@@ -17,7 +17,7 @@ type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' |
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'irl', label: 'Link Up', icon: 'irl' },
+  { id: 'irl', label: 'Convoy', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
   { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'My Profile', icon: 'me' },

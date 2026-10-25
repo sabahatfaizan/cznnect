@@ -16,7 +16,7 @@ import IrlScanSheet from '../components/IrlScanSheet'
 import Sheet from '../components/Sheet'
 import { Icon } from '../components/Icons'
 
-// Link Up: your personal code, scanning a cousin, and confirming meetups. The scoreboard lives in the menu.
+// Convoy: your personal code, scanning a cousin, and confirming meetups. The scoreboard lives in the menu.
 export default function Irl({ family, userId }: { family: Family; userId: string }) {
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [error, setError] = useState('')
@@ -118,11 +118,11 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="linkup-hero">
-        <span className="linkup-hero-icon" aria-hidden="true"><Icon name="irl" size={28} /></span>
+      <header className="convoy-hero">
+        <span className="convoy-hero-icon" aria-hidden="true"><Icon name="irl" size={28} /></span>
         <div className="min-w-0">
           <p className="eyebrow">In person</p>
-          <h1 className="font-display text-2xl font-extrabold">Link Up</h1>
+          <h1 className="font-display text-2xl font-extrabold">Convoy</h1>
           <p className="text-sm text-muted">Find a cousin, scan to link, and earn points for every real-life meetup.</p>
         </div>
       </header>

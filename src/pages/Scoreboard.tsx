@@ -4,7 +4,7 @@ import { startOfMonthIso, pointsSince, type Recent, type Row } from '../lib/irl'
 import { ledgerSince, recent, scoreboard } from '../lib/irlApi'
 import IrlScoreboard from '../components/IrlScoreboard'
 
-// The family scoreboard on its own screen. It is opened from the menu and has no link to Link Up.
+// The family scoreboard on its own screen. It is opened from the menu and has no link to Convoy.
 export default function Scoreboard({ family, userId }: { family: Family; userId: string }) {
   const [rows, setRows] = useState<Row[]>([])
   const [recents, setRecents] = useState<Recent[]>([])

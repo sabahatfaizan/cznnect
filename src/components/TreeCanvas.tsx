@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
-import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
+import { NODE_H, NODE_W, type Link, type Person, type TreeLayout } from '../lib/tree'
 
 type View = { x: number; y: number; k: number }
 const MIN_K = 0.3
@@ -15,6 +15,7 @@ function clip(text: string, max: number): string {
 export default function TreeCanvas({
   layout,
   people,
+  links,
   selectedId,
   meId,
   focus,
@@ -22,6 +23,7 @@ export default function TreeCanvas({
 }: {
   layout: TreeLayout
   people: Map<string, Person>
+  links: Link[]
   selectedId: string | null
   meId: string | null
   focus: { id: string; tick: number } | null
@@ -30,6 +32,7 @@ export default function TreeCanvas({
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 })
+  const [familyFocus, setFamilyFocus] = useState<string | null>(null)
   const started = useRef(false)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gesture = useRef({ moved: false, startX: 0, startY: 0, dist: 0 })
@@ -106,6 +109,61 @@ export default function TreeCanvas({
     return () => el.removeEventListener('wheel', onWheel)
   }, [zoomAt])
 
+  // Every person with descendants can open a family cluster. Partners and all
+  // descendants are included; stored relationships are never edited here.
+  const familyMembers = useMemo(() => {
+    const children = new Map<string, string[]>()
+    const partners = new Map<string, string[]>()
+    for (const link of links) {
+      const map = link.kind === 'parent' ? children : partners
+      const key = link.kind === 'parent' ? link.a_id : link.a_id
+      const value = link.b_id
+      const list = map.get(key)
+      if (list) list.push(value)
+      else map.set(key, [value])
+      if (link.kind === 'partner') {
+        const reverse = partners.get(link.b_id)
+        if (reverse) reverse.push(link.a_id)
+        else partners.set(link.b_id, [link.a_id])
+      }
+    }
+    const result = new Map<string, Set<string>>()
+    for (const root of people.keys()) {
+      const members = new Set<string>([root])
+      const queue = [root]
+      while (queue.length) {
+        const id = queue.shift() as string
+        for (const partner of partners.get(id) ?? []) {
+          if (!members.has(partner)) members.add(partner)
+        }
+        for (const child of children.get(id) ?? []) {
+          if (!members.has(child)) {
+            members.add(child)
+            queue.push(child)
+          }
+        }
+      }
+      result.set(root, members)
+    }
+    return result
+  }, [links, people])
+
+  const clusterRoots = useMemo(() => {
+    const hasChildren = new Set(links.filter((link) => link.kind === 'parent').map((link) => link.a_id))
+    return layout.nodes.filter((node) => hasChildren.has(node.id))
+  }, [layout.nodes, links])
+
+  const focusedMembers = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
+  const focusNodes = focusedMembers
+    ? layout.nodes.filter((node) => focusedMembers.has(node.id))
+    : []
+  const focusBounds = focusNodes.length ? {
+    x: Math.min(...focusNodes.map((node) => node.x)) - 30,
+    y: Math.min(...focusNodes.map((node) => node.y)) - 42,
+    w: Math.max(...focusNodes.map((node) => node.x + NODE_W)) - Math.min(...focusNodes.map((node) => node.x)) + 60,
+    h: Math.max(...focusNodes.map((node) => node.y + NODE_H)) - Math.min(...focusNodes.map((node) => node.y)) + 84,
+  } : null
+
   const pinchDistance = () => {
     const [a, b] = [...pointers.current.values()]
     return Math.hypot(a.x - b.x, a.y - b.y)
@@ -149,8 +207,15 @@ export default function TreeCanvas({
     if (pointers.current.size < 2) gesture.current.dist = 0
     if (wasOne && !gesture.current.moved && e.type === 'pointerup') {
       // A tap, not a drag: find which person was under the finger.
-      const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-pid]')
-      const id = hit?.getAttribute('data-pid')
+      const hit = document.elementFromPoint(e.clientX, e.clientY)
+      const branch = hit?.closest('[data-branch-id]')?.getAttribute('data-branch-id')
+      if (branch) {
+        setFamilyFocus((current) => current === branch ? null : branch)
+        const center = nodeCenter(branch)
+        if (center) centerOn(branch, Math.max(view.k, 0.9))
+        return
+      }
+      const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
       if (id) onSelect(id)
     }
   }
@@ -205,19 +270,43 @@ export default function TreeCanvas({
             display: 'block',
           }}
         >
+          {focusBounds && (
+            <g pointerEvents="none">
+              <rect
+                x={focusBounds.x}
+                y={focusBounds.y}
+                width={focusBounds.w}
+                height={focusBounds.h}
+                rx={28}
+                fill="var(--accent)"
+                fillOpacity={0.055}
+                stroke="var(--accent)"
+                strokeOpacity={0.65}
+                strokeWidth={2}
+                strokeDasharray="7 5"
+              />
+              <text x={focusBounds.x + 16} y={focusBounds.y + 23} fill="var(--accent-text)" fontSize={13} fontWeight={700}>
+                FAMILY FOCUS
+              </text>
+            </g>
+          )}
           {layout.edges.map((e) => (
             <path
               key={e.id}
               d={e.d}
               className={e.kind === 'partner' ? 'fill-none stroke-accent' : 'fill-none stroke-muted'}
               strokeWidth={e.kind === 'partner' ? 3 : 1.5}
-              strokeOpacity={e.kind === 'partner' ? 0.7 : 0.55}
+              strokeOpacity={familyFocus ? 0.14 : e.kind === 'partner' ? 0.7 : 0.55}
+              style={{ filter: familyFocus ? 'blur(0.6px)' : undefined }}
             />
           ))}
           {layout.nodes.map((n) => {
             const p = people.get(n.id)
             if (!p) return null
             const sub = p.nickname ? `“${clip(p.nickname, 12)}”` : p.birth_date ? p.birth_date.slice(0, 4) : ''
+            const inFocus = !focusedMembers || focusedMembers.has(n.id)
+            const scale = familyFocus ? (inFocus ? 1.08 : 0.72) : 1
+            const transform = `translate(${n.x + NODE_W / 2} ${n.y + NODE_H / 2}) scale(${scale}) translate(${-NODE_W / 2} ${-NODE_H / 2})`
             const classes = ['tnode-rect']
             if (n.id === meId) classes.push('tnode-me')
             if (n.id === selectedId) classes.push('tnode-sel')
@@ -226,7 +315,9 @@ export default function TreeCanvas({
               <g
                 key={n.id}
                 data-pid={n.id}
-                transform={`translate(${n.x} ${n.y})`}
+                transform={transform}
+                opacity={inFocus ? 1 : 0.18}
+                style={{ filter: inFocus ? undefined : 'blur(1.4px)', transition: 'opacity 220ms ease, filter 220ms ease' }}
                 tabIndex={0}
                 role="button"
                 aria-label={`${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
@@ -247,12 +338,41 @@ export default function TreeCanvas({
               </g>
             )
           })}
+          {clusterRoots.map((node) => {
+            const person = people.get(node.id)
+            if (!person) return null
+            const isActive = familyFocus === node.id
+            return (
+              <g
+                key={`cluster:${node.id}`}
+                data-branch-id={node.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`Focus ${person.full_name}'s family branch`}
+                transform={`translate(${node.x + NODE_W - 5} ${node.y - 13})`}
+                style={{ cursor: 'pointer' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setFamilyFocus((current) => current === node.id ? null : node.id)
+                    centerOn(node.id, Math.max(view.k, 0.9))
+                  }
+                }}
+              >
+                <circle r={13} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />
+                <text x={0} y={4.5} textAnchor="middle" fill="var(--accent-ink)" fontSize={15} fontWeight={800}>
+                  {isActive ? '×' : '⌂'}
+                </text>
+              </g>
+            )
+          })}
         </svg>
       </div>
 
       <div className="absolute bottom-3 right-3 flex flex-col gap-2">
         {centerButton('+', () => zoomAt(size.w / 2, size.h / 2, 1.25))}
         {centerButton('−', () => zoomAt(size.w / 2, size.h / 2, 1 / 1.25))}
+        {familyFocus && centerButton('Whole tree', () => setFamilyFocus(null))}
         {centerButton('Fit', fit)}
         {meId && centerButton('Me', () => centerOn(meId, 1))}
       </div>

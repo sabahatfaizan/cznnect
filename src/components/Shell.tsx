@@ -30,6 +30,15 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const current: Tab = tab
 
   useEffect(() => {
+    if (!menuOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [menuOpen])
+
+  useEffect(() => {
     if (!isOwner) return
     let active = true
     void supabase.from('app_settings').select('maintenance_enabled').eq('id', 1).maybeSingle().then(({ data, error }) => {
@@ -86,49 +95,82 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             )}
           </button>
         </header>
-        {menuOpen && <section id="cznnect-main-menu" className="card mb-4" aria-label="Main menu">
-          <p className="eyebrow mb-2">Menu</p>
-          <div className="grid gap-1">
-            {([
-              ['home', 'Home'],
-              ['tree', 'Family Tree'],
-              ['explore', 'Explore'],
-              ['plans', 'Plans'],
-              ['me', 'My Profile'],
-            ] as { id: Tab; label: string }[]).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition hover:bg-surface/70"
-                onClick={() => { setTab(item.id); setMenuOpen(false) }}
-              >
-                <span>{item.label}</span>
-                <span aria-hidden="true" className="text-muted">›</span>
-              </button>
-            ))}
-          </div>
-          {userId && isOwner && <div className="mt-4 border-t border-line pt-4">
-            <p className="eyebrow">Owner controls</p>
-            <div className="mt-2 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="font-bold">Maintenance mode</p>
-                <p className="mt-1 text-sm text-muted">{maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}</p>
+        <div
+          className={`fixed inset-0 z-50 transition-opacity duration-300 ${menuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+          aria-hidden={!menuOpen}
+        >
+          <button
+            type="button"
+            tabIndex={menuOpen ? 0 : -1}
+            aria-label="Close menu"
+            className="absolute inset-0 h-full w-full cursor-default bg-black/50"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside
+            id="cznnect-main-menu"
+            aria-label="Main menu"
+            aria-modal="true"
+            role="dialog"
+            className={`absolute right-0 top-0 flex h-full w-[min(82vw,24rem)] flex-col overflow-y-auto border-l border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="font-display text-xl font-extrabold">Menu</p>
+                <p className="text-xs text-muted">Cznnect navigation</p>
               </div>
               <button
                 type="button"
-                role="switch"
-                aria-checked={maintenanceEnabled}
-                aria-label="Maintenance mode"
-                disabled={busy || !maintenanceLoaded}
-                onClick={() => void saveMaintenance(!maintenanceEnabled)}
-                className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${maintenanceEnabled ? 'border-red-500 bg-red-500' : 'border-green-500 bg-green-500'}`}
+                aria-label="Close menu"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-line text-current hover:bg-surface/70"
+                onClick={() => setMenuOpen(false)}
               >
-                <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
               </button>
             </div>
-            {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}
-          </div>}
-        </section>}
+            <div className="grid gap-1">
+              {([
+                ['home', 'Home'],
+                ['tree', 'Family Tree'],
+                ['explore', 'Explore'],
+                ['plans', 'Plans'],
+                ['me', 'My Profile'],
+              ] as { id: Tab; label: string }[]).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition hover:bg-surface/70 ${tab === item.id ? 'bg-surface/70 font-bold' : ''}`}
+                  onClick={() => { setTab(item.id); setMenuOpen(false) }}
+                >
+                  <span>{item.label}</span>
+                  <span aria-hidden="true" className="text-muted">›</span>
+                </button>
+              ))}
+            </div>
+            {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
+              <p className="eyebrow">Owner controls</p>
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="font-bold">Maintenance mode</p>
+                  <p className="mt-1 text-sm text-muted">{maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={maintenanceEnabled}
+                  aria-label="Maintenance mode"
+                  disabled={busy || !maintenanceLoaded}
+                  onClick={() => void saveMaintenance(!maintenanceEnabled)}
+                  className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${maintenanceEnabled ? 'border-red-500 bg-red-500' : 'border-green-500 bg-green-500'}`}
+                >
+                  <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}
+            </div>}
+          </aside>
+        </div>
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'irl' && <Irl family={family} userId={userId} onBack={() => setTab('home')} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}

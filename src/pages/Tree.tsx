@@ -256,6 +256,7 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
             <TreeCanvas
               layout={layout}
               people={index.byId}
+              links={links}
               selectedId={selectedId}
               meId={mine?.id ?? null}
               focus={focus}

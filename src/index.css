@@ -866,3 +866,30 @@ input[type="checkbox"] {
   }
 }
 
+
+
+/* Cznnect mark reveal: one short entrance, then a completely still logo. */
+.splash-mark {
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: translateY(8px) scale(0.94);
+  animation: splash-mark-settle 850ms cubic-bezier(.2,.75,.25,1) 120ms forwards;
+}
+.splash-mark-still {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+@keyframes splash-mark-settle {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-mark,
+  .splash-name,
+  .splash-bar {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}

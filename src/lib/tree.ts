@@ -622,29 +622,35 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   for (const [key, stem] of stems) {
     const top = Math.min(...stem.kids.map((k) => k.y))
     const mid = stem.sy + (top - stem.sy) / 2
-    // Organic, root-like trunk: several alternating bends, then fine side roots.
+    // Draw a single organic trunk that gently tapers into each child branch.
+    // Fewer, longer curves avoid the rigid, comb-like look of separate connector lines.
     const trunkX = stem.sx
-    const bendY1 = stem.sy + (mid - stem.sy) * 0.28
-    const bendY2 = stem.sy + (mid - stem.sy) * 0.67
-    const parts = [
-      `M${trunkX} ${stem.sy} C${trunkX - 9} ${stem.sy + 18}, ${trunkX + 12} ${bendY1 - 8}, ${trunkX + 3} ${bendY1}`,
-      `C${trunkX - 10} ${bendY1 + 14}, ${trunkX + 13} ${bendY2 - 12}, ${trunkX - 2} ${bendY2}`,
-      `C${trunkX - 8} ${bendY2 + 13}, ${trunkX + 7} ${mid - 10}, ${trunkX} ${mid}`,
+    const branchY = mid + (top - mid) * 0.16
+    const parts: string[] = [
+      `M${trunkX} ${stem.sy} C${trunkX - 8} ${stem.sy + 22}, ${trunkX + 13} ${stem.sy + 38}, ${trunkX + 2} ${branchY}`,
     ]
-    // Tiny root hairs along the trunk give the connectors an organic, branching silhouette.
-    for (const [i, y] of [bendY1 + 4, bendY2 - 2, mid - 7].entries()) {
-      const dir = i % 2 === 0 ? -1 : 1
-      parts.push(`M${trunkX + (i === 1 ? 3 : -2)} ${y} Q${trunkX + dir * 15} ${y + 5} ${trunkX + dir * 25} ${y + 15}`)
-    }
-    for (const [i, k] of stem.kids.entries()) {
-      const childX = k.x + NODE_W / 2
-      const side = childX < trunkX ? -1 : 1
-      const spread = Math.abs(childX - trunkX)
-      const y1 = mid + Math.max(10, spread * 0.10)
-      const y2 = mid + Math.max(22, spread * 0.20)
-      const wobble = (i % 2 ? -1 : 1) * Math.min(18, spread * 0.08)
-      parts.push(`M${trunkX} ${mid} C${trunkX + side * 10} ${y1}, ${childX - side * 16} ${y2 + wobble}, ${childX} ${k.y - 5}`)
-      parts.push(`M${childX - side * 9} ${y2 + wobble - 4} Q${childX - side * 3} ${y2 + wobble + 2} ${childX} ${k.y - 5}`)
+    const orderedKids = [...stem.kids].sort((a, b) => (a.x + NODE_W / 2) - (b.x + NODE_W / 2))
+    const leftKids = orderedKids.filter((kid) => kid.x + NODE_W / 2 < trunkX)
+    const rightKids = orderedKids.filter((kid) => kid.x + NODE_W / 2 >= trunkX)
+    for (const [side, group] of [[-1, leftKids], [1, rightKids]] as const) {
+      if (!group.length) continue
+      const outer = group[side < 0 ? 0 : group.length - 1]
+      const outerX = outer.x + NODE_W / 2
+      // A curved bough flows out of the trunk; each child grows from that bough.
+      const boughEndY = Math.max(branchY + 14, top - 15)
+      parts.push(
+        `M${trunkX + side * 2} ${branchY} C${trunkX + side * 18} ${branchY + 13}, ${outerX - side * 22} ${boughEndY - 12}, ${outerX} ${boughEndY}`
+      )
+      for (const kid of group) {
+        const childX = kid.x + NODE_W / 2
+        const childY = kid.y - 5
+        const distance = Math.abs(childX - trunkX)
+        const startY = branchY + Math.min(18, distance * 0.08)
+        // Each offshoot bends naturally into the node rather than meeting at a sharp angle.
+        parts.push(
+          `M${trunkX + (childX - trunkX) * 0.24} ${startY} C${trunkX + (childX - trunkX) * 0.52} ${startY + 7}, ${childX - (childX - trunkX) * 0.12} ${childY - 20}, ${childX} ${childY}`
+        )
+      }
     }
     edges.push({ id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`, kind: 'parent', d: parts.join('') })
   }

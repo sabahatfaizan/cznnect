@@ -622,21 +622,19 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   for (const [key, stem] of stems) {
     const top = Math.min(...stem.kids.map((k) => k.y))
     const mid = stem.sy + (top - stem.sy) / 2
-    // Root-like trunk: broad at the parent and visibly tapering into fine roots.
+    // Organic, root-like trunk: several alternating bends, then fine side roots.
     const trunkX = stem.sx
     const bendY1 = stem.sy + (mid - stem.sy) * 0.28
     const bendY2 = stem.sy + (mid - stem.sy) * 0.67
-    const trunk = [
+    const parts = [
       `M${trunkX} ${stem.sy} C${trunkX - 9} ${stem.sy + 18}, ${trunkX + 12} ${bendY1 - 8}, ${trunkX + 3} ${bendY1}`,
       `C${trunkX - 10} ${bendY1 + 14}, ${trunkX + 13} ${bendY2 - 12}, ${trunkX - 2} ${bendY2}`,
       `C${trunkX - 8} ${bendY2 + 13}, ${trunkX + 7} ${mid - 10}, ${trunkX} ${mid}`,
-    ].join('')
-    const branches: string[] = []
-    // Fine root hairs split away from the thick trunk and taper to delicate tips.
-    for (const [i, y] of [bendY1 + 4, bendY1 + 18, bendY2 - 2, bendY2 + 12, mid - 7].entries()) {
+    ]
+    // Tiny root hairs along the trunk give the connectors an organic, branching silhouette.
+    for (const [i, y] of [bendY1 + 4, bendY2 - 2, mid - 7].entries()) {
       const dir = i % 2 === 0 ? -1 : 1
-      branches.push(`M${trunkX + (i % 2 ? 3 : -2)} ${y} Q${trunkX + dir * 15} ${y + 5} ${trunkX + dir * 25} ${y + 15}`)
-      branches.push(`M${trunkX + dir * 13} ${y + 7} Q${trunkX + dir * 21} ${y + 12} ${trunkX + dir * 29} ${y + 22}`)
+      parts.push(`M${trunkX + (i === 1 ? 3 : -2)} ${y} Q${trunkX + dir * 15} ${y + 5} ${trunkX + dir * 25} ${y + 15}`)
     }
     for (const [i, k] of stem.kids.entries()) {
       const childX = k.x + NODE_W / 2
@@ -645,12 +643,10 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
       const y1 = mid + Math.max(10, spread * 0.10)
       const y2 = mid + Math.max(22, spread * 0.20)
       const wobble = (i % 2 ? -1 : 1) * Math.min(18, spread * 0.08)
-      branches.push(`M${trunkX} ${mid} C${trunkX + side * 10} ${y1}, ${childX - side * 16} ${y2 + wobble}, ${childX} ${k.y - 5}`)
-      branches.push(`M${childX - side * 9} ${y2 + wobble - 4} Q${childX - side * 3} ${y2 + wobble + 2} ${childX} ${k.y - 5}`)
+      parts.push(`M${trunkX} ${mid} C${trunkX + side * 10} ${y1}, ${childX - side * 16} ${y2 + wobble}, ${childX} ${k.y - 5}`)
+      parts.push(`M${childX - side * 9} ${y2 + wobble - 4} Q${childX - side * 3} ${y2 + wobble + 2} ${childX} ${k.y - 5}`)
     }
-    const childIds = stem.kids.map((kid) => kid.id).join(',')
-    edges.push({ id: `stem:${key}:${childIds}`, kind: 'parent', d: trunk })
-    edges.push({ id: `roots:${key}:${childIds}`, kind: 'parent', d: branches.join('') })
+    edges.push({ id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`, kind: 'parent', d: parts.join('') })
   }
 
   return {

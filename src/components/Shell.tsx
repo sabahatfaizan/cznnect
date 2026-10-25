@@ -132,20 +132,20 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>
             <div className="grid gap-1">
               {([
-                ['home', 'Home'],
-                ['tree', 'Family Tree'],
-                ['irl', 'IRL Connect'],
-                ['explore', 'Explore'],
-                ['plans', 'Plans'],
-                ['me', 'My Profile'],
-              ] as { id: Tab; label: string }[]).map((item) => (
+                { id: 'home', label: 'Home', icon: 'home' },
+                { id: 'tree', label: 'Family Tree', icon: 'tree' },
+                { id: 'irl', label: 'IRL Connect', icon: 'irl' },
+                { id: 'explore', label: 'Explore', icon: 'explore' },
+                { id: 'plans', label: 'Plans', icon: 'plans' },
+                { id: 'me', label: 'My Profile', icon: 'me' },
+              ] as { id: Tab; label: string; icon: IconName }[]).map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition hover:bg-surface/70 ${tab === item.id ? 'bg-surface/70 font-bold' : ''}`}
-                  onClick={() => { setTab(item.id); setMenuOpen(false) }}
+                  onClick={() => { setScoreboardRequested(false); setTab(item.id); setMenuOpen(false) }}
                 >
-                  <span>{item.label}</span>
+                  <span className="flex items-center gap-3"><Icon name={item.icon} />{item.label}</span>
                   <span aria-hidden="true" className="text-muted">›</span>
                 </button>
               ))}

@@ -959,17 +959,16 @@ input[type="checkbox"] {
   :root[data-theme="glass"] .menu-item:active { transform: none; }
 }
 
-/* Spider-Verse-inspired family tree stage: the data layout stays intact;
+/* Glowing-roots family tree stage: the data layout stays intact;
    only the visual presentation changes. */
 .family-tree-stage {
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(ellipse at 12% 18%, rgb(255 64 157 / 0.2), transparent 25rem),
-    radial-gradient(ellipse at 84% 42%, rgb(52 218 255 / 0.19), transparent 29rem),
-    radial-gradient(ellipse at 52% 100%, rgb(143 78 255 / 0.2), transparent 29rem),
-    linear-gradient(145deg, #090b1c 0%, #12142c 54%, #090e22 100%);
-  border-color: rgb(164 176 255 / 0.24) !important;
+    radial-gradient(ellipse at 50% 0%, rgb(24 70 255 / 0.2), transparent 26rem),
+    radial-gradient(ellipse at 50% 100%, rgb(10 40 160 / 0.16), transparent 28rem),
+    linear-gradient(180deg, #02040f 0%, #030818 55%, #020512 100%);
+  border-color: rgb(80 130 255 / 0.28) !important;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.08),
     inset 0 0 44px rgb(92 92 255 / 0.08),
@@ -1003,7 +1002,7 @@ input[type="checkbox"] {
   stroke-width: 1.6;
   rx: 15px;
   ry: 15px;
-  filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.24)) drop-shadow(2px 1px 0 rgb(255 67 159 / 0.18));
+  filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.24)) drop-shadow(0 0 6px rgb(40 110 255 / 0.22));
 }
 :root .family-tree-stage .tnode-me {
   fill: rgb(38 228 255 / 0.16);
@@ -1012,9 +1011,9 @@ input[type="checkbox"] {
   filter: drop-shadow(0 0 8px rgb(52 224 255 / 0.36));
 }
 :root .family-tree-stage .tnode-sel {
-  stroke: #ff70b9;
+  stroke: #d8f1ff;
   stroke-width: 3;
-  filter: drop-shadow(0 0 8px rgb(255 70 168 / 0.58));
+  filter: drop-shadow(0 0 9px rgb(70 150 255 / 0.7));
 }
 :root .family-tree-stage .tnode-gone {
   stroke: rgb(190 174 222 / 0.7);

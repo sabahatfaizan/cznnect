@@ -335,11 +335,12 @@ export function initials(name: string): string {
 export const NODE_W = 112
 export const NODE_H = 60
 const SLOT = 136
-const ROW_H = 142
+const ROW_H = 216 // taller rows give the roots room to thin out as they grow downwards
 const PAD = 28
 
 export type TreeNode = { id: string; x: number; y: number; gen: number }
-export type TreeEdge = { id: string; kind: 'parent' | 'partner'; d: string }
+export type RootSeg = { d: string; role: 'trunk' | 'bough' | 'twig' }
+export type TreeEdge = { id: string; kind: 'parent' | 'partner'; d: string; sy?: number; segs?: RootSeg[] }
 export type TreeLayout = { nodes: TreeNode[]; edges: TreeEdge[]; width: number; height: number }
 
 type Cluster = { members: string[]; gen: number; start: number }
@@ -429,6 +430,8 @@ function place(row: Cluster[], desired: (c: Cluster) => number | null, gap: Gap)
     k = m
   }
 }
+
+const f1 = (n: number) => Math.round(n * 10) / 10
 
 export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   const index = buildIndex(people, links)
@@ -621,38 +624,60 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   }
   for (const [key, stem] of stems) {
     const top = Math.min(...stem.kids.map((k) => k.y))
-    const mid = stem.sy + (top - stem.sy) / 2
     // Draw a single organic trunk that gently tapers into each child branch.
     // Fewer, longer curves avoid the rigid, comb-like look of separate connector lines.
     const trunkX = stem.sx
-    const branchY = mid + (top - mid) * 0.16
-    const parts: string[] = [
-      `M${trunkX} ${stem.sy} C${trunkX - 8} ${stem.sy + 22}, ${trunkX + 13} ${stem.sy + 38}, ${trunkX + 2} ${branchY}`,
+    const branchY = stem.sy + (top - stem.sy) * 0.3
+    const segs: RootSeg[] = [
+      { role: 'trunk', d: `M${trunkX} ${stem.sy} C${trunkX - 8} ${stem.sy + (branchY - stem.sy) * 0.4}, ${trunkX + 10} ${stem.sy + (branchY - stem.sy) * 0.8}, ${trunkX + 2} ${branchY}` },
     ]
     const orderedKids = [...stem.kids].sort((a, b) => (a.x + NODE_W / 2) - (b.x + NODE_W / 2))
     const leftKids = orderedKids.filter((kid) => kid.x + NODE_W / 2 < trunkX)
     const rightKids = orderedKids.filter((kid) => kid.x + NODE_W / 2 >= trunkX)
     for (const [side, group] of [[-1, leftKids], [1, rightKids]] as const) {
       if (!group.length) continue
+      // The child furthest out gets the main limb. It drops down from the trunk, sweeps
+      // sideways in the middle and drops again into the person, so the roots grow downwards.
       const outer = group[side < 0 ? 0 : group.length - 1]
-      const outerX = outer.x + NODE_W / 2
-      // A curved bough flows out of the trunk; each child grows from that bough.
-      const boughEndY = Math.max(branchY + 14, top - 15)
-      parts.push(
-        `M${trunkX + side * 2} ${branchY} C${trunkX + side * 18} ${branchY + 13}, ${outerX - side * 22} ${boughEndY - 12}, ${outerX} ${boughEndY}`
-      )
+      const ox = outer.x + NODE_W / 2
+      const oy = outer.y - 5
+      const fall = oy - branchY
+      const limb: [number, number, number, number, number, number, number, number] = [
+        trunkX + side * 2, branchY,
+        trunkX + side * 3, branchY + fall * 0.5,
+        ox, oy - fall * 0.5,
+        ox, oy,
+      ]
+      segs.push({ role: 'bough', d: `M${limb[0]} ${limb[1]} C${limb[2]} ${limb[3]}, ${limb[4]} ${limb[5]}, ${limb[6]} ${limb[7]}` })
+      const along = (t: number) => {
+        const u = 1 - t
+        return {
+          x: u * u * u * limb[0] + 3 * u * u * t * limb[2] + 3 * u * t * t * limb[4] + t * t * t * limb[6],
+          y: u * u * u * limb[1] + 3 * u * u * t * limb[3] + 3 * u * t * t * limb[5] + t * t * t * limb[7],
+        }
+      }
+      const reach = Math.abs(ox - trunkX) || 1
       for (const kid of group) {
-        const childX = kid.x + NODE_W / 2
-        const childY = kid.y - 5
-        const distance = Math.abs(childX - trunkX)
-        const startY = branchY + Math.min(18, distance * 0.08)
-        // Each offshoot bends naturally into the node rather than meeting at a sharp angle.
-        parts.push(
-          `M${trunkX + (childX - trunkX) * 0.24} ${startY} C${trunkX + (childX - trunkX) * 0.52} ${startY + 7}, ${childX - (childX - trunkX) * 0.12} ${childY - 20}, ${childX} ${childY}`
-        )
+        if (kid.id === outer.id) continue
+        // Every other child splits off the limb part of the way along and drops into its own spot.
+        const cx = kid.x + NODE_W / 2
+        const cy = kid.y - 5
+        const t = 0.16 + 0.5 * Math.min(1, Math.abs(cx - trunkX) / reach)
+        const from = along(t)
+        const drop = Math.max(24, cy - from.y)
+        segs.push({
+          role: 'twig',
+          d: `M${f1(from.x)} ${f1(from.y)} C${f1(from.x + (cx - from.x) * 0.12)} ${f1(from.y + drop * 0.45)}, ${f1(cx)} ${f1(cy - drop * 0.5)}, ${f1(cx)} ${f1(cy)}`,
+        })
       }
     }
-    edges.push({ id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`, kind: 'parent', d: parts.join('') })
+    edges.push({
+      id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`,
+      kind: 'parent',
+      d: segs.map((x) => x.d).join(''),
+      sy: stem.sy,
+      segs,
+    })
   }
 
   return {

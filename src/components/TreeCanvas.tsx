@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { NODE_H, NODE_W, type Link, type Person, type TreeLayout } from '../lib/tree'
+import { hairPaths, taperPath } from '../lib/roots'
 
 type View = { x: number; y: number; k: number }
 const MIN_K = 0.3
@@ -302,6 +303,11 @@ export default function TreeCanvas({
               <stop offset="50%" stopColor="#62eaff" />
               <stop offset="100%" stopColor="#d7ffff" />
             </linearGradient>
+            <linearGradient id="root-body" x1="0" y1="0" x2="0" y2={layout.height} gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#1f5cff" />
+              <stop offset="55%" stopColor="#3d8bff" />
+              <stop offset="100%" stopColor="#7fd0ff" />
+            </linearGradient>
             <filter id="family-root-glow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="5.5" result="wideGlow" />
               <feMerge>
@@ -339,37 +345,45 @@ export default function TreeCanvas({
             return !link || (visibleIds.has(link.a_id) && visibleIds.has(link.b_id))
           }).map((e) => (
             <g key={e.id} pointerEvents="none" className={e.kind === 'partner' ? 'family-edge family-edge-partner' : 'family-edge family-edge-root'}>
-              {e.kind === 'parent' && (
+              {e.kind === 'parent' && e.segs ? (
+                (() => {
+                  // Thick near the top of the tree, thinner and thinner further down.
+                  const depth = Math.min(1, (e.sy ?? 0) / Math.max(1, layout.height))
+                  const base = 22 - 11 * depth
+                  const width = (role: 'trunk' | 'bough' | 'twig'): [number, number] =>
+                    role === 'trunk' ? [base, base * 0.7] : role === 'bough' ? [base * 0.7, base * 0.16] : [base * 0.4, 1.4]
+                  const dim = familyFocus ? 0.25 : 1
+                  return (
+                    <g style={{ transition: 'opacity 220ms ease' }} opacity={dim}>
+                      <g filter="url(#family-root-glow)" opacity={0.75}>
+                        {e.segs.map((seg, i) => (
+                          <path key={i} d={taperPath(seg.d, width(seg.role)[0] * 1.9, width(seg.role)[1] * 1.9)} fill="#0b4dff" />
+                        ))}
+                      </g>
+                      {e.segs.map((seg, i) => (
+                        <path key={i} d={taperPath(seg.d, ...width(seg.role))} fill="url(#root-body)" />
+                      ))}
+                      {e.segs.map((seg, i) => (
+                        <path key={i} d={taperPath(seg.d, width(seg.role)[0] * 0.3, Math.max(0.6, width(seg.role)[1] * 0.25))} fill="#eaf8ff" fillOpacity={0.95} />
+                      ))}
+                      {e.segs.flatMap((seg, i) =>
+                        hairPaths(seg, e.id).map((hd, j) => (
+                          <path key={`${i}-${j}`} d={hd} fill="none" stroke="#bfe6ff" strokeWidth={1.1} strokeLinecap="round" strokeOpacity={0.8} />
+                        )),
+                      )}
+                    </g>
+                  )
+                })()
+              ) : (
                 <path
                   d={e.d}
                   fill="none"
-                  stroke="#075dff"
-                  strokeWidth={13}
-                  strokeOpacity={familyFocus ? 0.1 : 0.42}
+                  stroke="url(#family-partner-gradient)"
+                  strokeWidth={3}
+                  strokeOpacity={familyFocus ? 0.25 : 0.95}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                />
-              )}
-              <path
-                d={e.d}
-                fill="none"
-                stroke={e.kind === 'partner' ? 'url(#family-partner-gradient)' : 'url(#family-root-gradient)'}
-                strokeWidth={e.kind === 'partner' ? 3 : 6.5}
-                strokeOpacity={familyFocus ? 0.25 : e.kind === 'partner' ? 0.95 : 1}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter={e.kind === 'parent' ? 'url(#family-root-glow)' : undefined}
-                style={{ transition: 'stroke-opacity 220ms ease' }}
-              />
-              {e.kind === 'parent' && (
-                <path
-                  d={e.d}
-                  fill="none"
-                  stroke="#e4ffff"
-                  strokeWidth={1.6}
-                  strokeOpacity={familyFocus ? 0.18 : 0.78}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  style={{ transition: 'stroke-opacity 220ms ease' }}
                 />
               )}
             </g>

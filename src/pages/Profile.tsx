@@ -2,10 +2,13 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import { getThemePref, setThemePref, type ThemePref } from '../theme'
 
-const OWNER_EMAIL = 'faizanplayz11@gmail.com'\n\nconst THEMES: { id: ThemePref; label: string; hint: string }[] = [
+const OWNER_EMAIL = 'faizanplayz11@gmail.com'
+
+const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'light', label: 'Light', hint: 'Clean and bright' },
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
-  { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },\n  { id: 'glass', label: 'Owner Glass', hint: 'Private · iOS Liquid Glass' },
+  { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
+  { id: 'glass', label: 'Owner Glass', hint: 'Private · iOS Liquid Glass' },
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]
 

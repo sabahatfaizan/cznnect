@@ -816,7 +816,7 @@ input[type="checkbox"] {
 .family-tree-stage .family-edge-partner {
   filter: drop-shadow(0 0 4px rgb(145 147 255 / 0.42));
 }
-.family-tree-stage .tnode-rect {
+:root .family-tree-stage .tnode-rect {
   fill: rgb(14 18 42 / 0.94);
   stroke: rgb(100 222 255 / 0.72);
   stroke-width: 1.6;
@@ -824,18 +824,18 @@ input[type="checkbox"] {
   ry: 15px;
   filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.24)) drop-shadow(2px 1px 0 rgb(255 67 159 / 0.18));
 }
-.family-tree-stage .tnode-me {
+:root .family-tree-stage .tnode-me {
   fill: rgb(38 228 255 / 0.16);
   stroke: #59f2ff;
   stroke-width: 2;
   filter: drop-shadow(0 0 8px rgb(52 224 255 / 0.36));
 }
-.family-tree-stage .tnode-sel {
+:root .family-tree-stage .tnode-sel {
   stroke: #ff70b9;
   stroke-width: 3;
   filter: drop-shadow(0 0 8px rgb(255 70 168 / 0.58));
 }
-.family-tree-stage .tnode-gone {
+:root .family-tree-stage .tnode-gone {
   stroke: rgb(190 174 222 / 0.7);
 }
 .family-tree-stage .fill-ink {

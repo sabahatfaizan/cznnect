@@ -22,7 +22,7 @@ import Sheet from '../components/Sheet'
 type View = 'meet' | 'board'
 
 // IRL Connect: your personal code, scanning a cousin, confirming meetups, and the family scoreboard.
-export default function Irl({ family, userId, onBack }: { family: Family; userId: string; onBack: () => void }) {
+export default function Irl({ family, userId }: { family: Family; userId: string }) {
   const [view, setView] = useState<View>('meet')
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [rows, setRows] = useState<Row[]>([])
@@ -147,9 +147,6 @@ export default function Irl({ family, userId, onBack }: { family: Family; userId
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
-        <button className="link self-start" onClick={onBack}>
-          ← Home
-        </button>
         <h1 className="font-display text-2xl font-extrabold">IRL Connect</h1>
         <p className="text-sm text-muted">Meet in person, confirm it together, and earn points as a family.</p>
       </header>

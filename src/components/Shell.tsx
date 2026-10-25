@@ -13,7 +13,7 @@ type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'tree', label: 'Family Tree', icon: 'tree' },
+  { id: 'irl', label: 'IRL Connect', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
   { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'My Profile', icon: 'me' },
@@ -27,7 +27,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
-  const current: Tab = tab === 'irl' ? 'home' : tab
+  const current: Tab = tab
 
   useEffect(() => {
     if (!isOwner) return
@@ -129,19 +129,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}
           </div>}
         </section>}
-        {tab === 'home' && (
-          <div className="flex flex-col gap-4">
-            <button type="button" className="card irl-entry flex items-center justify-between gap-3 text-left" onClick={() => setTab('irl')}>
-              <span>
-                <span className="eyebrow block">IRL Connect</span>
-                <span className="block font-display text-lg font-bold">Met a cousin today?</span>
-                <span className="block text-sm text-muted">Scan, confirm together, and earn points.</span>
-              </span>
-              <span aria-hidden="true" className="flex-none font-display text-2xl font-extrabold text-accent-text">→</span>
-            </button>
-            <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />
-          </div>
-        )}
+        {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'irl' && <Irl family={family} userId={userId} onBack={() => setTab('home')} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}

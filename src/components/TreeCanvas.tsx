@@ -32,7 +32,6 @@ export default function TreeCanvas({
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 })
-  const [familyFocus, setFamilyFocus] = useState<string | null>(null)
   const started = useRef(false)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gesture = useRef({ moved: false, startX: 0, startY: 0, dist: 0 })
@@ -109,64 +108,11 @@ export default function TreeCanvas({
     return () => el.removeEventListener('wheel', onWheel)
   }, [zoomAt])
 
-  // Every person with descendants can open a family cluster. Partners and all
-  // descendants are included; stored relationships are never edited here.
-  const familyMembers = useMemo(() => {
-    const children = new Map<string, string[]>()
-    const partners = new Map<string, string[]>()
-    for (const link of links) {
-      const map = link.kind === 'parent' ? children : partners
-      const key = link.kind === 'parent' ? link.a_id : link.a_id
-      const value = link.b_id
-      const list = map.get(key)
-      if (list) list.push(value)
-      else map.set(key, [value])
-      if (link.kind === 'partner') {
-        const reverse = partners.get(link.b_id)
-        if (reverse) reverse.push(link.a_id)
-        else partners.set(link.b_id, [link.a_id])
-      }
-    }
-    const result = new Map<string, Set<string>>()
-    for (const root of people.keys()) {
-      const members = new Set<string>([root])
-      const queue = [root]
-      while (queue.length) {
-        const id = queue.shift() as string
-        for (const partner of partners.get(id) ?? []) {
-          if (!members.has(partner)) {
-            members.add(partner)
-            queue.push(partner)
-          }
-        }
-        for (const child of children.get(id) ?? []) {
-          if (!members.has(child)) {
-            members.add(child)
-            queue.push(child)
-          }
-        }
-      }
-      result.set(root, members)
-    }
-    return result
-  }, [links, people])
-
-  const focusedMembers = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
-  // Keep the tree compact: show the oldest generation and their children/partners.
-  // A glossy bubble on a second-generation person reveals that person's descendants.
-  const visibleIds = useMemo(() => {
-    const expanded = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
-    return new Set(layout.nodes.filter((node) => node.gen <= 1 || (expanded?.has(node.id) ?? false)).map((node) => node.id))
-  }, [layout.nodes, familyFocus, familyMembers])
-  const focusNodes = focusedMembers
-    ? layout.nodes.filter((node) => focusedMembers.has(node.id) && visibleIds.has(node.id))
-    : []
-  const focusBounds = focusNodes.length ? {
-    x: Math.min(...focusNodes.map((node) => node.x)) - 30,
-    y: Math.min(...focusNodes.map((node) => node.y)) - 42,
-    w: Math.max(...focusNodes.map((node) => node.x + NODE_W)) - Math.min(...focusNodes.map((node) => node.x)) + 60,
-    h: Math.max(...focusNodes.map((node) => node.y + NODE_H)) - Math.min(...focusNodes.map((node) => node.y)) + 84,
-  } : null
+  // Show every person and every real relationship at once; the tree itself is the navigation.
+  const visibleIds = useMemo(() => new Set(layout.nodes.map((node) => node.id)), [layout.nodes])
+  const familyFocus = null
+  const focusedMembers: Set<string> | null = null
+  const focusBounds = null
 
   const pinchDistance = () => {
     const [a, b] = [...pointers.current.values()]
@@ -212,30 +158,6 @@ export default function TreeCanvas({
     if (wasOne && !gesture.current.moved && e.type === 'pointerup') {
       // A tap, not a drag: find which person was under the finger.
       const hit = document.elementFromPoint(e.clientX, e.clientY)
-      const branch = hit?.closest('[data-branch-id]')?.getAttribute('data-branch-id')
-      if (branch) {
-        setFamilyFocus((current) => current === branch ? null : branch)
-        const center = nodeCenter(branch)
-        if (center) centerOn(branch, Math.max(view.k, 0.9))
-        return
-      }
-
-      // While a family is focused, tapping anywhere outside its highlighted
-      // sphere/bounds exits focus. Taps inside the family still select people.
-      if (familyFocus && focusBounds) {
-        const rect = box.current?.getBoundingClientRect()
-        if (rect) {
-          const worldX = (e.clientX - rect.left - view.x) / view.k
-          const worldY = (e.clientY - rect.top - view.y) / view.k
-          const outside = worldX < focusBounds.x || worldX > focusBounds.x + focusBounds.w ||
-            worldY < focusBounds.y || worldY > focusBounds.y + focusBounds.h
-          if (outside) {
-            setFamilyFocus(null)
-            return
-          }
-        }
-      }
-
       const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
       if (id) onSelect(id)
     }
@@ -273,7 +195,7 @@ export default function TreeCanvas({
         ref={box}
         tabIndex={0}
         role="group"
-        aria-label="Family tree. Tap a glossy bubble to reveal that branch. Drag to move and pinch to zoom."
+        aria-label="Family tree. Everyone is shown. Tap a person to open their details. Drag to move and pinch to zoom."
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -323,16 +245,17 @@ export default function TreeCanvas({
               key={e.id}
               d={e.d}
               className={e.kind === 'partner' ? 'fill-none stroke-accent' : 'fill-none stroke-muted'}
-              strokeWidth={e.kind === 'partner' ? 3 : 1.5}
-              strokeOpacity={familyFocus ? 0.22 : e.kind === 'partner' ? 0.7 : 0.55}
-              style={{ filter: familyFocus ? 'blur(0.6px)' : undefined }}
+              strokeWidth={e.kind === 'partner' ? 3 : e.id.startsWith('stem:') ? 7 : e.id.startsWith('roots:') ? 1.15 : 1.5}
+              strokeOpacity={e.kind === 'partner' ? 0.7 : 0.78}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           ))}
           {layout.nodes.filter((n) => visibleIds.has(n.id)).map((n) => {
             const p = people.get(n.id)
             if (!p) return null
             const sub = p.nickname ? `“${clip(p.nickname, 12)}”` : p.birth_date ? p.birth_date.slice(0, 4) : ''
-            const overview = n.gen === 1
+            const overview = false
             const inFocus = !focusedMembers || focusedMembers.has(n.id)
             const scale = familyFocus ? (inFocus ? 1.08 : 0.72) : 1
             const transform = `translate(${n.x + NODE_W / 2} ${n.y + NODE_H / 2}) scale(${scale}) translate(${-NODE_W / 2} ${-NODE_H / 2})`

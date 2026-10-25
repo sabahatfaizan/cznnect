@@ -31,6 +31,7 @@ docs/PLAN.md              architecture, data model, stages
 7. Run `supabase/04_family_tree.sql` the same way. It adds the family tree.
 8. Run `supabase/05_places.sql` the same way. It adds places, the map and ratings.
 9. Run `supabase/06_plans.sql` the same way. It adds polls and bucket lists.
+10. Run `supabase/07_irl.sql` the same way. It adds IRL Connect (personal QR codes, meetups, points and the scoreboard).
 
 **2. Put the keys in the app**
 
@@ -66,6 +67,7 @@ npm run typecheck
 - **Family tree:** every member can add and edit people, link relatives, and merge duplicates. Anyone can delete an entry or link they created; the owner can delete any. Each cousin can link their account to their own spot ("Add me" or "I am already here").
 - **Explore (places, map, restaurants):** every member can add, edit and rate places. Each person has one rating per place and can change or remove their own. Anyone can remove a place they added; the owner can remove any. Searching an address uses OpenStreetMap's free search, and the map uses OpenStreetMap tiles. No account or key is needed.
 - **Plans (bucket lists and polls):** every member can add and edit bucket-list items (this month, this year, lifetime), give them a deadline and an organiser, say "I am in", tick them off, and start polls. Everyone gets one vote per poll and can change it until the poll is closed. Anyone can remove what they added; the owner can remove anything. A poll can be closed by whoever started it or by the owner.
+- **IRL Connect (Home tab > IRL Connect):** every member has a personal QR code that holds a random handle and a code that changes every 5 minutes. It never contains a name, email or account id, so an old screenshot stops working. Scan a cousin, they confirm on their own phone, and both of you earn 10 points. For 3 or more cousins, one person hosts a group, others scan to join, the host locks it, and everyone confirms: 10 points plus 5 for each cousin beyond two, up to 40. The same two cousins earn together once every 24 hours, and one person earns from at most 3 meetups in 24 hours. Points are decided and recorded only by the database; the app cannot write them. Only members of the family can see its scoreboard and verified meetups.
 - Adding people to the family is done with the invite code. A removed person can only rejoin with the code, so get a new one after removing someone.
 
 ## Next

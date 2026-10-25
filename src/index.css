@@ -893,3 +893,103 @@ input[type="checkbox"] {
     transform: none;
   }
 }
+
+/* IRL Connect */
+.irl-entry {
+  width: 100%;
+  border-color: var(--accent);
+}
+.qr-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: var(--radius-card);
+  background: #ffffff;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  line-height: 0;
+}
+:root[data-theme="tactical"] .qr-frame {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px var(--accent);
+}
+:root[data-theme="midnight"] .qr-frame {
+  border-color: var(--accent);
+}
+.scan-view {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: #05070a;
+  border: 1px solid var(--line);
+}
+.scan-reticle {
+  position: absolute;
+  inset: 18%;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-card);
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+.irl-me {
+  border-color: var(--accent);
+}
+.irl-win {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.irl-row {
+  position: relative;
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ctl);
+  background: var(--surface);
+  padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+}
+.irl-row-me {
+  border-color: var(--accent);
+}
+.irl-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent-soft);
+  min-width: 4px;
+}
+.irl-rank {
+  position: relative;
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-avatar);
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.irl-rank-top {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.irl-badge {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-ctl);
+  background: var(--surface);
+  padding: 0.625rem;
+  opacity: 0.75;
+}
+.irl-badge-on {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  opacity: 1;
+}

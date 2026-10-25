@@ -6,9 +6,10 @@ import Profile from '../pages/Profile'
 import Explore from '../pages/Explore'
 import Plans from '../pages/Plans'
 import Tree from '../pages/Tree'
+import Irl from '../pages/Irl'
 import { Icon, type IconName } from './Icons'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
@@ -25,6 +26,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
+  const current: Tab = tab === 'irl' ? 'home' : tab
 
   useEffect(() => {
     if (!isOwner) return
@@ -80,7 +82,20 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </div>
           {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}
         </section>}
-        {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+        {tab === 'home' && (
+          <div className="flex flex-col gap-4">
+            <button type="button" className="card irl-entry flex items-center justify-between gap-3 text-left" onClick={() => setTab('irl')}>
+              <span>
+                <span className="eyebrow block">IRL Connect</span>
+                <span className="block font-display text-lg font-bold">Met a cousin today?</span>
+                <span className="block text-sm text-muted">Scan, confirm together, and earn points.</span>
+              </span>
+              <span aria-hidden="true" className="flex-none font-display text-2xl font-extrabold text-accent-text">→</span>
+            </button>
+            <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />
+          </div>
+        )}
+        {tab === 'irl' && <Irl family={family} userId={userId} onBack={() => setTab('home')} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}
@@ -88,7 +103,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       </main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
-          {TABS.map((t) => <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id ? 'page' : undefined} className={`tab ${tab === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
+          {TABS.map((t) => <button key={t.id} onClick={() => setTab(t.id)} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
         </div>
       </nav>
     </div>

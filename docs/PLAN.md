@@ -54,6 +54,7 @@ One private Supabase Storage bucket, with files stored as `family_id/...`. Stora
 5. **Bucket lists and to-dos.** *(done, this repo, now)*
 6. **Feed, albums, memories.**
 7. **Extras.** Calendar, birthdays, trips, challenges, branch groups.
+8. **IRL Connect.** Personal QR codes, confirmed meetups, group meetups, points ledger, scoreboard and achievements. *(done)*
 
 ## Free plan limits to know about
 

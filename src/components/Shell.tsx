@@ -111,7 +111,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             aria-label="Main menu"
             aria-modal="true"
             role="dialog"
-            className={`absolute right-0 top-0 flex h-full w-[min(82vw,24rem)] flex-col overflow-y-auto border-l border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`absolute right-0 top-0 flex h-full w-[min(70vw,24rem)] flex-col overflow-y-auto border-l border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="mb-5 flex items-center justify-between">
               <div>

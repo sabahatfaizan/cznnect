@@ -33,7 +33,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const isOwner = email.toLowerCase() === OWNER_EMAIL
   const current: Tab = tab
 
-  // Liquid Glass is only allowed for the owner; anyone else is switched back to Light.
+  // Liquid Glass is only allowed for the owner; anyone else is switched back to a dark fallback.
   useEffect(() => {
     setGlassAllowed(isOwner)
     return () => setGlassAllowed(false)

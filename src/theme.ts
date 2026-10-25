@@ -16,7 +16,7 @@ export function getThemePref(): ThemePref {
 }
 
 // Liquid Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
-// else, a saved "glass" choice falls back to Light. (Hiding the option is not a security boundary.)
+// else, a saved "glass" choice falls back to dark Midnight, so there is no white flash before sign-in. (Hiding the option is not a security boundary.)
 let glassAllowed = false
 export function setGlassAllowed(allowed: boolean) {
   if (glassAllowed === allowed) return
@@ -25,7 +25,7 @@ export function setGlassAllowed(allowed: boolean) {
 }
 
 function resolve(pref: ThemePref): Theme {
-  if (pref === 'glass') return glassAllowed ? 'glass' : 'light'
+  if (pref === 'glass') return glassAllowed ? 'glass' : 'midnight'
   if (pref === 'system') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'tactical' : 'light'
   }
@@ -37,7 +37,7 @@ export function applyTheme(pref: ThemePref) {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : theme === 'glass' ? '#eaf3ff' : '#ffffff')
+    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : theme === 'glass' ? '#070b16' : '#ffffff')
 }
 
 export function setThemePref(pref: ThemePref) {

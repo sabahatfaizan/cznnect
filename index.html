@@ -20,7 +20,7 @@
       try {
         var p = localStorage.getItem('cznnect-theme')
         var dark = p === 'tactical' || (p === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
-        document.documentElement.dataset.theme = p === 'midnight' ? 'midnight' : dark ? 'tactical' : 'light'
+        document.documentElement.dataset.theme = p === 'midnight' || p === 'glass' ? 'midnight' : dark ? 'tactical' : 'light'
       } catch (e) {}
     </script>
   </head>

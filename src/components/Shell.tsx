@@ -26,6 +26,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scoreboardRequested, setScoreboardRequested] = useState(false)
+  const [scoreboardRequestId, setScoreboardRequestId] = useState(0)
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
@@ -81,7 +82,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => { setScoreboardRequested(true); setTab('irl') }}
+            onClick={() => { setScoreboardRequested(true); setScoreboardRequestId((id) => id + 1); setTab('irl') }}
             className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm font-bold text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
             aria-label="Open scoreboard"
           >
@@ -185,7 +186,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </aside>
         </div>
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-        {tab === 'irl' && <Irl family={family} userId={userId} initialView={scoreboardRequested ? 'board' : 'meet'} />}
+        {tab === 'irl' && <Irl key={scoreboardRequestId} family={family} userId={userId} initialView={scoreboardRequested ? 'board' : 'meet'} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}

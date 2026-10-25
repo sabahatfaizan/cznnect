@@ -337,6 +337,7 @@ export default function TreeCanvas({
             const p = people.get(n.id)
             if (!p) return null
             const sub = p.nickname ? `“${clip(p.nickname, 12)}”` : p.birth_date ? p.birth_date.slice(0, 4) : ''
+            const overview = n.gen === 1
             const inFocus = !focusedMembers || focusedMembers.has(n.id)
             const scale = familyFocus ? (inFocus ? 1.08 : 0.72) : 1
             const transform = `translate(${n.x + NODE_W / 2} ${n.y + NODE_H / 2}) scale(${scale}) translate(${-NODE_W / 2} ${-NODE_H / 2})`
@@ -348,58 +349,39 @@ export default function TreeCanvas({
               <g
                 key={n.id}
                 data-pid={n.id}
+                data-branch-id={overview && (familyMembers.get(n.id)?.size ?? 1) > 1 ? n.id : undefined}
                 transform={transform}
                 opacity={inFocus ? 1 : 0.18}
                 style={{ filter: inFocus ? undefined : 'blur(1.4px)', transition: 'opacity 220ms ease, filter 220ms ease' }}
                 tabIndex={0}
                 role="button"
-                aria-label={`${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
+                aria-label={overview ? `Open ${p.full_name}'s family roots` : `${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    onSelect(n.id)
+                    if (overview && (familyMembers.get(n.id)?.size ?? 1) > 1) setFamilyFocus((current) => current === n.id ? null : n.id)
+                    else onSelect(n.id)
                   }
                 }}
               >
-                <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
-                <text x={NODE_W / 2} y={26} textAnchor="middle" className="fill-ink" fontSize="13" fontWeight="700">
-                  {clip(p.full_name, 15)}
-                </text>
-                <text x={NODE_W / 2} y={44} textAnchor="middle" className="fill-muted" fontSize="11">
-                  {sub}
-                </text>
+                {overview ? (
+                  <g>
+                    <circle cx={NODE_W / 2} cy={NODE_H / 2} r={38} fill="var(--glass-regular, var(--surface))" stroke="var(--accent)" strokeOpacity={0.85} strokeWidth={1.6} style={{ filter: 'drop-shadow(0 5px 11px color-mix(in srgb, var(--accent) 26%, transparent))' }} />
+                    <circle cx={NODE_W / 2 - 11} cy={NODE_H / 2 - 17} r={20} fill="white" fillOpacity={0.09} />
+                    <text x={NODE_W / 2} y={NODE_H / 2 - 3} textAnchor="middle" className="fill-ink" fontSize="12" fontWeight="800">{clip(p.full_name, 10)}</text>
+                    <text x={NODE_W / 2} y={NODE_H / 2 + 13} textAnchor="middle" className="fill-muted" fontSize="9">{(familyMembers.get(n.id)?.size ?? 1) - 1} family</text>
+                  </g>
+                ) : (
+                  <>
+                    <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
+                    <text x={NODE_W / 2} y={26} textAnchor="middle" className="fill-ink" fontSize="13" fontWeight="700">{clip(p.full_name, 15)}</text>
+                    <text x={NODE_W / 2} y={44} textAnchor="middle" className="fill-muted" fontSize="11">{sub}</text>
+                  </>
+                )}
               </g>
             )
           })}
-          {clusterRoots.filter((node) => node.gen === 1 && (familyMembers.get(node.id)?.size ?? 1) > 1).map((node) => {
-            const person = people.get(node.id)
-            if (!person) return null
-            const isActive = familyFocus === node.id
-            return (
-              <g
-                key={`cluster:${node.id}`}
-                data-branch-id={node.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`Focus ${person.full_name}'s family branch`}
-                transform={`translate(${node.x + NODE_W - 5} ${node.y - 13})`}
-                style={{ cursor: 'pointer' }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setFamilyFocus((current) => current === node.id ? null : node.id)
-                    centerOn(node.id, Math.max(view.k, 0.9))
-                  }
-                }}
-              >
-                <circle r={15} fill="var(--glass-regular, var(--surface))" stroke="var(--accent)" strokeWidth={1.8} style={{ filter: 'drop-shadow(0 3px 8px color-mix(in srgb, var(--accent) 35%, transparent))' }} />
-                <circle r={10} fill="var(--accent)" fillOpacity={0.16} />
-                <text x={0} y={4} textAnchor="middle" fill="var(--accent-text)" fontSize={12} fontWeight={800}>
-                  {isActive ? '−' : '+'}
-                </text>
-              </g>
-            )
-          })}
+
         </svg>
       </div>
 

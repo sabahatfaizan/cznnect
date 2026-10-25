@@ -13,8 +13,6 @@ type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'tree', label: 'Family Tree', icon: 'tree' },
-  { id: 'irl', label: 'IRL Connect', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
   { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'My Profile', icon: 'me' },
@@ -25,8 +23,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scoreboardRequested, setScoreboardRequested] = useState(false)
-  const [scoreboardRequestId, setScoreboardRequestId] = useState(0)
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
@@ -79,16 +75,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <p className="font-display text-xl font-extrabold">Cznnect</p>
             <p className="text-xs text-muted">Family, connected.</p>
           </div>
-          <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => { setScoreboardRequested(true); setScoreboardRequestId((id) => id + 1); setTab('irl') }}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm font-bold text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-            aria-label="Open scoreboard"
-          >
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0zM7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4" /></svg>
-            <span>Scores</span>
-          </button>
           <button
             type="button"
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
@@ -107,7 +93,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               </svg>
             )}
           </button>
-          </div>
         </header>
         <div
           className={`fixed inset-0 z-50 transition-opacity duration-300 ${menuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
@@ -147,6 +132,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               {([
                 ['home', 'Home'],
                 ['tree', 'Family Tree'],
+                ['irl', 'IRL Connect'],
                 ['explore', 'Explore'],
                 ['plans', 'Plans'],
                 ['me', 'My Profile'],
@@ -162,6 +148,14 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-3 text-left font-semibold transition hover:bg-surface/70"
+              onClick={() => { setTab('irl'); setMenuOpen(false); window.setTimeout(() => window.dispatchEvent(new CustomEvent('cznnect:show-scoreboard')), 0) }}
+            >
+              <span className="flex items-center gap-3"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0zM7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4" /></svg>Scoreboard</span>
+              <span aria-hidden="true" className="text-muted">›</span>
+            </button>
             {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
               <p className="eyebrow">Owner controls</p>
               <div className="mt-2 flex items-center justify-between gap-4">
@@ -186,15 +180,15 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </aside>
         </div>
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-        {tab === 'irl' && <Irl key={scoreboardRequestId} family={family} userId={userId} initialView={scoreboardRequested ? 'board' : 'meet'} />}
+        {tab === 'irl' && <Irl family={family} userId={userId} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}
         {tab === 'me' && <Profile userId={userId} />}
       </main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-xl grid-cols-6 gap-0.5 px-1.5 py-1.5">
-          {TABS.map((t) => <button key={t.id} onClick={() => { if (t.id === 'irl') setScoreboardRequested(false); setTab(t.id) }} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
+        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1 px-2 py-1.5">
+          {TABS.map((t) => <button key={t.id} onClick={() => setTab(t.id)} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
         </div>
       </nav>
     </div>

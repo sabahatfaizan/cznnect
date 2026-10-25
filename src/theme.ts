@@ -15,7 +15,17 @@ export function getThemePref(): ThemePref {
   return 'light'
 }
 
+// Owner Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
+// else, a saved "glass" choice falls back to Light. (Hiding the option is not a security boundary.)
+let glassAllowed = false
+export function setGlassAllowed(allowed: boolean) {
+  if (glassAllowed === allowed) return
+  glassAllowed = allowed
+  applyTheme(getThemePref())
+}
+
 function resolve(pref: ThemePref): Theme {
+  if (pref === 'glass') return glassAllowed ? 'glass' : 'light'
   if (pref === 'system') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'tactical' : 'light'
   }

@@ -30,7 +30,7 @@ export default function Sheet({
   }, [])
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/45" onClick={onClose}>
+    <div className="sheet-scrim fixed inset-0 z-40 flex items-end justify-center bg-black/45" onClick={onClose}>
       <div
         ref={panel}
         role="dialog"
@@ -38,7 +38,7 @@ export default function Sheet({
         aria-label={title}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-t-[var(--radius-card)] border-t border-line bg-page p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] outline-none"
+        className="sheet-panel max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-t-[var(--radius-card)] border-t border-line bg-page p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] outline-none"
       >
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="font-display text-xl font-extrabold">{title}</h2>

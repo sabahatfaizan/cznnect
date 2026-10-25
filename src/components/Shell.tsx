@@ -9,6 +9,8 @@ import Tree from '../pages/Tree'
 import Irl from '../pages/Irl'
 import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
+import { Wordmark } from './Logo'
+import { setGlassAllowed } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
@@ -31,6 +33,12 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
   const current: Tab = tab
+
+  // Owner Glass is only allowed for the owner; anyone else is switched back to Light.
+  useEffect(() => {
+    setGlassAllowed(isOwner)
+    return () => setGlassAllowed(false)
+  }, [isOwner])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -76,12 +84,12 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       <main className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <p className="font-display text-xl font-extrabold">Cznnect</p>
+            <Wordmark className="font-display text-xl font-extrabold" />
             <p className="text-xs text-muted">Family, connected.</p>
           </div>
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            className="menu-btn flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
             aria-controls="cznnect-main-menu"
@@ -106,7 +114,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             type="button"
             tabIndex={menuOpen ? 0 : -1}
             aria-label="Close menu"
-            className="absolute inset-0 h-full w-full cursor-default bg-black/50"
+            className="menu-scrim absolute inset-0 h-full w-full cursor-default bg-black/50"
             onClick={() => setMenuOpen(false)}
           />
           <aside
@@ -114,7 +122,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             aria-label="Main menu"
             aria-modal="true"
             role="dialog"
-            className={`absolute right-2 top-2 flex h-[calc(100%-1rem)] w-[min(70vw,24rem)] flex-col overflow-y-auto rounded-3xl border border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`menu-panel absolute right-2 top-2 flex h-[calc(100%-1rem)] w-[min(80vw,24rem)] flex-col overflow-y-auto rounded-3xl border border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -143,33 +151,33 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <button
                   key={item.id}
                   type="button"
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition hover:bg-surface/70 ${tab === item.id ? 'bg-surface/70 font-bold' : ''}`}
+                  className={`menu-item ${tab === item.id && !scoreboardRequested ? 'menu-item-on' : ''}`}
                   onClick={() => { setScoreboardRequested(false); setTab(item.id); setMenuOpen(false) }}
                 >
-                  <span className="flex items-center gap-3"><Icon name={item.icon} />{item.label}</span>
-                  <span aria-hidden="true" className="text-muted">›</span>
+                  <span className="menu-item-label"><Icon name={item.icon} size={22} />{item.label}</span>
+                  <span aria-hidden="true" className="menu-chevron">›</span>
                 </button>
               ))}
+              <button
+                type="button"
+                className={`menu-item ${tab === 'irl' && scoreboardRequested ? 'menu-item-on' : ''}`}
+                onClick={() => { setScoreboardRequested(true); setScoreboardRequestId((id) => id + 1); setTab('irl'); setMenuOpen(false) }}
+              >
+                <span className="menu-item-label"><Icon name="trophy" size={22} />Scoreboard</span>
+                <span aria-hidden="true" className="menu-chevron">›</span>
+              </button>
             </div>
             <div className="mt-4 border-t border-line pt-4">
               <p className="eyebrow px-3 pb-1">Settings</p>
               <button
                 type="button"
-                className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition hover:bg-surface/70 ${tab === 'settings' ? 'bg-surface/70 font-bold' : ''}`}
+                className={`menu-item ${tab === 'settings' ? 'menu-item-on' : ''}`}
                 onClick={() => { setScoreboardRequested(false); setTab('settings'); setMenuOpen(false) }}
               >
-                <span className="flex items-center gap-3"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 2.9-.2-.1a1.7 1.7 0 0 0-1.8.1l-.2.1h-3.4l-.1-.2a1.7 1.7 0 0 0-1.5-1l-.2 0-2.9-1.7.1-.2a1.7 1.7 0 0 0-.1-1.8l-.1-.2v-3.4l.2-.1a1.7 1.7 0 0 0 1-1.5l0-.2 1.7-2.9.2.1a1.7 1.7 0 0 0 1.8-.1l.2-.1h3.4l.1.2a1.7 1.7 0 0 0 1.5 1l.2 0 2.9 1.7-.1.2a1.7 1.7 0 0 0 .1 1.8l.1.2z" /></svg>Appearance &amp; Theme</span>
-                <span aria-hidden="true" className="text-muted">›</span>
+                <span className="menu-item-label"><Icon name="settings" size={22} />Appearance &amp; Theme</span>
+                <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             </div>
-            <button
-              type="button"
-              className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-3 text-left font-semibold transition hover:bg-surface/70"
-              onClick={() => { setScoreboardRequested(true); setScoreboardRequestId((id) => id + 1); setTab('irl'); setMenuOpen(false) }}
-            >
-              <span className="flex items-center gap-3"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0zM7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4" /></svg>Scoreboard</span>
-              <span aria-hidden="true" className="text-muted">›</span>
-            </button>
             {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
               <p className="eyebrow">Owner controls</p>
               <div className="mt-2 flex items-center justify-between gap-4">
@@ -201,7 +209,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {tab === 'me' && <Profile userId={userId} />}
         {tab === 'settings' && <Settings />}
       </main>
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
+      <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
           {TABS.map((t) => <button key={t.id} onClick={() => { setScoreboardRequested(false); setTab(t.id) }} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
         </div>

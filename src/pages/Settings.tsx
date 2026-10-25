@@ -8,7 +8,7 @@ const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'light', label: 'Light', hint: 'Clean and bright' },
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
   { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
-  { id: 'glass', label: 'Owner Glass', hint: 'Private · iOS Liquid Glass' },
+  { id: 'glass', label: 'Owner Glass', hint: 'Private · Liquid Glass' },
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]
 

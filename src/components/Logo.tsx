@@ -1,21 +1,33 @@
-// Cznnect's mark: two bold, rounded connection arcs with deliberately detached people-dots.
-export function Mark({ className = '' }: { className?: string }) {
+// Cznnect's mark: an O and a Z in one square. The frame is the O, the diagonal bisector is the Z,
+// and the diagonal joins two opposite corners, so "Czn" and "connect" read as one shape.
+// With animated, the square spins and slows to rest while the diagonal draws across to the far corner.
+export function Mark({ className = '', animated = false }: { className?: string; animated?: boolean }) {
   return (
-    <svg viewBox="0 0 64 64" aria-hidden="true" className={className} fill="none">
-      <path d="M27 15C20 9 11 12 8 22C4 33 9 44 18 49C22 52 26 51 29 48" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M37 19C42 26 48 33 54 35C57 36 57 41 53 46C48 53 39 54 32 49" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="35" cy="11" r="4.5" fill="currentColor" />
-      <circle cx="34" cy="33" r="4.5" fill="currentColor" />
-      <circle cx="29" cy="56" r="4.5" fill="currentColor" />
+    <svg viewBox="0 0 64 64" aria-hidden="true" className={className + (animated ? ' mark-spin' : '')} fill="none">
+      <rect x="8" y="8" width="48" height="48" rx="2" stroke="currentColor" strokeWidth="8" strokeLinejoin="round" />
+      <path
+        d="M8 56L56 8"
+        pathLength={1}
+        className={animated ? 'mark-bar' : undefined}
+        stroke="currentColor"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
 
-export default function Logo({ big = false }: { big?: boolean }) {
+// The wordmark reads C_nnect, where the mark stands in for the "z": Cznnect and Connect in one word.
+export function Wordmark({ className = '', animated = false }: { className?: string; animated?: boolean }) {
   return (
-    <div className={'inline-flex items-center gap-2 font-display font-extrabold ' + (big ? 'text-4xl' : 'text-xl')} aria-label="Cznnect">
-      <Mark className="size-[1.15em] flex-none text-accent-text" />
-      <span aria-hidden="true"><span className="text-accent-text">Czn</span>nect</span>
-    </div>
+    <span className={'wordmark ' + className} role="img" aria-label="Cznnect">
+      <span aria-hidden="true" className="text-accent-text">C</span>
+      <Mark animated={animated} className="wordmark-mark text-accent-text" />
+      <span aria-hidden="true">nnect</span>
+    </span>
   )
+}
+
+export default function Logo({ big = false }: { big?: boolean }) {
+  return <Wordmark className={'font-display font-extrabold ' + (big ? 'text-4xl' : 'text-xl')} />
 }

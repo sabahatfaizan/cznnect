@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy'
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
@@ -32,14 +32,31 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
     </>
   ),
+  // Three sliders: reads clearly at small sizes, unlike a many-toothed gear.
+  settings: (
+    <>
+      <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
+      <circle cx="15" cy="6" r="2" />
+      <circle cx="9" cy="12" r="2" />
+      <circle cx="17" cy="18" r="2" />
+    </>
+  ),
+  trophy: (
+    <>
+      <path d="M8 4h8v6a4 4 0 0 1-8 0z" />
+      <path d="M8 6H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5A3.5 3.5 0 0 1 15.5 11" />
+      <path d="M12 14v4M8.5 20h7" />
+    </>
+  ),
 }
 
-export function Icon({ name }: { name: IconName }) {
+export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="24"
-      height="24"
+      width={size}
+      height={size}
+      className="flex-none"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"

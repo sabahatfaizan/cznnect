@@ -73,9 +73,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               aria-label="Maintenance mode"
               disabled={busy || !maintenanceLoaded}
               onClick={() => void saveMaintenance(!maintenanceEnabled)}
-              className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${maintenanceEnabled ? 'border-amber-500 bg-amber-500' : 'border-line bg-surface-2'}`}
+              className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${maintenanceEnabled ? 'border-red-500 bg-red-500' : 'border-green-500 bg-green-500'}`}
             >
-              <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
           {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}

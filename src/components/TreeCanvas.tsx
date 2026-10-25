@@ -316,7 +316,11 @@ export default function TreeCanvas({
               </text>
             </g>
           )}
-          {layout.edges.filter((e) => {\n            const ids = e.id.startsWith('stem:') ? [] : e.id.split('|')\n            if (e.id.startsWith('stem:')) return visibleIds.has(e.id.slice(5).split('|')[0]) || visibleIds.size > 0\n            return ids.length < 2 || (visibleIds.has(ids[0]) && visibleIds.has(ids[1]))\n          }).map((e) => (
+          {layout.edges.filter((e) => {
+            if (e.id.startsWith('stem:')) return true
+            const link = links.find((item) => item.id === e.id)
+            return !link || (visibleIds.has(link.a_id) && visibleIds.has(link.b_id))
+          }).map((e) => (
             <path
               key={e.id}
               d={e.d}

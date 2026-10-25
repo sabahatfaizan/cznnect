@@ -1,33 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Family } from '../types'
-import { startOfMonthIso, pointsSince, type Meetup, type Recent, type Row } from '../lib/irl'
+import type { Meetup } from '../lib/irl'
 import {
   confirmMeetup,
   declineMeetup,
   finishGroup,
-  ledgerSince,
   lockGroup,
   mine,
-  recent,
   removePerson,
-  scoreboard,
   startGroup,
 } from '../lib/irlApi'
 import IrlMyCode from '../components/IrlMyCode'
 import IrlMeetupCard from '../components/IrlMeetupCard'
 import IrlScanSheet from '../components/IrlScanSheet'
-import IrlScoreboard from '../components/IrlScoreboard'
 import Sheet from '../components/Sheet'
+import { Icon } from '../components/Icons'
 
-type View = 'meet' | 'board'
-
-// IRL Connect: your personal code, scanning a cousin, confirming meetups, and the family scoreboard.
-export default function Irl({ family, userId, initialView = 'meet' }: { family: Family; userId: string; initialView?: View }) {
-  const [view, setView] = useState<View>(initialView)
+// Link Up: your personal code, scanning a cousin, and confirming meetups. The scoreboard lives in the menu.
+export default function Irl({ family, userId }: { family: Family; userId: string }) {
   const [meetups, setMeetups] = useState<Meetup[]>([])
-  const [rows, setRows] = useState<Row[]>([])
-  const [recents, setRecents] = useState<Recent[]>([])
-  const [month, setMonth] = useState<Map<string, number> | null>(null)
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [notice, setNotice] = useState('')
@@ -69,21 +60,6 @@ export default function Irl({ family, userId, initialView = 'meet' }: { family: 
     setLoaded(true)
   }, [family.id, say])
 
-  const loadBoard = useCallback(async () => {
-    const [s, rc, led] = await Promise.all([
-      scoreboard(family.id),
-      recent(family.id, 20),
-      ledgerSince(family.id, startOfMonthIso()),
-    ])
-    if (!s.ok) {
-      setError(s.message)
-      return
-    }
-    setRows(s.data ?? [])
-    setRecents(rc.ok ? (rc.data ?? []) : [])
-    setMonth(led.ok ? pointsSince(led.data, startOfMonthIso()) : null)
-  }, [family.id])
-
   // Keep the meetups fresh while this screen is open, so a cousin's confirmation appears on its own.
   useEffect(() => {
     loadMeet()
@@ -92,10 +68,6 @@ export default function Irl({ family, userId, initialView = 'meet' }: { family: 
     }, 5000)
     return () => window.clearInterval(id)
   }, [loadMeet])
-
-  useEffect(() => {
-    if (view === 'board') loadBoard()
-  }, [view, loadBoard])
 
   const run = useCallback(
     async (fn: () => Promise<{ ok: boolean; message?: string }>, success?: string) => {
@@ -146,9 +118,13 @@ export default function Irl({ family, userId, initialView = 'meet' }: { family: 
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-2xl font-extrabold">IRL Connect</h1>
-        <p className="text-sm text-muted">Meet in person, confirm it together, and earn points as a family.</p>
+      <header className="linkup-hero">
+        <span className="linkup-hero-icon" aria-hidden="true"><Icon name="irl" size={28} /></span>
+        <div className="min-w-0">
+          <p className="eyebrow">In person</p>
+          <h1 className="font-display text-2xl font-extrabold">Link Up</h1>
+          <p className="text-sm text-muted">Find a cousin, scan to link, and earn points for every real-life meetup.</p>
+        </div>
       </header>
 
       {notice && (
@@ -157,40 +133,26 @@ export default function Irl({ family, userId, initialView = 'meet' }: { family: 
         </p>
       )}
 
-      <div role="tablist" aria-label="IRL Connect" className="grid grid-cols-2 gap-2">
-        {(['meet', 'board'] as const).map((v) => (
-          <button
-            key={v}
-            role="tab"
-            aria-selected={view === v}
-            className={`seg !min-h-11 items-center ${view === v ? 'seg-on' : ''}`}
-            onClick={() => setView(v)}
-          >
-            {v === 'meet' ? `Meet${needsMe.length > 0 ? ` (${needsMe.length})` : ''}` : 'Scoreboard'}
-          </button>
-        ))}
-      </div>
-
       {error && (
         <div className="card flex flex-col gap-3">
           <p role="alert" className="font-semibold text-danger">
             {error}
           </p>
-          <button className="btn btn-plain" onClick={() => { loadMeet(); if (view === 'board') loadBoard() }}>
+          <button className="btn btn-plain" onClick={loadMeet}>
             Try again
           </button>
         </div>
       )}
 
-      {view === 'meet' && !error && (
+      {!error && (
         <>
           {needsMe.map((m) => (
             <IrlMeetupCard key={m.id} meetup={m} userId={userId} busy={busy} run={run} actions={actions} />
           ))}
 
-          <section className="card flex flex-col gap-4" aria-label="Your code">
+          <section className="card flex flex-col gap-4" aria-label="Your link code">
             <div>
-              <p className="eyebrow">Your code</p>
+              <p className="eyebrow">Your link code</p>
               <p className="text-sm text-muted">
                 Show this to a cousin when you meet. It holds no name or email, and it changes every 5 minutes.
               </p>
@@ -198,7 +160,7 @@ export default function Irl({ family, userId, initialView = 'meet' }: { family: 
             <IrlMyCode familyId={family.id} />
             <div className="grid grid-cols-2 gap-3">
               <button className="btn btn-primary" onClick={() => setScanning(true)}>
-                Scan a cousin
+                Scan to link
               </button>
               <button className="btn btn-plain" onClick={() => setGroupSheet(true)}>
                 Group meetup
@@ -240,8 +202,6 @@ export default function Irl({ family, userId, initialView = 'meet' }: { family: 
           </section>
         </>
       )}
-
-      {view === 'board' && !error && <IrlScoreboard rows={rows} recent={recents} month={month} userId={userId} />}
 
       {scanning && (
         <IrlScanSheet

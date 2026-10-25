@@ -7,16 +7,17 @@ import Explore from '../pages/Explore'
 import Plans from '../pages/Plans'
 import Tree from '../pages/Tree'
 import Irl from '../pages/Irl'
+import Scoreboard from '../pages/Scoreboard'
 import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'settings'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'irl', label: 'IRL Connect', icon: 'irl' },
+  { id: 'irl', label: 'Link Up', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
   { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'My Profile', icon: 'me' },
@@ -27,8 +28,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scoreboardRequested, setScoreboardRequested] = useState(false)
-  const [scoreboardRequestId, setScoreboardRequestId] = useState(0)
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
@@ -151,8 +150,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <button
                   key={item.id}
                   type="button"
-                  className={`menu-item ${tab === item.id && !scoreboardRequested ? 'menu-item-on' : ''}`}
-                  onClick={() => { setScoreboardRequested(false); setTab(item.id); setMenuOpen(false) }}
+                  className={`menu-item ${tab === item.id ? 'menu-item-on' : ''}`}
+                  onClick={() => { setTab(item.id); setMenuOpen(false) }}
                 >
                   <span className="menu-item-label"><Icon name={item.icon} size={22} />{item.label}</span>
                   <span aria-hidden="true" className="menu-chevron">›</span>
@@ -160,8 +159,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               ))}
               <button
                 type="button"
-                className={`menu-item ${tab === 'irl' && scoreboardRequested ? 'menu-item-on' : ''}`}
-                onClick={() => { setScoreboardRequested(true); setScoreboardRequestId((id) => id + 1); setTab('irl'); setMenuOpen(false) }}
+                className={`menu-item ${tab === 'scoreboard' ? 'menu-item-on' : ''}`}
+                onClick={() => { setTab('scoreboard'); setMenuOpen(false) }}
               >
                 <span className="menu-item-label"><Icon name="trophy" size={22} />Scoreboard</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
@@ -172,7 +171,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               <button
                 type="button"
                 className={`menu-item ${tab === 'settings' ? 'menu-item-on' : ''}`}
-                onClick={() => { setScoreboardRequested(false); setTab('settings'); setMenuOpen(false) }}
+                onClick={() => { setTab('settings'); setMenuOpen(false) }}
               >
                 <span className="menu-item-label"><Icon name="settings" size={22} />Appearance &amp; Theme</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
@@ -202,7 +201,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </aside>
         </div>
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-        {tab === 'irl' && <Irl key={scoreboardRequestId} family={family} userId={userId} initialView={scoreboardRequested ? 'board' : 'meet'} />}
+        {tab === 'irl' && <Irl family={family} userId={userId} />}
+        {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}
@@ -211,7 +211,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
-          {TABS.map((t) => <button key={t.id} onClick={() => { setScoreboardRequested(false); setTab(t.id) }} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
+          {TABS.map((t) => <button key={t.id} onClick={() => { setTab(t.id) }} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
         </div>
       </nav>
     </div>

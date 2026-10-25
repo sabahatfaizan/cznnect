@@ -7,7 +7,7 @@ import type { LedgerLine, Meetup, Recent, Row } from './irl'
 export type Out<T> = { ok: true; data: T } | { ok: false; message: string }
 
 const OFFLINE = 'Could not reach the server. Check your connection and try again.'
-const NOT_SET_UP = 'IRL Connect is not set up yet. In Supabase, run supabase/07_irl.sql.'
+const NOT_SET_UP = 'Link Up is not set up yet. In Supabase, run supabase/07_irl.sql.'
 
 type DbError = { message: string; code?: string }
 

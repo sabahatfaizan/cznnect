@@ -18,11 +18,11 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'me', label: 'My Profile', icon: 'me' },
 ]
 
-export default function Shell({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
+export default function Shell({ family, userId, email, onFamilyChanged }: { family: Family; userId: string; email: string; onFamilyChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
-  const isOwner = typeof window !== 'undefined' && window.localStorage.getItem('cznnect-owner-email') === OWNER_EMAIL
+  const isOwner = email.toLowerCase() === OWNER_EMAIL
 
   async function saveMaintenance(enabled: boolean) {
     setBusy(true)

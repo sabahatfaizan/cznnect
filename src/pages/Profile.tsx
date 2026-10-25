@@ -2,10 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import { getThemePref, setThemePref, type ThemePref } from '../theme'
 
-const THEMES: { id: ThemePref; label: string; hint: string }[] = [
+const OWNER_EMAIL = 'faizanplayz11@gmail.com'\n\nconst THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'light', label: 'Light', hint: 'Clean and bright' },
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
-  { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
+  { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },\n  { id: 'glass', label: 'Owner Glass', hint: 'Private · iOS Liquid Glass' },
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]
 
@@ -58,7 +58,7 @@ export default function Profile({ userId }: { userId: string }) {
       <section className="card flex flex-col gap-3">
         <h2 className="font-display text-lg font-bold">Appearance</h2>
         <div className="grid grid-cols-2 gap-2">
-          {THEMES.map((t) => (
+          {THEMES.filter((t) => t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL).map((t) => (
             <button
               key={t.id}
               type="button"
@@ -71,7 +71,7 @@ export default function Profile({ userId }: { userId: string }) {
             </button>
           ))}
         </div>
-        <p className="text-sm text-muted">Saved on this device. Each cousin can pick their own.</p>
+        <p className="text-sm text-muted">Saved on this device. Owner Glass is only available to the app owner.</p>
       </section>
 
       <form onSubmit={save} className="card flex flex-col gap-4">

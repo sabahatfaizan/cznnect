@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Mark } from './Logo'
 
-// A figure-eight loop traces itself, starting from its right-hand end, two dots chase each other round it, then the name
-// appears. Shown for about six seconds when the app opens (a tap on Skip ends it sooner,
-// once the app is ready). With "reduce motion" on, nothing moves.
-const LOOP =
-  'M185 50C185 90 130 90 100 50C70 10 15 10 15 50C15 90 70 90 100 50C130 10 185 10 185 50Z'
-
+// The mark draws once, then settles. The dots stay detached from the thick rounded arcs;
+// nothing loops forever, so the loading animation always reaches a calm finished state.
 export function prefersReducedMotion(): boolean {
   try {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -24,55 +20,22 @@ export default function Splash({ onSkip }: { onSkip?: () => void }) {
   }, [])
 
   return (
-    <div
-      role="status"
-      aria-label="Loading Cznnect"
-      className="splash flex min-h-full flex-col items-center justify-center gap-6 px-6"
-    >
-      <svg viewBox="0 0 200 100" className="w-64 max-w-[80%] overflow-visible" aria-hidden="true">
-        <path d={LOOP} pathLength={100} className={`splash-loop ${calm ? 'splash-still' : ''}`} fill="none" strokeWidth="12" strokeLinecap="round" />
-        {calm ? (
-          <>
-            <circle cx="40" cy="25" r="10" className="fill-ink" />
-            <circle cx="160" cy="75" r="10" className="fill-accent" />
-          </>
-        ) : (
-          <>
-            {/* Both dots start with the loop and the progress strip. The first rides the tip of the
-                line as it draws; the second follows half a second behind. Then they keep circling. */}
-            <circle r="10" className="fill-ink stroke-page" strokeWidth="3">
-              <animateMotion id="dot-a" dur="2.4s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.42 0 0.58 1" path={LOOP} />
-              <animateMotion dur="3s" begin="dot-a.end" repeatCount="indefinite" path={LOOP} />
-            </circle>
-            <circle r="10" className="fill-accent stroke-page" strokeWidth="3" opacity="0">
-              <set attributeName="opacity" to="1" begin="0.5s" fill="freeze" />
-              <animateMotion id="dot-b" dur="2.4s" begin="0.5s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.42 0 0.58 1" path={LOOP} />
-              <animateMotion dur="3s" begin="dot-b.end" repeatCount="indefinite" path={LOOP} />
-            </circle>
-          </>
-        )}
-      </svg>
-
-      <div className={`flex flex-col items-center gap-2 ${calm ? '' : 'splash-name'}`}>
+    <div role="status" aria-label="Loading Cznnect" className="splash flex min-h-full flex-col items-center justify-center gap-6 px-6">
+      <div className={'splash-mark ' + (calm ? 'splash-mark-still' : '')} aria-hidden="true">
+        <Mark className="h-32 w-32 text-accent-text" />
+      </div>
+      <div className={'flex flex-col items-center gap-2 ' + (calm ? '' : 'splash-name')}>
         <div className="inline-flex items-center gap-2 font-display text-4xl font-extrabold">
           <Mark className="size-[1.15em] flex-none text-accent-text" />
-          <span>
-            <span className="text-accent-text">Czn</span>nect
-          </span>
+          <span><span className="text-accent-text">Czn</span>nect</span>
         </div>
         <p className="text-sm text-muted">Stay connected.</p>
       </div>
-
       <div className="splash-track" aria-hidden="true">
-        <div className={`splash-bar ${calm ? 'splash-still' : ''}`} />
+        <div className={'splash-bar ' + (calm ? 'splash-still' : '')} />
       </div>
-
       <div className="flex h-11 flex-col items-center justify-start gap-1">
-        {onSkip && showSkip ? (
-          <button className="link" onClick={onSkip}>
-            Skip
-          </button>
-        ) : null}
+        {onSkip && showSkip ? <button className="link" onClick={onSkip}>Skip</button> : null}
       </div>
       <p className="text-xs tracking-wide opacity-60">Made by Sabahat Faizan</p>
     </div>

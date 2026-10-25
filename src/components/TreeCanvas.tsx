@@ -340,16 +340,21 @@ export default function TreeCanvas({
           }).map((e) => (
             <g key={e.id} pointerEvents="none" className={e.kind === 'partner' ? 'family-edge family-edge-partner' : 'family-edge family-edge-root'}>
               {e.kind === 'parent' && (
-                <>
-                  <path d={e.d} transform="translate(-2 1)" fill="none" stroke="#ff4f9a" strokeWidth={2.2} strokeOpacity={0.7} strokeLinecap="round" strokeLinejoin="round" />
-                  <path d={e.d} transform="translate(2 -1)" fill="none" stroke="#45e4ff" strokeWidth={2.2} strokeOpacity={0.72} strokeLinecap="round" strokeLinejoin="round" />
-                </>
+                <path
+                  d={e.d}
+                  fill="none"
+                  stroke="#7e65ff"
+                  strokeWidth={9}
+                  strokeOpacity={familyFocus ? 0.07 : 0.28}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               )}
               <path
                 d={e.d}
                 fill="none"
                 stroke={e.kind === 'partner' ? 'url(#family-partner-gradient)' : 'url(#family-root-gradient)'}
-                strokeWidth={e.kind === 'partner' ? 3 : 3.3}
+                strokeWidth={e.kind === 'partner' ? 3 : 5.5}
                 strokeOpacity={familyFocus ? 0.2 : e.kind === 'partner' ? 0.95 : 0.98}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -357,7 +362,15 @@ export default function TreeCanvas({
                 style={{ transition: 'stroke-opacity 220ms ease' }}
               />
               {e.kind === 'parent' && (
-                <path d={e.d} fill="none" stroke="#fff4ff" strokeWidth={0.85} strokeOpacity={familyFocus ? 0.16 : 0.55} strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d={e.d}
+                  fill="none"
+                  stroke="#fff4ff"
+                  strokeWidth={1.1}
+                  strokeOpacity={familyFocus ? 0.12 : 0.42}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               )}
             </g>
           ))}

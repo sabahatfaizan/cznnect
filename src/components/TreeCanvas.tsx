@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { NODE_H, NODE_W, type Link, type Person, type TreeLayout } from '../lib/tree'
 
 type View = { x: number; y: number; k: number }
@@ -134,7 +134,10 @@ export default function TreeCanvas({
       while (queue.length) {
         const id = queue.shift() as string
         for (const partner of partners.get(id) ?? []) {
-          if (!members.has(partner)) members.add(partner)
+          if (!members.has(partner)) {
+            members.add(partner)
+            queue.push(partner)
+          }
         }
         for (const child of children.get(id) ?? []) {
           if (!members.has(child)) {

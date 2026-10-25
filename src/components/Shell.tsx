@@ -2,8 +2,8 @@ import { useState } from 'react'
 import type { Family } from '../types'
 import Home from '../pages/Home'
 import Profile from '../pages/Profile'
-import ComingSoon from '../pages/ComingSoon'
 import Explore from '../pages/Explore'
+import Plans from '../pages/Plans'
 import Tree from '../pages/Tree'
 import { Icon, type IconName } from './Icons'
 
@@ -35,14 +35,7 @@ export default function Shell({
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
-        {tab === 'plans' && (
-          <ComingSoon
-            title="Plans"
-            stage={5}
-            blurb="Bucket lists and things to do together."
-            items={['Monthly, yearly and lifetime lists', 'Assign tasks, set deadlines, vote on ideas', 'Finished plans become shared memories']}
-          />
-        )}
+        {tab === 'plans' && <Plans family={family} userId={userId} />}
         {tab === 'me' && <Profile userId={userId} />}
       </main>
 

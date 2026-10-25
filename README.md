@@ -30,6 +30,7 @@ docs/PLAN.md              architecture, data model, stages
 6. Run `supabase/03_family_settings.sql` the same way. It enables owner-only family-name changes and checks permissions in the database.
 7. Run `supabase/04_family_tree.sql` the same way. It adds the family tree.
 8. Run `supabase/05_places.sql` the same way. It adds places, the map and ratings.
+9. Run `supabase/06_plans.sql` the same way. It adds polls and bucket lists.
 
 **2. Put the keys in the app**
 
@@ -64,11 +65,12 @@ npm run typecheck
 - **Member**: see everyone in the family, edit their own profile, leave the family.
 - **Family tree:** every member can add and edit people, link relatives, and merge duplicates. Anyone can delete an entry or link they created; the owner can delete any. Each cousin can link their account to their own spot ("Add me" or "I am already here").
 - **Explore (places, map, restaurants):** every member can add, edit and rate places. Each person has one rating per place and can change or remove their own. Anyone can remove a place they added; the owner can remove any. Searching an address uses OpenStreetMap's free search, and the map uses OpenStreetMap tiles. No account or key is needed.
+- **Plans (bucket lists and polls):** every member can add and edit bucket-list items (this month, this year, lifetime), give them a deadline and an organiser, say "I am in", tick them off, and start polls. Everyone gets one vote per poll and can change it until the poll is closed. Anyone can remove what they added; the owner can remove anything. A poll can be closed by whoever started it or by the owner.
 - Adding people to the family is done with the invite code. A removed person can only rejoin with the code, so get a new one after removing someone.
 
 ## Next
 
-Stages 2 (family tree) and 3 (places, map, restaurants) are in. Stage 4 is polls to pick the next spot, and bucket lists. Profile photos come after storage is set up.
+Stages 2 (family tree) and 3 (places, map, restaurants) are in. Stages 4 and 5 (polls, bucket lists) are in too. Stage 6 is the feed, photo albums and memories. Profile photos come after storage is set up.
 
 ## Themes
 

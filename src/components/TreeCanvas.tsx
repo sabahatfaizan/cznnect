@@ -279,7 +279,7 @@ export default function TreeCanvas({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
-        className="h-[60dvh] min-h-[22rem] w-full touch-none select-none overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface"
+        className="family-tree-stage h-[60dvh] min-h-[22rem] w-full touch-none select-none overflow-hidden rounded-[var(--radius-card)] border border-line"
       >
         <svg
           width={layout.width}
@@ -291,6 +291,25 @@ export default function TreeCanvas({
             display: 'block',
           }}
         >
+          <defs>
+            <linearGradient id="family-root-gradient" x1="0" y1="0" x2={layout.width} y2={layout.height} gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ff4f9a" />
+              <stop offset="46%" stopColor="#9d75ff" />
+              <stop offset="100%" stopColor="#45e4ff" />
+            </linearGradient>
+            <linearGradient id="family-partner-gradient" x1="0" y1="0" x2={layout.width} y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ff73b7" />
+              <stop offset="50%" stopColor="#b59aff" />
+              <stop offset="100%" stopColor="#68eaff" />
+            </linearGradient>
+            <filter id="family-root-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3.2" result="softGlow" />
+              <feMerge>
+                <feMergeNode in="softGlow" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {focusBounds && (
             <g pointerEvents="none">
               <rect
@@ -319,14 +338,28 @@ export default function TreeCanvas({
             const link = links.find((item) => item.id === e.id)
             return !link || (visibleIds.has(link.a_id) && visibleIds.has(link.b_id))
           }).map((e) => (
-            <path
-              key={e.id}
-              d={e.d}
-              className={e.kind === 'partner' ? 'fill-none stroke-accent' : 'fill-none stroke-muted'}
-              strokeWidth={e.kind === 'partner' ? 3 : 1.5}
-              strokeOpacity={familyFocus ? 0.22 : e.kind === 'partner' ? 0.7 : 0.55}
-              style={{ filter: familyFocus ? 'blur(0.6px)' : undefined }}
-            />
+            <g key={e.id} pointerEvents="none" className={e.kind === 'partner' ? 'family-edge family-edge-partner' : 'family-edge family-edge-root'}>
+              {e.kind === 'parent' && (
+                <>
+                  <path d={e.d} transform="translate(-2 1)" fill="none" stroke="#ff4f9a" strokeWidth={2.2} strokeOpacity={0.7} strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={e.d} transform="translate(2 -1)" fill="none" stroke="#45e4ff" strokeWidth={2.2} strokeOpacity={0.72} strokeLinecap="round" strokeLinejoin="round" />
+                </>
+              )}
+              <path
+                d={e.d}
+                fill="none"
+                stroke={e.kind === 'partner' ? 'url(#family-partner-gradient)' : 'url(#family-root-gradient)'}
+                strokeWidth={e.kind === 'partner' ? 3 : 3.3}
+                strokeOpacity={familyFocus ? 0.2 : e.kind === 'partner' ? 0.95 : 0.98}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter={e.kind === 'parent' ? 'url(#family-root-glow)' : undefined}
+                style={{ transition: 'stroke-opacity 220ms ease' }}
+              />
+              {e.kind === 'parent' && (
+                <path d={e.d} fill="none" stroke="#fff4ff" strokeWidth={0.85} strokeOpacity={familyFocus ? 0.16 : 0.55} strokeLinecap="round" strokeLinejoin="round" />
+              )}
+            </g>
           ))}
           {layout.nodes.filter((n) => visibleIds.has(n.id)).map((n) => {
             const p = people.get(n.id)

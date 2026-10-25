@@ -277,8 +277,7 @@ export default function TreeCanvas({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    if (overview && (familyMembers.get(n.id)?.size ?? 1) > 1) setFamilyFocus((current) => current === n.id ? null : n.id)
-                    else onSelect(n.id)
+                    onSelect(n.id)
                   }
                 }}
               >

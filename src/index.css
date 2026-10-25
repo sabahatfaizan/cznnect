@@ -777,3 +777,92 @@ input[type="checkbox"] {
     background: #f5f9ff;
   }
 }
+
+/* Spider-Verse-inspired family tree stage: the data layout stays intact;
+   only the visual presentation changes. */
+.family-tree-stage {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgb(255 64 157 / 0.2), transparent 25rem),
+    radial-gradient(ellipse at 84% 42%, rgb(52 218 255 / 0.19), transparent 29rem),
+    radial-gradient(ellipse at 52% 100%, rgb(143 78 255 / 0.2), transparent 29rem),
+    linear-gradient(145deg, #090b1c 0%, #12142c 54%, #090e22 100%);
+  border-color: rgb(164 176 255 / 0.24) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset 0 0 44px rgb(92 92 255 / 0.08),
+    0 16px 38px rgb(12 10 35 / 0.2);
+}
+.family-tree-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.25;
+  background-image: radial-gradient(rgb(216 223 255 / 0.46) 0.7px, transparent 0.9px);
+  background-size: 11px 11px;
+  -webkit-mask-image: linear-gradient(135deg, #000 0%, transparent 82%);
+  mask-image: linear-gradient(135deg, #000 0%, transparent 82%);
+}
+.family-tree-stage > svg {
+  position: relative;
+  z-index: 1;
+}
+.family-tree-stage .family-edge-root {
+  mix-blend-mode: screen;
+}
+.family-tree-stage .family-edge-partner {
+  filter: drop-shadow(0 0 4px rgb(145 147 255 / 0.42));
+}
+.family-tree-stage .tnode-rect {
+  fill: rgb(14 18 42 / 0.94);
+  stroke: rgb(100 222 255 / 0.72);
+  stroke-width: 1.6;
+  rx: 15px;
+  ry: 15px;
+  filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.24)) drop-shadow(2px 1px 0 rgb(255 67 159 / 0.18));
+}
+.family-tree-stage .tnode-me {
+  fill: rgb(38 228 255 / 0.16);
+  stroke: #59f2ff;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px rgb(52 224 255 / 0.36));
+}
+.family-tree-stage .tnode-sel {
+  stroke: #ff70b9;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgb(255 70 168 / 0.58));
+}
+.family-tree-stage .tnode-gone {
+  stroke: rgb(190 174 222 / 0.7);
+}
+.family-tree-stage .fill-ink {
+  fill: #f5f2ff;
+}
+.family-tree-stage .fill-muted {
+  fill: #b4bddf;
+}
+.family-tree-stage svg text[fill="var(--accent-text)"] {
+  fill: #91eaff;
+}
+.family-tree-stage svg g[data-pid] > g > circle:first-of-type {
+  fill: rgb(14 18 42 / 0.96);
+  stroke: #a89aff;
+  stroke-width: 1.7;
+  filter: drop-shadow(0 0 9px rgb(143 115 255 / 0.3));
+}
+.family-tree-stage svg g[data-pid] > g > circle:nth-of-type(2) {
+  fill: #ffffff;
+  stroke: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .family-tree-stage *,
+  .family-tree-stage *::before,
+  .family-tree-stage *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

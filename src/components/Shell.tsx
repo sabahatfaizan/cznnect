@@ -7,12 +7,14 @@ import Explore from '../pages/Explore'
 import Plans from '../pages/Plans'
 import Tree from '../pages/Tree'
 import Irl from '../pages/Irl'
+import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'irl', label: 'IRL Connect', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
   { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'My Profile', icon: 'me' },
@@ -134,7 +136,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               {([
                 { id: 'home', label: 'Home', icon: 'home' },
                 { id: 'tree', label: 'Family Tree', icon: 'tree' },
-                { id: 'irl', label: 'IRL Connect', icon: 'irl' },
                 { id: 'explore', label: 'Explore', icon: 'explore' },
                 { id: 'plans', label: 'Plans', icon: 'plans' },
                 { id: 'me', label: 'My Profile', icon: 'me' },
@@ -149,6 +150,17 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                   <span aria-hidden="true" className="text-muted">›</span>
                 </button>
               ))}
+            </div>
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="eyebrow px-3 pb-1">Settings</p>
+              <button
+                type="button"
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition hover:bg-surface/70 ${tab === 'settings' ? 'bg-surface/70 font-bold' : ''}`}
+                onClick={() => { setScoreboardRequested(false); setTab('settings'); setMenuOpen(false) }}
+              >
+                <span className="flex items-center gap-3"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 2.9-.2-.1a1.7 1.7 0 0 0-1.8.1l-.2.1h-3.4l-.1-.2a1.7 1.7 0 0 0-1.5-1l-.2 0-2.9-1.7.1-.2a1.7 1.7 0 0 0-.1-1.8l-.1-.2v-3.4l.2-.1a1.7 1.7 0 0 0 1-1.5l0-.2 1.7-2.9.2.1a1.7 1.7 0 0 0 1.8-.1l.2-.1h3.4l.1.2a1.7 1.7 0 0 0 1.5 1l.2 0 2.9 1.7-.1.2a1.7 1.7 0 0 0 .1 1.8l.1.2z" /></svg>Appearance &amp; Theme</span>
+                <span aria-hidden="true" className="text-muted">›</span>
+              </button>
             </div>
             <button
               type="button"
@@ -187,9 +199,10 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}
         {tab === 'me' && <Profile userId={userId} />}
+        {tab === 'settings' && <Settings />}
       </main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1 px-2 py-1.5">
+        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
           {TABS.map((t) => <button key={t.id} onClick={() => setTab(t.id)} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
         </div>
       </nav>

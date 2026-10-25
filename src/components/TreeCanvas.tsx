@@ -151,11 +151,6 @@ export default function TreeCanvas({
     return result
   }, [links, people])
 
-  const clusterRoots = useMemo(() => {
-    const hasChildren = new Set(links.filter((link) => link.kind === 'parent').map((link) => link.a_id))
-    return layout.nodes.filter((node) => hasChildren.has(node.id))
-  }, [layout.nodes, links])
-
   const focusedMembers = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
   // Keep the tree compact: show the oldest generation and their children/partners.
   // A glossy bubble on a second-generation person reveals that person's descendants.

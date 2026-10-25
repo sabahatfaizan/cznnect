@@ -9,8 +9,23 @@ import Authed from './Authed'
 
 const SPLASH_MS = 6000
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
+const MAINTENANCE_PIN = '4124'
 
-function ServiceNotice({ message, onOwnerSignIn }: { message: string; onOwnerSignIn?: () => void }) {
+function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () => void }) {
+  const [pin, setPin] = useState('')
+  const [pinError, setPinError] = useState('')
+
+  function submitPin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (pin === MAINTENANCE_PIN) {
+      setPinError('')
+      onUnlock?.()
+    } else {
+      setPinError('Incorrect PIN. Please try again.')
+      setPin('')
+    }
+  }
+
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-6 p-6">
       <Logo big />
@@ -19,7 +34,27 @@ function ServiceNotice({ message, onOwnerSignIn }: { message: string; onOwnerSig
         <h1 className="mt-2 font-display text-2xl font-bold">Cznnect is getting an update</h1>
         <p className="mt-3 text-muted">{message}</p>
         <p className="mt-4 text-sm text-muted">Thanks for your patience.</p>
-        {onOwnerSignIn && <button className="btn btn-plain mt-5 w-full" onClick={onOwnerSignIn}>Owner sign in</button>}
+        {onUnlock && (
+          <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
+            <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>
+            <input
+              id="maintenance-pin"
+              className="input text-center tracking-[0.45em]"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]{4}"
+              maxLength={4}
+              autoComplete="off"
+              aria-describedby={pinError ? 'maintenance-pin-error' : undefined}
+              value={pin}
+              onChange={(e) => { setPin(e.target.value.replace(/\D/g, '').slice(0, 4)); setPinError('') }}
+              placeholder="••••"
+              required
+            />
+            {pinError && <p id="maintenance-pin-error" role="alert" className="text-sm text-danger">{pinError}</p>}
+            <button className="btn btn-primary w-full" type="submit">Unlock Cznnect</button>
+          </form>
+        )}
       </div>
     </div>
   )
@@ -30,7 +65,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [held, setHeld] = useState(true)
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null)
-  const [ownerLogin, setOwnerLogin] = useState(false)
+  const [pinUnlocked, setPinUnlocked] = useState(false)
 
   useEffect(() => {
     const id = setTimeout(() => setHeld(false), prefersReducedMotion() ? 1200 : SPLASH_MS)
@@ -67,8 +102,8 @@ export default function App() {
   if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
   if (!ready || held) return <Splash onSkip={ready ? () => setHeld(false) : undefined} />
   const isOwner = session?.user.email?.toLowerCase() === OWNER_EMAIL
-  if (maintenance?.enabled && !isOwner && !ownerLogin) {
-    return <ServiceNotice message={maintenance.message} onOwnerSignIn={() => setOwnerLogin(true)} />
+  if (maintenance?.enabled && !isOwner && !pinUnlocked) {
+    return <ServiceNotice message={maintenance.message} onUnlock={() => setPinUnlocked(true)} />
   }
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />

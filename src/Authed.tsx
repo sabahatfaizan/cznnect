@@ -6,7 +6,7 @@ import Shell from './components/Shell'
 import Splash from './components/Splash'
 
 // Everything after sign-in. Finds your family, or asks you to create or join one.
-export default function Authed({ userId }: { userId: string }) {
+export default function Authed({ userId, email }: { userId: string; email: string }) {
   const [family, setFamily] = useState<Family | null | undefined>(undefined)
   const [error, setError] = useState('')
 
@@ -49,5 +49,5 @@ export default function Authed({ userId }: { userId: string }) {
 
   if (family === undefined) return <Splash />
   if (family === null) return <FamilySetup onDone={load} />
-  return <Shell family={family} userId={userId} onFamilyChanged={load} />
+  return <Shell family={family} userId={userId} email={email} onFamilyChanged={load} />
 }

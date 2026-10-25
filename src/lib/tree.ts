@@ -445,35 +445,103 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     return a.members.length > 1 || b.members.length > 1 ? GAP_COUPLES : GAP_SIBLINGS
   }
 
-  // First guess: each row left to right, oldest first.
-  for (const row of rows) {
-    row.sort((a, b) => byAgeThenName(index.byId.get(a.members[0]) as Person, index.byId.get(b.members[0]) as Person))
-    let x = 0
-    row.forEach((c, i) => {
-      c.start = i === 0 ? 0 : x + gap(row[i - 1], c)
-      x = c.start + width(c)
-    })
-  }
-
+  // Build a hierarchy of descendant clusters before assigning any coordinates.
+  // Each partner group is one cluster. A cluster's descendants reserve their own
+  // horizontal subtrees, so a large aunt/uncle branch cannot push into a neighbour.
   const clusterOf = new Map<string, Cluster>()
   for (const row of rows) for (const c of row) for (const id of c.members) clusterOf.set(id, c)
-  const memberCenter = (id: string) => {
-    const c = clusterOf.get(id) as Cluster
-    return c.start + c.members.indexOf(id) * SLOT + SLOT / 2
-  }
-  const mean = (values: number[]) => (values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length)
 
-  const fromParents = (c: Cluster) =>
-    mean(c.members.flatMap((id) => get(index.parentsOf, id)).map(memberCenter))
-  const fromChildren = (c: Cluster) =>
-    mean(c.members.flatMap((id) => get(index.childrenOf, id)).map(memberCenter))
-
-  // Pull children under their parents, then parents over their children, a few times.
-  for (let pass = 0; pass < 3; pass++) {
-    for (let g = 1; g < rows.length; g++) place(rows[g], fromParents, gap)
-    for (let g = rows.length - 2; g >= 0; g--) place(rows[g], fromChildren, gap)
+  const parentVotes = new Map<Cluster, Map<Cluster, number>>()
+  for (const child of [...clusterOf.values()]) {
+    if (!parentVotes.has(child)) parentVotes.set(child, new Map())
   }
-  for (let g = 1; g < rows.length; g++) place(rows[g], fromParents, gap)
+  for (const link of links) {
+    if (link.kind !== 'parent') continue
+    const parentCluster = clusterOf.get(link.a_id)
+    const childCluster = clusterOf.get(link.b_id)
+    if (!parentCluster || !childCluster || parentCluster === childCluster) continue
+    if (parentCluster.gen >= childCluster.gen) continue
+    const votes = parentVotes.get(childCluster) as Map<Cluster, number>
+    votes.set(parentCluster, (votes.get(parentCluster) ?? 0) + 1)
+  }
+
+  // A child can have two parents in separate clusters (for example, when partner
+  // information is missing). Use the strongest parent cluster for branch placement;
+  // all real parent links are still drawn below, unchanged.
+  const primaryParent = new Map<Cluster, Cluster>()
+  for (const [child, votes] of parentVotes) {
+    const candidates = [...votes.entries()].sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1]
+      const pa = index.byId.get(a[0].members[0]) as Person
+      const pb = index.byId.get(b[0].members[0]) as Person
+      return byAgeThenName(pa, pb)
+    })
+    if (candidates.length) primaryParent.set(child, candidates[0][0])
+  }
+
+  const childrenByCluster = new Map<Cluster, Cluster[]>()
+  for (const [child, parent] of primaryParent) {
+    const children = childrenByCluster.get(parent)
+    if (children) children.push(child)
+    else childrenByCluster.set(parent, [child])
+  }
+  const clusterOrder = (a: Cluster, b: Cluster) =>
+    byAgeThenName(index.byId.get(a.members[0]) as Person, index.byId.get(b.members[0]) as Person)
+  for (const children of childrenByCluster.values()) children.sort(clusterOrder)
+
+  const branchGap = GAP_BRANCHES
+  const subtreeWidths = new Map<Cluster, number>()
+  const measuring = new Set<Cluster>()
+  const subtreeWidth = (cluster: Cluster): number => {
+    const cached = subtreeWidths.get(cluster)
+    if (cached !== undefined) return cached
+    // Defensive cycle guard; parent links should already progress by generation.
+    if (measuring.has(cluster)) return width(cluster)
+    measuring.add(cluster)
+    const children = childrenByCluster.get(cluster) ?? []
+    const childrenWidth = children.reduce((sum, child) => sum + subtreeWidth(child), 0)
+      + Math.max(0, children.length - 1) * branchGap
+    const result = Math.max(width(cluster), childrenWidth)
+    measuring.delete(cluster)
+    subtreeWidths.set(cluster, result)
+    return result
+  }
+
+  const roots = [...clusterOf.values()]
+    .filter((cluster) => !primaryParent.has(cluster))
+    .sort(clusterOrder)
+  const positioned = new Set<Cluster>()
+  const positionSubtree = (cluster: Cluster, left: number) => {
+    if (positioned.has(cluster)) return
+    positioned.add(cluster)
+    const span = subtreeWidth(cluster)
+    const middle = left + span / 2
+    cluster.start = middle - width(cluster) / 2
+
+    const children = childrenByCluster.get(cluster) ?? []
+    const total = children.reduce((sum, child) => sum + subtreeWidth(child), 0)
+      + Math.max(0, children.length - 1) * branchGap
+    let childLeft = middle - total / 2
+    for (const child of children) {
+      positionSubtree(child, childLeft)
+      childLeft += subtreeWidth(child) + branchGap
+    }
+  }
+
+  let rootLeft = 0
+  for (const root of roots) {
+    positionSubtree(root, rootLeft)
+    rootLeft += subtreeWidth(root) + branchGap
+  }
+  // Keep any unusual disconnected/cyclic data visible rather than dropping it.
+  for (const row of rows) {
+    for (const cluster of row) {
+      if (!positioned.has(cluster)) {
+        positionSubtree(cluster, rootLeft)
+        rootLeft += subtreeWidth(cluster) + branchGap
+      }
+    }
+  }
 
   let minX = Infinity
   let maxX = -Infinity

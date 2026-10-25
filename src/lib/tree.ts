@@ -334,8 +334,8 @@ export function initials(name: string): string {
 
 export const NODE_W = 112
 export const NODE_H = 60
-const SLOT = 156
-const ROW_H = 156
+const SLOT = 136
+const ROW_H = 142
 const PAD = 28
 
 export type TreeNode = { id: string; x: number; y: number; gen: number }
@@ -393,9 +393,9 @@ const center = (c: Cluster) => c.start + width(c) / 2
 // A couple sits clearly apart from their brother's or sister's family, and different
 // branches sit further apart still, so an uncle and aunt never look like they belong
 // to the family next to them.
-const GAP_SIBLINGS = 36 // keep sibling cards and their connector lanes distinct
-const GAP_COUPLES = 112 // separate a couple from a sibling's family
-const GAP_BRANCHES = 220 // leave room between unrelated family branches
+const GAP_SIBLINGS = 26 // keep sibling cards and their connector lanes distinct
+const GAP_COUPLES = 78 // separate a couple from a sibling's family
+const GAP_BRANCHES = 148 // leave room between unrelated family branches
 type Gap = (a: Cluster, b: Cluster) => number
 
 function place(row: Cluster[], desired: (c: Cluster) => number | null, gap: Gap) {
@@ -622,11 +622,29 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
   for (const [key, stem] of stems) {
     const top = Math.min(...stem.kids.map((k) => k.y))
     const mid = stem.sy + (top - stem.sy) / 2
-    const parts = [`M${stem.sx} ${stem.sy} C${stem.sx} ${stem.sy + 24}, ${stem.sx} ${mid - 18}, ${stem.sx} ${mid}`]
-    for (const k of stem.kids) {
+    // Organic, root-like trunk: several alternating bends, then fine side roots.
+    const trunkX = stem.sx
+    const bendY1 = stem.sy + (mid - stem.sy) * 0.28
+    const bendY2 = stem.sy + (mid - stem.sy) * 0.67
+    const parts = [
+      `M${trunkX} ${stem.sy} C${trunkX - 9} ${stem.sy + 18}, ${trunkX + 12} ${bendY1 - 8}, ${trunkX + 3} ${bendY1}`,
+      `C${trunkX - 10} ${bendY1 + 14}, ${trunkX + 13} ${bendY2 - 12}, ${trunkX - 2} ${bendY2}`,
+      `C${trunkX - 8} ${bendY2 + 13}, ${trunkX + 7} ${mid - 10}, ${trunkX} ${mid}`,
+    ]
+    // Tiny root hairs along the trunk give the connectors an organic, branching silhouette.
+    for (const [i, y] of [bendY1 + 4, bendY2 - 2, mid - 7].entries()) {
+      const dir = i % 2 === 0 ? -1 : 1
+      parts.push(`M${trunkX + (i === 1 ? 3 : -2)} ${y} Q${trunkX + dir * 15} ${y + 5} ${trunkX + dir * 25} ${y + 15}`)
+    }
+    for (const [i, k] of stem.kids.entries()) {
       const childX = k.x + NODE_W / 2
-      const bend = Math.max(16, Math.abs(childX - stem.sx) * 0.32)
-      parts.push(`M${stem.sx} ${mid} C${stem.sx} ${mid + bend}, ${childX} ${mid + bend}, ${childX} ${k.y}`)
+      const side = childX < trunkX ? -1 : 1
+      const spread = Math.abs(childX - trunkX)
+      const y1 = mid + Math.max(10, spread * 0.10)
+      const y2 = mid + Math.max(22, spread * 0.20)
+      const wobble = (i % 2 ? -1 : 1) * Math.min(18, spread * 0.08)
+      parts.push(`M${trunkX} ${mid} C${trunkX + side * 10} ${y1}, ${childX - side * 16} ${y2 + wobble}, ${childX} ${k.y - 5}`)
+      parts.push(`M${childX - side * 9} ${y2 + wobble - 4} Q${childX - side * 3} ${y2 + wobble + 2} ${childX} ${k.y - 5}`)
     }
     edges.push({ id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`, kind: 'parent', d: parts.join('') })
   }

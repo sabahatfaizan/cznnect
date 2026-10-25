@@ -677,3 +677,103 @@ input[type="checkbox"] {
   :root:not([data-theme="tactical"]) .seg,
   :root:not([data-theme="tactical"]) .input { background: var(--surface); }
 }
+
+
+/* Private Owner Glass theme — iOS-inspired translucent glass surfaces. */
+:root[data-theme="glass"] {
+  --page: #eaf3ff;
+  --surface: rgb(255 255 255 / 0.66);
+  --surface-2: rgb(245 249 255 / 0.78);
+  --ink: #17263d;
+  --muted: #63738b;
+  --line: rgb(255 255 255 / 0.78);
+  --accent: #087cff;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(255 255 255 / 0.76);
+  --accent-text: #0869d5;
+  --ok: #13845b;
+  --danger: #d73550;
+  --radius-card: 24px;
+  --radius-ctl: 18px;
+  --radius-avatar: 9999px;
+  --shadow-card: 0 18px 48px rgb(63 103 160 / 0.13), inset 0 1px 0 rgb(255 255 255 / 0.95);
+  --font-heading: "Manrope", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  --heading-case: none;
+  --heading-track: -0.025em;
+  color-scheme: light;
+}
+:root[data-theme="glass"] body {
+  background:
+    radial-gradient(ellipse at 4% 2%, rgb(95 173 255 / 0.34), transparent 28rem),
+    radial-gradient(ellipse at 96% 12%, rgb(194 170 255 / 0.34), transparent 30rem),
+    radial-gradient(ellipse at 60% 100%, rgb(105 210 220 / 0.24), transparent 32rem),
+    linear-gradient(145deg, #f5f9ff, #e5efff 58%, #f8faff);
+  background-attachment: fixed;
+}
+:root[data-theme="glass"] .card {
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.78), rgb(255 255 255 / 0.48));
+  border: 1px solid rgb(255 255 255 / 0.9);
+  border-radius: 26px;
+  box-shadow: 0 18px 48px rgb(57 92 146 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.98), inset 0 -1px 0 rgb(153 181 223 / 0.12);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+}
+:root[data-theme="glass"] .card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.98), transparent);
+  pointer-events: none;
+}
+:root[data-theme="glass"] .btn,
+:root[data-theme="glass"] .input,
+:root[data-theme="glass"] .seg {
+  border-radius: 999px;
+  border-color: rgb(255 255 255 / 0.88);
+  box-shadow: 0 6px 18px rgb(62 103 165 / 0.09), inset 0 1px 0 rgb(255 255 255 / 0.96);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+}
+:root[data-theme="glass"] .btn-primary {
+  background: linear-gradient(180deg, #2490ff, #0871f0);
+  color: #fff;
+  border-color: rgb(255 255 255 / 0.6);
+  box-shadow: 0 8px 20px rgb(8 124 255 / 0.23), inset 0 1px 0 rgb(255 255 255 / 0.5);
+}
+:root[data-theme="glass"] .btn-plain,
+:root[data-theme="glass"] .seg,
+:root[data-theme="glass"] .input {
+  background: rgb(255 255 255 / 0.58);
+}
+:root[data-theme="glass"] .seg-on,
+:root[data-theme="glass"] .tab-active {
+  color: #075fc2;
+  background: rgb(255 255 255 / 0.78);
+  border-color: rgb(255 255 255 / 0.96);
+  box-shadow: 0 6px 20px rgb(56 101 166 / 0.12), inset 0 1px 0 #fff;
+}
+:root[data-theme="glass"] .tab {
+  border-radius: 18px;
+}
+:root[data-theme="glass"] nav {
+  background: rgb(245 249 255 / 0.68);
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow: 0 -8px 32px rgb(58 93 143 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+}
+:root[data-theme="glass"] .tnode-rect {
+  fill: rgb(255 255 255 / 0.8);
+  stroke: rgb(255 255 255 / 0.98);
+}
+:root[data-theme="glass"] .tnode-me {
+  fill: rgb(8 124 255 / 0.12);
+  stroke: #087cff;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  :root[data-theme="glass"] .card,
+  :root[data-theme="glass"] nav {
+    background: #f5f9ff;
+  }
+}

@@ -71,5 +71,5 @@ export default function App() {
     return <ServiceNotice message={maintenance.message} onOwnerSignIn={() => setOwnerLogin(true)} />
   }
   if (!session) return <AuthScreen />
-  return <Authed userId={session.user.id} />
+  return <Authed userId={session.user.id} email={session.user.email ?? ''} />
 }

@@ -1,16 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
-import { getThemePref, setThemePref, type ThemePref } from '../theme'
-
-const OWNER_EMAIL = 'faizanplayz11@gmail.com'
-
-const THEMES: { id: ThemePref; label: string; hint: string }[] = [
-  { id: 'light', label: 'Light', hint: 'Clean and bright' },
-  { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
-  { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
-  { id: 'glass', label: 'Owner Glass', hint: 'Private · iOS Liquid Glass' },
-  { id: 'system', label: 'System', hint: 'Match my phone' },
-]
 
 export default function Profile({ userId }: { userId: string }) {
   const [name, setName] = useState('')
@@ -18,7 +7,6 @@ export default function Profile({ userId }: { userId: string }) {
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null)
-  const [theme, setTheme] = useState<ThemePref>(getThemePref())
 
   useEffect(() => {
     supabase
@@ -49,33 +37,9 @@ export default function Profile({ userId }: { userId: string }) {
     setMsg(error ? { kind: 'error', text: error.message } : { kind: 'ok', text: 'Saved' })
   }
 
-  function pickTheme(id: ThemePref) {
-    setThemePref(id)
-    setTheme(id)
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-display text-2xl font-extrabold">My Profile</h1>
-
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-display text-lg font-bold">Appearance</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {THEMES.filter((t) => t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-pressed={theme === t.id}
-              className={`seg ${theme === t.id ? 'seg-on' : ''}`}
-              onClick={() => pickTheme(t.id)}
-            >
-              {t.label}
-              <small>{t.hint}</small>
-            </button>
-          ))}
-        </div>
-        <p className="text-sm text-muted">Saved on this device. Owner Glass is only available to the app owner.</p>
-      </section>
 
       <form onSubmit={save} className="card flex flex-col gap-4">
         <h2 className="font-display text-lg font-bold">Details</h2>

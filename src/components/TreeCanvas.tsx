@@ -218,6 +218,23 @@ export default function TreeCanvas({
         if (center) centerOn(branch, Math.max(view.k, 0.9))
         return
       }
+
+      // While a family is focused, tapping anywhere outside its highlighted
+      // sphere/bounds exits focus. Taps inside the family still select people.
+      if (familyFocus && focusBounds) {
+        const rect = box.current?.getBoundingClientRect()
+        if (rect) {
+          const worldX = (e.clientX - rect.left - view.x) / view.k
+          const worldY = (e.clientY - rect.top - view.y) / view.k
+          const outside = worldX < focusBounds.x || worldX > focusBounds.x + focusBounds.w ||
+            worldY < focusBounds.y || worldY > focusBounds.y + focusBounds.h
+          if (outside) {
+            setFamilyFocus(null)
+            return
+          }
+        }
+      }
+
       const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
       if (id) onSelect(id)
     }
@@ -364,7 +381,7 @@ export default function TreeCanvas({
               >
                 <circle r={13} fill="var(--accent)" stroke="var(--surface)" strokeWidth={2} />
                 <text x={0} y={4.5} textAnchor="middle" fill="var(--accent-ink)" fontSize={15} fontWeight={800}>
-                  {isActive ? '×' : '⌂'}
+                  ⌂
                 </text>
               </g>
             )

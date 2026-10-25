@@ -1,14 +1,14 @@
-// Theme choice: Light (default), Tactical Dark, Midnight, or follow the phone's setting.
+// Theme choice: Light, Tactical Dark, Midnight, private Owner Glass, or follow the phone's setting.
 // The choice is saved on this device, so each cousin picks their own.
-export type ThemePref = 'light' | 'tactical' | 'midnight' | 'system'
-type Theme = 'light' | 'tactical' | 'midnight'
+export type ThemePref = 'light' | 'tactical' | 'midnight' | 'glass' | 'system'
+type Theme = 'light' | 'tactical' | 'midnight' | 'glass'
 
 const KEY = 'cznnect-theme'
 
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'light' || v === 'tactical' || v === 'midnight' || v === 'system') return v
+    if (v === 'light' || v === 'tactical' || v === 'midnight' || v === 'glass' || v === 'system') return v
   } catch {
     // Storage can be blocked. Fall back to the default.
   }
@@ -27,7 +27,7 @@ export function applyTheme(pref: ThemePref) {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : '#ffffff')
+    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : theme === 'glass' ? '#eaf3ff' : '#ffffff')
 }
 
 export function setThemePref(pref: ThemePref) {

@@ -8,7 +8,7 @@ const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'light', label: 'Light', hint: 'Clean and bright' },
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
   { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
-  { id: 'glass', label: 'Owner Glass', hint: 'Private · Liquid Glass' },
+  { id: 'glass', label: 'Liquid Glass', hint: 'Owner only' },
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]
 
@@ -47,7 +47,7 @@ export default function Settings() {
             </button>
           ))}
         </div>
-        <p className="text-sm text-muted">Saved on this device. Owner Glass is only available to the app owner.</p>
+        <p className="text-sm text-muted">Saved on this device. Liquid Glass is only available to the app owner.</p>
       </section>
     </div>
   )

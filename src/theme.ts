@@ -1,4 +1,4 @@
-// Theme choice: Light, Tactical Dark, Midnight, private Owner Glass, or follow the phone's setting.
+// Theme choice: Light, Tactical Dark, Midnight, private Liquid Glass, or follow the phone's setting.
 // The choice is saved on this device, so each cousin picks their own.
 export type ThemePref = 'light' | 'tactical' | 'midnight' | 'glass' | 'system'
 type Theme = 'light' | 'tactical' | 'midnight' | 'glass'
@@ -15,7 +15,7 @@ export function getThemePref(): ThemePref {
   return 'light'
 }
 
-// Owner Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
+// Liquid Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
 // else, a saved "glass" choice falls back to Light. (Hiding the option is not a security boundary.)
 let glassAllowed = false
 export function setGlassAllowed(allowed: boolean) {

@@ -7,7 +7,7 @@ import Splash, { prefersReducedMotion } from './components/Splash'
 import Logo from './components/Logo'
 import Authed from './Authed'
 
-const SPLASH_MS = 6000
+const SPLASH_MS = 2400
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const MAINTENANCE_PIN = '4124'
 
@@ -111,7 +111,7 @@ export default function App() {
   }, [])
 
   if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
-  if (!ready || held) return <Splash onSkip={ready ? () => setHeld(false) : undefined} />
+  if (!ready || held) return <Splash />
   const isOwner = session?.user.email?.toLowerCase() === OWNER_EMAIL
   if (maintenance?.enabled && !isOwner && !pinUnlocked) {
     return <ServiceNotice message={maintenance.message} onUnlock={() => setPinUnlocked(true)} />

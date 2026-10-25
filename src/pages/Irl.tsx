@@ -22,8 +22,8 @@ import Sheet from '../components/Sheet'
 type View = 'meet' | 'board'
 
 // IRL Connect: your personal code, scanning a cousin, confirming meetups, and the family scoreboard.
-export default function Irl({ family, userId }: { family: Family; userId: string }) {
-  const [view, setView] = useState<View>('meet')
+export default function Irl({ family, userId, initialView = 'meet' }: { family: Family; userId: string; initialView?: View }) {
+  const [view, setView] = useState<View>(initialView)
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [rows, setRows] = useState<Row[]>([])
   const [recents, setRecents] = useState<Recent[]>([])

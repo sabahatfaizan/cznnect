@@ -1,22 +1,23 @@
-// Theme choice: Light, Tactical Dark, Midnight, private Liquid Glass, or follow the phone's setting.
+// Available themes: Tactical HUD, Uncharted, RDR2, and owner-only Liquid Glass.
 // The choice is saved on this device, so each cousin picks their own.
-export type ThemePref = 'light' | 'tactical' | 'midnight' | 'uncharted' | 'rdr2' | 'glass' | 'system'
-type Theme = 'light' | 'tactical' | 'midnight' | 'uncharted' | 'rdr2' | 'glass'
+export type ThemePref = 'tactical' | 'uncharted' | 'rdr2' | 'glass'
+type Theme = 'tactical' | 'uncharted' | 'rdr2' | 'glass'
 
 const KEY = 'cznnect-theme'
 
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'light' || v === 'tactical' || v === 'midnight' || v === 'uncharted' || v === 'rdr2' || v === 'glass' || v === 'system') return v
+    if (v === 'tactical' || v === 'uncharted' || v === 'rdr2' || v === 'glass') return v
+    // Migrate removed themes to Tactical HUD so existing users don't land on a retired appearance.
   } catch {
     // Storage can be blocked. Fall back to the default.
   }
-  return 'light'
+  return 'tactical'
 }
 
 // Liquid Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
-// else, a saved "glass" choice falls back to dark Midnight, so there is no white flash before sign-in. (Hiding the option is not a security boundary.)
+// else, a saved "glass" choice falls back to dark Midnight, so there is no light flash before sign-in. (Hiding the option is not a security boundary.)
 let glassAllowed = false
 export function setGlassAllowed(allowed: boolean) {
   if (glassAllowed === allowed) return
@@ -27,10 +28,7 @@ export function setGlassAllowed(allowed: boolean) {
 function resolve(pref: ThemePref): Theme {
   if (pref === 'uncharted') return 'uncharted'
   if (pref === 'rdr2') return 'rdr2'
-  if (pref === 'glass') return glassAllowed ? 'glass' : 'midnight'
-  if (pref === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'tactical' : 'light'
-  }
+  if (pref === 'glass') return glassAllowed ? 'glass' : 'tactical'
   return pref
 }
 
@@ -39,7 +37,7 @@ export function applyTheme(pref: ThemePref) {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : theme === 'glass' ? '#070b16' : theme === 'uncharted' ? '#d8c69e' : theme === 'rdr2' ? '#171310' : '#ffffff')
+    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'uncharted' ? '#d8c69e' : theme === 'rdr2' ? '#171310' : theme === 'glass' ? '#070b16' : '#0c0e0b')
 }
 
 export function setThemePref(pref: ThemePref) {
@@ -51,12 +49,4 @@ export function setThemePref(pref: ThemePref) {
   applyTheme(pref)
 }
 
-// Keeps "System" in step when the phone switches between light and dark.
-export function watchSystemTheme() {
-  const mq = window.matchMedia('(prefers-color-scheme: dark)')
-  const onChange = () => {
-    if (getThemePref() === 'system') applyTheme('system')
-  }
-  mq.addEventListener('change', onChange)
-  return () => mq.removeEventListener('change', onChange)
-}
+

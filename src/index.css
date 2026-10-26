@@ -1388,3 +1388,34 @@ input[type="checkbox"] {
   background-clip: text;
   color: transparent;
 }
+
+/* Loading screen footer: the motto in engraved Roman capitals, and the copyright line. */
+.motto {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: "Cinzel", "Trajan Pro", "Optima", Georgia, serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0;
+  animation: motto-in 1.6s ease-out 0.9s forwards;
+}
+.motto-rule {
+  display: block;
+  width: 1.75rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--muted));
+}
+.motto-rule:last-child { transform: scaleX(-1); }
+.copyright { font-size: 0.68rem; letter-spacing: 0.04em; color: var(--muted); opacity: 0; animation: motto-in 1.2s ease-out 1.4s forwards; }
+@keyframes motto-in { from { opacity: 0; letter-spacing: 0.5em; } to { opacity: 0.85; letter-spacing: 0.34em; } }
+.copyright { animation-name: copyright-in; }
+@keyframes copyright-in { to { opacity: 0.75; } }
+@media (prefers-reduced-motion: reduce) {
+  .motto { animation: none; opacity: 0.85; }
+  .copyright { animation: none; opacity: 0.75; }
+}

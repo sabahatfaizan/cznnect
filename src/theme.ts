@@ -1,7 +1,7 @@
 // Available themes: Tactical HUD, RDR2, and owner-only Liquid Glass.
 // The choice is saved on this device, so each cousin picks their own.
 export type ThemePref = 'tactical' | 'rdr2' | 'glass'
-type Theme = 'tactical' | 'uncharted' | 'rdr2' | 'glass'
+type Theme = 'tactical' | 'rdr2' | 'glass'
 
 const KEY = 'cznnect-theme'
 

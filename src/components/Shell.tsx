@@ -8,12 +8,15 @@ import Plans from '../pages/Plans'
 import Tree from '../pages/Tree'
 import Irl from '../pages/Irl'
 import Scoreboard from '../pages/Scoreboard'
+import Birthdays from '../pages/Birthdays'
+import { rank, useFamilyBirthdays } from '../lib/birthdays'
+import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'settings'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
@@ -31,6 +34,15 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
+
+  // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
+  const bday = useFamilyBirthdays(family.id, userId)
+  const upcoming = rank(bday.people).upcoming
+  const soon = upcoming.filter((u) => u.days <= 7)
+  const dueNow = upcoming.some((u) => u.days <= 1)
+  useEffect(() => {
+    if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
+  }, [bday.loaded, bday.people])
   const current: Tab = tab
 
   // Liquid Glass is only allowed for the owner; anyone else is switched back to a dark fallback.
@@ -89,11 +101,12 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           <button
             type="button"
             className="menu-btn flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={menuOpen ? 'Close menu' : dueNow ? 'Open menu, a birthday is today or tomorrow' : 'Open menu'}
             aria-expanded={menuOpen}
             aria-controls="cznnect-main-menu"
             onClick={() => setMenuOpen((open) => !open)}
           >
+            {dueNow && !menuOpen && <span aria-hidden="true" className="menu-dot" />}
             {menuOpen ? (
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" />
@@ -145,6 +158,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 { id: 'tree', label: 'Family Tree', icon: 'tree' },
                 { id: 'explore', label: 'Explore', icon: 'explore' },
                 { id: 'plans', label: 'Plans', icon: 'plans' },
+                { id: 'birthdays', label: 'Birthdays', icon: 'cake' },
                 { id: 'me', label: 'My Profile', icon: 'me' },
               ] as { id: Tab; label: string; icon: IconName }[]).map((item) => (
                 <button
@@ -154,7 +168,11 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                   onClick={() => { setTab(item.id); setMenuOpen(false) }}
                 >
                   <span className="menu-item-label"><Icon name={item.icon} size={22} />{item.label}</span>
-                  <span aria-hidden="true" className="menu-chevron">›</span>
+                  {item.id === 'birthdays' && soon.length > 0 ? (
+                    <span className="menu-badge" aria-label={`${soon.length} birthdays this week`}>{soon.length}</span>
+                  ) : (
+                    <span aria-hidden="true" className="menu-chevron">›</span>
+                  )}
                 </button>
               ))}
               <button
@@ -203,6 +221,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'irl' && <Irl family={family} userId={userId} />}
         {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
+        {tab === 'birthdays' && (
+          <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />
+        )}
         {tab === 'tree' && <Tree family={family} userId={userId} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}

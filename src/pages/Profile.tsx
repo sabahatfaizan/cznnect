@@ -66,7 +66,7 @@ export default function Profile({ userId }: { userId: string }) {
             value={birthday}
             onChange={(e) => setBirthday(e.target.value)}
           />
-          <p className="mt-1 text-sm text-muted">Used for birthday reminders in a later stage.</p>
+          <p className="mt-1 text-sm text-muted">Shown to your family on the Birthdays page.</p>
         </div>
         <div>
           <p className="label">Email</p>

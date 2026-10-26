@@ -173,7 +173,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 className={`menu-item ${tab === 'settings' ? 'menu-item-on' : ''}`}
                 onClick={() => { setTab('settings'); setMenuOpen(false) }}
               >
-                <span className="menu-item-label"><Icon name="settings" size={22} />Appearance &amp; Theme</span>
+                <span className="menu-item-label"><Icon name="settings" size={22} />Settings</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             </div>
@@ -207,7 +207,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}
         {tab === 'me' && <Profile userId={userId} />}
-        {tab === 'settings' && <Settings />}
+        {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">

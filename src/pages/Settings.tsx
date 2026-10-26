@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import type { Family } from '../types'
 import { getThemePref, setThemePref, type ThemePref } from '../theme'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
@@ -12,9 +13,28 @@ const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]
 
-export default function Settings() {
+export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [email, setEmail] = useState('')
+  const [isFamilyOwner, setIsFamilyOwner] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [familyName, setFamilyName] = useState(family.name)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle()
+      .then(({ data }) => setIsFamilyOwner(data?.role === 'owner'))
+  }, [family.id, userId])
+
+  async function saveName() {
+    setBusy(true); setError(''); setSaved(false)
+    const { error } = await supabase.rpc('update_family_name', { fid: family.id, new_name: familyName })
+    setBusy(false)
+    if (error) { setError(error.message); return }
+    setEditingName(false); setSaved(true); onFamilyChanged()
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''))
@@ -28,6 +48,34 @@ export default function Settings() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-display text-2xl font-extrabold">Settings</h1>
+      {isFamilyOwner && (
+        <section className="card flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">Family settings</h2>
+            <p className="mt-1 text-sm text-muted">Only you, the owner, can change these.</p>
+          </div>
+          {editingName ? (
+            <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); void saveName() }}>
+              <label className="label" htmlFor="family-name-edit">Family name</label>
+              <input id="family-name-edit" className="input" value={familyName} onChange={(e) => setFamilyName(e.target.value)} maxLength={60} required />
+              <div className="flex gap-2">
+                <button className="btn btn-primary" type="submit" disabled={busy || !familyName.trim()}>Save name</button>
+                <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setEditingName(false); setError('') }}>Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm text-muted">Family name</p>
+                <p className="truncate font-semibold">{family.name}</p>
+              </div>
+              <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setSaved(false); setEditingName(true) }}>Change</button>
+            </div>
+          )}
+          {saved && <p className="text-sm font-bold text-accent-text">Name updated.</p>}
+          {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
+        </section>
+      )}
       <section className="card flex flex-col gap-3">
         <div>
           <h2 className="font-display text-lg font-bold">Appearance</h2>

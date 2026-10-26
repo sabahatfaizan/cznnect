@@ -15,8 +15,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   // Which in-page confirmation is open: 'newcode', 'leave', or 'remove:<user id>'.
   const [confirm, setConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [editingFamilyName, setEditingFamilyName] = useState(false)
-  const [familyName, setFamilyName] = useState(family.name)
 
   const loadMembers = useCallback(async () => {
     const { data, error } = await supabase
@@ -70,11 +68,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   const leave = () => run(() => supabase.rpc('leave_family', { fid: family.id }), onFamilyChanged)
   const newCode = () =>
     run(() => supabase.rpc('regenerate_invite', { fid: family.id }), onFamilyChanged)
-  const saveFamilyName = () =>
-    run(
-      () => supabase.rpc('update_family_name', { fid: family.id, new_name: familyName }),
-      () => { setEditingFamilyName(false); onFamilyChanged() },
-    )
 
   return (
     <div className="flex flex-col gap-5">
@@ -82,18 +75,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
         <p className="eyebrow">Family space</p>
         <h1 className="font-display text-2xl font-extrabold leading-tight">{family.name}</h1>
         <p className="text-muted">{firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}</p>
-        {isOwner && (editingFamilyName ? (
-          <form className="mt-2 flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); saveFamilyName() }}>
-            <label className="label" htmlFor="family-name-edit">Change family name</label>
-            <input id="family-name-edit" className="input" value={familyName} onChange={(e) => setFamilyName(e.target.value)} maxLength={60} required />
-            <div className="flex gap-2">
-              <button className="btn btn-primary" type="submit" disabled={busy || !familyName.trim()}>Save name</button>
-              <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setEditingFamilyName(false) }}>Cancel</button>
-            </div>
-          </form>
-        ) : (
-          <button className="link self-start" onClick={() => { setFamilyName(family.name); setEditingFamilyName(true) }}>Change family name</button>
-        ))}
       </header>
 
       <section className="card flex flex-col gap-3">

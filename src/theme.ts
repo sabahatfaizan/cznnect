@@ -1,14 +1,14 @@
 // Theme choice: Light, Tactical Dark, Midnight, private Liquid Glass, or follow the phone's setting.
 // The choice is saved on this device, so each cousin picks their own.
-export type ThemePref = 'light' | 'tactical' | 'midnight' | 'glass' | 'system'
-type Theme = 'light' | 'tactical' | 'midnight' | 'glass'
+export type ThemePref = 'light' | 'tactical' | 'midnight' | 'uncharted' | 'glass' | 'system'
+type Theme = 'light' | 'tactical' | 'midnight' | 'uncharted' | 'glass'
 
 const KEY = 'cznnect-theme'
 
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'light' || v === 'tactical' || v === 'midnight' || v === 'glass' || v === 'system') return v
+    if (v === 'light' || v === 'tactical' || v === 'midnight' || v === 'uncharted' || v === 'glass' || v === 'system') return v
   } catch {
     // Storage can be blocked. Fall back to the default.
   }
@@ -25,6 +25,7 @@ export function setGlassAllowed(allowed: boolean) {
 }
 
 function resolve(pref: ThemePref): Theme {
+  if (pref === 'uncharted') return 'uncharted'
   if (pref === 'glass') return glassAllowed ? 'glass' : 'midnight'
   if (pref === 'system') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'tactical' : 'light'
@@ -37,7 +38,7 @@ export function applyTheme(pref: ThemePref) {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : theme === 'glass' ? '#070b16' : '#ffffff')
+    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'midnight' ? '#05070d' : theme === 'glass' ? '#070b16' : theme === 'uncharted' ? '#d8c69e' : '#ffffff')
 }
 
 export function setThemePref(pref: ThemePref) {

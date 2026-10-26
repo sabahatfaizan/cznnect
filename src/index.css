@@ -184,10 +184,6 @@
 
 
 
-  :root[data-theme="uncharted"] .eyebrow {
-    letter-spacing: 0.06em;
-    color: var(--accent);
-  }
 
   :root[data-theme="rdr2"] body {
     background:

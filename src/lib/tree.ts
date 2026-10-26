@@ -1,3 +1,5 @@
+import { hash, parseCubic, pointOn } from './roots'
+
 // Family tree logic with no screens in it: who is whose parent, which generation
 // someone is in, where to draw them, how two people are related, and which
 // existing people look like a new name being typed (to avoid duplicates).
@@ -334,13 +336,14 @@ export function initials(name: string): string {
 
 export const NODE_W = 112
 export const NODE_H = 60
-const SLOT = 136
-const ROW_H = 216 // taller rows give the roots room to thin out as they grow downwards
+const SLOT = 156 // a little wider than a card, so a couple has room between them
+const ROW_H = 310 // tall rows: roots grow straight down and have room to thin out
 const PAD = 28
 
 export type TreeNode = { id: string; x: number; y: number; gen: number }
-export type RootSeg = { d: string; role: 'trunk' | 'bough' | 'twig' }
-export type TreeEdge = { id: string; kind: 'parent' | 'partner'; d: string; sy?: number; segs?: RootSeg[] }
+// One piece of root: a single curve that is w0 wide where it starts and w1 wide where it ends.
+export type RootSeg = { d: string; w0: number; w1: number }
+export type TreeEdge = { id: string; kind: 'parent' | 'partner' | 'tip'; d: string; segs?: RootSeg[] }
 export type TreeLayout = { nodes: TreeNode[]; edges: TreeEdge[]; width: number; height: number }
 
 type Cluster = { members: string[]; gen: number; start: number }
@@ -396,7 +399,7 @@ const center = (c: Cluster) => c.start + width(c) / 2
 // to the family next to them.
 const GAP_SIBLINGS = 26 // keep sibling cards and their connector lanes distinct
 const GAP_COUPLES = 78 // separate a couple from a sibling's family
-const GAP_BRANCHES = 148 // leave room between unrelated family branches
+const GAP_BRANCHES = 96 // leave room between unrelated family branches
 type Gap = (a: Cluster, b: Cluster) => number
 
 function place(row: Cluster[], desired: (c: Cluster) => number | null, gap: Gap) {
@@ -622,68 +625,97 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
       else stems.set(src.key, { sx: src.sx, sy: src.sy, kids: [child] })
     }
   }
-  for (const [key, stem] of stems) {
-    const top = Math.min(...stem.kids.map((k) => k.y))
-    // Draw a single organic trunk that gently tapers into each child branch.
-    // Fewer, longer curves avoid the rigid, comb-like look of separate connector lines.
-    const trunkX = stem.sx
-    const branchY = stem.sy + (top - stem.sy) * 0.3
-    const segs: RootSeg[] = [
-      { role: 'trunk', d: `M${trunkX} ${stem.sy} C${trunkX - 8} ${stem.sy + (branchY - stem.sy) * 0.4}, ${trunkX + 10} ${stem.sy + (branchY - stem.sy) * 0.8}, ${trunkX + 2} ${branchY}` },
-    ]
-    const orderedKids = [...stem.kids].sort((a, b) => (a.x + NODE_W / 2) - (b.x + NODE_W / 2))
-    const leftKids = orderedKids.filter((kid) => kid.x + NODE_W / 2 < trunkX)
-    const rightKids = orderedKids.filter((kid) => kid.x + NODE_W / 2 >= trunkX)
-    for (const [side, group] of [[-1, leftKids], [1, rightKids]] as const) {
-      if (!group.length) continue
-      // The child furthest out gets the main limb. It drops down from the trunk, sweeps
-      // sideways in the middle and drops again into the person, so the roots grow downwards.
-      const outer = group[side < 0 ? 0 : group.length - 1]
-      const ox = outer.x + NODE_W / 2
-      const oy = outer.y - 5
-      const fall = oy - branchY
-      const limb: [number, number, number, number, number, number, number, number] = [
-        trunkX + side * 2, branchY,
-        trunkX + side * 3, branchY + fall * 0.5,
-        ox, oy - fall * 0.5,
-        ox, oy,
-      ]
-      segs.push({ role: 'bough', d: `M${limb[0]} ${limb[1]} C${limb[2]} ${limb[3]}, ${limb[4]} ${limb[5]}, ${limb[6]} ${limb[7]}` })
-      const along = (t: number) => {
-        const u = 1 - t
-        return {
-          x: u * u * u * limb[0] + 3 * u * u * t * limb[2] + 3 * u * t * t * limb[4] + t * t * t * limb[6],
-          y: u * u * u * limb[1] + 3 * u * u * t * limb[3] + 3 * u * t * t * limb[5] + t * t * t * limb[7],
-        }
-      }
-      const reach = Math.abs(ox - trunkX) || 1
-      for (const kid of group) {
-        if (kid.id === outer.id) continue
-        // Every other child splits off the limb part of the way along and drops into its own spot.
-        const cx = kid.x + NODE_W / 2
-        const cy = kid.y - 5
-        const t = 0.16 + 0.5 * Math.min(1, Math.abs(cx - trunkX) / reach)
-        const from = along(t)
-        const drop = Math.max(24, cy - from.y)
-        segs.push({
-          role: 'twig',
-          d: `M${f1(from.x)} ${f1(from.y)} C${f1(from.x + (cx - from.x) * 0.12)} ${f1(from.y + drop * 0.45)}, ${f1(cx)} ${f1(cy - drop * 0.5)}, ${f1(cx)} ${f1(cy)}`,
-        })
-      }
+  // How many people grow below someone decides how thick their roots are.
+  const below = new Map<string, Set<string>>()
+  const descendants = (id: string, trail = new Set<string>()): Set<string> => {
+    const cached = below.get(id)
+    if (cached) return cached
+    const out = new Set<string>()
+    if (trail.has(id)) return out
+    trail.add(id)
+    for (const c of get(index.childrenOf, id)) {
+      out.add(c)
+      for (const x of descendants(c, trail)) out.add(x)
     }
+    trail.delete(id)
+    below.set(id, out)
+    return out
+  }
+  const wTop = (d: number) => Math.min(34, 8 + 4.6 * Math.sqrt(d))
+  const wEnd = (d: number) => Math.min(18, 3.6 + 2.8 * Math.sqrt(d))
+
+  for (const [key, stem] of stems) {
+    const kids = [...stem.kids].sort((a, b) => a.x - b.x)
+    const everyone = new Set<string>()
+    for (const k of kids) {
+      everyone.add(k.id)
+      for (const x of descendants(k.id)) everyone.add(x)
+    }
+    const sx = stem.sx
+    const sy = stem.sy
+    const top = Math.min(...kids.map((k) => k.y))
+    const span = top - sy
+    const reach = (k: TreeNode) => Math.abs(k.x + NODE_W / 2 - sx)
+    const maxReach = Math.max(1, ...kids.map(reach))
+    // Kids far out split off high and sweep down and outwards; the middle ones split off low.
+    const frac = (k: TreeNode) => 0.16 + 0.34 * (1 - reach(k) / maxReach)
+    const maxFrac = Math.max(...kids.map(frac))
+    const wob = (hash(key) - 0.5) * 14
+    const ty = sy + span * maxFrac
+    const tx = sx + wob
+    const trunkD = `M${f1(sx)} ${f1(sy)} C${f1(sx)} ${f1(sy + (ty - sy) * 0.35)}, ${f1(tx)} ${f1(sy + (ty - sy) * 0.7)}, ${f1(tx)} ${f1(ty)}`
+    const trunk = parseCubic(trunkD)
+    const t0 = wTop(everyone.size)
+    const t1 = t0 * 0.62
+    const segs: RootSeg[] = [{ d: trunkD, w0: t0, w1: t1 }]
+    kids.forEach((kid) => {
+      const cx = kid.x + NODE_W / 2
+      const cy = kid.y
+      const from = trunk ? pointOn(trunk, Math.min(1, frac(kid) / maxFrac)) : { x: sx, y: sy + span * frac(kid) }
+      const dy = cy - from.y
+      const jit = (n: number) => (hash(`${key}:${kid.id}:${n}`) - 0.5) * 14
+      const here = t0 + (t1 - t0) * Math.min(1, frac(kid) / maxFrac)
+      const kidBelow = descendants(kid.id).size
+      const end = wEnd(kidBelow)
+      const start = Math.max(end + 1.5, Math.min(here * 0.85, wTop(kidBelow) * 0.95))
+      segs.push({
+        d: `M${f1(from.x)} ${f1(from.y)} C${f1(from.x + (cx - from.x) * 0.02 + jit(0))} ${f1(from.y + dy * 0.62)}, ${f1(cx - (cx - from.x) * 0.06 + jit(1))} ${f1(cy - dy * 0.55)}, ${f1(cx)} ${f1(cy)}`,
+        w0: start,
+        w1: end,
+      })
+    })
     edges.push({
-      id: `stem:${key}:${stem.kids.map((kid) => kid.id).join(',')}`,
+      id: `stem:${key}:${kids.map((kid) => kid.id).join(',')}`,
       kind: 'parent',
       d: segs.map((x) => x.d).join(''),
-      sy: stem.sy,
       segs,
     })
+  }
+
+  // People with no children get a few fine roots reaching down, so every card looks grown into the tree.
+  for (const n of nodes) {
+    if (get(index.childrenOf, n.id).length > 0) continue
+    const cx = n.x + NODE_W / 2
+    const y0 = n.y + NODE_H - 2
+    const tip: RootSeg[] = []
+    for (let i = 0; i < 3; i++) {
+      const r = hash(`tip:${n.id}:${i}`)
+      const len = 30 + r * 34
+      const dx = (i - 1) * (12 + r * 12)
+      const w1 = (hash(`tipw:${n.id}:${i}`) - 0.5) * 12
+      tip.push({
+        d: `M${f1(cx + (i - 1) * 8)} ${f1(y0)} C${f1(cx + (i - 1) * 8 + w1)} ${f1(y0 + len * 0.35)}, ${f1(cx + dx - w1)} ${f1(y0 + len * 0.7)}, ${f1(cx + dx)} ${f1(y0 + len)}`,
+        w0: 4.6 - i * 0.6 + (i === 1 ? 0.8 : 0),
+        w1: 0.7,
+      })
+    }
+    edges.push({ id: `tip:${n.id}`, kind: 'tip', d: tip.map((x) => x.d).join(''), segs: tip })
   }
 
   return {
     nodes,
     edges,
     width: maxX - minX + PAD * 2,
-    height: PAD * 2 + (rows.length - 1) * ROW_H + NODE_H,
+    height: PAD * 2 + (rows.length - 1) * ROW_H + NODE_H + 70, // room for the fine roots under the last row
   }
 }

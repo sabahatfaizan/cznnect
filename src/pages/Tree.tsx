@@ -16,6 +16,7 @@ import { withTimeout } from '../lib/net'
 import TreeCanvas from '../components/TreeCanvas'
 import PersonRow from '../components/PersonRow'
 import PersonSheet from '../components/PersonSheet'
+import PersonCard from '../components/PersonCard'
 import PersonPicker from '../components/PersonPicker'
 import PersonForm from '../components/PersonForm'
 import Sheet from '../components/Sheet'
@@ -38,6 +39,7 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
   const [view, setView] = useState<View>('tree')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [detail, setDetail] = useState(false) // false: the quick card. true: everything, with editing.
   const [focus, setFocus] = useState<{ id: string; tick: number } | null>(null)
   const [mode, setMode] = useState<Mode>('none')
   const [notice, setNotice] = useState('')
@@ -95,8 +97,9 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
     if (status === 'ready' && selectedId && !index.byId.has(selectedId)) setSelectedId(null)
   }, [status, selectedId, index])
 
-  function show(id: string) {
+  function show(id: string, full = false) {
     setSelectedId(id)
+    setDetail(full)
     setFocus({ id, tick: Date.now() })
   }
 
@@ -256,11 +259,10 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
             <TreeCanvas
               layout={layout}
               people={index.byId}
-              links={links}
               selectedId={selectedId}
               meId={mine?.id ?? null}
               focus={focus}
-              onSelect={(id) => setSelectedId(id)}
+              onSelect={(id) => show(id)}
             />
           )}
 
@@ -338,7 +340,20 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
         </Sheet>
       )}
 
-      {selected && (
+      {selected && !detail && (
+        <PersonCard
+          key={selected.id}
+          person={selected}
+          index={index}
+          me={mine}
+          userId={userId}
+          onClose={() => setSelectedId(null)}
+          onSelect={(id) => show(id)}
+          onMore={() => setDetail(true)}
+        />
+      )}
+
+      {selected && detail && (
         <PersonSheet
           key={selected.id}
           person={selected}
@@ -349,8 +364,8 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
           userId={userId}
           isOwner={isOwner}
           familyId={family.id}
-          onClose={() => setSelectedId(null)}
-          onSelect={show}
+          onClose={() => { setSelectedId(null); setDetail(false) }}
+          onSelect={(id) => show(id, true)}
           onChanged={load}
           onNotice={say}
         />

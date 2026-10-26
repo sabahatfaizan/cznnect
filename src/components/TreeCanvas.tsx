@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
-import { NODE_H, NODE_W, type Link, type Person, type TreeLayout } from '../lib/tree'
-import { hairPaths, taperPath } from '../lib/roots'
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
+import { rootlets, taperPath } from '../lib/roots'
 
 type View = { x: number; y: number; k: number }
-const MIN_K = 0.3
+const MIN_K = 0.1
 const MAX_K = 2.2
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
 
@@ -16,7 +16,6 @@ function clip(text: string, max: number): string {
 export default function TreeCanvas({
   layout,
   people,
-  links,
   selectedId,
   meId,
   focus,
@@ -24,7 +23,6 @@ export default function TreeCanvas({
 }: {
   layout: TreeLayout
   people: Map<string, Person>
-  links: Link[]
   selectedId: string | null
   meId: string | null
   focus: { id: string; tick: number } | null
@@ -33,8 +31,7 @@ export default function TreeCanvas({
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 })
-  const [familyFocus, setFamilyFocus] = useState<string | null>(null)
-  const started = useRef(false)
+    const started = useRef(false)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gesture = useRef({ moved: false, startX: 0, startY: 0, dist: 0 })
 
@@ -67,20 +64,19 @@ export default function TreeCanvas({
     [nodeCenter, size.w, size.h],
   )
 
+  // The whole tree on screen at once.
   const fit = useCallback(() => {
     if (size.w === 0 || layout.width === 0) return
     const k = clamp(Math.min(size.w / layout.width, size.h / layout.height), MIN_K, 1)
     setView({ k, x: (size.w - layout.width * k) / 2, y: Math.max(8, (size.h - layout.height * k) / 2) })
   }, [size.w, size.h, layout.width, layout.height])
 
-  // First view: on you if you are in the tree, otherwise the whole tree across the screen.
+  // First view: the full tree.
   useEffect(() => {
     if (started.current || size.w === 0 || layout.nodes.length === 0) return
     started.current = true
-    const k = clamp(size.w / layout.width, 0.6, 1)
-    if (meId && centerOn(meId, k)) return
-    setView({ k, x: (size.w - layout.width * k) / 2, y: 12 })
-  }, [size.w, layout, meId, centerOn])
+    fit()
+  }, [size.w, layout, fit])
 
   // Jump to someone chosen from the search box.
   useEffect(() => {
@@ -109,65 +105,6 @@ export default function TreeCanvas({
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
   }, [zoomAt])
-
-  // Every person with descendants can open a family cluster. Partners and all
-  // descendants are included; stored relationships are never edited here.
-  const familyMembers = useMemo(() => {
-    const children = new Map<string, string[]>()
-    const partners = new Map<string, string[]>()
-    for (const link of links) {
-      const map = link.kind === 'parent' ? children : partners
-      const key = link.kind === 'parent' ? link.a_id : link.a_id
-      const value = link.b_id
-      const list = map.get(key)
-      if (list) list.push(value)
-      else map.set(key, [value])
-      if (link.kind === 'partner') {
-        const reverse = partners.get(link.b_id)
-        if (reverse) reverse.push(link.a_id)
-        else partners.set(link.b_id, [link.a_id])
-      }
-    }
-    const result = new Map<string, Set<string>>()
-    for (const root of people.keys()) {
-      const members = new Set<string>([root])
-      const queue = [root]
-      while (queue.length) {
-        const id = queue.shift() as string
-        for (const partner of partners.get(id) ?? []) {
-          if (!members.has(partner)) {
-            members.add(partner)
-            queue.push(partner)
-          }
-        }
-        for (const child of children.get(id) ?? []) {
-          if (!members.has(child)) {
-            members.add(child)
-            queue.push(child)
-          }
-        }
-      }
-      result.set(root, members)
-    }
-    return result
-  }, [links, people])
-
-  const focusedMembers = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
-  // Keep the tree compact: show the oldest generation and their children/partners.
-  // A glossy bubble on a second-generation person reveals that person's descendants.
-  const visibleIds = useMemo(() => {
-    const expanded = familyFocus ? familyMembers.get(familyFocus) ?? new Set([familyFocus]) : null
-    return new Set(layout.nodes.filter((node) => node.gen <= 1 || (expanded?.has(node.id) ?? false)).map((node) => node.id))
-  }, [layout.nodes, familyFocus, familyMembers])
-  const focusNodes = focusedMembers
-    ? layout.nodes.filter((node) => focusedMembers.has(node.id) && visibleIds.has(node.id))
-    : []
-  const focusBounds = focusNodes.length ? {
-    x: Math.min(...focusNodes.map((node) => node.x)) - 30,
-    y: Math.min(...focusNodes.map((node) => node.y)) - 42,
-    w: Math.max(...focusNodes.map((node) => node.x + NODE_W)) - Math.min(...focusNodes.map((node) => node.x)) + 60,
-    h: Math.max(...focusNodes.map((node) => node.y + NODE_H)) - Math.min(...focusNodes.map((node) => node.y)) + 84,
-  } : null
 
   const pinchDistance = () => {
     const [a, b] = [...pointers.current.values()]
@@ -213,30 +150,6 @@ export default function TreeCanvas({
     if (wasOne && !gesture.current.moved && e.type === 'pointerup') {
       // A tap, not a drag: find which person was under the finger.
       const hit = document.elementFromPoint(e.clientX, e.clientY)
-      const branch = hit?.closest('[data-branch-id]')?.getAttribute('data-branch-id')
-      if (branch) {
-        setFamilyFocus((current) => current === branch ? null : branch)
-        const center = nodeCenter(branch)
-        if (center) centerOn(branch, Math.max(view.k, 0.9))
-        return
-      }
-
-      // While a family is focused, tapping anywhere outside its highlighted
-      // sphere/bounds exits focus. Taps inside the family still select people.
-      if (familyFocus && focusBounds) {
-        const rect = box.current?.getBoundingClientRect()
-        if (rect) {
-          const worldX = (e.clientX - rect.left - view.x) / view.k
-          const worldY = (e.clientY - rect.top - view.y) / view.k
-          const outside = worldX < focusBounds.x || worldX > focusBounds.x + focusBounds.w ||
-            worldY < focusBounds.y || worldY > focusBounds.y + focusBounds.h
-          if (outside) {
-            setFamilyFocus(null)
-            return
-          }
-        }
-      }
-
       const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
       if (id) onSelect(id)
     }
@@ -274,13 +187,13 @@ export default function TreeCanvas({
         ref={box}
         tabIndex={0}
         role="group"
-        aria-label="Family tree. Tap a glossy bubble to reveal that branch. Drag to move and pinch to zoom."
+        aria-label="Family tree. Tap a person to see who they are. Drag to move and pinch to zoom."
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
-        className="family-tree-stage h-[60dvh] min-h-[22rem] w-full touch-none select-none overflow-hidden rounded-[var(--radius-card)] border border-line"
+        className="family-tree-stage h-[72dvh] min-h-[26rem] w-full touch-none select-none overflow-hidden rounded-[var(--radius-card)] border border-line"
       >
         <svg
           width={layout.width}
@@ -292,110 +205,39 @@ export default function TreeCanvas({
             display: 'block',
           }}
         >
-          <defs>
-            <linearGradient id="family-root-gradient" x1="0" y1="0" x2={layout.width} y2={layout.height} gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#2478ff" />
-              <stop offset="48%" stopColor="#36dfff" />
-              <stop offset="100%" stopColor="#b8ffff" />
-            </linearGradient>
-            <linearGradient id="family-partner-gradient" x1="0" y1="0" x2={layout.width} y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#398dff" />
-              <stop offset="50%" stopColor="#62eaff" />
-              <stop offset="100%" stopColor="#d7ffff" />
-            </linearGradient>
-            <linearGradient id="root-body" x1="0" y1="0" x2="0" y2={layout.height} gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#1f5cff" />
-              <stop offset="55%" stopColor="#3d8bff" />
-              <stop offset="100%" stopColor="#7fd0ff" />
-            </linearGradient>
-            <filter id="family-root-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="5.5" result="wideGlow" />
-              <feMerge>
-                <feMergeNode in="wideGlow" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-          {focusBounds && (
-            <g pointerEvents="none">
-              <rect
-                x={focusBounds.x}
-                y={focusBounds.y}
-                width={focusBounds.w}
-                height={focusBounds.h}
-                rx={28}
-                fill="var(--accent)"
-                fillOpacity={0.055}
-                stroke="var(--accent)"
-                strokeOpacity={0.65}
-                strokeWidth={2}
-                strokeDasharray="7 5"
-              />
-              <text x={focusBounds.x + 16} y={focusBounds.y + 23} fill="var(--accent-text)" fontSize={13} fontWeight={700}>
-                FAMILY FOCUS
-              </text>
-            </g>
-          )}
-          {layout.edges.filter((e) => {
-            if (e.id.startsWith('stem:')) {
-              const [, , childIds = ''] = e.id.split(':')
-              return childIds.split(',').some((id) => visibleIds.has(id))
-            }
-            const link = links.find((item) => item.id === e.id)
-            return !link || (visibleIds.has(link.a_id) && visibleIds.has(link.b_id))
-          }).map((e) => (
-            <g key={e.id} pointerEvents="none" className={e.kind === 'partner' ? 'family-edge family-edge-partner' : 'family-edge family-edge-root'}>
-              {e.kind === 'parent' && e.segs ? (
-                (() => {
-                  // Thick near the top of the tree, thinner and thinner further down.
-                  const depth = Math.min(1, (e.sy ?? 0) / Math.max(1, layout.height))
-                  const base = 22 - 11 * depth
-                  const width = (role: 'trunk' | 'bough' | 'twig'): [number, number] =>
-                    role === 'trunk' ? [base, base * 0.7] : role === 'bough' ? [base * 0.7, base * 0.16] : [base * 0.4, 1.4]
-                  const dim = familyFocus ? 0.25 : 1
-                  return (
-                    <g style={{ transition: 'opacity 220ms ease' }} opacity={dim}>
-                      <g filter="url(#family-root-glow)" opacity={0.75}>
-                        {e.segs.map((seg, i) => (
-                          <path key={i} d={taperPath(seg.d, width(seg.role)[0] * 1.9, width(seg.role)[1] * 1.9)} fill="#0b4dff" />
-                        ))}
-                      </g>
-                      {e.segs.map((seg, i) => (
-                        <path key={i} d={taperPath(seg.d, ...width(seg.role))} fill="url(#root-body)" />
-                      ))}
-                      {e.segs.map((seg, i) => (
-                        <path key={i} d={taperPath(seg.d, width(seg.role)[0] * 0.3, Math.max(0.6, width(seg.role)[1] * 0.25))} fill="#eaf8ff" fillOpacity={0.95} />
-                      ))}
-                      {e.segs.flatMap((seg, i) =>
-                        hairPaths(seg, e.id).map((hd, j) => (
-                          <path key={`${i}-${j}`} d={hd} fill="none" stroke="#bfe6ff" strokeWidth={1.1} strokeLinecap="round" strokeOpacity={0.8} />
-                        )),
-                      )}
+          {(() => {
+            const roots = layout.edges.filter((e) => e.segs)
+            const partners = layout.edges.filter((e) => e.kind === 'partner')
+            // Every root is a ribbon: wide where it leaves the parents, thin where it reaches the child.
+            const parts = roots.flatMap((e) =>
+              (e.segs ?? []).flatMap((seg, i) => [
+                { seg, tip: e.kind === 'tip', hairs: e.kind === 'parent' ? rootlets(seg, `${e.id}:${i}`) : [] },
+              ]),
+            )
+            return (
+              <g pointerEvents="none">
+                <g className="root-aura">
+                  {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 2.6 + 6, seg.w1 * 2.6 + 4)} />)}
+                </g>
+                <g className="root-body">
+                  {parts.map(({ seg, tip, hairs }, i) => (
+                    <g key={i} className={tip ? 'root-tip' : undefined}>
+                      <path d={taperPath(seg.d, seg.w0, seg.w1)} />
+                      {hairs.map((h, j) => <path key={j} d={taperPath(h.d, h.w0, h.w1)} />)}
                     </g>
-                  )
-                })()
-              ) : (
-                <path
-                  d={e.d}
-                  fill="none"
-                  stroke="url(#family-partner-gradient)"
-                  strokeWidth={3}
-                  strokeOpacity={familyFocus ? 0.25 : 0.95}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ transition: 'stroke-opacity 220ms ease' }}
-                />
-              )}
-            </g>
-          ))}
-          {layout.nodes.filter((n) => visibleIds.has(n.id)).map((n) => {
+                  ))}
+                </g>
+                <g className="root-core">
+                  {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 0.3, Math.max(0.5, seg.w1 * 0.3))} />)}
+                </g>
+                {partners.map((e) => <path key={e.id} d={e.d} className="root-partner" />)}
+              </g>
+            )
+          })()}
+          {layout.nodes.map((n) => {
             const p = people.get(n.id)
             if (!p) return null
             const sub = p.nickname ? `“${clip(p.nickname, 12)}”` : p.birth_date ? p.birth_date.slice(0, 4) : ''
-            const overview = n.gen === 1
-            const inFocus = !focusedMembers || focusedMembers.has(n.id)
-            const scale = familyFocus ? (inFocus ? 1.08 : 0.72) : 1
-            const transform = `translate(${n.x + NODE_W / 2} ${n.y + NODE_H / 2}) scale(${scale}) translate(${-NODE_W / 2} ${-NODE_H / 2})`
             const classes = ['tnode-rect']
             if (n.id === meId) classes.push('tnode-me')
             if (n.id === selectedId) classes.push('tnode-sel')
@@ -404,39 +246,23 @@ export default function TreeCanvas({
               <g
                 key={n.id}
                 data-pid={n.id}
-                data-branch-id={overview && (familyMembers.get(n.id)?.size ?? 1) > 1 ? n.id : undefined}
-                transform={transform}
-                opacity={inFocus ? 1 : 0.18}
-                style={{ filter: inFocus ? undefined : 'blur(1.4px)', transition: 'opacity 220ms ease, filter 220ms ease' }}
+                transform={`translate(${n.x} ${n.y})`}
                 tabIndex={0}
                 role="button"
-                aria-label={overview ? `Open ${p.full_name}'s family roots` : `${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
+                aria-label={`${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    if (overview && (familyMembers.get(n.id)?.size ?? 1) > 1) setFamilyFocus((current) => current === n.id ? null : n.id)
-                    else onSelect(n.id)
+                    onSelect(n.id)
                   }
                 }}
               >
-                {overview ? (
-                  <g>
-                    <circle cx={NODE_W / 2} cy={NODE_H / 2} r={38} fill="var(--glass-regular, var(--surface))" stroke="var(--accent)" strokeOpacity={0.85} strokeWidth={1.6} style={{ filter: 'drop-shadow(0 5px 11px color-mix(in srgb, var(--accent) 26%, transparent))' }} />
-                    <circle cx={NODE_W / 2 - 11} cy={NODE_H / 2 - 17} r={20} fill="white" fillOpacity={0.09} />
-                    <text x={NODE_W / 2} y={NODE_H / 2 - 3} textAnchor="middle" className="fill-ink" fontSize="12" fontWeight="800">{clip(p.full_name, 10)}</text>
-                    <text x={NODE_W / 2} y={NODE_H / 2 + 13} textAnchor="middle" className="fill-muted" fontSize="9">{(familyMembers.get(n.id)?.size ?? 1) - 1} family</text>
-                  </g>
-                ) : (
-                  <>
-                    <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
-                    <text x={NODE_W / 2} y={26} textAnchor="middle" className="fill-ink" fontSize="13" fontWeight="700">{clip(p.full_name, 15)}</text>
-                    <text x={NODE_W / 2} y={44} textAnchor="middle" className="fill-muted" fontSize="11">{sub}</text>
-                  </>
-                )}
+                <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
+                <text x={NODE_W / 2} y={26} textAnchor="middle" className="fill-ink" fontSize="13" fontWeight="700">{clip(p.full_name, 15)}</text>
+                <text x={NODE_W / 2} y={44} textAnchor="middle" className="fill-muted" fontSize="11">{sub}</text>
               </g>
             )
           })}
-
         </svg>
       </div>
 

@@ -12,6 +12,7 @@ const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
   { id: 'midnight', label: 'Midnight', hint: 'Black and deep blue' },
   { id: 'uncharted', label: 'Uncharted', hint: 'Expedition journal' },
+  { id: 'rdr2', label: 'RDR2', hint: 'Outlaw frontier' },
   { id: 'glass', label: 'Liquid Glass', hint: 'Owner only' },
   { id: 'system', label: 'System', hint: 'Match my phone' },
 ]

@@ -1446,31 +1446,63 @@ input[type="checkbox"] {
   color: transparent;
 }
 
-/* Loading screen footer: the motto in engraved Roman capitals, and the copyright line. */
+/* Loading screen footer: motto, theme-specific epigraph, and copyright. */
 .motto {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  margin: 0;
   font-family: var(--font-heading);
   font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.34em;
-  text-indent: 0.34em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+  text-align: center;
   color: var(--ink);
   opacity: 0;
   animation: motto-in 1.6s ease-out 0.9s forwards;
 }
-.motto-rule {
-  display: block;
-  width: 1.75rem;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--muted));
+.theme-quote {
+  display: none;
+  max-width: min(22rem, 88vw);
+  margin: 0.15rem 0 0;
+  padding: 0.25rem 0 0.25rem 0.8rem;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  animation: quote-in 1.2s ease-out 1.25s forwards;
 }
-.motto-rule:last-child { transform: scaleX(-1); }
-.copyright { font-size: 0.68rem; letter-spacing: 0.04em; color: var(--muted); opacity: 0; animation: motto-in 1.2s ease-out 1.4s forwards; }
-@keyframes motto-in { from { opacity: 0; letter-spacing: 0.5em; } to { opacity: 0.85; letter-spacing: 0.34em; } }
-.copyright { animation-name: copyright-in; }
+.theme-quote cite {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-align: right;
+}
+:root[data-theme="tactical"] .theme-quote-tactical,
+:root:not([data-theme]) .theme-quote-tactical { display: block; }
+:root[data-theme="rdr2"] .theme-quote-rdr2 { display: block; }
+:root[data-theme="glass"] .theme-quote-glass { display: block; }
+:root[data-theme="rdr2"] .theme-quote {
+  border-left-color: #a93626;
+  color: #cbb596;
+  background: linear-gradient(90deg, rgb(169 54 38 / 0.12), transparent);
+  padding: 0.45rem 0.7rem;
+}
+:root[data-theme="rdr2"] .theme-quote cite {
+  color: #eadbc0;
+  font-family: "Chinese Rocks", Impact, fantasy, serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+.copyright { font-size: 0.68rem; letter-spacing: 0.04em; color: var(--muted); opacity: 0; animation: copyright-in 1.2s ease-out 1.4s forwards; }
+@keyframes motto-in { from { opacity: 0; letter-spacing: 0.5em; } to { opacity: 0.85; letter-spacing: 0.22em; } }
+@keyframes quote-in { to { opacity: 0.95; } }
 @keyframes copyright-in { to { opacity: 0.75; } }
 @media (prefers-reduced-motion: reduce) {
   .motto { animation: none; opacity: 0.85; }

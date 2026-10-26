@@ -1449,8 +1449,9 @@ input[type="checkbox"] {
   color: transparent;
 }
 
-/* Loading screen footer: motto, theme-specific epigraph, and copyright. */
+/* Loading screen footer: Sic Parvis Magna is exclusive to the Uncharted theme. */
 .motto {
+  display: none;
   margin: 0;
   font-family: var(--font-heading);
   font-size: 0.82rem;
@@ -1462,6 +1463,7 @@ input[type="checkbox"] {
   opacity: 0;
   animation: motto-in 1.6s ease-out 0.9s forwards;
 }
+:root[data-theme="uncharted"] .motto { display: block; }
 .theme-quote {
   display: none;
   max-width: min(22rem, 88vw);

@@ -1466,16 +1466,21 @@ input[type="checkbox"] {
 :root[data-theme="uncharted"] .motto { display: block; }
 .theme-quote {
   display: none;
-  max-width: min(22rem, 88vw);
+  width: min(34rem, 92vw);
+  max-width: min(34rem, 92vw);
+  box-sizing: border-box;
   margin: 0.15rem 0 0;
-  padding: 0.25rem 0 0.25rem 0.8rem;
-  border-left: 2px solid var(--accent);
-  color: var(--muted);
+  padding: 0.85rem 1.1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
+  color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.82rem;
+  font-size: clamp(0.95rem, 3.6vw, 1.1rem);
   font-style: italic;
-  line-height: 1.5;
-  text-align: left;
+  line-height: 1.55;
+  text-align: center;
   opacity: 0;
   animation: quote-in 1.2s ease-out 1.25s forwards;
 }
@@ -1494,10 +1499,9 @@ input[type="checkbox"] {
 :root[data-theme="rdr2"] .theme-quote-rdr2 { display: block; }
 :root[data-theme="glass"] .theme-quote-glass { display: block; }
 :root[data-theme="rdr2"] .theme-quote {
-  border-left-color: #a93626;
-  color: #cbb596;
-  background: linear-gradient(90deg, rgb(169 54 38 / 0.12), transparent);
-  padding: 0.45rem 0.7rem;
+  color: #eadbc0;
+  background: linear-gradient(110deg, rgb(169 54 38 / 0.18), rgb(48 37 30 / 0.92));
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.28);
 }
 :root[data-theme="rdr2"] .theme-quote cite {
   color: #eadbc0;

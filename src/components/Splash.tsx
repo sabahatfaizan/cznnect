@@ -21,7 +21,10 @@ export default function Splash() {
       </div>
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <p className="motto">Sic Parvis Magna</p>
-        <blockquote className="theme-quote theme-quote-tactical">Stay sharp. Stay connected.</blockquote>
+        <blockquote className="theme-quote theme-quote-tactical">
+          “Stay frosty, soldier.”
+          <cite>— Simon “Ghost” Riley</cite>
+        </blockquote>
         <blockquote className="theme-quote theme-quote-rdr2">
           “We're more ghosts than people.”
           <cite>— Arthur Morgan</cite>

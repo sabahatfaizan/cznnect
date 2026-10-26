@@ -29,26 +29,27 @@
   color-scheme: light;
 }
 
+/* Call of Duty-inspired Tactical HUD: field black, ranger olive, muted amber. */
 :root[data-theme="tactical"] {
-  --page: #0c0e0b;
-  --surface: #141812;
-  --surface-2: #1b2118;
-  --ink: #dde3d6;
-  --muted: #8b9684;
-  --line: #2c3527;
-  --accent: #a3e635;
-  --accent-ink: #0c0e0b;
-  --accent-soft: #212b19;
-  --accent-text: #a3e635;
-  --ok: #7bd389;
-  --danger: #ff7a6b;
-  --radius-card: 4px;
-  --radius-ctl: 3px;
-  --radius-avatar: 3px;
-  --shadow-card: none;
+  --page: #0b0d0b;
+  --surface: #141713;
+  --surface-2: #20251d;
+  --ink: #e2e4d8;
+  --muted: #929887;
+  --line: #394132;
+  --accent: #b6a36a;
+  --accent-ink: #10120e;
+  --accent-soft: #2b3023;
+  --accent-text: #c9b77b;
+  --ok: #91ad78;
+  --danger: #d96a53;
+  --radius-card: 2px;
+  --radius-ctl: 2px;
+  --radius-avatar: 2px;
+  --shadow-card: 0 3px 12px rgb(0 0 0 / 0.28);
   --font-heading: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --heading-case: uppercase;
-  --heading-track: 0.04em;
+  --heading-track: 0.055em;
   color-scheme: dark;
 }
 
@@ -233,12 +234,14 @@
     border-color: rgb(255 255 255 / 0.12);
   }
 
-  /* Tactical gets a faint grid behind the panels. */
+  /* COD-inspired field HUD: subtle grid, vignette, and olive telemetry glow. */
   :root[data-theme="tactical"] body {
     background-image:
-      linear-gradient(rgb(163 230 53 / 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(163 230 53 / 0.045) 1px, transparent 1px);
-    background-size: 32px 32px;
+      radial-gradient(ellipse at 50% 42%, transparent 20%, rgb(0 0 0 / 0.58) 100%),
+      linear-gradient(rgb(182 163 106 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(182 163 106 / 0.035) 1px, transparent 1px),
+      radial-gradient(ellipse at 12% 0%, rgb(104 121 75 / 0.12), transparent 34rem);
+    background-size: auto, 32px 32px, 32px 32px, auto;
     background-attachment: fixed;
   }
 
@@ -1003,11 +1006,11 @@ input[type="checkbox"] {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
 }
 :root[data-theme="tactical"] .family-tree-stage {
-  --root-body: #7fb520;
-  --root-core: #e6ffa8;
-  --root-aura: rgb(163 230 53 / 0.16);
-  --root-partner: #a3e635;
-  --stage-bg: linear-gradient(180deg, #0f130d, #0a0c09);
+  --root-body: #8b9664;
+  --root-core: #e4dfbd;
+  --root-aura: rgb(182 163 106 / 0.16);
+  --root-partner: #c9b77b;
+  --stage-bg: linear-gradient(180deg, #11150f, #090b08);
 }
 :root[data-theme="midnight"] .family-tree-stage {
   --root-body: #2f72ff;

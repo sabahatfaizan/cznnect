@@ -70,6 +70,37 @@
   color-scheme: dark;
 }
 
+/* RDR2: dusty frontier palette with the uploaded Chinese Rocks western display font. */
+@font-face {
+  font-family: "Chinese Rocks";
+  src: url("../chinese rocks rg.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 400 800;
+}
+
+:root[data-theme="rdr2"] {
+  --page: #171310;
+  --surface: #241d18;
+  --surface-2: #30251e;
+  --ink: #eadbc0;
+  --muted: #b49e7e;
+  --line: #594333;
+  --accent: #a93626;
+  --accent-ink: #fff0d8;
+  --accent-soft: #45251e;
+  --accent-text: #e6a36b;
+  --ok: #9b9b5a;
+  --danger: #e05242;
+  --radius-card: 3px;
+  --radius-ctl: 2px;
+  --radius-avatar: 2px;
+  --shadow-card: 0 5px 18px rgb(0 0 0 / 0.35);
+  --font-heading: "Chinese Rocks", Impact, fantasy, serif;
+  --heading-case: uppercase;
+  --heading-track: 0.045em;
+  color-scheme: dark;
+}
+
 /* Uncharted: expedition journal, aged paper, jungle green, and brass. */
 @font-face {
   font-family: "Nathan";
@@ -202,6 +233,38 @@
   :root[data-theme="uncharted"] .eyebrow {
     letter-spacing: 0.06em;
     color: var(--accent);
+  }
+
+  :root[data-theme="rdr2"] body {
+    background:
+      radial-gradient(ellipse at 50% -8%, rgb(169 54 38 / 0.22), transparent 34rem),
+      repeating-linear-gradient(0deg, rgb(218 179 126 / 0.018) 0px, rgb(218 179 126 / 0.018) 1px, transparent 1px, transparent 5px),
+      var(--page);
+    background-attachment: fixed;
+  }
+
+  :root[data-theme="rdr2"] .card {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border-color: var(--line);
+    box-shadow: 0 5px 18px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 231 196 / 0.035);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  :root[data-theme="rdr2"] .font-display,
+  :root[data-theme="rdr2"] .btn,
+  :root[data-theme="rdr2"] .eyebrow {
+    font-family: var(--font-heading);
+  }
+
+  :root[data-theme="rdr2"] .eyebrow {
+    color: var(--accent-text);
+    letter-spacing: 0.08em;
+  }
+
+  :root[data-theme="rdr2"] .btn-primary {
+    border-color: #c05b40;
+    box-shadow: inset 0 1px 0 rgb(255 226 190 / 0.15);
   }
 
   :root[data-theme="midnight"] body {

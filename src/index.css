@@ -101,36 +101,6 @@
   color-scheme: dark;
 }
 
-/* Uncharted: expedition journal, aged paper, jungle green, and brass. */
-@font-face {
-  font-family: "Nathan";
-  src: url("../Nathan-eXBp.ttf") format("truetype");
-  font-display: swap;
-  font-weight: 400 800;
-}
-
-:root[data-theme="uncharted"] {
-  --page: #d8c69e;
-  --surface: #f0e5c8;
-  --surface-2: #e2d3ad;
-  --ink: #25352b;
-  --muted: #66705b;
-  --line: #b5a27a;
-  --accent: #476044;
-  --accent-ink: #f7efd9;
-  --accent-soft: #c8d0b0;
-  --accent-text: #354d37;
-  --ok: #426b42;
-  --danger: #9a3f2f;
-  --radius-card: 5px;
-  --radius-ctl: 3px;
-  --radius-avatar: 9999px;
-  --shadow-card: 0 3px 10px rgb(49 42 25 / 0.14);
-  --font-heading: "Nathan", "Cinzel", Georgia, serif;
-  --heading-case: none;
-  --heading-track: 0.01em;
-  color-scheme: light;
-}
 /* Lets Tailwind classes like bg-surface and text-muted follow the tokens above. */
 @theme inline {
   --color-page: var(--page);
@@ -208,27 +178,11 @@
     -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
 
-  :root[data-theme="uncharted"] body {
-    background:
-      radial-gradient(ellipse at 18% 0%, rgb(101 115 67 / 0.17), transparent 34rem),
-      repeating-linear-gradient(0deg, rgb(89 72 39 / 0.025) 0px, rgb(89 72 39 / 0.025) 1px, transparent 1px, transparent 5px),
-      var(--page);
-    background-attachment: fixed;
-  }
 
-  :root[data-theme="uncharted"] .card {
-    background: color-mix(in srgb, var(--surface) 91%, transparent);
-    border-color: var(--line);
-    box-shadow: 0 3px 10px rgb(49 42 25 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.45);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 
-  :root[data-theme="uncharted"] .font-display,
-  :root[data-theme="uncharted"] .btn,
-  :root[data-theme="uncharted"] .eyebrow {
-    font-family: var(--font-heading);
-  }
+
+
+
 
   :root[data-theme="uncharted"] .eyebrow {
     letter-spacing: 0.06em;

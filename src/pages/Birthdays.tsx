@@ -92,7 +92,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="font-display text-2xl font-extrabold">Birthdays</h1>
-        <p className="text-sm text-muted">Never miss a cousin's day. Only people who joined your family show up here.</p>
+        <p className="text-sm text-muted">Never miss a cousin's day.</p>
       </header>
 
       {error && (

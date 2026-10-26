@@ -123,7 +123,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
         <div className="min-w-0">
           <p className="eyebrow">In person</p>
           <h1 className="font-display text-2xl font-extrabold">Convoy</h1>
-          <p className="text-sm text-muted">Find a cousin, scan to link, and earn points for every real-life meetup.</p>
         </div>
       </header>
 
@@ -151,12 +150,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
           ))}
 
           <section className="card flex flex-col gap-4" aria-label="Your link code">
-            <div>
-              <p className="eyebrow">Your link code</p>
-              <p className="text-sm text-muted">
-                Show this to a cousin when you meet. It holds no name or email, and it changes every 5 minutes.
-              </p>
-            </div>
+            <p className="eyebrow">Your link code</p>
             <IrlMyCode familyId={family.id} />
             <div className="grid grid-cols-2 gap-3">
               <button className="btn btn-primary" onClick={() => setScanning(true)}>
@@ -186,20 +180,19 @@ export default function Irl({ family, userId }: { family: Family; userId: string
             </section>
           )}
 
-          {loaded && active.length === 0 && finished.length === 0 && (
-            <p className="px-1 text-sm text-muted">No meetups right now. Next time you see a cousin, scan their code.</p>
-          )}
-
-          <section className="card flex flex-col gap-1" aria-label="How points work">
-            <h2 className="font-display text-lg font-bold">How points work</h2>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+          <details className="card expander" aria-label="How points work">
+            <summary>
+              <span className="font-display text-lg font-bold">How points work</span>
+              <span aria-hidden="true" className="expander-chevron">›</span>
+            </summary>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
               <li>Two cousins meet: scan each other, both confirm, 10 points each.</li>
               <li>Group of 3 or more: 10 points plus 5 for each cousin beyond two, up to 40 each.</li>
               <li>The same two cousins earn together once every 24 hours.</li>
               <li>You can earn from up to 3 meetups in 24 hours.</li>
               <li>Points are decided by the server, so they cannot be edited on a phone.</li>
             </ul>
-          </section>
+          </details>
         </>
       )}
 

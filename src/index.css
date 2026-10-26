@@ -1356,3 +1356,27 @@ input[type="checkbox"] {
 :root[data-theme="glass"] .bd-alert { border: 1px solid var(--glass-stroke); }
 :root[data-theme="glass"] .bd-count { border-radius: 22px; box-shadow: inset 0 1.5px 0 rgb(255 255 255 / 0.4), 0 8px 18px rgb(0 0 0 / 0.35); }
 @media (prefers-reduced-motion: reduce) { .bd-switch, .bd-switch span { transition: none; } }
+
+/* Expandable card (native <details>) */
+.expander { padding-block: 0; }
+.expander > summary {
+  display: flex;
+  min-height: 3.5rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
+}
+.expander > summary::-webkit-details-marker { display: none; }
+.expander[open] > summary { padding-top: 0.25rem; }
+.expander[open] { padding-bottom: 1rem; }
+.expander-chevron {
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 0.25s;
+}
+.expander[open] .expander-chevron { transform: rotate(90deg); }
+.expander > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 0.5rem; }
+@media (prefers-reduced-motion: reduce) { .expander-chevron { transition: none; } }

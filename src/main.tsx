@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import '@fontsource/cinzel/latin-600.css'
 import App from './App'
 import { applyTheme, getThemePref, watchSystemTheme } from './theme'
 import { applyIcon } from './appIcon'

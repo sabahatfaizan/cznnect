@@ -19,7 +19,7 @@
       // Apply the saved theme before the page paints, so there is no flash of the wrong one.
       try {
         var p = localStorage.getItem('cznnect-theme')
-        document.documentElement.dataset.theme = p === 'uncharted' ? 'uncharted' : p === 'rdr2' ? 'rdr2' : p === 'glass' ? 'glass' : 'tactical'
+        document.documentElement.dataset.theme = p === 'rdr2' ? 'rdr2' : p === 'glass' ? 'glass' : 'tactical'
       } catch (e) {}
     </script>
   </head>

@@ -1,6 +1,6 @@
-// Available themes: Tactical HUD, Uncharted, RDR2, and owner-only Liquid Glass.
+// Available themes: Tactical HUD, RDR2, and owner-only Liquid Glass.
 // The choice is saved on this device, so each cousin picks their own.
-export type ThemePref = 'tactical' | 'uncharted' | 'rdr2' | 'glass'
+export type ThemePref = 'tactical' | 'rdr2' | 'glass'
 type Theme = 'tactical' | 'uncharted' | 'rdr2' | 'glass'
 
 const KEY = 'cznnect-theme'
@@ -8,7 +8,7 @@ const KEY = 'cznnect-theme'
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'tactical' || v === 'uncharted' || v === 'rdr2' || v === 'glass') return v
+    if (v === 'tactical' || v === 'rdr2' || v === 'glass') return v
     // Migrate removed themes to Tactical HUD so existing users don't land on a retired appearance.
   } catch {
     // Storage can be blocked. Fall back to the default.
@@ -17,7 +17,7 @@ export function getThemePref(): ThemePref {
 }
 
 // Liquid Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
-// else, a saved "glass" choice falls back to dark Midnight, so there is no flash of a retired theme before sign-in. (Hiding the option is not a security boundary.)
+// else, a saved "glass" choice falls back to Tactical HUD, so there is no flash of a retired theme before sign-in. (Hiding the option is not a security boundary.)
 let glassAllowed = false
 export function setGlassAllowed(allowed: boolean) {
   if (glassAllowed === allowed) return
@@ -26,7 +26,6 @@ export function setGlassAllowed(allowed: boolean) {
 }
 
 function resolve(pref: ThemePref): Theme {
-  if (pref === 'uncharted') return 'uncharted'
   if (pref === 'rdr2') return 'rdr2'
   if (pref === 'glass') return glassAllowed ? 'glass' : 'tactical'
   return pref
@@ -37,7 +36,7 @@ export function applyTheme(pref: ThemePref) {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'uncharted' ? '#d8c69e' : theme === 'rdr2' ? '#171310' : theme === 'glass' ? '#070b16' : '#0c0e0b')
+    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'rdr2' ? '#171310' : theme === 'glass' ? '#070b16' : '#0c0e0b')
 }
 
 export function setThemePref(pref: ThemePref) {

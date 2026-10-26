@@ -25,6 +25,7 @@ export default function Splash() {
           Sic Parvis Magna
           <span aria-hidden="true" className="motto-rule" />
         </p>
+        <p className="copyright">© 2026 Sabahat Faizan. All rights reserved.</p>
       </div>
     </div>
   )

@@ -73,7 +73,7 @@
 /* Uncharted: expedition journal, aged paper, jungle green, and brass. */
 @font-face {
   font-family: "Nathan";
-  src: url("../fonts/Nathan-eXBp.ttf") format("truetype");
+  src: url("../Nathan-eXBp.ttf") format("truetype");
   font-display: swap;
   font-weight: 400 800;
 }

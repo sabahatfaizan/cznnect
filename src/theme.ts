@@ -17,7 +17,7 @@ export function getThemePref(): ThemePref {
 }
 
 // Liquid Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
-// else, a saved "glass" choice falls back to dark Midnight, so there is no light flash before sign-in. (Hiding the option is not a security boundary.)
+// else, a saved "glass" choice falls back to dark Midnight, so there is no flash of a retired theme before sign-in. (Hiding the option is not a security boundary.)
 let glassAllowed = false
 export function setGlassAllowed(allowed: boolean) {
   if (glassAllowed === allowed) return

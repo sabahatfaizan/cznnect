@@ -1,28 +1,36 @@
-// Cznnect's mark: an O and a Z in one square. The frame is the O, the diagonal bisector is the Z,
-// and the diagonal joins two opposite corners, so "Czn" and "connect" read as one shape.
-// With animated, the square spins and slows to rest while the diagonal draws across to the far corner.
-export function Mark({ className = '', animated = false }: { className?: string; animated?: boolean }) {
+import { useId } from 'react'
+
+// Cznnect's mark: an O and a Z in one square. The sharp, thick frame is the O, the diagonal bisector is
+// the Z, and the diagonal joins two opposite corners, so "Czn" and "connect" read as one shape.
+// The colours are a gradient taken from the chosen app icon (see appIcon.ts).
+// With loop, the square keeps spinning and slows to rest; as it rests the diagonal connects, then it spins on.
+export function Mark({ className = '', loop = false }: { className?: string; loop?: boolean }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   return (
-    <svg viewBox="0 0 64 64" aria-hidden="true" className={className + (animated ? ' mark-spin' : '')} fill="none">
-      <rect x="8" y="8" width="48" height="48" rx="2" stroke="currentColor" strokeWidth="8" strokeLinejoin="round" />
-      <path
-        d="M8 56L56 8"
-        pathLength={1}
-        className={animated ? 'mark-bar' : undefined}
-        stroke="currentColor"
-        strokeWidth="8"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 64 64" aria-hidden="true" className={className + (loop ? ' mark-loop' : '')} fill="none">
+      <defs>
+        <linearGradient id={`g${id}`} gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="60" y2="60">
+          <stop offset="0" style={{ stopColor: 'var(--logo-a, #5aa9ff)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--logo-b, #1f3fd0)' }} />
+        </linearGradient>
+        <clipPath id={`c${id}`}>
+          <rect x="4" y="4" width="56" height="56" />
+        </clipPath>
+      </defs>
+      <path d="M4 4H60V60H4Z M15 15V49H49V15Z" fillRule="evenodd" fill={`url(#g${id})`} />
+      <g clipPath={`url(#c${id})`}>
+        <path d="M0 64L64 0" pathLength={1} className="mark-bar" stroke={`url(#g${id})`} strokeWidth="11" strokeLinecap="butt" />
+      </g>
     </svg>
   )
 }
 
 // The wordmark reads C_nnect, where the mark stands in for the "z": Cznnect and Connect in one word.
-export function Wordmark({ className = '', animated = false }: { className?: string; animated?: boolean }) {
+export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={'wordmark ' + className} role="img" aria-label="Cznnect">
-      <span aria-hidden="true" className="text-accent-text">C</span>
-      <Mark animated={animated} className="wordmark-mark text-accent-text" />
+      <span aria-hidden="true" className="wordmark-c">C</span>
+      <Mark className="wordmark-mark" />
       <span aria-hidden="true">nnect</span>
     </span>
   )

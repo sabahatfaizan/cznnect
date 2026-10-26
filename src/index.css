@@ -447,51 +447,6 @@ input[type="checkbox"] {
 .pin-new { background: var(--danger); border-color: var(--danger); }
 .pin-sel { transform: scale(1.3); box-shadow: 0 0 0 3px var(--ink), 0 1px 6px rgb(0 0 0 / 0.5); }
 
-/* Opening screen */
-.splash-loop {
-  stroke: var(--accent);
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: splash-draw 2.4s ease-in-out 0s forwards;
-}
-.splash-still {
-  animation: none;
-  stroke-dashoffset: 0;
-}
-.splash-name {
-  opacity: 0;
-  transform: translateY(6px);
-  animation: splash-in 0.6s ease-out 1.5s forwards;
-}
-.splash-track {
-  width: 12rem;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 9999px;
-  background: var(--line);
-}
-.splash-bar {
-  width: 100%;
-  height: 100%;
-  background: var(--accent);
-  transform-origin: left;
-  animation: splash-fill 2.4s linear forwards;
-}
-.splash-bar.splash-still {
-  animation: none;
-}
-@keyframes splash-draw {
-  to { stroke-dashoffset: 0; }
-}
-@keyframes splash-in {
-  to { opacity: 1; transform: none; }
-}
-@keyframes splash-fill {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-
 /* iOS-inspired glass finish. Kept outside Tailwind layers so it reliably
    overrides the base component surfaces while preserving the tactical theme. */
 :root:not([data-theme="tactical"]) .card {
@@ -1069,34 +1024,63 @@ input[type="checkbox"] {
 @keyframes splash-mark-settle {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* New mark: the square spins and slows to rest, then the diagonal connects the far corners. */
-.mark-spin {
-  animation: mark-spin 1.5s cubic-bezier(.15,.6,.25,1) both;
+/* The mark: the diagonal is drawn with a dash so it can slide in and out.
+   Loop (3s): the square spins and slows to rest; as it rests the diagonal connects; the hold; then it
+   slides out through the far corner as the next spin starts. It never stops while the screen is open. */
+.mark-bar { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.mark-loop { animation: mark-loop-spin 3s infinite; }
+.mark-loop .mark-bar { animation: mark-loop-bar 3s infinite; }
+@keyframes mark-loop-spin {
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(.5, 0, .15, 1); }
+  62% { transform: rotate(360deg); }
+  100% { transform: rotate(360deg); }
 }
-.mark-bar {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: mark-connect 0.8s cubic-bezier(.3,.1,.2,1) 0.95s forwards;
+@keyframes mark-loop-bar {
+  0% { stroke-dashoffset: 0; animation-timing-function: ease-in; }
+  16% { stroke-dashoffset: -1; animation-timing-function: step-end; }
+  40% { stroke-dashoffset: 1; animation-timing-function: cubic-bezier(.3, .1, .2, 1); }
+  58% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
 }
-@keyframes mark-spin {
-  from { transform: rotate(-360deg); }
-  to { transform: rotate(0deg); }
+.splash-logo { filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--logo-b, #1f3fd0) 30%, transparent)); }
+
+/* Signature */
+.signature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 1rem;
+  -webkit-tap-highlight-color: transparent;
 }
-@keyframes mark-connect {
-  to { stroke-dashoffset: 0; }
+.signature-by { font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); opacity: 0.8; }
+.signature-name { display: inline-flex; font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; letter-spacing: 0.02em; }
+.signature-ch {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--logo-a, #5aa9ff), var(--logo-b, #1f3fd0));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0;
+  transform: translateY(10px);
+  animation:
+    signature-rise 0.5s cubic-bezier(.2, .8, .25, 1.2) calc(var(--i) * 45ms + 250ms) forwards,
+    signature-shine 2.8s ease-in-out calc(var(--i) * 90ms + 1s) infinite;
 }
+.signature-pop .signature-ch {
+  opacity: 1;
+  transform: none;
+  animation:
+    signature-bounce 0.6s cubic-bezier(.3, 1.6, .5, 1) calc(var(--i) * 40ms) both,
+    signature-shine 2.8s ease-in-out calc(var(--i) * 90ms + 1s) infinite;
+}
+@keyframes signature-rise { to { opacity: 1; transform: none; } }
+@keyframes signature-bounce { 0% { transform: translateY(0); } 40% { transform: translateY(-14px) scale(1.15); } 100% { transform: translateY(0); } }
+@keyframes signature-shine { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.45) saturate(1.2); } }
 @media (prefers-reduced-motion: reduce) {
-  .mark-spin { animation: none !important; transform: none; }
-  .mark-bar { animation: none !important; stroke-dashoffset: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .splash-mark,
-  .splash-name,
-  .splash-bar {
-    animation: none !important;
-    opacity: 1;
-    transform: none;
-  }
+  .mark-loop, .mark-loop .mark-bar { animation: none !important; }
+  .mark-bar { stroke-dashoffset: 0; }
+  .signature-ch { animation: none !important; opacity: 1; transform: none; }
 }
 
 /* Convoy */
@@ -1380,3 +1364,27 @@ input[type="checkbox"] {
 .expander[open] .expander-chevron { transform: rotate(90deg); }
 .expander > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 0.5rem; }
 @media (prefers-reduced-motion: reduce) { .expander-chevron { transition: none; } }
+
+/* Custom app icon picker */
+.icon-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  border: 2px solid transparent;
+  border-radius: 1.2rem;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.icon-tile img { width: 3.75rem; height: 3.75rem; border-radius: 22%; box-shadow: 0 4px 12px rgb(0 0 0 / 0.25); }
+.icon-tile-on { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+
+/* The C of the wordmark wears the same gradient as the mark. */
+.wordmark-c {
+  background: linear-gradient(135deg, var(--logo-a, #5aa9ff), var(--logo-b, #1f3fd0));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

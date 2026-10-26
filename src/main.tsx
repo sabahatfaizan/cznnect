@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 import { applyTheme, getThemePref, watchSystemTheme } from './theme'
+import { applyIcon } from './appIcon'
 
 applyTheme(getThemePref())
+applyIcon()
 watchSystemTheme()
 
 createRoot(document.getElementById('root')!).render(

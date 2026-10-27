@@ -4,10 +4,43 @@ export type ThemePref = 'tactical' | 'rdr2' | 'uncharted' | 'mw4' | 'glass'
 type Theme = 'tactical' | 'rdr2' | 'uncharted' | 'mw4' | 'glass'
 
 const KEY = 'cznnect-theme'
+const UNLOCKS_KEY = 'cznnect-unlocked-themes'
+const UNLOCK_EVENT = 'cznnect-theme-unlocked'
+
+export type ExclusiveTheme = 'rdr2' | 'uncharted'
+
+export function getUnlockedThemes(): ExclusiveTheme[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(UNLOCKS_KEY) || '[]')
+    return (Array.isArray(saved) ? saved : []).filter((v): v is ExclusiveTheme => v === 'rdr2' || v === 'uncharted')
+  } catch {
+    return []
+  }
+}
+
+export function isThemeUnlocked(theme: ExclusiveTheme): boolean {
+  return getUnlockedThemes().includes(theme)
+}
+
+export function unlockTheme(theme: ExclusiveTheme): boolean {
+  const unlocked = getUnlockedThemes()
+  if (unlocked.includes(theme)) return false
+  try { localStorage.setItem(UNLOCKS_KEY, JSON.stringify([...unlocked, theme])) } catch { /* This visit can still unlock it. */ }
+  window.dispatchEvent(new CustomEvent(UNLOCK_EVENT, { detail: theme }))
+  return true
+}
+
+export function onThemeUnlocked(callback: (theme: ExclusiveTheme) => void) {
+  const handler = (event: Event) => callback((event as CustomEvent<ExclusiveTheme>).detail)
+  window.addEventListener(UNLOCK_EVENT, handler)
+  return () => window.removeEventListener(UNLOCK_EVENT, handler)
+}
 
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
+    if (v === 'rdr2' && !isThemeUnlocked('rdr2')) return 'tactical'
+    if (v === 'uncharted' && !isThemeUnlocked('uncharted')) return 'tactical'
     if (v === 'tactical' || v === 'rdr2' || v === 'uncharted' || v === 'mw4' || v === 'glass') return v
     // Migrate removed themes to Tactical HUD so existing users don't land on a retired appearance.
   } catch {
@@ -40,6 +73,8 @@ export function applyTheme(pref: ThemePref) {
 }
 
 export function setThemePref(pref: ThemePref) {
+  if (pref === 'rdr2' && !isThemeUnlocked('rdr2')) pref = 'tactical'
+  if (pref === 'uncharted' && !isThemeUnlocked('uncharted')) pref = 'tactical'
   try {
     localStorage.setItem(KEY, pref)
   } catch {

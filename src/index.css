@@ -2,7 +2,7 @@
 
 /*
   Theme tokens.
-  Light is the default. Tactical Dark applies when <html data-theme="tactical">.
+  Light is the default. Dark applies when <html data-theme="dark">.
   Every screen reads these tokens, so a color change here changes the whole app.
 */
 :root {
@@ -29,47 +29,32 @@
   color-scheme: light;
 }
 
-/* Call of Duty-inspired Tactical HUD: field black, ranger olive, muted amber. */
-:root[data-theme="tactical"] {
-  --page: #0b0d0b;
-  --surface: #141713;
-  --surface-2: #20251d;
-  --ink: #e2e4d8;
-  --muted: #929887;
-  --line: #394132;
-  --accent: #b6a36a;
-  --accent-ink: #10120e;
-  --accent-soft: #2b3023;
-  --accent-text: #c9b77b;
-  --ok: #91ad78;
-  --danger: #d96a53;
-  --radius-card: 2px;
-  --radius-ctl: 2px;
-  --radius-avatar: 2px;
-  --shadow-card: 0 3px 12px rgb(0 0 0 / 0.28);
-  --font-heading: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --heading-case: uppercase;
-  --heading-track: 0.055em;
+:root[data-theme="dark"] {
+  --page: #111318;
+  --surface: #1b1e25;
+  --surface-2: #252933;
+  --ink: #edf0f5;
+  --muted: #a0a7b4;
+  --line: #343945;
+  --accent: #7ea7ff;
+  --accent-ink: #101827;
+  --accent-soft: #26334d;
+  --accent-text: #a8c4ff;
+  --ok: #73d6a0;
+  --danger: #ff8989;
+  --radius-card: 14px;
+  --radius-ctl: 10px;
+  --radius-avatar: 9999px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.16), 0 4px 12px rgb(0 0 0 / 0.12);
+  --font-heading: "Manrope", system-ui, sans-serif;
+  --heading-case: none;
+  --heading-track: -0.01em;
   color-scheme: dark;
 }
 
-/* Midnight: black and deep blue, with the same shapes as Light. */
-:root[data-theme="midnight"] {
-  --page: #05070d;
-  --surface: #0b1224;
-  --surface-2: #111b36;
-  --ink: #e6ecfa;
-  --muted: #8b98b8;
-  --line: #1d2c52;
-  --accent: #4f8cff;
-  --accent-ink: #04101f;
-  --accent-soft: #12234a;
-  --accent-text: #7fabff;
-  --ok: #5fd39a;
-  --danger: #ff7b7b;
-  --shadow-card: 0 1px 0 rgb(79 140 255 / 0.08);
-  color-scheme: dark;
-}
+
+
+
 
 /* Lets Tailwind classes like bg-surface and text-muted follow the tokens above. */
 @theme inline {
@@ -109,7 +94,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Soft iOS-inspired glass surfaces; tactical keeps its intentional HUD look. */
+  /* Soft iOS-inspired glass surfaces. */
   :root[data-theme="glass"] .card {
     background: color-mix(in srgb, var(--surface) 72%, transparent);
     border-color: color-mix(in srgb, var(--line) 72%, white 28%);
@@ -155,32 +140,11 @@
 
 
 
-  :root[data-theme="midnight"] body {
-    background:
-      radial-gradient(ellipse at 15% 0%, rgb(54 107 220 / 0.23), transparent 38rem),
-      radial-gradient(ellipse at 100% 35%, rgb(117 77 210 / 0.16), transparent 34rem),
-      var(--page);
-    background-attachment: fixed;
-  }
+  
 
-  :root[data-theme="midnight"] .card {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.08),
-      0 12px 36px rgb(0 0 0 / 0.2),
-      0 1px 3px rgb(0 0 0 / 0.15);
-    border-color: rgb(255 255 255 / 0.12);
-  }
+  
 
-  /* COD-inspired field HUD: subtle grid, vignette, and olive telemetry glow. */
-  :root[data-theme="tactical"] body {
-    background-image:
-      radial-gradient(ellipse at 50% 42%, transparent 20%, rgb(0 0 0 / 0.58) 100%),
-      linear-gradient(rgb(182 163 106 / 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(182 163 106 / 0.035) 1px, transparent 1px),
-      radial-gradient(ellipse at 12% 0%, rgb(104 121 75 / 0.12), transparent 34rem);
-    background-size: auto, 32px 32px, 32px 32px, auto;
-    background-attachment: fixed;
-  }
+  
 
   :focus-visible {
     outline: 2px solid var(--accent);
@@ -216,10 +180,7 @@
     color: var(--muted);
   }
 
-  :root[data-theme="tactical"] .eyebrow {
-    font-family: var(--mono);
-    color: var(--accent-text);
-  }
+  
 
   .btn {
     display: inline-flex;
@@ -301,13 +262,7 @@
     color: var(--muted);
   }
 
-  :root[data-theme="tactical"] .label {
-    font-family: var(--mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent-text);
-  }
+  
 
   .link {
     min-height: 2.75rem;
@@ -339,11 +294,7 @@
     color: var(--accent-text);
   }
 
-  :root[data-theme="tactical"] .tab {
-    font-family: var(--mono);
-    font-size: 0.5938rem;
-    text-transform: uppercase;
-  }
+  
 
   /* Theme picker buttons */
   .seg {
@@ -428,12 +379,8 @@ input[type="checkbox"] {
   outline-offset: -3px;
   cursor: crosshair;
 }
-:root[data-theme="midnight"] .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(200deg) brightness(0.8) contrast(0.95) saturate(0.7);
-}
-:root[data-theme="tactical"] .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
-}
+
+
 .leaflet-container {
   font-family: inherit;
   background: var(--surface-2);
@@ -457,8 +404,7 @@ input[type="checkbox"] {
 .pin-new { background: var(--danger); border-color: var(--danger); }
 .pin-sel { transform: scale(1.3); box-shadow: 0 0 0 3px var(--ink), 0 1px 6px rgb(0 0 0 / 0.5); }
 
-/* iOS-inspired glass finish. Kept outside Tailwind layers so it reliably
-   overrides the base component surfaces while preserving the tactical theme. */
+/* iOS-inspired glass finish. Kept outside Tailwind layers so it reliably overrides base surfaces. */
 :root[data-theme="glass"] .card {
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   border-color: color-mix(in srgb, var(--line) 72%, white 28%);
@@ -489,10 +435,7 @@ input[type="checkbox"] {
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
 }
-:root[data-theme="midnight"] .card {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 12px 36px rgb(0 0 0 / 0.2), 0 1px 3px rgb(0 0 0 / 0.15);
-  border-color: rgb(255 255 255 / 0.12);
-}
+
 @supports not (backdrop-filter: blur(1px)) {
   :root[data-theme="glass"] .card,
   :root[data-theme="glass"] .btn-plain,
@@ -511,14 +454,7 @@ input[type="checkbox"] {
   --glass-highlight: rgb(255 255 255 / 0.72);
   --glass-shadow: 0 10px 32px rgb(30 50 90 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.72);
 }
-:root[data-theme="midnight"] {
-  --glass-thin: rgb(15 27 52 / 0.55);
-  --glass-regular: rgb(12 21 42 / 0.74);
-  --glass-thick: rgb(9 16 32 / 0.9);
-  --glass-stroke: rgb(255 255 255 / 0.13);
-  --glass-highlight: rgb(255 255 255 / 0.1);
-  --glass-shadow: 0 14px 38px rgb(0 0 0 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.09);
-}
+
 :root[data-theme="glass"] body {
   background-image:
     radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34rem),
@@ -946,22 +882,8 @@ input[type="checkbox"] {
   background: var(--stage-bg);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
 }
-:root[data-theme="tactical"] .family-tree-stage {
-  --root-body: #8b9664;
-  --root-core: #e4dfbd;
-  --root-aura: rgb(182 163 106 / 0.16);
-  --root-partner: #c9b77b;
-  --stage-bg: linear-gradient(180deg, #11150f, #090b08);
-}
-:root[data-theme="midnight"] .family-tree-stage {
-  --root-body: #2f72ff;
-  --root-core: #eaf6ff;
-  --root-aura: rgb(40 110 255 / 0.2);
-  --root-partner: #6fb0ff;
-  --stage-bg:
-    radial-gradient(ellipse at 50% 0%, rgb(24 70 255 / 0.2), transparent 26rem),
-    linear-gradient(180deg, #02040f, #030818 60%, #020512);
-}
+
+
 /* Liquid Glass (owner): the roots become frosted glass tubes with a bright rim and a specular line. */
 :root[data-theme="glass"] .family-tree-stage {
   --root-body: rgb(150 205 255 / 0.5);
@@ -984,8 +906,7 @@ input[type="checkbox"] {
   stroke-width: 3;
   stroke-linecap: round;
 }
-:root[data-theme="midnight"] .family-tree-stage .root-aura,
-:root[data-theme="tactical"] .family-tree-stage .root-aura { mix-blend-mode: screen; }
+
 :root[data-theme="glass"] .family-tree-stage .root-body path {
   stroke: rgb(255 255 255 / 0.55);
   stroke-width: 0.9;
@@ -1066,13 +987,8 @@ input[type="checkbox"] {
   border: 1px solid var(--line);
   line-height: 0;
 }
-:root[data-theme="tactical"] .qr-frame {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px var(--accent);
-}
-:root[data-theme="midnight"] .qr-frame {
-  border-color: var(--accent);
-}
+
+
 .scan-view {
   position: relative;
   aspect-ratio: 1 / 1;
@@ -1370,6 +1286,6 @@ input[type="checkbox"] {
 .coin-easter-egg { padding: 0; border: 0; background: transparent; cursor: pointer; }
 .coin-easter-egg:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 50%; }
 .brand-rdr2 { display: none; }
-.brand-mw4, .splash-brand-mw4 { display: none; }
+
 /* Extra mark details that only some themes show. */
 .mk-deco { display: none; }

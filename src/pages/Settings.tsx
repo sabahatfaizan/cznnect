@@ -82,26 +82,29 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
         </section>
       )}
-      <section className="card flex flex-col gap-3">
-        <div>
-          <h2 className="font-display text-lg font-bold">Appearance</h2>
-          <p className="mt-1 text-sm text-muted">Choose how Cznnect looks on this device.</p>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+      <details className="card expander" aria-label="Appearance themes">
+        <summary>
+          <span className="min-w-0">
+            <span className="font-display block text-lg font-bold">Appearance</span>
+            <span className="block text-sm text-muted">Choose your theme · {theme === 'rdr2' ? 'Red Dead' : theme === 'uncharted' ? 'Uncharted' : theme === 'glass' ? 'Liquid Glass' : theme === 'dark' ? 'Dark' : 'Light'}</span>
+          </span>
+          <span aria-hidden="true" className="expander-chevron">›</span>
+        </summary>
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {THEMES.filter((t) => (t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL) && (t.id !== 'rdr2' || unlockedThemes.includes('rdr2')) && (t.id !== 'uncharted' || unlockedThemes.includes('uncharted'))).map((t) => (
             <button
               key={t.id}
               type="button"
               aria-pressed={theme === t.id}
-              className={`seg ${theme === t.id ? 'seg-on' : ''}`}
+              className={`seg !min-h-0 !px-2 !py-2 text-sm ${theme === t.id ? 'seg-on' : ''}`}
               onClick={() => pickTheme(t.id)}
             >
               {t.label}
-              <small>{t.hint}</small>
+              <small className="mt-0.5 text-xs">{t.hint}</small>
             </button>
           ))}
         </div>
-      </section>
+      </details>
       <details className="card expander" aria-label="Custom app icon">
         <summary>
           <span className="flex min-w-0 items-center gap-3">

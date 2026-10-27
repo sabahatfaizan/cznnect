@@ -14,6 +14,7 @@ import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
+import CoinMark from './CoinMark'
 import { setGlassAllowed } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
@@ -107,8 +108,12 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       <main data-tab={tab} className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <Wordmark className="font-display text-xl font-extrabold" />
-            <p className="text-xs text-muted">Family, connected.</p>
+            <div className="brand-default">
+              <Wordmark className="font-display text-xl font-extrabold" />
+              <p className="text-xs text-muted">Family, connected.</p>
+            </div>
+            {/* Only the Uncharted theme shows the coin, in place of the wordmark and tagline. */}
+            <CoinMark className="brand-coin" />
           </div>
           <button
             type="button"

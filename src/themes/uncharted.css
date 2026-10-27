@@ -39,7 +39,7 @@
   color-scheme: light;
 }
 
-/* ---- the world behind the app: an old sea chart, fixed and cheap ---- */
+/* ---- the world behind the app: an old sea chart, fixed in place ---- */
 :root[data-theme="uncharted"] body {
   background: #d9c28a;
   font-family: var(--font-body);
@@ -52,9 +52,11 @@
   inset: 0;
   z-index: -2;
   pointer-events: none;
+  /* An old chart of the Madagascar coast. The parchment veil keeps the writing on top of it readable. */
   background:
     radial-gradient(ellipse at 50% 45%, transparent 52%, rgb(92 56 20 / 0.34) 100%),
-    url("./uncharted-bg.svg") center / cover no-repeat;
+    linear-gradient(rgb(238 222 184 / 0.4), rgb(238 222 184 / 0.4)),
+    url("./uncharted-map.jpg") 56% 50% / cover no-repeat;
 }
 :root[data-theme="uncharted"] body::after {
   content: "";
@@ -144,6 +146,18 @@
 :root[data-theme="uncharted"] .label { font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.06em; color: #5d3b1f; }
 :root[data-theme="uncharted"] .link { color: var(--accent-text); text-decoration-style: dotted; text-decoration-thickness: 2px; }
 :root[data-theme="uncharted"] .wordmark { letter-spacing: 0.05em; text-shadow: 0 1px 0 rgb(255 240 200 / 0.6); }
+/* The coin replaces the wordmark and the tagline at the top of the home screen. */
+:root[data-theme="uncharted"] {
+  --coin-bg: #17110a;
+  --coin-fg: #ead9a8;
+}
+:root[data-theme="uncharted"] .brand-default { display: none; }
+:root[data-theme="uncharted"] .brand-coin {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  filter: drop-shadow(0 2px 3px rgb(60 35 10 / 0.45));
+}
 
 /* ---- controls: leather, gold thread, wax ---- */
 :root[data-theme="uncharted"] .btn { letter-spacing: 0.06em; border-radius: 3px; }

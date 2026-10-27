@@ -34,8 +34,8 @@
   --heading-track: 0.03em;
   --logo-a: #e0b04f;
   --logo-b: #8a3512;
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  --leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23l)'/%3E%3C/svg%3E"), linear-gradient(180deg, #5b3a22, #3a2415);
+  --grain: url("./grain.png") 0 0 / 180px 180px;
+  --leather: url("./leather.png") 0 0 / 140px 140px, linear-gradient(180deg, #5b3a22, #3a2415);
   color-scheme: light;
 }
 
@@ -47,25 +47,26 @@
   line-height: 1.45;
 }
 :root[data-theme="uncharted"] body::before {
+  /* One stable layer (the sea chart plus a fixed grain on top), sized to the large viewport so it never
+     resizes when the phone's address bar slides away, and on its own GPU layer so scrolling does not
+     repaint it. The grain used to be a second full-screen layer; it is now part of this one. */
   content: "";
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
   z-index: -2;
   pointer-events: none;
   /* An old chart of the Madagascar coast. The parchment veil keeps the writing on top of it readable. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
   background:
+    url("./grain-fixed.png") 0 0 / 180px 180px,
     radial-gradient(ellipse at 50% 45%, transparent 52%, rgb(92 56 20 / 0.34) 100%),
     linear-gradient(rgb(238 222 184 / 0.4), rgb(238 222 184 / 0.4)),
     url("./uncharted-map.jpg") 56% 50% / cover no-repeat;
-}
-:root[data-theme="uncharted"] body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: var(--grain);
-  opacity: 0.8;
 }
 
 /* ---- journal pages: ruled paper, leather spine with stitching, washi tape ---- */

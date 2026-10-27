@@ -5,7 +5,7 @@ export type IconId =
   | 'ocean' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
   | 'treasure' | 'libertalia' | 'outlaw' | 'dust'
 
-// "a" is the main colour and "b" the deep end of the gradient. The Uncharted and RDR2 sets follow the
+// "a" is the main colour and "b" the deep end of the gradient. The Uncharted and Red Dead sets follow the
 // colours of those two app themes (parchment, gold and leather; ember red and oxblood).
 export const ICONS: { id: IconId; label: string; group: string; a: string; b: string }[] = [
   { id: 'ocean', label: 'Ocean', group: 'Classic', a: '#5aa9ff', b: '#1f3fd0' },
@@ -16,10 +16,10 @@ export const ICONS: { id: IconId; label: string; group: string; a: string; b: st
   { id: 'graphite', label: 'Graphite', group: 'Classic', a: '#cfd8e6', b: '#58698a' },
   { id: 'treasure', label: 'Treasure Map', group: 'Uncharted', a: '#f2d58f', b: '#a8431a' },
   { id: 'libertalia', label: 'Libertalia', group: 'Uncharted', a: '#ffd36b', b: '#6b3410' },
-  { id: 'outlaw', label: 'Outlaw', group: 'RDR2', a: '#e8603f', b: '#4a0f0a' },
-  { id: 'dust', label: 'Dust & Leather', group: 'RDR2', a: '#dcbd8e', b: '#4a2c17' },
+  { id: 'outlaw', label: 'Outlaw', group: 'Red Dead', a: '#e8603f', b: '#4a0f0a' },
+  { id: 'dust', label: 'Dust & Leather', group: 'Red Dead', a: '#dcbd8e', b: '#4a2c17' },
 ]
-export const ICON_GROUPS = ['Classic', 'Uncharted', 'RDR2']
+export const ICON_GROUPS = ['Classic', 'Uncharted', 'Red Dead']
 
 const KEY = 'cznnect-icon'
 

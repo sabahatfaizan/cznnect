@@ -1,4 +1,4 @@
-// Available themes: Tactical HUD, RDR2, Uncharted, and owner-only Liquid Glass.
+// Available themes: Tactical HUD, Red Dead, Uncharted, and owner-only Liquid Glass.
 // The choice is saved on this device, so each cousin picks their own.
 export type ThemePref = 'tactical' | 'rdr2' | 'uncharted' | 'glass'
 type Theme = 'tactical' | 'rdr2' | 'uncharted' | 'glass'

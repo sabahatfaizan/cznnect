@@ -9,7 +9,7 @@ const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 
 const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
-  { id: 'rdr2', label: 'RDR2', hint: 'Outlaw frontier' },
+  { id: 'rdr2', label: 'Red Dead', hint: 'Outlaw frontier' },
   { id: 'uncharted', label: 'Uncharted', hint: 'Treasure-map parchment' },
   { id: 'glass', label: 'Liquid Glass', hint: 'Owner only' },
 ]

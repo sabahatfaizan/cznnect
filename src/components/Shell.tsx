@@ -18,7 +18,7 @@ import CoinMark from './CoinMark'
 import { setGlassAllowed } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
-// Taglines for the RDR2 and Uncharted screen banners. Other themes hide the banner.
+// Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
 const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   home: { rdr2: "The Gang's Camp", unc: 'Expedition Base' },
   tree: { rdr2: 'Kin & Kith', unc: 'The Lineage Chart' },

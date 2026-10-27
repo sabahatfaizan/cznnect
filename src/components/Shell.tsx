@@ -17,6 +17,18 @@ import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
+// Taglines for the RDR2 and Uncharted screen banners. Other themes hide the banner.
+const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
+  home: { rdr2: "The Gang's Camp", unc: 'Expedition Base' },
+  tree: { rdr2: 'Kin & Kith', unc: 'The Lineage Chart' },
+  explore: { rdr2: 'Scouting Territory', unc: 'Uncharted Territory' },
+  plans: { rdr2: 'The Next Job', unc: 'The Next Expedition' },
+  birthdays: { rdr2: 'Days Worth Marking', unc: 'Dates in the Journal' },
+  me: { rdr2: 'Your Wanted Poster', unc: "Explorer's Dossier" },
+  irl: { rdr2: 'Riding Together', unc: 'The Field Team' },
+  scoreboard: { rdr2: 'The Bounty Board', unc: 'Treasure Tally' },
+  settings: { rdr2: 'Camp Supplies', unc: 'Gear & Supplies' },
+}
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
@@ -92,7 +104,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
 
   return (
     <div className="mx-auto min-h-full max-w-xl">
-      <main className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
+      <main data-tab={tab} className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
             <Wordmark className="font-display text-xl font-extrabold" />
@@ -218,6 +230,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>}
           </aside>
         </div>
+        <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'irl' && <Irl family={family} userId={userId} />}
         {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}

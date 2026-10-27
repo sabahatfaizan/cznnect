@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 900" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f0808"/>
+      <stop offset=".3" stop-color="#2e1511"/>
+      <stop offset=".5" stop-color="#6e2d1b"/>
+      <stop offset=".63" stop-color="#c0662f"/>
+      <stop offset=".72" stop-color="#eba85f"/>
+      <stop offset=".74" stop-color="#3a1a10"/>
+      <stop offset="1" stop-color="#0d0605"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffd9a0" stop-opacity=".95"/>
+      <stop offset=".35" stop-color="#ff9a4d" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#ff7a30" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="900" fill="url(#sky)"/>
+  <g fill="#f5dfc0" opacity=".55">
+    <circle cx="40" cy="60" r=".9"/><circle cx="120" cy="110" r="1.1"/><circle cx="210" cy="48" r=".8"/>
+    <circle cx="300" cy="96" r="1"/><circle cx="360" cy="40" r=".9"/><circle cx="70" cy="190" r=".7"/><circle cx="330" cy="200" r=".7"/>
+  </g>
+  <!-- low sun and its glow -->
+  <circle cx="265" cy="610" r="190" fill="url(#glow)"/>
+  <circle cx="265" cy="612" r="40" fill="#ffe2b0"/>
+  <!-- streaky clouds -->
+  <g fill="#ff9a58" opacity=".28">
+    <path d="M-10 520 Q90 508 200 520 T410 512 L410 524 Q300 534 200 528 T-10 532Z"/>
+    <path d="M40 560 Q140 550 240 560 T420 556 L420 566 Q320 574 230 568 T40 572Z"/>
+  </g>
+  <g fill="#ffcf94" opacity=".16">
+    <path d="M-10 478 Q120 468 230 480 T410 474 L410 482 Q300 490 220 486 T-10 488Z"/>
+  </g>
+  <!-- circling birds -->
+  <g fill="none" stroke="#150907" stroke-width="1.6" stroke-linecap="round" opacity=".8">
+    <path d="M110 330q8-8 16 0q8-8 16 0"/><path d="M170 372q6-6 12 0q6-6 12 0"/><path d="M82 396q5-5 10 0q5-5 10 0"/>
+  </g>
+  <!-- far mesas -->
+  <path d="M0 640 L0 616 L34 612 L46 588 L112 584 L124 610 L190 614 L204 636 L262 640 L296 612 L312 580 L382 576 L400 604 L400 700 L0 700Z" fill="#6b2a1b"/>
+  <!-- mid mesas -->
+  <path d="M0 700 L0 668 L60 664 L72 640 L150 636 L162 664 L232 668 L244 690 L330 692 L350 662 L400 660 L400 740 L0 740Z" fill="#43190f"/>
+  <!-- dusty dunes -->
+  <path d="M0 735 Q90 705 190 728 T400 716 L400 800 L0 800Z" fill="#2a110a"/>
+  <path d="M0 790 Q110 762 220 786 T400 774 L400 900 L0 900Z" fill="#150a06"/>
+  <rect y="840" width="400" height="60" fill="#0a0504"/>
+  <!-- telegraph line -->
+  <g stroke="#0c0504" fill="none" stroke-linecap="round">
+    <path d="M96 596 V792" stroke-width="5"/>
+    <path d="M82 614 H112" stroke-width="3.5"/>
+    <path d="M86 630 H108" stroke-width="3"/>
+    <path d="M96 614 Q220 650 330 614" stroke-width="1.2" opacity=".85"/>
+    <path d="M96 630 Q220 668 330 632" stroke-width="1.2" opacity=".85"/>
+    <path d="M330 590 V780" stroke-width="4"/>
+    <path d="M318 610 H344" stroke-width="3"/>
+    <path d="M330 628 H342" stroke-width="2.6"/>
+  </g>
+  <!-- cacti -->
+  <g fill="#0b0504">
+    <path d="M48 800 V736 q0-8 7-8 t7 8 V800Z"/>
+    <path d="M48 770 q-14 0-14-14 v-12 q0-6 5-6 t5 6 v10 q0 5 4 5Z"/>
+    <path d="M62 756 q12 0 12-12 v-8 q0-6 5-6 t5 6 v10 q0 14-22 14Z"/>
+    <path d="M360 810 V760 q0-7 6-7 t6 7 V810Z"/>
+    <path d="M360 788 q-12 0-12-12 v-8 q0-5 4-5 t4 5 v8 q0 4 4 4Z"/>
+  </g>
+  <!-- sage brush -->
+  <g fill="#120907">
+    <ellipse cx="196" cy="806" rx="26" ry="9"/><ellipse cx="230" cy="812" rx="16" ry="6"/><ellipse cx="22" cy="838" rx="22" ry="8"/><ellipse cx="320" cy="842" rx="28" ry="9"/>
+  </g>
+</svg>

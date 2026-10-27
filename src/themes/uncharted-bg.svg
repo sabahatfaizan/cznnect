@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="stain1" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7a4f1c" stop-opacity=".28"/><stop offset="1" stop-color="#7a4f1c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="sea" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#9fb8a6" stop-opacity=".30"/><stop offset="1" stop-color="#9fb8a6" stop-opacity="0"/></radialGradient>
+    <pattern id="wave" width="14" height="8" patternUnits="userSpaceOnUse"><path d="M0 5q3.5-4 7 0t7 0" fill="none" stroke="#6d5a38" stroke-width=".7" opacity=".45"/></pattern>
+  </defs>
+  <rect width="400" height="900" fill="#e4d09f"/>
+  <ellipse cx="90" cy="150" rx="150" ry="120" fill="url(#stain1)"/>
+  <ellipse cx="340" cy="560" rx="170" ry="150" fill="url(#stain1)"/>
+  <ellipse cx="60" cy="800" rx="150" ry="110" fill="url(#stain1)"/>
+  <ellipse cx="300" cy="260" rx="190" ry="200" fill="url(#sea)"/>
+  <!-- chart grid -->
+  <g stroke="#6d5a38" stroke-width=".6" opacity=".28" fill="none">
+    <path d="M0 150H400M0 300H400M0 450H400M0 600H400M0 750H400"/>
+    <path d="M80 0V900M180 0V900M280 0V900M380 0V900"/>
+  </g>
+  <!-- island, coast, contours -->
+  <path d="M120 360 q-40 40-20 90 t60 70 q30 40 80 30 t90-50 q40-40 10-90 t-80-60 q-30-40-70-30 t-70 40Z" fill="#d8c08a" stroke="#6d4f26" stroke-width="2.2"/>
+  <path d="M120 360 q-40 40-20 90 t60 70 q30 40 80 30 t90-50 q40-40 10-90 t-80-60 q-30-40-70-30 t-70 40Z" fill="none" stroke="url(#wave)" stroke-width="22" opacity=".7"/>
+  <g fill="none" stroke="#6d4f26" stroke-width="1" opacity=".5">
+    <path d="M150 380 q-26 30-10 64 t46 52 q24 30 62 22 t68-38 q30-30 6-68 t-62-44 q-24-30-54-22 t-56 34Z"/>
+    <path d="M178 402 q-14 20-4 42 t30 34 q16 20 40 14 t44-24 q18-20 4-44 t-40-28 q-16-18-34-14 t-40 20Z"/>
+    <path d="M206 424 q-6 12 0 22 t16 14 q10 8 22 4 t18-14 q6-12-2-22 t-22-12 q-10-6-20-4 t-12 12Z"/>
+  </g>
+  <!-- little hills -->
+  <g fill="none" stroke="#6d4f26" stroke-width="1.2" opacity=".7" stroke-linecap="round">
+    <path d="M168 392l8-12 8 12M186 386l7-10 7 10M250 410l8-12 8 12M228 470l8-12 8 12"/>
+  </g>
+  <!-- palms -->
+  <g fill="#6d4f26" opacity=".75">
+    <path d="M256 440 q-14-10-26-6 q12 2 20 10 q-12-2-22 4 q14 0 22 6Z"/>
+    <path d="M256 440 q6-16 18-18 q-8 8-8 18 q8-8 18-8 q-12 6-14 16Z"/>
+    <path d="M254 442 q2 14 0 28" stroke="#6d4f26" stroke-width="2" fill="none"/>
+  </g>
+  <!-- dotted trail to the X -->
+  <path d="M-10 800 C60 760 80 700 130 690 S210 720 240 660 S190 580 210 540 S258 500 232 470" fill="none" stroke="#a8321f" stroke-width="2.4" stroke-dasharray="2 7" stroke-linecap="round" opacity=".85"/>
+  <g stroke="#a8321f" stroke-width="4" stroke-linecap="round" opacity=".9"><path d="M222 460l20 20M242 460l-20 20"/></g>
+  <!-- compass rose -->
+  <g transform="translate(318 130)" fill="none" stroke="#5a3d1c">
+    <circle r="62" stroke-width="1.4" opacity=".55"/><circle r="52" stroke-width=".8" opacity=".5"/><circle r="12" stroke-width="1" opacity=".6"/>
+    <path d="M0-76 L10-10 L0 0 L-10-10Z M0 76 L10 10 L0 0 L-10 10Z M-76 0 L-10-10 L0 0 L-10 10Z M76 0 L10-10 L0 0 L10 10Z" fill="#5a3d1c" fill-opacity=".62" stroke-width=".8"/>
+    <path d="M0-52 L36-36 L52 0 L36 36 L0 52 L-36 36 L-52 0 L-36-36Z" stroke-width=".8" opacity=".55"/>
+    <path d="M-48 -48 L48 48 M48 -48 L-48 48" stroke-width=".6" opacity=".45"/>
+    <path d="M0-76 L6-62 L-6-62Z" fill="#a8321f" stroke="none"/>
+  </g>
+  <!-- ship -->
+  <g transform="translate(70 640)" fill="none" stroke="#5a3d1c" stroke-width="1.6" stroke-linejoin="round" opacity=".8">
+    <path d="M-26 6 q26 16 52 0 l-6 12 q-20 8-40 0Z" fill="#5a3d1c" fill-opacity=".5"/>
+    <path d="M0 6 V-34"/><path d="M0-32 q16 8 18 22 H0Z" fill="#e4d09f"/><path d="M0-26 q-12 6-14 18 H0Z" fill="#e4d09f"/>
+    <path d="M-34 24q8-5 17 0t17 0t17 0t17 0" opacity=".7"/>
+  </g>
+  <!-- sea beast -->
+  <g transform="translate(300 760)" fill="none" stroke="#5a3d1c" stroke-width="1.6" stroke-linecap="round" opacity=".6">
+    <path d="M-40 10q8-18 16 0t16 0q8-24 20-6 q8 6 6-14"/><circle cx="30" cy="-12" r="1.2" fill="#5a3d1c"/>
+  </g>
+</svg>

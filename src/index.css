@@ -71,37 +71,6 @@
   color-scheme: dark;
 }
 
-/* RDR2: dusty frontier palette with the uploaded Chinese Rocks western display font. */
-@font-face {
-  font-family: "Chinese Rocks";
-  src: url("../chinese rocks rg.ttf") format("truetype");
-  font-display: swap;
-  font-weight: 400 800;
-}
-
-:root[data-theme="rdr2"] {
-  --page: #171310;
-  --surface: #241d18;
-  --surface-2: #30251e;
-  --ink: #eadbc0;
-  --muted: #b49e7e;
-  --line: #594333;
-  --accent: #a93626;
-  --accent-ink: #fff0d8;
-  --accent-soft: #45251e;
-  --accent-text: #e6a36b;
-  --ok: #9b9b5a;
-  --danger: #e05242;
-  --radius-card: 3px;
-  --radius-ctl: 2px;
-  --radius-avatar: 2px;
-  --shadow-card: 0 5px 18px rgb(0 0 0 / 0.35);
-  --font-heading: "Chinese Rocks", Impact, fantasy, serif;
-  --heading-case: uppercase;
-  --heading-track: 0.045em;
-  color-scheme: dark;
-}
-
 /* Lets Tailwind classes like bg-surface and text-muted follow the tokens above. */
 @theme inline {
   --color-page: var(--page);
@@ -141,7 +110,7 @@
   }
 
   /* Soft iOS-inspired glass surfaces; tactical keeps its intentional HUD look. */
-  :root:not([data-theme="tactical"]) .card {
+  :root[data-theme="glass"] .card {
     background: color-mix(in srgb, var(--surface) 72%, transparent);
     border-color: color-mix(in srgb, var(--line) 72%, white 28%);
     box-shadow:
@@ -152,26 +121,26 @@
     -webkit-backdrop-filter: blur(24px) saturate(170%);
   }
 
-  :root:not([data-theme="tactical"]) .btn,
-  :root:not([data-theme="tactical"]) .seg,
-  :root:not([data-theme="tactical"]) .input {
+  :root[data-theme="glass"] .btn,
+  :root[data-theme="glass"] .seg,
+  :root[data-theme="glass"] .input {
     backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.62), 0 3px 12px rgb(30 50 90 / 0.05);
   }
 
-  :root:not([data-theme="tactical"]) .btn-plain,
-  :root:not([data-theme="tactical"]) .seg {
+  :root[data-theme="glass"] .btn-plain,
+  :root[data-theme="glass"] .seg {
     background: color-mix(in srgb, var(--surface) 66%, transparent);
     border-color: color-mix(in srgb, var(--line) 65%, white 35%);
   }
 
-  :root:not([data-theme="tactical"]) .input {
+  :root[data-theme="glass"] .input {
     background: color-mix(in srgb, var(--surface) 78%, transparent);
     border-color: color-mix(in srgb, var(--line) 75%, white 25%);
   }
 
-  :root:not([data-theme="tactical"]) .tab-active {
+  :root[data-theme="glass"] .tab-active {
     border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
     background: color-mix(in srgb, var(--accent-soft) 76%, transparent);
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 4px 14px rgb(30 50 90 / 0.06);
@@ -185,38 +154,6 @@
 
 
 
-
-  :root[data-theme="rdr2"] body {
-    background:
-      radial-gradient(ellipse at 50% -8%, rgb(169 54 38 / 0.22), transparent 34rem),
-      repeating-linear-gradient(0deg, rgb(218 179 126 / 0.018) 0px, rgb(218 179 126 / 0.018) 1px, transparent 1px, transparent 5px),
-      var(--page);
-    background-attachment: fixed;
-  }
-
-  :root[data-theme="rdr2"] .card {
-    background: color-mix(in srgb, var(--surface) 94%, transparent);
-    border-color: var(--line);
-    box-shadow: 0 5px 18px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 231 196 / 0.035);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  :root[data-theme="rdr2"] .font-display,
-  :root[data-theme="rdr2"] .btn,
-  :root[data-theme="rdr2"] .eyebrow {
-    font-family: var(--font-heading);
-  }
-
-  :root[data-theme="rdr2"] .eyebrow {
-    color: var(--accent-text);
-    letter-spacing: 0.08em;
-  }
-
-  :root[data-theme="rdr2"] .btn-primary {
-    border-color: #c05b40;
-    box-shadow: inset 0 1px 0 rgb(255 226 190 / 0.15);
-  }
 
   :root[data-theme="midnight"] body {
     background:
@@ -522,30 +459,30 @@ input[type="checkbox"] {
 
 /* iOS-inspired glass finish. Kept outside Tailwind layers so it reliably
    overrides the base component surfaces while preserving the tactical theme. */
-:root:not([data-theme="tactical"]) .card {
+:root[data-theme="glass"] .card {
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   border-color: color-mix(in srgb, var(--line) 72%, white 28%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72), 0 8px 28px rgb(30 50 90 / 0.07), 0 1px 3px rgb(30 50 90 / 0.05);
   backdrop-filter: blur(24px) saturate(170%);
   -webkit-backdrop-filter: blur(24px) saturate(170%);
 }
-:root:not([data-theme="tactical"]) .btn,
-:root:not([data-theme="tactical"]) .seg,
-:root:not([data-theme="tactical"]) .input {
+:root[data-theme="glass"] .btn,
+:root[data-theme="glass"] .seg,
+:root[data-theme="glass"] .input {
   backdrop-filter: blur(18px) saturate(160%);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.62), 0 3px 12px rgb(30 50 90 / 0.05);
 }
-:root:not([data-theme="tactical"]) .btn-plain,
-:root:not([data-theme="tactical"]) .seg {
+:root[data-theme="glass"] .btn-plain,
+:root[data-theme="glass"] .seg {
   background: color-mix(in srgb, var(--surface) 66%, transparent);
   border-color: color-mix(in srgb, var(--line) 65%, white 35%);
 }
-:root:not([data-theme="tactical"]) .input {
+:root[data-theme="glass"] .input {
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   border-color: color-mix(in srgb, var(--line) 75%, white 25%);
 }
-:root:not([data-theme="tactical"]) .tab-active {
+:root[data-theme="glass"] .tab-active {
   border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
   background: color-mix(in srgb, var(--accent-soft) 76%, transparent);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 4px 14px rgb(30 50 90 / 0.06);
@@ -557,16 +494,16 @@ input[type="checkbox"] {
   border-color: rgb(255 255 255 / 0.12);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  :root:not([data-theme="tactical"]) .card,
-  :root:not([data-theme="tactical"]) .btn-plain,
-  :root:not([data-theme="tactical"]) .seg {
+  :root[data-theme="glass"] .card,
+  :root[data-theme="glass"] .btn-plain,
+  :root[data-theme="glass"] .seg {
     background: var(--surface);
   }
 }
 
 
 /* Cznnect Liquid Glass — full-app surface system */
-:root:not([data-theme="tactical"]) {
+:root[data-theme="glass"] {
   --glass-thin: color-mix(in srgb, var(--surface) 52%, transparent);
   --glass-regular: color-mix(in srgb, var(--surface) 72%, transparent);
   --glass-thick: color-mix(in srgb, var(--surface) 88%, transparent);
@@ -582,7 +519,7 @@ input[type="checkbox"] {
   --glass-highlight: rgb(255 255 255 / 0.1);
   --glass-shadow: 0 14px 38px rgb(0 0 0 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.09);
 }
-:root:not([data-theme="tactical"]) body {
+:root[data-theme="glass"] body {
   background-image:
     radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34rem),
     radial-gradient(ellipse at 96% 18%, rgb(174 143 255 / 0.13), transparent 30rem),
@@ -590,7 +527,7 @@ input[type="checkbox"] {
     linear-gradient(145deg, color-mix(in srgb, var(--page) 92%, white 8%), var(--page));
   background-attachment: fixed;
 }
-:root:not([data-theme="tactical"]) .card {
+:root[data-theme="glass"] .card {
   position: relative;
   overflow: hidden;
   background: var(--glass-regular);
@@ -598,7 +535,7 @@ input[type="checkbox"] {
   border-radius: clamp(18px, calc(var(--radius-card) + 6px), 26px);
   box-shadow: var(--glass-shadow);
 }
-:root:not([data-theme="tactical"]) .card::before {
+:root[data-theme="glass"] .card::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
@@ -606,92 +543,92 @@ input[type="checkbox"] {
   pointer-events: none;
   background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
 }
-:root:not([data-theme="tactical"]) .btn,
-:root:not([data-theme="tactical"]) .btn-plain,
-:root:not([data-theme="tactical"]) .btn-primary,
-:root:not([data-theme="tactical"]) .btn-danger,
-:root:not([data-theme="tactical"]) .input,
-:root:not([data-theme="tactical"]) .seg {
+:root[data-theme="glass"] .btn,
+:root[data-theme="glass"] .btn-plain,
+:root[data-theme="glass"] .btn-primary,
+:root[data-theme="glass"] .btn-danger,
+:root[data-theme="glass"] .input,
+:root[data-theme="glass"] .seg {
   border-radius: 999px;
   transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
-:root:not([data-theme="tactical"]) .btn-primary {
+:root[data-theme="glass"] .btn-primary {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 5px 16px color-mix(in srgb, var(--accent) 22%, transparent);
 }
-:root:not([data-theme="tactical"]) .btn:hover:not(:disabled) {
+:root[data-theme="glass"] .btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
-:root:not([data-theme="tactical"]) .btn:active:not(:disabled) {
+:root[data-theme="glass"] .btn:active:not(:disabled) {
   transform: scale(0.98);
 }
-:root:not([data-theme="tactical"]) .input {
+:root[data-theme="glass"] .input {
   min-height: 3.15rem;
   box-shadow: inset 0 1px 2px rgb(30 50 90 / 0.035), 0 3px 12px rgb(30 50 90 / 0.035);
 }
-:root:not([data-theme="tactical"]) .input:focus {
+:root[data-theme="glass"] .input:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 65%, white 35%);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 13%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.5);
 }
-:root:not([data-theme="tactical"]) .seg {
+:root[data-theme="glass"] .seg {
   border-radius: 18px;
   background: var(--glass-thin);
 }
-:root:not([data-theme="tactical"]) .seg-on {
+:root[data-theme="glass"] .seg-on {
   background: color-mix(in srgb, var(--accent-soft) 88%, transparent);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.58), 0 4px 16px color-mix(in srgb, var(--accent) 10%, transparent);
 }
-:root:not([data-theme="tactical"]) .tab {
+:root[data-theme="glass"] .tab {
   border-radius: 16px;
   transition: background 180ms ease, color 180ms ease, transform 180ms ease;
 }
-:root:not([data-theme="tactical"]) .tab-active {
+:root[data-theme="glass"] .tab-active {
   border-radius: 16px;
   background: color-mix(in srgb, var(--accent-soft) 76%, transparent);
   box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 16px color-mix(in srgb, var(--accent) 10%, transparent);
 }
-:root:not([data-theme="tactical"]) .eyebrow {
+:root[data-theme="glass"] .eyebrow {
   letter-spacing: 0.11em;
 }
-:root:not([data-theme="tactical"]) .tnode-rect {
+:root[data-theme="glass"] .tnode-rect {
   fill: var(--glass-thick);
   stroke: var(--glass-stroke);
   stroke-width: 1.5;
   filter: drop-shadow(0 5px 9px rgb(30 50 90 / 0.08));
 }
-:root:not([data-theme="tactical"]) .tnode-me {
+:root[data-theme="glass"] .tnode-me {
   fill: color-mix(in srgb, var(--accent-soft) 84%, transparent);
   stroke: color-mix(in srgb, var(--accent) 70%, white 30%);
 }
-:root:not([data-theme="tactical"]) .tnode-sel {
+:root[data-theme="glass"] .tnode-sel {
   stroke: var(--accent);
   stroke-width: 2.5;
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 28%, transparent));
 }
-:root:not([data-theme="tactical"]) .map-wrap {
+:root[data-theme="glass"] .map-wrap {
   border-color: var(--glass-stroke);
   box-shadow: var(--glass-shadow);
 }
-:root:not([data-theme="tactical"]) .leaflet-container {
+:root[data-theme="glass"] .leaflet-container {
   border-radius: inherit;
 }
-:root:not([data-theme="tactical"]) ::-webkit-scrollbar {
+:root[data-theme="glass"] ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-:root:not([data-theme="tactical"]) ::-webkit-scrollbar-thumb {
+:root[data-theme="glass"] ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
   background: color-mix(in srgb, var(--muted) 38%, transparent);
   background-clip: padding-box;
 }
-:root:not([data-theme="tactical"]) ::-webkit-scrollbar-track {
+:root[data-theme="glass"] ::-webkit-scrollbar-track {
   background: transparent;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :root:not([data-theme="tactical"]) .card,
-  :root:not([data-theme="tactical"]) .btn,
-  :root:not([data-theme="tactical"]) .tab {
+  :root[data-theme="glass"] .card,
+  :root[data-theme="glass"] .btn,
+  :root[data-theme="glass"] .tab {
     animation: glass-arrive 420ms cubic-bezier(.2,.75,.25,1) both;
   }
   @keyframes glass-arrive {
@@ -700,10 +637,10 @@ input[type="checkbox"] {
   }
 }
 @supports not (backdrop-filter: blur(1px)) {
-  :root:not([data-theme="tactical"]) .card { background: var(--glass-thick); }
-  :root:not([data-theme="tactical"]) .btn-plain,
-  :root:not([data-theme="tactical"]) .seg,
-  :root:not([data-theme="tactical"]) .input { background: var(--surface); }
+  :root[data-theme="glass"] .card { background: var(--glass-thick); }
+  :root[data-theme="glass"] .btn-plain,
+  :root[data-theme="glass"] .seg,
+  :root[data-theme="glass"] .input { background: var(--surface); }
 }
 
 
@@ -1463,7 +1400,6 @@ input[type="checkbox"] {
   opacity: 0;
   animation: motto-in 1.6s ease-out 0.9s forwards;
 }
-:root[data-theme="uncharted"] .motto { display: block; }
 .theme-quote {
   display: none;
   width: min(34rem, 92vw);
@@ -1517,126 +1453,3 @@ input[type="checkbox"] {
   .motto { animation: none; opacity: 0.85; }
   .copyright { animation: none; opacity: 0.75; }
 }
-
-
-@font-face {
-  font-family: "Nathan";
-  src: url('./assets/Nathan.ttf') format('truetype');
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-:root[data-theme="uncharted"] {
-  --page: #e8d9b5;
-  --surface: #f4e9cc;
-  --surface-2: #ecdcb4;
-  --ink: #2a1c10;
-  --muted: #6b5638;
-  --line: #b99d68;
-  --accent: #a8431a;
-  --accent-ink: #fff3dc;
-  --accent-soft: #ecd0a4;
-  --accent-text: #8a3512;
-  --ok: #3f6f3a;
-  --danger: #9b2218;
-  --radius-card: 6px;
-  --radius-ctl: 4px;
-  --radius-avatar: 9999px;
-  --shadow-card: 0 2px 0 rgb(80 50 20 / 0.16), 0 8px 16px rgb(60 35 10 / 0.12);
-  --font-heading: "Nathan", "Manrope", system-ui, sans-serif;
-  --heading-case: none;
-  --heading-track: 0.03em;
-  --logo-a: #e0b04f;
-  --logo-b: #8a3512;
-  color-scheme: light;
-}
-:root[data-theme="uncharted"] body {
-  background:
-    radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(90 55 20 / 0.22) 100%),
-    radial-gradient(ellipse at 15% 10%, rgb(255 244 214 / 0.55), transparent 30rem),
-    radial-gradient(ellipse at 90% 80%, rgb(150 100 40 / 0.16), transparent 26rem),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"),
-    var(--page);
-  background-attachment: fixed;
-}
-:root[data-theme="uncharted"] .motto { color: #5d3b1f; opacity: 1; font-size: 1.05rem; }
-/* Tree roots: dark wood with a gold core on a map. RDR2 gets burnt-red roots on dark leather. */
-:root[data-theme="uncharted"] .family-tree-stage {
-  --root-body: #4a2f18;
-  --root-core: #d9a441;
-  --root-aura: rgb(120 70 20 / 0.16);
-  --root-partner: #8a3512;
-  --stage-bg:
-    radial-gradient(ellipse at 50% 45%, transparent 50%, rgb(90 55 20 / 0.25) 100%),
-    linear-gradient(180deg, #efe2bf, #e0cc98);
-}
-:root[data-theme="rdr2"] .family-tree-stage {
-  --root-body: #8c2f21;
-  --root-core: #e6a36b;
-  --root-aura: rgb(169 54 38 / 0.2);
-  --root-partner: #e6a36b;
-  --stage-bg:
-    radial-gradient(ellipse at 50% 0%, rgb(169 54 38 / 0.2), transparent 30rem),
-    linear-gradient(180deg, #201813, #15100d);
-}
-:root[data-theme="rdr2"] .family-tree-stage .root-aura { mix-blend-mode: screen; }
-
-/* ------------------------------------------------------------------
-   Uncharted: weathered treasure-map parchment, leather and gold.
-   The default theme. Tactical Dark and Liquid Glass sit beside it.
-   ------------------------------------------------------------------ */
-:root[data-theme="uncharted"] .card {
-  background: linear-gradient(170deg, #f8eed2, var(--surface) 60%, #efe0b8);
-  border: 1px solid var(--line);
-  box-shadow:
-    inset 0 0 0 4px #f6ebcd,
-    inset 0 0 0 5px color-mix(in srgb, var(--line) 60%, transparent),
-    var(--shadow-card);
-  padding: 1.15rem;
-}
-:root[data-theme="uncharted"] .font-display,
-:root[data-theme="uncharted"] .btn { font-weight: 400; }
-:root[data-theme="uncharted"] h1.font-display { font-size: 2rem; letter-spacing: 0.04em; }
-:root[data-theme="uncharted"] .eyebrow {
-  letter-spacing: 0.16em;
-  color: var(--accent-text);
-}
-:root[data-theme="uncharted"] .btn-primary {
-  background: linear-gradient(180deg, #5d3b1f, #3a2412);
-  color: #f6dfa8;
-  border-color: #c9a14e;
-  box-shadow: inset 0 1px 0 rgb(255 225 150 / 0.35), 0 2px 0 rgb(40 22 8 / 0.5);
-}
-:root[data-theme="uncharted"] .btn-plain,
-:root[data-theme="uncharted"] .seg {
-  background: #f6ebcd;
-  border-color: var(--line);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
-}
-:root[data-theme="uncharted"] .btn-danger {
-  background: linear-gradient(180deg, #b13226, #7f1d14);
-  color: #ffe9d2;
-}
-:root[data-theme="uncharted"] .seg-on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-:root[data-theme="uncharted"] .input {
-  background: #fbf3da;
-  border-color: var(--line);
-  box-shadow: inset 0 2px 3px rgb(90 55 20 / 0.12);
-}
-:root[data-theme="uncharted"] .input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
-:root[data-theme="uncharted"] .tab-active {
-  background: var(--accent-soft);
-  box-shadow: inset 0 -2px 0 #c9a14e;
-}
-:root[data-theme="uncharted"] .tnode-rect {
-  fill: #f6ebcd;
-  stroke: #8a6a37;
-  stroke-width: 1.6;
-  filter: drop-shadow(0 3px 3px rgb(60 35 10 / 0.3));
-}
-:root[data-theme="uncharted"] .tnode-me { fill: #ecd0a4; stroke: var(--accent); stroke-width: 2.2; }
-:root[data-theme="uncharted"] .tnode-sel { stroke: #2a1c10; stroke-width: 3; }
-:root[data-theme="uncharted"] .leaflet-tile-pane { filter: sepia(0.6) saturate(0.9) contrast(0.95) brightness(0.98); }

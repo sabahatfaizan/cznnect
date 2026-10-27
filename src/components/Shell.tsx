@@ -17,7 +17,7 @@ import { Wordmark } from './Logo'
 import rdr2Logo from '../assets/rdr2-logo.svg'
 import mw4Logo from '../assets/mw4-logo.svg'
 import CoinMark from './CoinMark'
-import { setGlassAllowed } from '../theme'
+import { isThemeUnlocked, setGlassAllowed, setThemePref, unlockTheme } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
@@ -46,6 +46,10 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [coinTaps, setCoinTaps] = useState(0)
+  const [coinNotice, setCoinNotice] = useState('')
+  const [redeemCode, setRedeemCode] = useState('')
+  const [redeemNotice, setRedeemNotice] = useState('')
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
@@ -59,6 +63,33 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
   }, [bday.loaded, bday.people])
   const current: Tab = tab
+
+  function handlePirateCoinTap() {
+    if (isThemeUnlocked('rdr2')) {
+      setCoinNotice('Red Dead is already unlocked.')
+      return
+    }
+    const next = coinTaps + 1
+    setCoinTaps(next)
+    if (next >= 7) {
+      unlockTheme('rdr2')
+      setCoinNotice('Secret unlocked: Red Dead Redemption theme.')
+      setCoinTaps(0)
+    }
+  }
+
+  function redeemExclusiveTheme(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const normalized = redeemCode.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (normalized === 'SIRFRANCISDRAKE') {
+      const wasNew = unlockTheme('uncharted')
+      setThemePref('uncharted')
+      setRedeemNotice(wasNew ? 'Code accepted! Uncharted theme unlocked and equipped.' : 'Uncharted is already unlocked. Theme equipped.')
+      setRedeemCode('')
+    } else {
+      setRedeemNotice('That code is not recognized. Check it and try again.')
+    }
+  }
 
   // Liquid Glass is only allowed for the owner; anyone else is switched back to a dark fallback.
   useEffect(() => {
@@ -113,8 +144,10 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
             </div>
-            {/* Only the Uncharted theme shows the coin, in place of the wordmark and tagline. */}
-            <CoinMark className="brand-coin" />
+            {/* The pirate coin is the seven-tap Easter egg for Red Dead. It appears with the Uncharted theme. */}
+            <button type="button" className="brand-coin coin-easter-egg" aria-label="Pirate coin Easter egg" onClick={handlePirateCoinTap}>
+              <CoinMark />
+            </button>
             {/* Only the Red Dead theme shows this worn-poster wordmark, in place of the plain one. */}
             <img src={rdr2Logo} alt="Cznnect" className="brand-rdr2" draggable={false} />
             {/* Only the MW4 theme shows this one. */}
@@ -205,6 +238,17 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span className="menu-item-label"><Icon name="trophy" size={22} />Scoreboard</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
+            </div>
+            {coinNotice && <p role="status" className="mt-2 px-3 text-sm text-accent-text">{coinNotice}</p>}
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="eyebrow px-3 pb-1">Redeem code</p>
+              <p className="px-3 pb-2 text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
+              <form className="flex flex-col gap-2 px-3" onSubmit={redeemExclusiveTheme}>
+                <label className="sr-only" htmlFor="exclusive-theme-code">Redeem code</label>
+                <input id="exclusive-theme-code" className="input" value={redeemCode} onChange={(e) => { setRedeemCode(e.target.value); setRedeemNotice('') }} placeholder="Enter code" autoCapitalize="characters" autoComplete="off" required />
+                <button className="btn btn-primary w-full" type="submit">Redeem</button>
+                {redeemNotice && <p role="status" className="text-sm text-muted">{redeemNotice}</p>}
+              </form>
             </div>
             <div className="mt-4 border-t border-line pt-4">
               <p className="eyebrow px-3 pb-1">Settings</p>

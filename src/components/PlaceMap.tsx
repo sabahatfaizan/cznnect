@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react'
-import * as L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import maplibregl, { type Map as MapLibreMap, type Marker as MapLibreMarker } from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { boundsOf, type Place } from '../lib/places'
 
 type Spot = { lat: number; lng: number }
 
-// The map. Leaflet draws it with free OpenStreetMap tiles. Each saved place is a pin:
-// round for a place, square for a restaurant, filled when the family has been there and
-// hollow when it is somewhere they want to go.
+const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
+
+// OpenFreeMap vector basemap with MapLibre. Saved places stay interactive:
+// round for places, square for restaurants, filled for visited, hollow for wanted.
 export default function PlaceMap({
   places,
   selectedId,
@@ -26,12 +27,11 @@ export default function PlaceMap({
   focus: (Spot & { tick: number }) | null
 }) {
   const box = useRef<HTMLDivElement>(null)
-  const map = useRef<L.Map | null>(null)
-  const layer = useRef<L.LayerGroup | null>(null)
-  const tempPin = useRef<L.Marker | null>(null)
+  const map = useRef<MapLibreMap | null>(null)
+  const markers = useRef<Map<string, MapLibreMarker>>(new Map())
+  const tempPin = useRef<MapLibreMarker | null>(null)
   const fitted = useRef(false)
 
-  // Always call the newest callbacks without rebuilding the map.
   const selectRef = useRef(onSelect)
   selectRef.current = onSelect
   const pickRef = useRef(onPick)
@@ -42,78 +42,97 @@ export default function PlaceMap({
   useEffect(() => {
     const el = box.current
     if (!el) return
-    const m = L.map(el, { zoomControl: true, attributionControl: true }).setView([23.8103, 90.4125], 7)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(m)
-    layer.current = L.layerGroup().addTo(m)
-    m.on('click', (e: L.LeafletMouseEvent) => {
-      if (pickingRef.current) pickRef.current(e.latlng.lat, e.latlng.lng)
+
+    const m = new maplibregl.Map({
+      container: el,
+      style: OPENFREEMAP_STYLE,
+      center: [90.4125, 23.8103],
+      zoom: 7,
+      attributionControl: true,
+      cooperativeGestures: true,
+    })
+    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+    m.on('click', (event) => {
+      if (pickingRef.current) pickRef.current(event.lngLat.lat, event.lngLat.lng)
     })
     map.current = m
-    const ro = new ResizeObserver(() => m.invalidateSize())
+
+    const ro = new ResizeObserver(() => m.resize())
     ro.observe(el)
     return () => {
       ro.disconnect()
+      markers.current.forEach((marker) => marker.remove())
+      markers.current.clear()
+      tempPin.current?.remove()
+      tempPin.current = null
       m.remove()
       map.current = null
-      layer.current = null
-      tempPin.current = null
       fitted.current = false
     }
   }, [])
 
-  // Draw the pins.
+  // Rebuild saved-place markers while keeping the map instance alive.
   useEffect(() => {
     const m = map.current
-    const g = layer.current
-    if (!m || !g) return
-    g.clearLayers()
+    if (!m) return
+
+    markers.current.forEach((marker) => marker.remove())
+    markers.current.clear()
+
     for (const p of places) {
+      const el = document.createElement('button')
+      el.type = 'button'
+      el.className = 'map-place-marker'
+      el.setAttribute('aria-label', p.name)
+      el.title = p.name
       const cls = [
         'pin',
         p.kind === 'restaurant' ? 'pin-sq' : 'pin-round',
         p.status === 'want' ? 'pin-want' : 'pin-been',
         p.id === selectedId ? 'pin-sel' : '',
       ].join(' ')
-      L.marker([p.lat, p.lng], {
-        title: p.name,
-        alt: p.name,
-        keyboard: true,
-        icon: L.divIcon({ className: 'pin-wrap', html: `<span class="${cls}"></span>`, iconSize: [30, 30], iconAnchor: [15, 15] }),
+      el.innerHTML = `<span class="${cls}"></span>`
+      el.addEventListener('click', (event) => {
+        event.stopPropagation()
+        selectRef.current(p.id)
       })
-        .on('click', () => selectRef.current(p.id))
-        .addTo(g)
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([p.lng, p.lat])
+        .addTo(m)
+      markers.current.set(p.id, marker)
     }
-    // Fit everything in view the first time places arrive.
+
     if (!fitted.current && places.length > 0) {
       fitted.current = true
       const b = boundsOf(places)
       if (b) {
-        if (places.length === 1) m.setView(b[0], 14)
-        else m.fitBounds(b, { padding: [40, 40], maxZoom: 15 })
+        if (places.length === 1) m.setCenter([b[0][1], b[0][0]]).setZoom(14)
+        else {
+          const bounds = new maplibregl.LngLatBounds()
+          for (const p of places) bounds.extend([p.lng, p.lat])
+          m.fitBounds(bounds, { padding: 40, maxZoom: 15, duration: 0 })
+        }
       }
     }
   }, [places, selectedId])
 
-  // The temporary pin shown while adding a place.
   useEffect(() => {
     const m = map.current
-    if (!m) return
     tempPin.current?.remove()
     tempPin.current = null
-    if (pin) {
-      tempPin.current = L.marker([pin.lat, pin.lng], {
-        interactive: false,
-        icon: L.divIcon({ className: 'pin-wrap', html: '<span class="pin pin-round pin-new"></span>', iconSize: [30, 30], iconAnchor: [15, 15] }),
-      }).addTo(m)
+    if (m && pin) {
+      const el = document.createElement('div')
+      el.className = 'map-place-marker'
+      el.innerHTML = '<span class="pin pin-round pin-new"></span>'
+      tempPin.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([pin.lng, pin.lat])
+        .addTo(m)
     }
   }, [pin])
 
   useEffect(() => {
     const m = map.current
-    if (m && focus) m.setView([focus.lat, focus.lng], Math.max(m.getZoom(), 15))
+    if (m && focus) m.flyTo({ center: [focus.lng, focus.lat], zoom: Math.max(m.getZoom(), 15), essential: true })
   }, [focus])
 
   return (

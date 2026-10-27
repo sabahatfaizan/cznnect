@@ -7,10 +7,10 @@ import { ICONS, ICON_GROUPS, getIconPref, renderIcon, setIconPref, type IconId }
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 
 const THEMES: { id: ThemePref; label: string; hint: string }[] = [
-  { id: 'tactical', label: 'Tactical Dark', hint: 'Current standard theme' },
+  { id: 'light', label: 'Light', hint: 'Clean, bright, everyday use' },
+  { id: 'dark', label: 'Dark', hint: 'Clean, comfortable low-light use' },
   { id: 'rdr2', label: 'Red Dead', hint: 'Secret unlock · outlaw frontier' },
   { id: 'uncharted', label: 'Uncharted', hint: 'Redeem-code unlock · treasure map' },
-  { id: 'mw4', label: 'MW4', hint: 'Modern warfare ops' },
   { id: 'glass', label: 'Liquid Glass', hint: 'Owner only' },
 ]
 
@@ -101,7 +101,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
             </button>
           ))}
         </div>
-        <p className="text-sm text-muted">Red Dead unlocks after seven taps on the pirate coin in Uncharted. Uncharted unlocks with the code SIR FRANCIS DRAKE. Liquid Glass is only available to the app owner.</p>
+        <p className="text-sm text-muted">Light and Dark are the standard themes. Red Dead unlocks after seven taps on the pirate coin in Uncharted. Uncharted unlocks with the code SIR FRANCIS DRAKE. Liquid Glass is only available to the app owner.</p>
       </section>
       <details className="card expander" aria-label="Custom app icon">
         <summary>

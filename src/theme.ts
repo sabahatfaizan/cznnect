@@ -1,14 +1,14 @@
 // Available themes: Tactical HUD, Red Dead, Uncharted, and owner-only Liquid Glass.
 // The choice is saved on this device, so each cousin picks their own.
-export type ThemePref = 'tactical' | 'rdr2' | 'uncharted' | 'glass'
-type Theme = 'tactical' | 'rdr2' | 'uncharted' | 'glass'
+export type ThemePref = 'tactical' | 'rdr2' | 'uncharted' | 'mw4' | 'glass'
+type Theme = 'tactical' | 'rdr2' | 'uncharted' | 'mw4' | 'glass'
 
 const KEY = 'cznnect-theme'
 
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'tactical' || v === 'rdr2' || v === 'uncharted' || v === 'glass') return v
+    if (v === 'tactical' || v === 'rdr2' || v === 'uncharted' || v === 'mw4' || v === 'glass') return v
     // Migrate removed themes to Tactical HUD so existing users don't land on a retired appearance.
   } catch {
     // Storage can be blocked. Fall back to the default.
@@ -26,7 +26,7 @@ export function setGlassAllowed(allowed: boolean) {
 }
 
 function resolve(pref: ThemePref): Theme {
-  if (pref === 'rdr2' || pref === 'uncharted') return pref
+  if (pref === 'rdr2' || pref === 'uncharted' || pref === 'mw4') return pref
   if (pref === 'glass') return glassAllowed ? 'glass' : 'tactical'
   return pref
 }
@@ -36,7 +36,7 @@ export function applyTheme(pref: ThemePref) {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'rdr2' ? '#171310' : theme === 'uncharted' ? '#e8d9b5' : theme === 'glass' ? '#070b16' : '#0c0e0b')
+    ?.setAttribute('content', theme === 'tactical' ? '#0c0e0b' : theme === 'rdr2' ? '#171310' : theme === 'uncharted' ? '#e8d9b5' : theme === 'mw4' ? '#06090c' : theme === 'glass' ? '#070b16' : '#0c0e0b')
 }
 
 export function setThemePref(pref: ThemePref) {

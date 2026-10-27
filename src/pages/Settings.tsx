@@ -10,6 +10,7 @@ const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
   { id: 'rdr2', label: 'Red Dead', hint: 'Outlaw frontier' },
   { id: 'uncharted', label: 'Uncharted', hint: 'Treasure-map parchment' },
+  { id: 'mw4', label: 'MW4', hint: 'Modern warfare ops' },
   { id: 'glass', label: 'Liquid Glass', hint: 'Owner only' },
 ]
 

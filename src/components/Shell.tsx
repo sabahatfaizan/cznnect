@@ -14,21 +14,22 @@ import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
+import rdr2Logo from '../assets/rdr2-logo.svg'
 import CoinMark from './CoinMark'
 import { setGlassAllowed } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
-const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
-  home: { rdr2: "The Gang's Camp", unc: 'Expedition Base' },
-  tree: { rdr2: 'Kin & Kith', unc: 'The Lineage Chart' },
-  explore: { rdr2: 'Scouting Territory', unc: 'Uncharted Territory' },
-  plans: { rdr2: 'The Next Job', unc: 'The Next Expedition' },
-  birthdays: { rdr2: 'Days Worth Marking', unc: 'Dates in the Journal' },
-  me: { rdr2: 'Your Wanted Poster', unc: "Explorer's Dossier" },
-  irl: { rdr2: 'Riding Together', unc: 'The Field Team' },
-  scoreboard: { rdr2: 'The Bounty Board', unc: 'Treasure Tally' },
-  settings: { rdr2: 'Camp Supplies', unc: 'Gear & Supplies' },
+const BANNERS: Record<Tab, { rdr2: string; unc: string; mw4: string }> = {
+  home: { rdr2: "The Gang's Camp", unc: 'Expedition Base', mw4: 'BASE OF OPS' },
+  tree: { rdr2: 'Kin & Kith', unc: 'The Lineage Chart', mw4: 'BLOODLINE INTEL' },
+  explore: { rdr2: 'Scouting Territory', unc: 'Uncharted Territory', mw4: 'RECON' },
+  plans: { rdr2: 'The Next Job', unc: 'The Next Expedition', mw4: 'MISSION BRIEF' },
+  birthdays: { rdr2: 'Days Worth Marking', unc: 'Dates in the Journal', mw4: 'DATES ON RECORD' },
+  me: { rdr2: 'Your Wanted Poster', unc: "Explorer's Dossier", mw4: 'OPERATOR FILE' },
+  irl: { rdr2: 'Riding Together', unc: 'The Field Team', mw4: 'SQUAD LINK' },
+  scoreboard: { rdr2: 'The Bounty Board', unc: 'Treasure Tally', mw4: 'LEADERBOARD' },
+  settings: { rdr2: 'Camp Supplies', unc: 'Gear & Supplies', mw4: 'LOADOUT' },
 }
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
@@ -110,10 +111,11 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           <div>
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
-              <p className="text-xs text-muted">Family, connected.</p>
             </div>
             {/* Only the Uncharted theme shows the coin, in place of the wordmark and tagline. */}
             <CoinMark className="brand-coin" />
+            {/* Only the Red Dead theme shows this worn-poster wordmark, in place of the plain one. */}
+            <img src={rdr2Logo} alt="Cznnect" className="brand-rdr2" draggable={false} />
           </div>
           <button
             type="button"
@@ -235,7 +237,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>}
           </aside>
         </div>
-        <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
+        <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} data-mw4={BANNERS[tab].mw4} />
         {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {tab === 'irl' && <Irl family={family} userId={userId} />}
         {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}

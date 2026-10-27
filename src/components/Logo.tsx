@@ -42,6 +42,16 @@ export function Mark({ className = '', loop = false }: { className?: string; loo
           <path d="M0 64L64 0" pathLength={1} className="mark-bar" stroke={`url(#g${id})`} strokeWidth="10" strokeLinecap="butt" />
         </g>
       </g>
+      {/* Theme extras. Hidden unless the matching theme is active (see index.css). */}
+      <g className="mk-deco mk-rdr2">
+        {([[11, 11], [53, 11], [11, 53], [53, 53]] as const).map(([x, y]) => (
+          <circle key={x + '-' + y} cx={x} cy={y} r="1.6" fill="#f1dfb8" stroke="#120805" strokeWidth="0.8" />
+        ))}
+      </g>
+      <g className="mk-deco mk-mw4">
+        <path d="M3 13V3H13M51 3H61V13M61 51V61H51M13 61H3V51" stroke="#ff6a1f" strokeWidth="2.2" strokeLinecap="square" />
+        <path d="M20.5 20.5L27 27M43.5 43.5L37 37" stroke="#ffffff" strokeWidth="3.4" strokeLinecap="square" />
+      </g>
     </svg>
   )
 }

@@ -35,7 +35,14 @@
   --logo-a: #e0b04f;
   --logo-b: #8a3512;
   --grain: url("./grain.png") 0 0 / 180px 180px;
-  --leather: url("./leather.png") 0 0 / 140px 140px, linear-gradient(180deg, #5b3a22, #3a2415);
+  --leather: url("./unc-cracks.png") 0 0 / 220px 220px, url("./leather.png") 0 0 / 140px 140px, linear-gradient(180deg, #5b3a22, #3a2415);
+  /* grunge: scratches and fibres, soft stains, and burnt corners. All pre-rendered images, so scrolling stays smooth. */
+  --wear: url("./unc-scratches.png") 0 0 / 256px 256px, url("./unc-stains-soft.png") 0 0 / 360px 360px;
+  --corner-burn:
+    radial-gradient(circle at 0 0, rgb(100 62 22 / 0.28), transparent 30%),
+    radial-gradient(circle at 100% 0, rgb(100 62 22 / 0.22), transparent 28%),
+    radial-gradient(circle at 0 100%, rgb(100 62 22 / 0.24), transparent 30%),
+    radial-gradient(circle at 100% 100%, rgb(100 62 22 / 0.3), transparent 32%);
   color-scheme: light;
 }
 
@@ -47,9 +54,10 @@
   line-height: 1.45;
 }
 :root[data-theme="uncharted"] body::before {
-  /* One stable layer (the sea chart plus a fixed grain on top), sized to the large viewport so it never
-     resizes when the phone's address bar slides away, and on its own GPU layer so scrolling does not
-     repaint it. The grain used to be a second full-screen layer; it is now part of this one. */
+  /* One stable layer: a soft, simplified treasure map (coast ripples, a dotted trail, a faint compass) with
+     scratches and grain over it. It is deliberately quiet so names and text stay readable. It is sized to
+     the large viewport so it never resizes when the phone's address bar slides away, and sits on its own
+     GPU layer so scrolling does not repaint it. */
   content: "";
   position: fixed;
   top: 0;
@@ -59,14 +67,12 @@
   height: 100lvh;
   z-index: -2;
   pointer-events: none;
-  /* An old chart of the Madagascar coast. The parchment veil keeps the writing on top of it readable. */
   transform: translateZ(0);
   backface-visibility: hidden;
   background:
     url("./grain-fixed.png") 0 0 / 180px 180px,
-    radial-gradient(ellipse at 50% 45%, transparent 52%, rgb(92 56 20 / 0.34) 100%),
-    linear-gradient(rgb(238 222 184 / 0.4), rgb(238 222 184 / 0.4)),
-    url("./uncharted-map.jpg") 56% 50% / cover no-repeat;
+    url("./unc-scratches.png") 0 0 / 256px 256px,
+    url("./uncharted-soft-map.jpg") 50% 50% / cover no-repeat;
 }
 
 /* ---- journal pages: ruled paper, leather spine with stitching, washi tape ---- */
@@ -76,12 +82,14 @@
   position: relative;
   background:
     repeating-linear-gradient(180deg, transparent 0 1.7rem, rgb(70 105 125 / 0.15) 1.7rem calc(1.7rem + 1px)),
+    var(--wear),
+    var(--corner-burn),
     var(--grain),
     linear-gradient(172deg, #faf0d6, #f3e4bb);
   border: 1px solid #a98a55;
   border-left: 12px solid #4a2f1b;
   border-radius: 2px 5px 5px 2px;
-  box-shadow: 0 12px 20px rgb(60 35 10 / 0.28), 0 2px 0 rgb(60 35 10 / 0.3), inset 0 0 22px rgb(150 100 40 / 0.18);
+  box-shadow: 0 12px 20px rgb(60 35 10 / 0.28), 0 2px 0 rgb(60 35 10 / 0.3), inset 0 0 28px rgb(120 75 25 / 0.3), inset 0 0 2px rgb(70 45 20 / 0.55);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -118,7 +126,7 @@
   background: repeating-linear-gradient(135deg, rgb(80 120 108 / 0.72) 0 6px, rgb(98 140 126 / 0.72) 6px 12px);
 }
 :root[data-theme="uncharted"] .sheet-panel {
-  background: repeating-linear-gradient(180deg, transparent 0 1.7rem, rgb(70 105 125 / 0.14) 1.7rem calc(1.7rem + 1px)), var(--grain), linear-gradient(172deg, #faf0d6, #f1e1b4);
+  background: repeating-linear-gradient(180deg, transparent 0 1.7rem, rgb(70 105 125 / 0.14) 1.7rem calc(1.7rem + 1px)), var(--wear), var(--corner-burn), var(--grain), linear-gradient(172deg, #faf0d6, #f1e1b4);
   color: var(--ink);
   border: 0;
   border-top: 12px solid #4a2f1b;
@@ -287,7 +295,7 @@
   gap: 0.6rem;
   margin: 0.1rem 0 1.25rem;
   padding: 0.55rem 1.6rem;
-  background: var(--grain), linear-gradient(180deg, #ecd9a6, #dcc388);
+  background: var(--wear), var(--grain), linear-gradient(180deg, #ecd9a6, #dcc388);
   color: #5d2a10;
   font-family: var(--font-heading);
   font-size: 1.2rem;
@@ -335,6 +343,7 @@
   --root-partner: #a8431a;
   --stage-bg:
     radial-gradient(ellipse at 50% 45%, transparent 48%, rgb(110 70 25 / 0.32) 100%),
+    var(--wear),
     var(--grain),
     linear-gradient(180deg, #f1e3bd, #e2cd98);
   border: 2px solid #4a2f1b;

@@ -35,7 +35,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
 
   const me = members.find((m) => m.user_id === userId)
   const isOwner = me?.role === 'owner'
-  const firstName = me?.profiles?.display_name.split(' ')[0] ?? ''
   const code = family.invite_code.toUpperCase()
   const inviteText = `Join ${family.name} on Cznnect. Open ${location.href.split('?')[0]}, create an account, then enter this invite code: ${code}`
 
@@ -72,9 +71,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-1">
-        <p className="eyebrow">Family space</p>
         <h1 className="font-display text-2xl font-extrabold leading-tight">{family.name}</h1>
-        <p className="text-muted">{firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}</p>
       </header>
 
       <section className="card flex flex-col gap-3">

@@ -377,9 +377,25 @@ input[type="checkbox"] {
 }
 
 
-.leaflet-container {
+.maplibregl-map {
   font-family: inherit;
   background: var(--surface-2);
+}
+.map-place-marker {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.map-place-marker:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 9999px;
 }
 .pin-wrap {
   background: none;

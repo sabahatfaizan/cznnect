@@ -16,7 +16,7 @@ import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import rdr2Logo from '../assets/rdr2-logo.svg'
 import CoinMark from './CoinMark'
-import { isThemeUnlocked, setGlassAllowed, setThemePref, unlockTheme } from '../theme'
+import { isThemeUnlocked, setGlassAllowed, unlockTheme } from '../theme'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.

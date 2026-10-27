@@ -238,16 +238,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>
             {coinNotice && <p role="status" className="mt-2 px-3 text-sm text-accent-text">{coinNotice}</p>}
             <div className="mt-4 border-t border-line pt-4">
-              <p className="eyebrow px-3 pb-1">Redeem code</p>
-              <p className="px-3 pb-2 text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
-              <form className="flex flex-col gap-2 px-3" onSubmit={redeemExclusiveTheme}>
-                <label className="sr-only" htmlFor="exclusive-theme-code">Redeem code</label>
-                <input id="exclusive-theme-code" className="input" value={redeemCode} onChange={(e) => { setRedeemCode(e.target.value); setRedeemNotice('') }} placeholder="Enter code" autoCapitalize="characters" autoComplete="off" required />
-                <button className="btn btn-primary w-full" type="submit">Redeem</button>
-                {redeemNotice && <p role="status" className="text-sm text-muted">{redeemNotice}</p>}
-              </form>
-            </div>
-            <div className="mt-4 border-t border-line pt-4">
               <p className="eyebrow px-3 pb-1">Settings</p>
               <button
                 type="button"
@@ -258,6 +248,21 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             </div>
+            <details className="mt-2 border-b border-line pb-2" aria-label="Redeem code">
+              <summary className="menu-item">
+                <span className="menu-item-label"><Icon name="settings" size={22} />Redeem code</span>
+                <span aria-hidden="true" className="expander-chevron">›</span>
+              </summary>
+              <div className="mt-2 px-3 pb-2">
+                <p className="pb-2 text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
+                <form className="flex flex-col gap-2" onSubmit={redeemExclusiveTheme}>
+                  <label className="sr-only" htmlFor="exclusive-theme-code">Redeem code</label>
+                  <input id="exclusive-theme-code" className="input" value={redeemCode} onChange={(e) => { setRedeemCode(e.target.value); setRedeemNotice('') }} placeholder="Enter code" autoCapitalize="characters" autoComplete="off" required />
+                  <button className="btn btn-primary w-full" type="submit">Redeem</button>
+                  {redeemNotice && <p role="status" className="text-sm text-muted">{redeemNotice}</p>}
+                </form>
+              </div>
+            </details>
             {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
               <p className="eyebrow">Owner controls</p>
               <div className="mt-2 flex items-center justify-between gap-4">

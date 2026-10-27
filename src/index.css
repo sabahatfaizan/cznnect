@@ -654,10 +654,14 @@ input[type="checkbox"] {
   white-space: nowrap;
 }
 .wordmark-mark {
-  width: 0.86em;
-  height: 0.86em;
+  width: 0.9em;
+  height: 0.9em;
   flex: none;
-  margin: 0 0.04em -0.17em;
+  margin: 0 0.04em;
+  /* The mark sits on the text baseline (its box bottom), but the square is inset in its box, so drop it
+     by the inset to put the square's bottom edge on the baseline and its top at cap height. */
+  position: relative;
+  top: 0.1em;
 }
 .menu-item {
   display: flex;
@@ -1022,11 +1026,11 @@ input[type="checkbox"] {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 /* The mark: the diagonal is drawn with a dash so it can slide in and out.
-   Loop (3s): the square spins and slows to rest; as it rests the diagonal connects; the hold; then it
-   slides out through the far corner as the next spin starts. It never stops while the screen is open. */
+   Each turn (2.2s): the square spins and slows to rest; as it rests the diagonal connects; then it slides
+   out through the far corner as the next spin starts. The loading screen plays exactly two turns. */
 .mark-bar { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.mark-loop { animation: mark-loop-spin 3s infinite; }
-.mark-loop .mark-bar { animation: mark-loop-bar 3s infinite; }
+.mark-loop { animation: mark-loop-spin 2.2s 2 forwards; }
+.mark-loop .mark-bar { animation: mark-loop-bar 2.2s 2 forwards; }
 @keyframes mark-loop-spin {
   0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(.5, 0, .15, 1); }
   62% { transform: rotate(360deg); }
@@ -1040,6 +1044,7 @@ input[type="checkbox"] {
   100% { stroke-dashoffset: 0; }
 }
 .splash-logo { filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--logo-b, #1f3fd0) 30%, transparent)); }
+.splash { position: fixed; inset: 0; }
 
 /* Signature */
 .signature {
@@ -1387,69 +1392,9 @@ input[type="checkbox"] {
 }
 
 /* Loading screen footer: Sic Parvis Magna is exclusive to the Uncharted theme. */
-.motto {
-  display: none;
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--ink);
-  opacity: 0;
-  animation: motto-in 1.6s ease-out 0.9s forwards;
-}
-.theme-quote {
-  display: none;
-  width: min(34rem, 92vw);
-  max-width: min(34rem, 92vw);
-  box-sizing: border-box;
-  margin: 0.15rem 0 0;
-  padding: 0.85rem 1.1rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
-  color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(0.95rem, 3.6vw, 1.1rem);
-  font-style: italic;
-  line-height: 1.55;
-  text-align: center;
-  opacity: 0;
-  animation: quote-in 1.2s ease-out 1.25s forwards;
-}
-.theme-quote cite {
-  display: block;
-  margin-top: 0.2rem;
-  color: var(--ink);
-  font-family: var(--font-heading);
-  font-size: 0.7rem;
-  font-style: normal;
-  letter-spacing: 0.06em;
-  text-align: right;
-}
-:root[data-theme="tactical"] .theme-quote-tactical,
-:root:not([data-theme]) .theme-quote-tactical { display: block; }
-:root[data-theme="rdr2"] .theme-quote-rdr2 { display: block; }
-:root[data-theme="glass"] .theme-quote-glass { display: block; }
-:root[data-theme="rdr2"] .theme-quote {
-  color: #eadbc0;
-  background: linear-gradient(110deg, rgb(169 54 38 / 0.18), rgb(48 37 30 / 0.92));
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.28);
-}
-:root[data-theme="rdr2"] .theme-quote cite {
-  color: #eadbc0;
-  font-family: "Chinese Rocks", Impact, fantasy, serif;
-  font-size: 0.9rem;
-  letter-spacing: 0.04em;
-}
 .copyright { font-size: 0.68rem; letter-spacing: 0.04em; color: var(--muted); opacity: 0; animation: copyright-in 1.2s ease-out 1.4s forwards; }
-@keyframes motto-in { from { opacity: 0; letter-spacing: 0.5em; } to { opacity: 0.85; letter-spacing: 0.22em; } }
 @keyframes quote-in { to { opacity: 0.95; } }
 @keyframes copyright-in { to { opacity: 0.75; } }
 @media (prefers-reduced-motion: reduce) {
-  .motto { animation: none; opacity: 0.85; }
   .copyright { animation: none; opacity: 0.75; }
 }

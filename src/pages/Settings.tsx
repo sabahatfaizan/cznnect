@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
 import { getThemePref, setThemePref, type ThemePref } from '../theme'
-import { ICONS, getIconPref, renderIcon, setIconPref, type IconId } from '../appIcon'
+import { ICONS, ICON_GROUPS, getIconPref, renderIcon, setIconPref, type IconId } from '../appIcon'
 import Signature from '../components/Signature'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
@@ -100,34 +100,44 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         </div>
         <p className="text-sm text-muted">Saved on this device. Liquid Glass is only available to the app owner.</p>
       </section>
-      <section className="card flex flex-col gap-3" aria-label="Custom app icon">
-        <div>
-          <h2 className="font-display text-lg font-bold">Custom app icon</h2>
-          <p className="mt-1 text-sm text-muted">Pick a colour for the logo and icon.</p>
-        </div>
-        <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="App icon colour">
-          {previews.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              role="radio"
-              aria-checked={icon === v.id}
-              className={`icon-tile ${icon === v.id ? 'icon-tile-on' : ''}`}
-              onClick={() => { setIconPref(v.id); setIcon(v.id) }}
-            >
-              <img src={v.src} alt="" width={60} height={60} />
-              <span>{v.label}</span>
-            </button>
+      <details className="card expander" aria-label="Custom app icon">
+        <summary>
+          <span className="flex min-w-0 items-center gap-3">
+            <img src={previews.find((p) => p.id === icon)?.src} alt="" width={36} height={36} className="h-9 w-9 flex-none rounded-[22%]" />
+            <span className="min-w-0">
+              <span className="font-display block text-lg font-bold">Custom app icon</span>
+              <span className="block text-sm text-muted">{ICONS.find((i) => i.id === icon)?.label}</span>
+            </span>
+          </span>
+          <span aria-hidden="true" className="expander-chevron">›</span>
+        </summary>
+        <div className="mt-3 flex flex-col gap-4" role="radiogroup" aria-label="App icon colour">
+          {ICON_GROUPS.map((group) => (
+            <div key={group} className="flex flex-col gap-2">
+              <h3 className="eyebrow">{group}</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {previews.filter((v) => v.group === group).map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={icon === v.id}
+                    className={`icon-tile ${icon === v.id ? 'icon-tile-on' : ''}`}
+                    onClick={() => { setIconPref(v.id); setIcon(v.id) }}
+                  >
+                    <img src={v.src} alt="" width={60} height={60} />
+                    <span>{v.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
+          <p className="text-sm text-muted">
+            It recolours the logo in the app and the icon for new Home Screen shortcuts. An icon already on your Home Screen
+            keeps its look until you remove it and add Cznnect again.
+          </p>
         </div>
-        <a className="btn btn-plain" download={`cznnect-icon-${icon}.png`} href={renderIcon(icon, 512)}>
-          Download this icon
-        </a>
-        <p className="text-sm text-muted">
-          It recolours the logo in the app and the icon for new Home Screen shortcuts. An icon already on your Home Screen
-          keeps its look until you remove it and add Cznnect again.
-        </p>
-      </section>
+      </details>
       <div className="flex justify-center pt-2">
         <Signature />
       </div>

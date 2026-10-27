@@ -7,7 +7,7 @@ import Splash, { prefersReducedMotion } from './components/Splash'
 import Logo from './components/Logo'
 import Authed from './Authed'
 
-const SPLASH_MS = 3000
+const SPLASH_MS = 4500
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const MAINTENANCE_PIN = '4124'
 

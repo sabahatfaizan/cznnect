@@ -1,16 +1,25 @@
 // Custom app icon: a colour variant for the Cznnect mark. It recolours the logo inside the app and the
 // icon the browser uses for the tab and for new Home Screen shortcuts. An icon that is already on a
 // phone's Home Screen keeps its look until the app is removed and added again.
-export type IconId = 'ocean' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
+export type IconId =
+  | 'ocean' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
+  | 'treasure' | 'libertalia' | 'outlaw' | 'dust'
 
-export const ICONS: { id: IconId; label: string; a: string; b: string }[] = [
-  { id: 'ocean', label: 'Ocean', a: '#5aa9ff', b: '#1f3fd0' },
-  { id: 'sunset', label: 'Sunset', a: '#ffb347', b: '#f0286e' },
-  { id: 'aurora', label: 'Aurora', a: '#2fe0b5', b: '#6a4bff' },
-  { id: 'orchid', label: 'Orchid', a: '#ff82dc', b: '#7b3dff' },
-  { id: 'forest', label: 'Forest', a: '#9be86e', b: '#0a8f6a' },
-  { id: 'graphite', label: 'Graphite', a: '#cfd8e6', b: '#58698a' },
+// "a" is the main colour and "b" the deep end of the gradient. The Uncharted and RDR2 sets follow the
+// colours of those two app themes (parchment, gold and leather; ember red and oxblood).
+export const ICONS: { id: IconId; label: string; group: string; a: string; b: string }[] = [
+  { id: 'ocean', label: 'Ocean', group: 'Classic', a: '#5aa9ff', b: '#1f3fd0' },
+  { id: 'sunset', label: 'Sunset', group: 'Classic', a: '#ffb347', b: '#f0286e' },
+  { id: 'aurora', label: 'Aurora', group: 'Classic', a: '#2fe0b5', b: '#6a4bff' },
+  { id: 'orchid', label: 'Orchid', group: 'Classic', a: '#ff82dc', b: '#7b3dff' },
+  { id: 'forest', label: 'Forest', group: 'Classic', a: '#9be86e', b: '#0a8f6a' },
+  { id: 'graphite', label: 'Graphite', group: 'Classic', a: '#cfd8e6', b: '#58698a' },
+  { id: 'treasure', label: 'Treasure Map', group: 'Uncharted', a: '#f2d58f', b: '#a8431a' },
+  { id: 'libertalia', label: 'Libertalia', group: 'Uncharted', a: '#ffd36b', b: '#6b3410' },
+  { id: 'outlaw', label: 'Outlaw', group: 'RDR2', a: '#e8603f', b: '#4a0f0a' },
+  { id: 'dust', label: 'Dust & Leather', group: 'RDR2', a: '#dcbd8e', b: '#4a2c17' },
 ]
+export const ICON_GROUPS = ['Classic', 'Uncharted', 'RDR2']
 
 const KEY = 'cznnect-icon'
 
@@ -28,8 +37,20 @@ function find(id: IconId) {
   return ICONS.find((i) => i.id === id) ?? ICONS[0]
 }
 
-// The icon artwork: a gradient square with the white mark. Same shapes as the in-app logo.
-export function renderIcon(id: IconId, size: number): string {
+function rgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
+function mix(hex: string, other: string, t: number): string {
+  const [r1, g1, b1] = rgb(hex)
+  const [r2, g2, b2] = rgb(other)
+  const f = (a: number, b: number) => Math.round(a + (b - a) * t)
+  return `rgb(${f(r1, r2)} ${f(g1, g2)} ${f(b1, b2)})`
+}
+
+// The icon artwork: a gradient square with the mark in light metal, a dark outline round every edge
+// and a thin bright rim just inside them. Same shapes as the in-app logo.
+export function renderIcon(id: IconId, size: number, scale = 0.58): string {
   const v = find(id)
   const c = document.createElement('canvas')
   c.width = c.height = size
@@ -46,22 +67,64 @@ export function renderIcon(id: IconId, size: number): string {
   g.fillStyle = glow
   g.fillRect(0, 0, size, size)
 
-  // The mark sits in the middle 56% so it survives circular and rounded masks.
-  const u = (size * 0.56) / 56
+  // The mark sits in the middle 58% so it survives circular and rounded masks.
+  const u = (size * scale) / 52
   g.save()
   g.translate(size / 2 - 32 * u, size / 2 - 32 * u)
   g.scale(u, u)
-  g.fillStyle = '#ffffff'
-  g.fill(new Path2D('M4 4H60V60H4Z M15 15V49H49V15Z'), 'evenodd')
+  const ring = new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z')
+  const bar = new Path2D('M3.54 67.54L67.54 3.54L60.46 -3.54L-3.54 60.46Z')
+  const edge = mix(v.b, '#000000', 0.55)
+  const fill = g.createLinearGradient(6, 6, 58, 58)
+  fill.addColorStop(0, '#ffffff')
+  fill.addColorStop(1, mix(v.a, '#ffffff', 0.55))
+
+  // 1. Outline: stroke both shapes dark; the fills below cover the inner halves and the seams.
+  g.save()
   g.beginPath()
-  g.rect(4, 4, 56, 56)
+  g.rect(6 - 3, 6 - 3, 52 + 6, 52 + 6)
   g.clip()
-  g.lineWidth = 11
-  g.strokeStyle = '#ffffff'
+  g.strokeStyle = edge
+  g.lineWidth = 3
+  g.lineJoin = 'miter'
+  g.stroke(ring)
+  g.restore()
+  g.save()
   g.beginPath()
-  g.moveTo(0, 64)
-  g.lineTo(64, 0)
-  g.stroke()
+  g.rect(6, 6, 52, 52)
+  g.clip()
+  g.strokeStyle = edge
+  g.lineWidth = 3
+  g.stroke(bar)
+  g.fillStyle = fill
+  g.fill(bar)
+  g.restore()
+  // 2. Fill the frame, then the bar over it.
+  g.fillStyle = fill
+  g.fill(ring, 'evenodd')
+  g.save()
+  g.beginPath()
+  g.rect(6, 6, 52, 52)
+  g.clip()
+  g.fillStyle = fill
+  g.fill(bar)
+  g.restore()
+  // 3. Rim light just inside the frame's edges (clipped to the frame), then along the bar inside the opening.
+  g.save()
+  g.clip(ring, 'evenodd')
+  g.strokeStyle = 'rgb(255 255 255 / 0.9)'
+  g.lineWidth = 2.4
+  g.stroke(ring)
+  g.restore()
+  g.save()
+  g.beginPath()
+  g.rect(16, 16, 32, 32)
+  g.clip()
+  g.clip(bar)
+  g.strokeStyle = 'rgb(255 255 255 / 0.9)'
+  g.lineWidth = 2.4
+  g.stroke(bar)
+  g.restore()
   g.restore()
   return c.toDataURL('image/png')
 }
@@ -78,6 +141,8 @@ export function applyIcon(id: IconId = getIconPref()) {
   const root = document.documentElement
   root.style.setProperty('--logo-a', v.a)
   root.style.setProperty('--logo-b', v.b)
+  root.style.setProperty('--logo-hi', mix(v.a, '#ffffff', 0.45))
+  root.style.setProperty('--logo-edge', mix(v.b, '#000000', 0.5))
   if (id === 'ocean') {
     setLink('icon', null)
     setLink('apple-touch-icon', null)

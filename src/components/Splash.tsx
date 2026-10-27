@@ -1,5 +1,4 @@
 import { Mark } from './Logo'
-import '@fontsource/cinzel/latin-600.css'
 
 export function prefersReducedMotion(): boolean {
   try {
@@ -9,32 +8,20 @@ export function prefersReducedMotion(): boolean {
   }
 }
 
-// Just the logo, spinning for as long as the app is loading. Each turn slows to a rest, the diagonal
-// connects, and the spin carries on. With reduced motion it is a still, connected logo.
+// Just the logo, dead centre. It turns twice: each turn slows to a rest, the diagonal connects, and the
+// spin carries on; after the second turn the app opens (App.tsx holds this screen for those two turns).
+// With reduced motion it is a still, connected logo.
 export default function Splash() {
   const calm = prefersReducedMotion()
 
   return (
-    <div role="status" aria-label="Loading Cznnect" className="splash relative flex min-h-full flex-col items-center justify-center px-6">
+    <div role="status" aria-label="Loading Cznnect" className="splash flex items-center justify-center px-6">
       <div className={'splash-mark ' + (calm ? 'splash-mark-still' : '')}>
         <Mark loop={!calm} className="splash-logo h-40 w-40" />
       </div>
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
-        <p className="motto">
-          Sic Parvis Magna
-          <span className="motto-sub">Greatness from small beginnings</span>
-        </p>
-        <blockquote className="theme-quote theme-quote-tactical">
-          “Stay frosty, soldier.”
-          <cite>— Simon “Ghost” Riley</cite>
-        </blockquote>
-        <blockquote className="theme-quote theme-quote-rdr2">
-          “We're more ghosts than people.”
-          <cite>— Arthur Morgan</cite>
-        </blockquote>
-        <blockquote className="theme-quote theme-quote-glass">A little closer, a little clearer.</blockquote>
-        <p className="copyright">© 2026 Sabahat Faizan. All rights reserved.</p>
-      </div>
+      <p className="copyright absolute inset-x-0 bottom-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center">
+        &copy; 2026 Sabahat Faizan. All rights reserved.
+      </p>
     </div>
   )
 }

@@ -90,19 +90,45 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           </span>
           <span aria-hidden="true" className="expander-chevron">›</span>
         </summary>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {THEMES.filter((t) => (t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL) && (t.id !== 'rdr2' || unlockedThemes.includes('rdr2')) && (t.id !== 'uncharted' || unlockedThemes.includes('uncharted'))).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              aria-pressed={theme === t.id}
-              className={`seg !min-h-0 !px-2 !py-2 text-sm ${theme === t.id ? 'seg-on' : ''}`}
-              onClick={() => pickTheme(t.id)}
-            >
-              {t.label}
-              <small className="mt-0.5 text-xs">{t.hint}</small>
-            </button>
-          ))}
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {THEMES.filter((t) => (t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL) && (t.id !== 'rdr2' || unlockedThemes.includes('rdr2')) && (t.id !== 'uncharted' || unlockedThemes.includes('uncharted'))).map((t) => {
+            const preview = ({
+              light: { page: '#f1f4f8', surface: '#ffffff', ink: '#172333', muted: '#657287', accent: '#2457d6', soft: '#e5edff', border: '#d9e0ea' },
+              dark: { page: '#111318', surface: '#1b1e25', ink: '#edf0f5', muted: '#a0a7b4', accent: '#7ea7ff', soft: '#26334d', border: '#343945' },
+              rdr2: { page: '#211710', surface: '#392719', ink: '#f6e7c9', muted: '#c3a987', accent: '#d49a4e', soft: '#4d3421', border: '#745034' },
+              uncharted: { page: '#14251f', surface: '#203b31', ink: '#e9f3df', muted: '#a9c2aa', accent: '#d5b76a', soft: '#354b35', border: '#4c6850' },
+              glass: { page: '#101b35', surface: 'rgba(116,151,213,.24)', ink: '#eaf1ff', muted: '#b6c8e8', accent: '#75b8ff', soft: 'rgba(117,184,255,.18)', border: 'rgba(205,225,255,.3)' },
+            } as Record<string, { page: string; surface: string; ink: string; muted: string; accent: string; soft: string; border: string }>)[t.id]
+            return (
+              <div key={t.id} className={`overflow-hidden rounded-xl border ${theme === t.id ? 'border-accent ring-2 ring-accent/30' : 'border-line'}`}>
+                <div className="p-2" style={{ background: preview.page, color: preview.ink }}>
+                  <div className="mb-2 flex items-center justify-between gap-1">
+                    <span className="truncate text-xs font-bold">{t.label}</span>
+                    <span className="h-2 w-2 flex-none rounded-full" style={{ background: preview.accent }} />
+                  </div>
+                  <div className="rounded-lg border p-2" style={{ background: preview.surface, borderColor: preview.border }}>
+                    <div className="mb-2 h-1.5 w-2/3 rounded-full" style={{ background: preview.ink, opacity: 0.8 }} />
+                    <div className="mb-2 h-1 w-1/2 rounded-full" style={{ background: preview.muted, opacity: 0.85 }} />
+                    <div className="flex items-center gap-1">
+                      <span className="h-4 flex-1 rounded-md" style={{ background: preview.soft, border: `1px solid ${preview.border}` }} />
+                      <span className="h-4 w-8 rounded-md" style={{ background: preview.accent }} />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 p-2">
+                  <p className="min-h-8 text-xs text-muted">{t.hint}</p>
+                  <button
+                    type="button"
+                    aria-pressed={theme === t.id}
+                    className={`btn w-full !min-h-0 !px-2 !py-1.5 text-xs ${theme === t.id ? 'btn-primary' : 'btn-plain'}`}
+                    onClick={() => pickTheme(t.id)}
+                  >
+                    {theme === t.id ? 'Selected' : 'Use theme'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </details>
       <details className="card expander" aria-label="Custom app icon">

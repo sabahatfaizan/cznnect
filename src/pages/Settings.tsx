@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
-import { getThemePref, getUnlockedThemes, onThemeUnlocked, setThemePref, type ThemePref } from '../theme'
+import { getThemePref, getUnlockedThemes, onThemeUnlocked, setThemePref, unlockTheme, type ThemePref } from '../theme'
 import { ICONS, ICON_GROUPS, getIconPref, renderIcon, setIconPref, type IconId } from '../appIcon'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
@@ -18,6 +18,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [unlockedThemes, setUnlockedThemes] = useState(() => getUnlockedThemes())
   const [icon, setIcon] = useState<IconId>(getIconPref())
+  const [redeemCode, setRedeemCode] = useState('')
+  const [redeemNotice, setRedeemNotice] = useState('')
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
   const [isFamilyOwner, setIsFamilyOwner] = useState(false)
@@ -68,6 +70,21 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
     setTheme(id)
   }
 
+  function redeemExclusiveTheme(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const normalized = redeemCode.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (normalized === 'SIRFRANCISDRAKE') {
+      const wasNew = unlockTheme('uncharted')
+      setThemePref('uncharted')
+      setTheme('uncharted')
+      setUnlockedThemes(getUnlockedThemes())
+      setRedeemNotice(wasNew ? 'Code accepted! Uncharted theme unlocked and equipped.' : 'Uncharted is already unlocked. Theme equipped.')
+      setRedeemCode('')
+    } else {
+      setRedeemNotice('That code is not recognized. Check it and try again.')
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-display text-2xl font-extrabold">Settings</h1>
@@ -99,6 +116,24 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
         </section>
       )}
+      <details className="card expander" aria-label="Redeem code">
+        <summary>
+          <span className="min-w-0">
+            <span className="font-display block text-lg font-bold">Redeem code</span>
+            <span className="block text-sm text-muted">Unlock exclusive themes</span>
+          </span>
+          <span aria-hidden="true" className="expander-chevron">›</span>
+        </summary>
+        <div className="mt-3">
+          <p className="pb-2 text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
+          <form className="flex flex-col gap-2" onSubmit={redeemExclusiveTheme}>
+            <label className="sr-only" htmlFor="exclusive-theme-code">Redeem code</label>
+            <input id="exclusive-theme-code" className="input" value={redeemCode} onChange={(e) => { setRedeemCode(e.target.value); setRedeemNotice('') }} placeholder="Enter code" autoCapitalize="characters" autoComplete="off" required />
+            <button className="btn btn-primary w-full" type="submit">Redeem</button>
+            {redeemNotice && <p role="status" className="text-sm text-muted">{redeemNotice}</p>}
+          </form>
+        </div>
+      </details>
       <details className="card expander" aria-label="Appearance themes">
         <summary>
           <span className="min-w-0">

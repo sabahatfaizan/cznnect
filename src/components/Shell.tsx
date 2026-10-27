@@ -47,8 +47,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [menuOpen, setMenuOpen] = useState(false)
   const [coinTaps, setCoinTaps] = useState(0)
   const [coinNotice, setCoinNotice] = useState('')
-  const [redeemCode, setRedeemCode] = useState('')
-  const [redeemNotice, setRedeemNotice] = useState('')
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
   const isOwner = email.toLowerCase() === OWNER_EMAIL
@@ -74,19 +72,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       unlockTheme('rdr2')
       setCoinNotice('Secret unlocked: Red Dead Redemption theme.')
       setCoinTaps(0)
-    }
-  }
-
-  function redeemExclusiveTheme(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const normalized = redeemCode.toUpperCase().replace(/[^A-Z0-9]/g, '')
-    if (normalized === 'SIRFRANCISDRAKE') {
-      const wasNew = unlockTheme('uncharted')
-      setThemePref('uncharted')
-      setRedeemNotice(wasNew ? 'Code accepted! Uncharted theme unlocked and equipped.' : 'Uncharted is already unlocked. Theme equipped.')
-      setRedeemCode('')
-    } else {
-      setRedeemNotice('That code is not recognized. Check it and try again.')
     }
   }
 
@@ -248,21 +233,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             </div>
-            <details className="mt-2 border-b border-line pb-2" aria-label="Redeem code">
-              <summary className="menu-item">
-                <span className="menu-item-label"><Icon name="settings" size={22} />Redeem code</span>
-                <span aria-hidden="true" className="expander-chevron">›</span>
-              </summary>
-              <div className="mt-2 px-3 pb-2">
-                <p className="pb-2 text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
-                <form className="flex flex-col gap-2" onSubmit={redeemExclusiveTheme}>
-                  <label className="sr-only" htmlFor="exclusive-theme-code">Redeem code</label>
-                  <input id="exclusive-theme-code" className="input" value={redeemCode} onChange={(e) => { setRedeemCode(e.target.value); setRedeemNotice('') }} placeholder="Enter code" autoCapitalize="characters" autoComplete="off" required />
-                  <button className="btn btn-primary w-full" type="submit">Redeem</button>
-                  {redeemNotice && <p role="status" className="text-sm text-muted">{redeemNotice}</p>}
-                </form>
-              </div>
-            </details>
             {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
               <p className="eyebrow">Owner controls</p>
               <div className="mt-2 flex items-center justify-between gap-4">

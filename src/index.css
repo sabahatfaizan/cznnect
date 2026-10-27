@@ -1368,5 +1368,6 @@ input[type="checkbox"] {
 /* The coin is only shown by the Uncharted theme; the worn-poster wordmark only by Red Dead. */
 .brand-coin { display: none; }
 .brand-rdr2 { display: none; }
+.brand-mw4, .splash-brand-mw4 { display: none; }
 /* Extra mark details that only some themes show. */
 .mk-deco { display: none; }

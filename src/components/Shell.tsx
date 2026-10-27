@@ -15,6 +15,7 @@ import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import rdr2Logo from '../assets/rdr2-logo.svg'
+import mw4Logo from '../assets/mw4-logo.svg'
 import CoinMark from './CoinMark'
 import { setGlassAllowed } from '../theme'
 
@@ -116,6 +117,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <CoinMark className="brand-coin" />
             {/* Only the Red Dead theme shows this worn-poster wordmark, in place of the plain one. */}
             <img src={rdr2Logo} alt="Cznnect" className="brand-rdr2" draggable={false} />
+            {/* Only the MW4 theme shows this one. */}
+            <img src={mw4Logo} alt="Cznnect" className="brand-mw4" draggable={false} />
           </div>
           <button
             type="button"

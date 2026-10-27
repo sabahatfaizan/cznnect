@@ -48,10 +48,6 @@ export function Mark({ className = '', loop = false }: { className?: string; loo
           <circle key={x + '-' + y} cx={x} cy={y} r="1.6" fill="#f1dfb8" stroke="#120805" strokeWidth="0.8" />
         ))}
       </g>
-      <g className="mk-deco mk-mw4">
-        <path d="M3 13V3H13M51 3H61V13M61 51V61H51M13 61H3V51" stroke="#e8cf1a" strokeWidth="2.2" strokeLinecap="square" />
-        <path d="M20.5 20.5L27 27M43.5 43.5L37 37" stroke="#ffffff" strokeWidth="3.4" strokeLinecap="square" />
-      </g>
     </svg>
   )
 }

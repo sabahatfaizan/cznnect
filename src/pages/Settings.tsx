@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
-import { getThemePref, setThemePref, type ThemePref } from '../theme'
+import { getThemePref, getUnlockedThemes, onThemeUnlocked, setThemePref, type ThemePref } from '../theme'
 import { ICONS, ICON_GROUPS, getIconPref, renderIcon, setIconPref, type IconId } from '../appIcon'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 
 const THEMES: { id: ThemePref; label: string; hint: string }[] = [
-  { id: 'tactical', label: 'Tactical Dark', hint: 'Dark, HUD style' },
-  { id: 'rdr2', label: 'Red Dead', hint: 'Outlaw frontier' },
-  { id: 'uncharted', label: 'Uncharted', hint: 'Treasure-map parchment' },
+  { id: 'tactical', label: 'Tactical Dark', hint: 'Current standard theme' },
+  { id: 'rdr2', label: 'Red Dead', hint: 'Secret unlock · outlaw frontier' },
+  { id: 'uncharted', label: 'Uncharted', hint: 'Redeem-code unlock · treasure map' },
   { id: 'mw4', label: 'MW4', hint: 'Modern warfare ops' },
   { id: 'glass', label: 'Liquid Glass', hint: 'Owner only' },
 ]
 
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
+  const [unlockedThemes, setUnlockedThemes] = useState(() => getUnlockedThemes())
   const [icon, setIcon] = useState<IconId>(getIconPref())
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
@@ -25,6 +26,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+
+  useEffect(() => onThemeUnlocked(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
 
   useEffect(() => {
     supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle()
@@ -85,7 +88,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           <p className="mt-1 text-sm text-muted">Choose how Cznnect looks on this device.</p>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {THEMES.filter((t) => t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL).map((t) => (
+          {THEMES.filter((t) => (t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL) && (t.id !== 'rdr2' || unlockedThemes.includes('rdr2')) && (t.id !== 'uncharted' || unlockedThemes.includes('uncharted'))).map((t) => (
             <button
               key={t.id}
               type="button"
@@ -98,7 +101,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
             </button>
           ))}
         </div>
-        <p className="text-sm text-muted">Saved on this device. Liquid Glass is only available to the app owner.</p>
+        <p className="text-sm text-muted">Red Dead unlocks after seven taps on the pirate coin in Uncharted. Uncharted unlocks with the code SIR FRANCIS DRAKE. Liquid Glass is only available to the app owner.</p>
       </section>
       <details className="card expander" aria-label="Custom app icon">
         <summary>

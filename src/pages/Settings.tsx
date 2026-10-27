@@ -29,6 +29,23 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
   useEffect(() => onThemeUnlocked(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
 
+  const availableIconGroups = ICON_GROUPS.filter((group) =>
+    group === 'Classic' ||
+    (group === 'Uncharted' && unlockedThemes.includes('uncharted')) ||
+    (group === 'Red Dead' && unlockedThemes.includes('rdr2'))
+  )
+  const isIconAvailable = (id: IconId) => {
+    const item = ICONS.find((candidate) => candidate.id === id)
+    return Boolean(item && (item.group === 'Classic' || availableIconGroups.includes(item.group)))
+  }
+
+  useEffect(() => {
+    if (!isIconAvailable(icon)) {
+      setIconPref('ocean')
+      setIcon('ocean')
+    }
+  }, [icon, unlockedThemes])
+
   useEffect(() => {
     supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle()
       .then(({ data }) => setIsFamilyOwner(data?.role === 'owner'))
@@ -134,16 +151,16 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
       <details className="card expander" aria-label="Custom app icon">
         <summary>
           <span className="flex min-w-0 items-center gap-3">
-            <img src={previews.find((p) => p.id === icon)?.src} alt="" width={36} height={36} className="h-9 w-9 flex-none rounded-[22%]" />
+            <img src={previews.find((p) => p.id === (isIconAvailable(icon) ? icon : 'ocean'))?.src} alt="" width={36} height={36} className="h-9 w-9 flex-none rounded-[22%]" />
             <span className="min-w-0">
               <span className="font-display block text-lg font-bold">Custom app icon</span>
-              <span className="block text-sm text-muted">{ICONS.find((i) => i.id === icon)?.label}</span>
+              <span className="block text-sm text-muted">{ICONS.find((i) => i.id === (isIconAvailable(icon) ? icon : 'ocean'))?.label}</span>
             </span>
           </span>
           <span aria-hidden="true" className="expander-chevron">›</span>
         </summary>
         <div className="mt-3 flex flex-col gap-4" role="radiogroup" aria-label="App icon colour">
-          {ICON_GROUPS.map((group) => (
+          {availableIconGroups.map((group) => (
             <div key={group} className="flex flex-col gap-2">
               <h3 className="eyebrow">{group}</h3>
               <div className="grid grid-cols-3 gap-3">

@@ -3,7 +3,6 @@ import { supabase } from '../supabase'
 import type { Family } from '../types'
 import { getThemePref, setThemePref, type ThemePref } from '../theme'
 import { ICONS, ICON_GROUPS, getIconPref, renderIcon, setIconPref, type IconId } from '../appIcon'
-import Signature from '../components/Signature'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 
@@ -138,9 +137,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           </p>
         </div>
       </details>
-      <div className="flex justify-center pt-2">
-        <Signature />
-      </div>
     </div>
   )
 }

@@ -163,9 +163,11 @@
 :root[data-theme="uncharted"] .brand-default { display: none; }
 :root[data-theme="uncharted"] .brand-coin {
   display: block;
-  width: 3.5rem;
-  height: 3.5rem;
-  filter: drop-shadow(0 2px 3px rgb(60 35 10 / 0.45));
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 3px 4px rgb(60 35 10 / 0.5));
 }
 
 /* ---- controls: leather, gold thread, wax ---- */

@@ -76,4 +76,4 @@ Stages 2 (family tree) and 3 (places, map, restaurants) are in. Stages 4 and 5 (
 
 ## Themes
 
-Cznnect has two looks: **Light** (default) and **Tactical Dark**. Pick one, or follow the phone's setting, in My Profile > Appearance. The choice is saved on the device. Colors and shapes for both live as tokens at the top of `src/index.css`, and the switching code is `src/theme.ts`.
+Cznnect has two standard themes: **Light** (default) and **Dark**. Red Dead and Uncharted are exclusive themes unlocked in-app, and Liquid Glass is owner-only. Choose a theme in Settings > Appearance; the choice is saved on the device. Standard theme colors are defined in `src/index.css`, and switching logic is in `src/theme.ts`.

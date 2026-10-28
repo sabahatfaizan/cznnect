@@ -69,8 +69,8 @@ export function taperPath(d: string, w0: number, w1: number, steps = 22): string
 // Fine rootlets that split off the thicker roots. Always the same for the same family.
 export function rootlets(seg: RootSeg, seed: string): Rootlet[] {
   const cubic = parseCubic(seg.d)
-  if (!cubic || seg.w0 < 4) return []
-  const count = seg.w0 > 14 ? 3 : seg.w0 > 8 ? 2 : 1
+  if (!cubic || seg.w0 < 8) return [] // thin roots stay clean; only the thick ones split off a rootlet
+  const count = seg.w0 > 16 ? 2 : 1
   const out: Rootlet[] = []
   for (let i = 0; i < count; i++) {
     const r = hash(`${seed}:${i}`)
@@ -85,15 +85,15 @@ export function rootlets(seg: RootSeg, seed: string): Rootlet[] {
     let hx = n.x * c - n.y * s
     let hy = n.x * s + n.y * c
     if (hy < 0.35) { hy = 0.35; const m = Math.hypot(hx, hy); hx /= m; hy /= m } // always grow downwards
-    const len = (34 + r * 30) * Math.min(1.6, 0.7 + seg.w0 / 18)
+    const len = (26 + r * 20) * Math.min(1.25, 0.7 + seg.w0 / 30)
     const wig = (r2 - 0.5) * 12
     const x3 = p.x + hx * len
     const y3 = p.y + hy * len
     const local = widthAt(seg.w0, seg.w1, t)
     out.push({
       d: `M${f(p.x)} ${f(p.y)}C${f(p.x + hx * len * 0.3 + wig)} ${f(p.y + hy * len * 0.3)},${f(p.x + hx * len * 0.7 - wig)} ${f(p.y + hy * len * 0.7)},${f(x3)} ${f(y3)}`,
-      w0: Math.max(2, local * 0.5),
-      w1: 0.7,
+      w0: Math.max(2.4, local * 0.42),
+      w1: 1.1,
     })
   }
   return out

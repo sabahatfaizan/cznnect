@@ -38,6 +38,15 @@ export default function TreeCanvas({
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 })
+  // True only while the view glides to a new place (Me, Fit, search). Dragging and pinching stay instant.
+  const [gliding, setGliding] = useState(false)
+  const glideTimer = useRef<number | undefined>(undefined)
+  const glide = useCallback((next: View) => {
+    setGliding(true)
+    setView(next)
+    window.clearTimeout(glideTimer.current)
+    glideTimer.current = window.setTimeout(() => setGliding(false), 520)
+  }, [])
     const started = useRef(false)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gesture = useRef({ moved: false, startX: 0, startY: 0, dist: 0 })
@@ -97,30 +106,29 @@ export default function TreeCanvas({
     (id: string, k: number) => {
       const c = nodeCenter(id)
       if (!c || size.w === 0) return false
-      setView({ k, x: size.w / 2 - c.x * k, y: size.h / 2 - c.y * k })
+      glide({ k, x: size.w / 2 - c.x * k, y: size.h / 2 - c.y * k })
       return true
     },
-    [nodeCenter, size.w, size.h],
+    [nodeCenter, size.w, size.h, glide],
   )
 
   // The whole tree on screen at once.
   const fit = useCallback(() => {
     if (size.w === 0 || layout.width === 0) return
     const k = clamp(Math.min(size.w / layout.width, size.h / layout.height), MIN_K, 1)
-    setView({ k, x: (size.w - layout.width * k) / 2, y: Math.max(8, (size.h - layout.height * k) / 2) })
-  }, [size.w, size.h, layout.width, layout.height])
+    glide({ k, x: (size.w - layout.width * k) / 2, y: Math.max(8, (size.h - layout.height * k) / 2) })
+  }, [size.w, size.h, layout.width, layout.height, glide])
 
   // First view: a small tree is shown whole; a bigger one opens on you (or the oldest couple) at a readable size.
   useEffect(() => {
     if (started.current || size.w === 0 || layout.nodes.length === 0) return
     started.current = true
     const whole = Math.min(size.w / layout.width, size.h / layout.height)
-    if (whole >= 0.6) {
-      fit()
-      return
-    }
-    const start = (meId && layout.nodes.find((n) => n.id === meId)) || layout.nodes[0]
-    centerOn(start.id, READABLE_K)
+    if (whole >= 0.6) fit()
+    else centerOn(((meId && layout.nodes.find((n) => n.id === meId)) || layout.nodes[0]).id, READABLE_K)
+    // The opening view appears in place; only later moves glide.
+    window.clearTimeout(glideTimer.current)
+    setGliding(false)
   }, [size.w, layout, fit, centerOn, meId])
 
   // Jump to someone chosen from the search box.
@@ -157,6 +165,8 @@ export default function TreeCanvas({
   }
 
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
+    window.clearTimeout(glideTimer.current)
+    setGliding(false)
     e.currentTarget.setPointerCapture(e.pointerId)
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (pointers.current.size === 1) {
@@ -247,6 +257,8 @@ export default function TreeCanvas({
           style={{
             transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`,
             transformOrigin: '0 0',
+            transition: gliding ? 'transform 0.45s cubic-bezier(.2,.8,.2,1)' : 'none',
+            willChange: 'transform',
             overflow: 'visible',
             display: 'block',
           }}

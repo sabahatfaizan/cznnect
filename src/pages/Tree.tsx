@@ -99,11 +99,12 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
     if (status === 'ready' && selectedId && !index.byId.has(selectedId)) setSelectedId(null)
   }, [status, selectedId, index])
 
-  function show(id: string, full = false) {
+  // jump: also glide the tree to them. Tapping someone right on the tree leaves the view where it is.
+  function show(id: string, full = false, jump = true) {
     setSelectedId(id)
     setLitId(id)
     setDetail(full)
-    setFocus({ id, tick: Date.now() })
+    if (jump) setFocus({ id, tick: Date.now() })
   }
 
   const results = query.trim() ? searchPeople(people, query, 6) : []
@@ -251,7 +252,7 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
             ←
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="font-display truncate text-lg font-extrabold leading-tight">Family Tree</h1>
+            <h1 className="tree-title truncate">Family Tree</h1>
             <p className="truncate text-xs text-muted">
               {people.length} {people.length === 1 ? 'person' : 'people'} · tap someone to light up their line
             </p>
@@ -275,7 +276,7 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
             meId={mine?.id ?? null}
             focus={focus}
             litId={litId}
-            onSelect={(id) => show(id)}
+            onSelect={(id) => show(id, false, false)}
             onClear={() => setLitId(null)}
           />
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
 import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
 import { rootlets, taperPath } from '../lib/roots'
 
@@ -199,16 +199,18 @@ export default function TreeCanvas({
   }
 
   function onPointerUp(e: PointerEvent<HTMLDivElement>) {
-    const wasOne = pointers.current.size === 1
     pointers.current.delete(e.pointerId)
     if (pointers.current.size < 2) gesture.current.dist = 0
-    if (wasOne && !gesture.current.moved && e.type === 'pointerup') {
-      // A tap, not a drag: find which person was under the finger.
-      const hit = document.elementFromPoint(e.clientX, e.clientY)
-      const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
-      if (id) onSelect(id)
-      else onClear()
-    }
+  }
+
+  // A tap is handled on the click, not on pointerup. Opening the card on pointerup put its backdrop under the
+  // finger just before the click arrived, and that click closed the card again straight away.
+  function onClick(e: MouseEvent<HTMLDivElement>) {
+    if (gesture.current.moved) return
+    const hit = document.elementFromPoint(e.clientX, e.clientY)
+    const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
+    if (id) onSelect(id)
+    else onClear()
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -341,6 +343,7 @@ export default function TreeCanvas({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onClick={onClick}
         onKeyDown={onKeyDown}
         className="family-tree-stage h-full w-full touch-none select-none overflow-hidden"
       >

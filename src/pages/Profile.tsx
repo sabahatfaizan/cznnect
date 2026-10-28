@@ -1,9 +1,27 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
 import { AVATAR_COLORS, AVATAR_EMOJI, encodeAvatar, parseAvatar } from '../lib/avatars'
 
 const BIO_MAX = 140
+
+function Expander({ title, hint, lead, children }: { title: string; hint?: string; lead?: ReactNode; children: ReactNode }) {
+  return (
+    <details className="card expander">
+      <summary>
+        <span className="flex min-w-0 items-center gap-3">
+          {lead}
+          <span className="min-w-0">
+            <span className="font-display block text-lg font-bold">{title}</span>
+            {hint && <span className="block truncate text-sm text-muted">{hint}</span>}
+          </span>
+        </span>
+        <span aria-hidden="true" className="expander-chevron">›</span>
+      </summary>
+      <div className="mt-3 flex flex-col gap-4">{children}</div>
+    </details>
+  )
+}
 
 export default function Profile({ userId }: { userId: string }) {
   const [name, setName] = useState('')
@@ -94,11 +112,24 @@ export default function Profile({ userId }: { userId: string }) {
 
       <form onSubmit={save} className="flex flex-col gap-4">
         <section className="card flex flex-col gap-4">
-          <h2 className="font-display text-lg font-bold">Avatar</h2>
-          <div className="flex items-center gap-4">
-            <Avatar value={avatarValue} name={nickname || name} size={72} />
-            <p className="text-sm text-muted">Pick a symbol and a colour. Nothing is uploaded.</p>
+          <div>
+            <label className="label" htmlFor="p-name">
+              Name
+            </label>
+            <input id="p-name" className="input" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
+          <div>
+            <p className="label">Email</p>
+            <p className="break-all">{email}</p>
+          </div>
+        </section>
+
+        <Expander
+          title="Avatar"
+          hint={emoji ? 'Symbol and colour chosen' : 'Pick a symbol and a colour'}
+          lead={<Avatar value={avatarValue} name={nickname || name} size={36} />}
+        >
+          <p className="text-sm text-muted">Nothing is uploaded, so it costs no storage.</p>
           <div role="radiogroup" aria-label="Avatar symbol" className="grid grid-cols-8 gap-1.5">
             {AVATAR_EMOJI.map((em) => (
               <button
@@ -135,16 +166,9 @@ export default function Profile({ userId }: { userId: string }) {
               Use my initial instead
             </button>
           )}
-        </section>
+        </Expander>
 
-        <section className="card flex flex-col gap-4">
-          <h2 className="font-display text-lg font-bold">Details</h2>
-          <div>
-            <label className="label" htmlFor="p-name">
-              Name
-            </label>
-            <input id="p-name" className="input" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
+        <Expander title="Nickname and bio" hint={nickname || bio || 'What the family calls you'}>
           <div>
             <label className="label" htmlFor="p-nick">
               Nickname
@@ -175,17 +199,23 @@ export default function Profile({ userId }: { userId: string }) {
               {bio.length}/{BIO_MAX}
             </p>
           </div>
+        </Expander>
+
+        <Expander title="Birthday" hint={birthday || 'Not added'}>
           <div>
-            <label className="label" htmlFor="p-birthday">
-              Birthday
-            </label>
-            <input id="p-birthday" type="date" className="input" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
+            <input
+              id="p-birthday"
+              aria-label="Birthday"
+              type="date"
+              className="input"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+            />
             <p className="mt-1 text-sm text-muted">Shown to your family on the Birthdays page.</p>
           </div>
-        </section>
+        </Expander>
 
-        <section className="card flex flex-col gap-4">
-          <h2 className="font-display text-lg font-bold">Contact details</h2>
+        <Expander title="Contact details" hint={share ? 'Shared with your family' : 'Private'}>
           <div>
             <label className="label" htmlFor="p-phone">
               Phone
@@ -231,7 +261,7 @@ export default function Profile({ userId }: { userId: string }) {
               </span>
             </span>
           </label>
-        </section>
+        </Expander>
 
         {msg && (
           <p role="status" className={`text-sm font-bold ${msg.kind === 'error' ? 'text-danger' : 'text-ok'}`}>

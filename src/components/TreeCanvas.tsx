@@ -227,6 +227,99 @@ export default function TreeCanvas({
     e.preventDefault()
   }
 
+  // The drawing itself. It is built once per change of people, selection or lit line, not on every drag
+  // frame, so panning and pinching only move the picture and stay smooth.
+  const selectRef = useRef(onSelect)
+  selectRef.current = onSelect
+  const scene = useMemo(
+    () => (
+      <>
+    {(() => {
+      const dimmed = (e: (typeof layout.edges)[number]) => {
+        if (!kin) return false
+        if (e.kind === 'tip') return !kin.has(e.person ?? '')
+        if (e.kind === 'partner') return !((e.parents ?? []).every((id) => kin.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
+        return !((e.parents ?? []).some((id) => kin.has(id)) && (e.kids ?? []).some((id) => kin.has(id)))
+      }
+      const roots = layout.edges
+        .filter((e) => e.segs)
+        .map((e) => ({
+          e,
+          dim: dimmed(e),
+          parts: (e.segs ?? []).map((seg, i) => ({ seg, hairs: e.kind === 'parent' ? rootlets(seg, `${e.id}:${i}`) : [] })),
+        }))
+      const partners = layout.edges.filter((e) => e.kind === 'partner')
+      return (
+        <g pointerEvents="none">
+          <g className="root-aura">
+            {roots.map(({ e, dim, parts }) => (
+              <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
+                {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 2.6 + 6, seg.w1 * 2.6 + 4)} />)}
+              </g>
+            ))}
+          </g>
+          <g className="root-body">
+            {roots.map(({ e, dim, parts }) => (
+              <g key={e.id} className={`${e.kind === 'tip' ? 'root-tip ' : ''}${dim ? 'root-dim' : 'root-lit'}`}>
+                {parts.map(({ seg, hairs }, i) => (
+                  <g key={i}>
+                    <path d={taperPath(seg.d, seg.w0, seg.w1)} />
+                    {hairs.map((h, j) => <path key={j} d={taperPath(h.d, h.w0, h.w1)} />)}
+                  </g>
+                ))}
+              </g>
+            ))}
+          </g>
+          <g className="root-core">
+            {roots.map(({ e, dim, parts }) => (
+              <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
+                {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 0.3, Math.max(0.5, seg.w1 * 0.3))} />)}
+              </g>
+            ))}
+          </g>
+          {partners.map((e) => <path key={e.id} d={e.d} className={`root-partner ${dimmed(e) ? 'root-dim' : ''}`} />)}
+        </g>
+      )
+    })()}
+    {layout.nodes.map((n) => {
+      const p = people.get(n.id)
+      if (!p) return null
+      const year = p.birth_date ? p.birth_date.slice(0, 4) : ''
+      const classes = ['tnode-rect']
+      if (n.id === meId) classes.push('tnode-me')
+      if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
+      if (p.is_deceased) classes.push('tnode-gone')
+      const dim = kin ? !kin.has(n.id) : false
+      return (
+        <g
+          key={n.id}
+          data-pid={n.id}
+          className={`tnode ${dim ? 'tnode-dim' : ''}`}
+          transform={`translate(${n.x} ${n.y})`}
+          tabIndex={0}
+          role="button"
+          aria-label={`${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              selectRef.current(n.id)
+            }
+          }}
+        >
+          <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
+          <text x={NODE_W / 2} y={p.nickname ? 30 : 36} textAnchor="middle" className="fill-ink" fontSize="15" fontWeight="700">{clip(p.full_name, 13)}</text>
+          {p.nickname && <text x={NODE_W / 2} y={50} textAnchor="middle" className="fill-muted" fontSize="13">{`“${clip(p.nickname, 14)}”`}</text>}
+          <text x={NODE_W / 2} y={p.nickname ? 69 : 60} textAnchor="middle" className="fill-muted" fontSize="12.5">
+            {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `† b. ${year}` : '†') : year ? `b. ${year}` : ''}
+          </text>
+        </g>
+      )
+    })}
+      </>
+    ),
+    [layout, people, kin, litId, selectedId, meId],
+  )
+
   const centerButton = (label: string, onClick: () => void) => (
     <button
       type="button"
@@ -263,87 +356,7 @@ export default function TreeCanvas({
             display: 'block',
           }}
         >
-          {(() => {
-            const dimmed = (e: (typeof layout.edges)[number]) => {
-              if (!kin) return false
-              if (e.kind === 'tip') return !kin.has(e.person ?? '')
-              if (e.kind === 'partner') return !((e.parents ?? []).every((id) => kin.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
-              return !((e.parents ?? []).some((id) => kin.has(id)) && (e.kids ?? []).some((id) => kin.has(id)))
-            }
-            const roots = layout.edges
-              .filter((e) => e.segs)
-              .map((e) => ({
-                e,
-                dim: dimmed(e),
-                parts: (e.segs ?? []).map((seg, i) => ({ seg, hairs: e.kind === 'parent' ? rootlets(seg, `${e.id}:${i}`) : [] })),
-              }))
-            const partners = layout.edges.filter((e) => e.kind === 'partner')
-            return (
-              <g pointerEvents="none">
-                <g className="root-aura">
-                  {roots.map(({ e, dim, parts }) => (
-                    <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
-                      {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 2.6 + 6, seg.w1 * 2.6 + 4)} />)}
-                    </g>
-                  ))}
-                </g>
-                <g className="root-body">
-                  {roots.map(({ e, dim, parts }) => (
-                    <g key={e.id} className={`${e.kind === 'tip' ? 'root-tip ' : ''}${dim ? 'root-dim' : 'root-lit'}`}>
-                      {parts.map(({ seg, hairs }, i) => (
-                        <g key={i}>
-                          <path d={taperPath(seg.d, seg.w0, seg.w1)} />
-                          {hairs.map((h, j) => <path key={j} d={taperPath(h.d, h.w0, h.w1)} />)}
-                        </g>
-                      ))}
-                    </g>
-                  ))}
-                </g>
-                <g className="root-core">
-                  {roots.map(({ e, dim, parts }) => (
-                    <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
-                      {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 0.3, Math.max(0.5, seg.w1 * 0.3))} />)}
-                    </g>
-                  ))}
-                </g>
-                {partners.map((e) => <path key={e.id} d={e.d} className={`root-partner ${dimmed(e) ? 'root-dim' : ''}`} />)}
-              </g>
-            )
-          })()}
-          {layout.nodes.map((n) => {
-            const p = people.get(n.id)
-            if (!p) return null
-            const year = p.birth_date ? p.birth_date.slice(0, 4) : ''
-            const classes = ['tnode-rect']
-            if (n.id === meId) classes.push('tnode-me')
-            if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
-            if (p.is_deceased) classes.push('tnode-gone')
-            const dim = kin ? !kin.has(n.id) : false
-            return (
-              <g
-                key={n.id}
-                data-pid={n.id}
-                className={`tnode ${dim ? 'tnode-dim' : ''}`}
-                transform={`translate(${n.x} ${n.y})`}
-                tabIndex={0}
-                role="button"
-                aria-label={`${p.full_name}${n.id === meId ? ' (you)' : ''}${p.is_deceased ? ', passed away' : ''}`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    onSelect(n.id)
-                  }
-                }}
-              >
-                <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
-                <text x={NODE_W / 2} y={p.nickname ? 30 : 36} textAnchor="middle" className="fill-ink" fontSize="15" fontWeight="700">{clip(p.full_name, 13)}</text>
-                {p.nickname && <text x={NODE_W / 2} y={50} textAnchor="middle" className="fill-muted" fontSize="13">{`“${clip(p.nickname, 14)}”`}</text>}
-                <text x={NODE_W / 2} y={p.nickname ? 69 : 60} textAnchor="middle" className="fill-muted" fontSize="12.5">
-                  {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `† b. ${year}` : '†') : year ? `b. ${year}` : ''}
-                </text>
-              </g>
-            )
-          })}
+          {scene}
         </svg>
       </div>
 

@@ -7,6 +7,10 @@ import { ICONS, ICON_GROUPS, getIconPref, iconGroupAvailable, renderIcon, setIco
 import { isOwnerEmail } from '../owner'
 import ThemePicker from '../components/ThemePicker'
 import RedeemCard from '../components/RedeemCard'
+import Sheet from '../components/Sheet'
+import { Icon, type IconName } from '../components/Icons'
+
+type Panel = 'family' | 'theme' | 'icon' | 'redeem'
 
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
@@ -21,6 +25,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [panel, setPanel] = useState<Panel | null>(null)
 
   // Keep the theme list in step with unlocks from a code, the secret coin, or an owner re-lock.
   useEffect(() => onUnlocksChanged(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
@@ -61,86 +66,107 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
     setTheme(id)
   }
 
+  const currentIcon = previews.find((p) => p.id === (isIconAvailable(icon) ? icon : 'ocean'))
+  const tile = (id: Panel, label: string, name: IconName, hint: string) => (
+    <button key={id} type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
+      <span className="set-tile-icon" aria-hidden="true">
+        {id === 'icon' && currentIcon ? <img src={currentIcon.src} alt="" width={30} height={30} className="rounded-[22%]" /> : <Icon name={name} size={26} />}
+      </span>
+      <span className="set-tile-label">{label}</span>
+      <span className="set-tile-hint">{hint}</span>
+    </button>
+  )
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <h1 className="font-display text-2xl font-extrabold">Settings</h1>
-      {isFamilyOwner && (
-        <section className="card flex flex-col gap-3">
-          <div>
-            <h2 className="font-display text-lg font-bold">Family settings</h2>
-            <p className="mt-1 text-sm text-muted">Only you, the owner, can change these.</p>
+      <div className="set-grid">
+        {isFamilyOwner && tile('family', 'Family', 'family', family.name)}
+        {tile('theme', 'Theme', 'palette', themeLabel(theme))}
+        {tile('icon', 'App icon', 'phone', currentIcon?.label ?? '')}
+      </div>
+
+      <button type="button" className="set-redeem" onClick={() => setPanel('redeem')} aria-haspopup="dialog">
+        <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="set-tile-label block">Redeem code</span>
+          <span className="set-tile-hint block">
+            {unlockedThemes.length > 0 ? `${unlockedThemes.length} exclusive ${unlockedThemes.length === 1 ? 'theme' : 'themes'} unlocked` : 'Unlock exclusive themes'}
+          </span>
+        </span>
+        <span aria-hidden="true" className="expander-chevron">›</span>
+      </button>
+
+      {panel === 'family' && isFamilyOwner && (
+        <Sheet title="Family settings" onClose={() => { setPanel(null); setEditingName(false); setError('') }}>
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted">Only you, the owner, can change these.</p>
+            {editingName ? (
+              <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void saveName() }}>
+                <label className="label" htmlFor="family-name-edit">Family name</label>
+                <input id="family-name-edit" className="input" value={familyName} onChange={(e) => setFamilyName(e.target.value)} maxLength={60} required />
+                <div className="flex gap-2">
+                  <button className="btn btn-primary" type="submit" disabled={busy || !familyName.trim()}>Save name</button>
+                  <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setEditingName(false); setError('') }}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-muted">Family name</p>
+                  <p className="truncate font-semibold">{family.name}</p>
+                </div>
+                <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setSaved(false); setEditingName(true) }}>Change</button>
+              </div>
+            )}
+            {saved && <p className="text-sm font-bold text-accent-text">Name updated.</p>}
+            {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
           </div>
-          {editingName ? (
-            <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); void saveName() }}>
-              <label className="label" htmlFor="family-name-edit">Family name</label>
-              <input id="family-name-edit" className="input" value={familyName} onChange={(e) => setFamilyName(e.target.value)} maxLength={60} required />
-              <div className="flex gap-2">
-                <button className="btn btn-primary" type="submit" disabled={busy || !familyName.trim()}>Save name</button>
-                <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setEditingName(false); setError('') }}>Cancel</button>
-              </div>
-            </form>
-          ) : (
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm text-muted">Family name</p>
-                <p className="truncate font-semibold">{family.name}</p>
-              </div>
-              <button className="btn btn-plain" type="button" onClick={() => { setFamilyName(family.name); setSaved(false); setEditingName(true) }}>Change</button>
-            </div>
-          )}
-          {saved && <p className="text-sm font-bold text-accent-text">Name updated.</p>}
-          {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
-        </section>
+        </Sheet>
       )}
-      <RedeemCard isOwner={isOwnerEmail(email)} onRedeemed={(t) => { setTheme(t); setUnlockedThemes(getUnlockedThemes()) }} />
-      <details className="card expander" aria-label="Appearance themes">
-        <summary>
-          <span className="min-w-0">
-            <span className="font-display block text-lg font-bold">Appearance</span>
-            <span className="block text-sm text-muted">Choose your theme · {themeLabel(theme)}</span>
-          </span>
-          <span aria-hidden="true" className="expander-chevron">›</span>
-        </summary>
-        <ThemePicker theme={theme} unlocked={unlockedThemes} isOwner={isOwnerEmail(email)} fresh={fresh} onPick={pickTheme} />
-      </details>
-      <details className="card expander" aria-label="Custom app icon">
-        <summary>
-          <span className="flex min-w-0 items-center gap-3">
-            <img src={previews.find((p) => p.id === (isIconAvailable(icon) ? icon : 'ocean'))?.src} alt="" width={36} height={36} className="h-9 w-9 flex-none rounded-[22%]" />
-            <span className="min-w-0">
-              <span className="font-display block text-lg font-bold">Custom app icon</span>
-              <span className="block text-sm text-muted">{ICONS.find((i) => i.id === (isIconAvailable(icon) ? icon : 'ocean'))?.label}</span>
-            </span>
-          </span>
-          <span aria-hidden="true" className="expander-chevron">›</span>
-        </summary>
-        <div className="mt-3 flex flex-col gap-4" role="radiogroup" aria-label="App icon colour">
-          {availableIconGroups.map((group) => (
-            <div key={group} className="flex flex-col gap-2">
-              <h3 className="eyebrow">{group}</h3>
-              <div className="grid grid-cols-3 gap-3">
-                {previews.filter((v) => v.group === group).map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={icon === v.id}
-                    className={`icon-tile ${icon === v.id ? 'icon-tile-on' : ''}`}
-                    onClick={() => { setIconPref(v.id); setIcon(v.id) }}
-                  >
-                    <img src={v.src} alt="" width={60} height={60} />
-                    <span>{v.label}</span>
-                  </button>
-                ))}
+
+      {panel === 'theme' && (
+        <Sheet title="Theme" onClose={() => setPanel(null)}>
+          <ThemePicker theme={theme} unlocked={unlockedThemes} isOwner={isOwnerEmail(email)} fresh={fresh} onPick={pickTheme} />
+        </Sheet>
+      )}
+
+      {panel === 'icon' && (
+        <Sheet title="App icon" onClose={() => setPanel(null)}>
+          <div className="flex flex-col gap-4" role="radiogroup" aria-label="App icon colour">
+            {availableIconGroups.map((group) => (
+              <div key={group} className="flex flex-col gap-2">
+                <h3 className="eyebrow">{group}</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {previews.filter((v) => v.group === group).map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={icon === v.id}
+                      className={`icon-tile ${icon === v.id ? 'icon-tile-on' : ''}`}
+                      onClick={() => { setIconPref(v.id); setIcon(v.id) }}
+                    >
+                      <img src={v.src} alt="" width={60} height={60} />
+                      <span>{v.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-          <p className="text-sm text-muted">
-            It recolours the logo in the app and the icon for new Home Screen shortcuts. An icon already on your Home Screen
-            keeps its look until you remove it and add Cznnect again.
-          </p>
-        </div>
-      </details>
+            ))}
+            <p className="text-sm text-muted">
+              It recolours the logo in the app and the icon for new Home Screen shortcuts. An icon already on your Home Screen
+              keeps its look until you remove it and add Cznnect again.
+            </p>
+          </div>
+        </Sheet>
+      )}
+
+      {panel === 'redeem' && (
+        <Sheet title="Redeem code" onClose={() => setPanel(null)}>
+          <RedeemCard isOwner={isOwnerEmail(email)} onRedeemed={(t) => { setTheme(t); setUnlockedThemes(getUnlockedThemes()) }} />
+        </Sheet>
+      )}
     </div>
   )
 }

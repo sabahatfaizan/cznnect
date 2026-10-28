@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from './Icons'
 import { redeemCode } from '../lib/redeem'
 import { getUnlockedThemes, onUnlocksChanged, relockThemes, setThemePref, type ExclusiveTheme } from '../theme'
 import { themeLabel } from '../themes/catalog'
@@ -13,7 +12,7 @@ type State =
   | { kind: 'ok'; theme: ExclusiveTheme; isNew: boolean }
   | { kind: 'bad'; message: string }
 
-// "Redeem code" in Settings. A wrong code shakes the field; a right one draws a tick, unlocks the theme
+// The body of the "Redeem code" slide in Settings. A wrong code shakes the field; a right one draws a tick, unlocks the theme
 // and equips it. A few wrong guesses in a row pause the form briefly.
 export default function RedeemCard({ isOwner, onRedeemed }: { isOwner: boolean; onRedeemed: (theme: ExclusiveTheme) => void }) {
   const [code, setCode] = useState('')
@@ -68,20 +67,7 @@ export default function RedeemCard({ isOwner, onRedeemed }: { isOwner: boolean; 
   const secondsLeft = Math.max(0, Math.ceil((waitUntil - now) / 1000))
 
   return (
-    <details className="card expander" aria-label="Redeem code">
-      <summary>
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="redeem-key" aria-hidden="true"><Icon name="key" size={22} /></span>
-          <span className="min-w-0">
-            <span className="font-display block text-lg font-bold">Redeem code</span>
-            <span className="block text-sm text-muted">
-              {unlockedCount > 0 ? `${unlockedCount} exclusive ${unlockedCount === 1 ? 'theme' : 'themes'} unlocked` : 'Unlock exclusive themes'}
-            </span>
-          </span>
-        </span>
-        <span aria-hidden="true" className="expander-chevron">›</span>
-      </summary>
-      <div className="mt-3 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
         <p className="text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
         <form className="flex flex-col gap-3" onSubmit={submit}>
           <label className="sr-only" htmlFor="redeem-code">Redeem code</label>
@@ -128,7 +114,6 @@ export default function RedeemCard({ isOwner, onRedeemed }: { isOwner: boolean; 
             Owner only: lock the exclusive themes again on this device
           </button>
         )}
-      </div>
-    </details>
+    </div>
   )
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'family' | 'palette' | 'phone'
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
@@ -52,6 +52,27 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="8" cy="15" r="4" />
       <path d="M11 12l9-9M17 6l3 3M14 9l2.5 2.5" />
+    </>
+  ),
+  family: (
+    <>
+      <circle cx="9" cy="8" r="3" />
+      <circle cx="17.5" cy="9.5" r="2.3" />
+      <path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15.5 14.8c3-.4 5.5 1.3 5.5 4.2" />
+    </>
+  ),
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.8 0-1.2-1-1.5-1-2.7 0-.9.7-1.5 1.7-1.5H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3z" />
+      <circle cx="7.5" cy="11" r="1" />
+      <circle cx="10" cy="7.3" r="1" />
+      <circle cx="14.5" cy="7.3" r="1" />
+    </>
+  ),
+  phone: (
+    <>
+      <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+      <path d="M10.5 18.5h3" />
     </>
   ),
   trophy: (

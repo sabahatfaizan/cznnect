@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import Avatar from '../components/Avatar'
+import { shownName } from '../lib/avatars'
 import type { Family, Member } from '../types'
+
+type Contact = { user_id: string; phone: string | null; contact_email: string | null }
 
 type Props = {
   family: Family
@@ -10,6 +14,8 @@ type Props = {
 
 export default function Home({ family, userId, onFamilyChanged }: Props) {
   const [members, setMembers] = useState<Member[]>([])
+  // Only rows people chose to share come back; row-level security hides the rest.
+  const [contacts, setContacts] = useState<Map<string, Contact>>(new Map())
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   // Which in-page confirmation is open: 'newcode', 'leave', or 'remove:<user id>'.
@@ -17,16 +23,18 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   const [busy, setBusy] = useState(false)
 
   const loadMembers = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('family_members')
-      .select('user_id, role, profiles(display_name)')
-      .eq('family_id', family.id)
-      .order('joined_at')
+    const q = (cols: string) =>
+      supabase.from('family_members').select(`user_id, role, profiles(${cols})`).eq('family_id', family.id).order('joined_at')
+    let { data, error } = await q('display_name, nickname, bio, avatar')
+    // Falls back to the old columns until supabase/08_profile.sql has been run.
+    if (error) ({ data, error } = await q('display_name'))
     if (error) setError(error.message)
     else {
       setError('')
       setMembers((data ?? []) as unknown as Member[])
     }
+    const c = await supabase.from('profile_contacts').select('user_id, phone, contact_email')
+    if (!c.error) setContacts(new Map(((c.data ?? []) as Contact[]).map((x) => [x.user_id, x])))
   }, [family.id])
 
   useEffect(() => {
@@ -127,18 +135,34 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
         )}
         <ul className="divide-y divide-line">
           {members.map((m) => {
-            const name = m.profiles?.display_name || 'Someone'
+            const name = shownName(m.profiles)
+            const real = m.profiles?.display_name
+            const bio = m.profiles?.bio?.trim()
+            const ct = m.user_id !== userId ? contacts.get(m.user_id) : undefined
             const canRemove = isOwner && m.role !== 'owner'
             const asking = confirm === 'remove:' + m.user_id
             return (
               <li key={m.user_id} className="flex flex-wrap items-center gap-x-3">
-                <span
-                  className="my-2 flex size-10 flex-none items-center justify-center rounded-[var(--radius-avatar)] bg-accent-soft font-display text-base font-bold text-accent-text"
-                  aria-hidden="true"
-                >
-                  {name.charAt(0).toUpperCase()}
+                <Avatar value={m.profiles?.avatar} name={name} size={40} className="my-2" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{name}</span>
+                  {real && name !== real && <span className="block truncate text-xs text-muted">{real}</span>}
+                  {bio && <span className="block text-sm text-muted">{bio}</span>}
+                  {ct && (ct.phone || ct.contact_email) && (
+                    <span className="mt-1 flex flex-wrap gap-x-3 text-sm font-semibold">
+                      {ct.phone && (
+                        <a className="link" href={`tel:${ct.phone.replace(/[^\d+]/g, '')}`}>
+                          {ct.phone}
+                        </a>
+                      )}
+                      {ct.contact_email && (
+                        <a className="link break-all" href={`mailto:${ct.contact_email}`}>
+                          {ct.contact_email}
+                        </a>
+                      )}
+                    </span>
+                  )}
                 </span>
-                <span className="min-w-0 flex-1 truncate font-semibold">{name}</span>
                 {m.role === 'owner' && (
                   <span className="rounded-[var(--radius-ctl)] bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-text">
                     Owner

@@ -7,5 +7,5 @@ export type Family = {
 export type Member = {
   user_id: string
   role: 'owner' | 'member'
-  profiles: { display_name: string } | null
+  profiles: { display_name: string; nickname: string | null; bio: string | null; avatar: string | null } | null
 }

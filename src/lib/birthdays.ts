@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { shownName } from './avatars'
 
 // Birthdays come from each member's profile. Row-level security already lets family members read
 // each other's profiles, so no database change is needed.
 export type BirthdayPerson = {
   userId: string
   name: string
+  avatar: string | null
   birthday: string | null // 'YYYY-MM-DD'
   isMe: boolean
   isOwner: boolean
@@ -88,7 +90,7 @@ export function rank(people: BirthdayPerson[], now = new Date()): { upcoming: Up
 type Row = {
   user_id: string
   role: 'owner' | 'member'
-  profiles: { display_name: string; birthday: string | null } | null
+  profiles: { display_name: string; nickname: string | null; avatar: string | null; birthday: string | null } | null
 }
 
 // One query for the whole app: the menu badge, the reminders and the Birthdays page all read this.
@@ -98,11 +100,11 @@ export function useFamilyBirthdays(familyId: string, userId: string) {
   const [error, setError] = useState('')
 
   const reload = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('family_members')
-      .select('user_id, role, profiles(display_name, birthday)')
-      .eq('family_id', familyId)
-      .order('joined_at')
+    const q = (cols: string) =>
+      supabase.from('family_members').select(`user_id, role, profiles(${cols})`).eq('family_id', familyId).order('joined_at')
+    let { data, error } = await q('display_name, nickname, avatar, birthday')
+    // Falls back to the old columns until supabase/08_profile.sql has been run.
+    if (error) ({ data, error } = await q('display_name, birthday'))
     if (error) {
       setError(error.message)
       return
@@ -111,7 +113,8 @@ export function useFamilyBirthdays(familyId: string, userId: string) {
     setPeople(
       ((data ?? []) as unknown as Row[]).map((r) => ({
         userId: r.user_id,
-        name: r.profiles?.display_name || 'Someone',
+        name: shownName(r.profiles),
+        avatar: r.profiles?.avatar ?? null,
         birthday: r.profiles?.birthday ?? null,
         isMe: r.user_id === userId,
         isOwner: r.role === 'owner',

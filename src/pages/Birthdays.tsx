@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import AppAvatar from '../components/Avatar'
 import { Icon } from '../components/Icons'
+import { parseAvatar } from '../lib/avatars'
 import {
   countdownText,
   dateText,
@@ -26,7 +28,8 @@ const SECTIONS: { tier: Tier[]; title: string }[] = [
   { tier: ['later'], title: 'Later' },
 ]
 
-function Avatar({ name, hot }: { name: string; hot?: boolean }) {
+function Avatar({ name, avatar, hot }: { name: string; avatar?: string | null; hot?: boolean }) {
+  if (parseAvatar(avatar)) return <AppAvatar value={avatar} name={name} size={40} className="flex-none" />
   return (
     <span aria-hidden="true" className={`bd-avatar ${hot ? 'bd-avatar-hot' : ''}`}>
       {(name.trim()[0] || '?').toUpperCase()}
@@ -38,7 +41,7 @@ function Row({ u }: { u: Upcoming }) {
   const tier = tierOf(u.days)
   return (
     <li className="bd-row">
-      <Avatar name={u.name} hot={u.days <= 1} />
+      <Avatar name={u.name} avatar={u.avatar} hot={u.days <= 1} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-bold">
           {u.name}
@@ -165,7 +168,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
           <ul className="card bd-list">
             {missing.map((p) => (
               <li key={p.userId} className="bd-row">
-                <Avatar name={p.name} />
+                <Avatar name={p.name} avatar={p.avatar} />
                 <p className="min-w-0 flex-1 truncate font-bold">
                   {p.name}
                   {p.isMe ? ' (you)' : ''}

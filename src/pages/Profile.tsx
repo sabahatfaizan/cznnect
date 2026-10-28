@@ -1,27 +1,11 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
+import Sheet from '../components/Sheet'
+import { Icon, type IconName } from '../components/Icons'
 import { AVATAR_COLORS, AVATAR_EMOJI, encodeAvatar, parseAvatar } from '../lib/avatars'
 
 const BIO_MAX = 140
-
-function Expander({ title, hint, lead, children }: { title: string; hint?: string; lead?: ReactNode; children: ReactNode }) {
-  return (
-    <details className="card expander">
-      <summary>
-        <span className="flex min-w-0 items-center gap-3">
-          {lead}
-          <span className="min-w-0">
-            <span className="font-display block text-lg font-bold">{title}</span>
-            {hint && <span className="block truncate text-sm text-muted">{hint}</span>}
-          </span>
-        </span>
-        <span aria-hidden="true" className="expander-chevron">›</span>
-      </summary>
-      <div className="mt-3 flex flex-col gap-4">{children}</div>
-    </details>
-  )
-}
 
 export default function Profile({ userId }: { userId: string }) {
   const [name, setName] = useState('')
@@ -35,6 +19,7 @@ export default function Profile({ userId }: { userId: string }) {
   const [share, setShare] = useState(false)
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
+  const [panel, setPanel] = useState<'avatar' | 'about' | 'contact' | null>(null)
   const [msg, setMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null)
 
   useEffect(() => {
@@ -105,6 +90,15 @@ export default function Profile({ userId }: { userId: string }) {
   }
 
   const avatarValue = emoji ? encodeAvatar({ emoji, color }) : null
+  const tile = (id: 'about' | 'contact', label: string, icon: IconName, hint: string) => (
+    <button type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
+      <span className="set-tile-icon" aria-hidden="true">
+        <Icon name={icon} size={26} />
+      </span>
+      <span className="set-tile-label">{label}</span>
+      <span className="set-tile-hint">{hint}</span>
+    </button>
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -119,17 +113,49 @@ export default function Profile({ userId }: { userId: string }) {
             <input id="p-name" className="input" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div>
+            <label className="label" htmlFor="p-birthday">
+              Birthday
+            </label>
+            <input id="p-birthday" type="date" className="input" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
+            <p className="mt-1 text-sm text-muted">Shown to your family on the Birthdays page.</p>
+          </div>
+          <div>
             <p className="label">Email</p>
             <p className="break-all">{email}</p>
           </div>
         </section>
 
-        <Expander
-          title="Avatar"
-          hint={emoji ? 'Symbol and colour chosen' : 'Pick a symbol and a colour'}
-          lead={<Avatar value={avatarValue} name={nickname || name} size={36} />}
-        >
-          <p className="text-sm text-muted">Nothing is uploaded, so it costs no storage.</p>
+        <div className="set-grid">
+          <button type="button" className="set-tile" onClick={() => setPanel('avatar')} aria-haspopup="dialog">
+            <Avatar value={avatarValue} name={nickname || name} size={48} />
+            <span className="set-tile-label">Avatar</span>
+            <span className="set-tile-hint">{emoji ? 'Chosen' : 'Pick one'}</span>
+          </button>
+          {tile('about', 'About you', 'me', nickname || bio || 'Nickname, bio')}
+          {tile('contact', 'Contact', 'phone', share ? 'Shared' : 'Private')}
+        </div>
+
+        {msg && (
+          <p role="status" className={`text-sm font-bold ${msg.kind === 'error' ? 'text-danger' : 'text-ok'}`}>
+            {msg.text}
+          </p>
+        )}
+        <button className="btn btn-primary w-full" disabled={busy}>
+          {busy ? 'Saving...' : 'Save'}
+        </button>
+      </form>
+
+      <button className="btn btn-plain w-full" onClick={() => supabase.auth.signOut()}>
+        Sign out
+      </button>
+
+      {panel === 'avatar' && (
+        <Sheet title="Avatar" onClose={() => setPanel(null)}>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <Avatar value={avatarValue} name={nickname || name} size={64} />
+              <p className="text-sm text-muted">Nothing is uploaded, so it costs no storage. Remember to press Save.</p>
+            </div>
           <div role="radiogroup" aria-label="Avatar symbol" className="grid grid-cols-8 gap-1.5">
             {AVATAR_EMOJI.map((em) => (
               <button
@@ -166,9 +192,13 @@ export default function Profile({ userId }: { userId: string }) {
               Use my initial instead
             </button>
           )}
-        </Expander>
+          </div>
+        </Sheet>
+      )}
 
-        <Expander title="Nickname and bio" hint={nickname || bio || 'What the family calls you'}>
+      {panel === 'about' && (
+        <Sheet title="About you" onClose={() => setPanel(null)}>
+          <div className="flex flex-col gap-4">
           <div>
             <label className="label" htmlFor="p-nick">
               Nickname
@@ -199,23 +229,13 @@ export default function Profile({ userId }: { userId: string }) {
               {bio.length}/{BIO_MAX}
             </p>
           </div>
-        </Expander>
-
-        <Expander title="Birthday" hint={birthday || 'Not added'}>
-          <div>
-            <input
-              id="p-birthday"
-              aria-label="Birthday"
-              type="date"
-              className="input"
-              value={birthday}
-              onChange={(e) => setBirthday(e.target.value)}
-            />
-            <p className="mt-1 text-sm text-muted">Shown to your family on the Birthdays page.</p>
           </div>
-        </Expander>
+        </Sheet>
+      )}
 
-        <Expander title="Contact details" hint={share ? 'Shared with your family' : 'Private'}>
+      {panel === 'contact' && (
+        <Sheet title="Contact details" onClose={() => setPanel(null)}>
+          <div className="flex flex-col gap-4">
           <div>
             <label className="label" htmlFor="p-phone">
               Phone
@@ -261,21 +281,9 @@ export default function Profile({ userId }: { userId: string }) {
               </span>
             </span>
           </label>
-        </Expander>
-
-        {msg && (
-          <p role="status" className={`text-sm font-bold ${msg.kind === 'error' ? 'text-danger' : 'text-ok'}`}>
-            {msg.text}
-          </p>
-        )}
-        <button className="btn btn-primary w-full" disabled={busy}>
-          {busy ? 'Saving...' : 'Save'}
-        </button>
-      </form>
-
-      <button className="btn btn-plain w-full" onClick={() => supabase.auth.signOut()}>
-        Sign out
-      </button>
+          </div>
+        </Sheet>
+      )}
     </div>
   )
 }

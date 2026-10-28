@@ -912,6 +912,10 @@ input[type="checkbox"] {
 .family-tree-stage .root-body path { fill: var(--root-body); }
 .family-tree-stage .root-core path { fill: var(--root-core); fill-opacity: 0.9; }
 .family-tree-stage .root-tip { opacity: 0.7; }
+.family-tree-stage .root-dim { opacity: 0.12; }
+.family-tree-stage .tnode { transition: opacity 0.25s; }
+.family-tree-stage .tnode-dim { opacity: 0.3; }
+.family-tree-stage .root-lit, .family-tree-stage .root-partner { transition: opacity 0.25s; }
 .family-tree-stage .root-partner {
   fill: none;
   stroke: var(--root-partner);

@@ -30,7 +30,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: 'people', label: 'People' },
 ]
 
-export default function Tree({ family, userId }: { family: Family; userId: string }) {
+export default function Tree({ family, userId, onExit }: { family: Family; userId: string; onExit: () => void }) {
   const [people, setPeople] = useState<Person[]>([])
   const [links, setLinks] = useState<Link[]>([])
   const [isOwner, setIsOwner] = useState(false)
@@ -39,6 +39,8 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
   const [view, setView] = useState<View>('tree')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [litId, setLitId] = useState<string | null>(null) // whose line of descent is lit on the tree
+  const [searching, setSearching] = useState(false)
   const [detail, setDetail] = useState(false) // false: the quick card. true: everything, with editing.
   const [focus, setFocus] = useState<{ id: string; tick: number } | null>(null)
   const [mode, setMode] = useState<Mode>('none')
@@ -99,6 +101,7 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
 
   function show(id: string, full = false) {
     setSelectedId(id)
+    setLitId(id)
     setDetail(full)
     setFocus({ id, tick: Date.now() })
   }
@@ -163,6 +166,176 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
 
   const rows = groupByGeneration(people, generations)
   const alphabetical = [...people].sort((a, b) => a.full_name.localeCompare(b.full_name))
+
+  const sheets = (
+    <>
+      {mode === 'add' && (
+        <Sheet title="Add a person" onClose={() => setMode('none')}>
+          <PersonForm
+            people={people}
+            submitLabel="Add person"
+            onSubmit={createPerson}
+            onCancel={() => setMode('none')}
+            onUseExisting={(p) => {
+              setMode('none')
+              show(p.id)
+            }}
+          />
+        </Sheet>
+      )}
+
+      {mode === 'claim' && (
+        <Sheet title="Which one is you?" onClose={() => setMode('none')}>
+          <PersonPicker
+            people={people.filter((p) => !p.claimed_by)}
+            allPeople={people}
+            allowNew={false}
+            prompt="Pick your own entry in the tree. Entries that already belong to an account are not shown."
+            onCancel={() => setMode('none')}
+            onPick={async (p) => {
+              setBusy(true)
+              const problem = await claimPerson(p.id)
+              setBusy(false)
+              if (problem) {
+                say(problem)
+                return
+              }
+              await load()
+              setMode('none')
+              say('You are linked to your spot in the tree')
+              show(p.id)
+            }}
+          />
+        </Sheet>
+      )}
+
+      {selected && !detail && (
+        <PersonCard
+          key={selected.id}
+          person={selected}
+          index={index}
+          me={mine}
+          userId={userId}
+          onClose={() => setSelectedId(null)}
+          onSelect={(id) => show(id)}
+          onMore={() => setDetail(true)}
+        />
+      )}
+
+      {selected && detail && (
+        <PersonSheet
+          key={selected.id}
+          person={selected}
+          index={index}
+          links={links}
+          people={people}
+          me={mine}
+          userId={userId}
+          isOwner={isOwner}
+          familyId={family.id}
+          onClose={() => { setSelectedId(null); setDetail(false) }}
+          onSelect={(id) => show(id, true)}
+          onChanged={load}
+          onNotice={say}
+        />
+      )}
+    </>
+  )
+
+  // Opening Family Tree gives the whole screen to the tree, with its own bar on top.
+  if (people.length > 0 && view === 'tree') {
+    return (
+      <div className="tree-full fixed inset-0 z-40 flex flex-col bg-page">
+        <div className="tree-bar flex items-center gap-2 border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <button className="btn btn-plain !min-h-11 !px-3" onClick={onExit} aria-label="Back to Home">
+            ←
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display truncate text-lg font-extrabold leading-tight">Family Tree</h1>
+            <p className="truncate text-xs text-muted">
+              {people.length} {people.length === 1 ? 'person' : 'people'} · tap someone to light up their line
+            </p>
+          </div>
+          <button className="btn btn-plain !min-h-11 !px-3" onClick={() => setSearching((v) => !v)} aria-label="Find someone" aria-pressed={searching}>
+            Find
+          </button>
+          <button className="btn btn-plain !min-h-11 !px-3" onClick={() => setView('people')}>
+            List
+          </button>
+          <button className="btn btn-primary !min-h-11 !px-3" onClick={() => setMode('add')}>
+            + Add
+          </button>
+        </div>
+
+        <div className="relative min-h-0 flex-1">
+          <TreeCanvas
+            layout={layout}
+            people={index.byId}
+            selectedId={selectedId}
+            meId={mine?.id ?? null}
+            focus={focus}
+            litId={litId}
+            onSelect={(id) => show(id)}
+            onClear={() => setLitId(null)}
+          />
+
+          {searching && (
+            <div className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2">
+              <input
+                autoFocus
+                className="input shadow-[var(--shadow-card)]"
+                placeholder="Search by name or nickname"
+                aria-label="Find someone"
+                value={query}
+                autoComplete="off"
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {query.trim() && (
+                <ul className="max-h-64 divide-y divide-line overflow-y-auto rounded-[var(--radius-ctl)] border border-line bg-surface px-3 shadow-[var(--shadow-card)]">
+                  {results.map((p) => (
+                    <li key={p.id}>
+                      <PersonRow
+                        person={p}
+                        note={noteFor(p)}
+                        isMe={p.id === mine?.id}
+                        onClick={() => {
+                          setQuery('')
+                          setSearching(false)
+                          show(p.id)
+                        }}
+                      />
+                    </li>
+                  ))}
+                  {results.length === 0 && <li className="py-3 text-muted">No one matches “{query.trim()}”.</li>}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {notice && !searching && (
+            <p role="status" className="absolute inset-x-3 top-3 z-10 rounded-[var(--radius-ctl)] bg-accent-soft px-3 py-2 text-sm font-bold text-accent-text shadow-[var(--shadow-card)]">
+              {notice}
+            </p>
+          )}
+
+          {!mine && (
+            <div className="card absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-3 right-20 z-10 flex flex-col gap-2 !p-3">
+              <p className="text-sm font-bold">Are you in the tree?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="btn btn-primary !min-h-10" disabled={busy} onClick={addMe}>
+                  Add me
+                </button>
+                <button className="btn btn-plain !min-h-10" onClick={() => setMode('claim')}>
+                  I am here
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        {sheets}
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -255,17 +428,6 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
             ))}
           </div>
 
-          {view === 'tree' && (
-            <TreeCanvas
-              layout={layout}
-              people={index.byId}
-              selectedId={selectedId}
-              meId={mine?.id ?? null}
-              focus={focus}
-              onSelect={(id) => show(id)}
-            />
-          )}
-
           {view === 'generations' && (
             <div className="flex flex-col gap-4">
               {rows.map((row, i) => (
@@ -300,76 +462,7 @@ export default function Tree({ family, userId }: { family: Family; userId: strin
         </>
       )}
 
-      {mode === 'add' && (
-        <Sheet title="Add a person" onClose={() => setMode('none')}>
-          <PersonForm
-            people={people}
-            submitLabel="Add person"
-            onSubmit={createPerson}
-            onCancel={() => setMode('none')}
-            onUseExisting={(p) => {
-              setMode('none')
-              show(p.id)
-            }}
-          />
-        </Sheet>
-      )}
-
-      {mode === 'claim' && (
-        <Sheet title="Which one is you?" onClose={() => setMode('none')}>
-          <PersonPicker
-            people={people.filter((p) => !p.claimed_by)}
-            allPeople={people}
-            allowNew={false}
-            prompt="Pick your own entry in the tree. Entries that already belong to an account are not shown."
-            onCancel={() => setMode('none')}
-            onPick={async (p) => {
-              setBusy(true)
-              const problem = await claimPerson(p.id)
-              setBusy(false)
-              if (problem) {
-                say(problem)
-                return
-              }
-              await load()
-              setMode('none')
-              say('You are linked to your spot in the tree')
-              show(p.id)
-            }}
-          />
-        </Sheet>
-      )}
-
-      {selected && !detail && (
-        <PersonCard
-          key={selected.id}
-          person={selected}
-          index={index}
-          me={mine}
-          userId={userId}
-          onClose={() => setSelectedId(null)}
-          onSelect={(id) => show(id)}
-          onMore={() => setDetail(true)}
-        />
-      )}
-
-      {selected && detail && (
-        <PersonSheet
-          key={selected.id}
-          person={selected}
-          index={index}
-          links={links}
-          people={people}
-          me={mine}
-          userId={userId}
-          isOwner={isOwner}
-          familyId={family.id}
-          onClose={() => { setSelectedId(null); setDetail(false) }}
-          onSelect={(id) => show(id, true)}
-          onChanged={load}
-          onNotice={say}
-        />
-      )}
+      {sheets}
     </div>
   )
 }

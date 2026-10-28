@@ -246,7 +246,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {tab === 'birthdays' && (
           <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />
         )}
-        {tab === 'tree' && <Tree family={family} userId={userId} />}
+        {tab === 'tree' && <Tree family={family} userId={userId} onExit={() => setTab('home')} />}
         {tab === 'explore' && <Explore family={family} userId={userId} />}
         {tab === 'plans' && <Plans family={family} userId={userId} />}
         {tab === 'me' && <Profile userId={userId} />}

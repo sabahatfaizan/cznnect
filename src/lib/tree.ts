@@ -334,16 +334,25 @@ export function initials(name: string): string {
 
 // ---------- drawing the tree ----------
 
-export const NODE_W = 112
-export const NODE_H = 60
-const SLOT = 156 // a little wider than a card, so a couple has room between them
+export const NODE_W = 132
+export const NODE_H = 80
+const SLOT = 192 // a little wider than a card, so a couple has room between them
 const ROW_H = 310 // tall rows: roots grow straight down and have room to thin out
 const PAD = 28
 
 export type TreeNode = { id: string; x: number; y: number; gen: number }
 // One piece of root: a single curve that is w0 wide where it starts and w1 wide where it ends.
 export type RootSeg = { d: string; w0: number; w1: number }
-export type TreeEdge = { id: string; kind: 'parent' | 'partner' | 'tip'; d: string; segs?: RootSeg[] }
+// parents/kids (stems) and person (tip roots) say whose root this is, so the screen can light up one line of descent.
+export type TreeEdge = {
+  id: string
+  kind: 'parent' | 'partner' | 'tip'
+  d: string
+  segs?: RootSeg[]
+  parents?: string[]
+  kids?: string[]
+  person?: string
+}
 export type TreeLayout = { nodes: TreeNode[]; edges: TreeEdge[]; width: number; height: number }
 
 type Cluster = { members: string[]; gen: number; start: number }
@@ -586,7 +595,7 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     if (!a || !b) continue
     const [left, right] = a.x <= b.x ? [a, b] : [b, a]
     const y = left.y + NODE_H / 2
-    edges.push({ id: l.id, kind: 'partner', d: `M${left.x + NODE_W} ${y}H${right.x}` })
+    edges.push({ id: l.id, kind: 'partner', d: `M${left.x + NODE_W} ${y}H${right.x}`, parents: [l.a_id, l.b_id] })
   }
 
   // Children of a couple hang from one stem that starts on the line between the two
@@ -599,12 +608,12 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     if (list) list.push(l.a_id)
     else byChild.set(l.b_id, [l.a_id])
   }
-  const stems = new Map<string, { sx: number; sy: number; kids: TreeNode[] }>()
+  const stems = new Map<string, { sx: number; sy: number; kids: TreeNode[]; gen: number; parents: string[] }>()
   for (const [childId, parentIds] of byChild) {
     const child = at.get(childId)
     if (!child) continue
     const nodes2 = parentIds.map((p) => at.get(p)).filter((n): n is TreeNode => !!n)
-    const sources: { key: string; sx: number; sy: number }[] = []
+    const sources: { key: string; sx: number; sy: number; gen: number; parents: string[] }[] = []
     const used = new Set<string>()
     for (const p of nodes2) {
       if (used.has(p.id)) continue
@@ -613,16 +622,16 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
         const [l, r] = p.x <= mate.x ? [p, mate] : [mate, p]
         used.add(p.id)
         used.add(mate.id)
-        sources.push({ key: [p.id, mate.id].sort().join('|'), sx: (l.x + NODE_W + r.x) / 2, sy: l.y + NODE_H / 2 })
+        sources.push({ key: [p.id, mate.id].sort().join('|'), sx: (l.x + NODE_W + r.x) / 2, sy: l.y + NODE_H / 2, gen: p.gen, parents: [p.id, mate.id] })
       } else {
         used.add(p.id)
-        sources.push({ key: p.id, sx: p.x + NODE_W / 2, sy: p.y + NODE_H })
+        sources.push({ key: p.id, sx: p.x + NODE_W / 2, sy: p.y + NODE_H, gen: p.gen, parents: [p.id] })
       }
     }
     for (const src of sources) {
       const stem = stems.get(src.key)
       if (stem) stem.kids.push(child)
-      else stems.set(src.key, { sx: src.sx, sy: src.sy, kids: [child] })
+      else stems.set(src.key, { sx: src.sx, sy: src.sy, kids: [child], gen: src.gen, parents: src.parents })
     }
   }
   // How many people grow below someone decides how thick their roots are.
@@ -641,8 +650,10 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     below.set(id, out)
     return out
   }
-  const wTop = (d: number) => Math.min(34, 8 + 4.6 * Math.sqrt(d))
-  const wEnd = (d: number) => Math.min(18, 3.6 + 2.8 * Math.sqrt(d))
+  // Thickness follows the generation: the oldest roots are the thickest, and every generation
+  // down is clearly thinner, like a real root system running from trunk to fine tips.
+  const W = (g: number) => Math.max(4.2, 46 * Math.pow(0.62, g))
+  const total = Math.max(1, index.byId.size)
 
   for (const [key, stem] of stems) {
     const kids = [...stem.kids].sort((a, b) => a.x - b.x)
@@ -665,8 +676,9 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     const tx = sx + wob
     const trunkD = `M${f1(sx)} ${f1(sy)} C${f1(sx)} ${f1(sy + (ty - sy) * 0.35)}, ${f1(tx)} ${f1(sy + (ty - sy) * 0.7)}, ${f1(tx)} ${f1(ty)}`
     const trunk = parseCubic(trunkD)
-    const t0 = wTop(everyone.size)
-    const t1 = t0 * 0.62
+    // A bigger branch is a touch fatter than its sibling branch in the same generation.
+    const t0 = W(stem.gen) * (0.9 + 0.2 * Math.min(1, (everyone.size / total) * 2.5))
+    const t1 = t0 * 0.66
     const segs: RootSeg[] = [{ d: trunkD, w0: t0, w1: t1 }]
     kids.forEach((kid) => {
       const cx = kid.x + NODE_W / 2
@@ -675,9 +687,8 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
       const dy = cy - from.y
       const jit = (n: number) => (hash(`${key}:${kid.id}:${n}`) - 0.5) * 14
       const here = t0 + (t1 - t0) * Math.min(1, frac(kid) / maxFrac)
-      const kidBelow = descendants(kid.id).size
-      const end = wEnd(kidBelow)
-      const start = Math.max(end + 1.5, Math.min(here * 0.85, wTop(kidBelow) * 0.95))
+      const end = Math.max(2.4, W(kid.gen) * 0.7)
+      const start = Math.max(end + 1.5, here * 0.82)
       segs.push({
         d: `M${f1(from.x)} ${f1(from.y)} C${f1(from.x + (cx - from.x) * 0.02 + jit(0))} ${f1(from.y + dy * 0.62)}, ${f1(cx - (cx - from.x) * 0.06 + jit(1))} ${f1(cy - dy * 0.55)}, ${f1(cx)} ${f1(cy)}`,
         w0: start,
@@ -689,6 +700,8 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
       kind: 'parent',
       d: segs.map((x) => x.d).join(''),
       segs,
+      parents: stem.parents,
+      kids: kids.map((kid) => kid.id),
     })
   }
 
@@ -705,11 +718,11 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
       const w1 = (hash(`tipw:${n.id}:${i}`) - 0.5) * 12
       tip.push({
         d: `M${f1(cx + (i - 1) * 8)} ${f1(y0)} C${f1(cx + (i - 1) * 8 + w1)} ${f1(y0 + len * 0.35)}, ${f1(cx + dx - w1)} ${f1(y0 + len * 0.7)}, ${f1(cx + dx)} ${f1(y0 + len)}`,
-        w0: 4.6 - i * 0.6 + (i === 1 ? 0.8 : 0),
+        w0: Math.max(1.8, Math.min(6.5, W(n.gen) * 0.5)) - i * 0.4 + (i === 1 ? 0.6 : 0),
         w1: 0.7,
       })
     }
-    edges.push({ id: `tip:${n.id}`, kind: 'tip', d: tip.map((x) => x.d).join(''), segs: tip })
+    edges.push({ id: `tip:${n.id}`, kind: 'tip', d: tip.map((x) => x.d).join(''), segs: tip, person: n.id })
   }
 
   return {

@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
 import { rootlets, taperPath } from '../lib/roots'
 
 type View = { x: number; y: number; k: number }
 const MIN_K = 0.1
-const MAX_K = 2.2
+const MAX_K = 2.4
+// Open at a size where names can be read. Only a small tree is shown whole.
+const READABLE_K = 0.85
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
 
 function clip(text: string, max: number): string {
@@ -19,14 +21,19 @@ export default function TreeCanvas({
   selectedId,
   meId,
   focus,
+  litId,
   onSelect,
+  onClear,
 }: {
   layout: TreeLayout
   people: Map<string, Person>
   selectedId: string | null
   meId: string | null
   focus: { id: string; tick: number } | null
+  // The person whose line of descent is lit; everyone else is dimmed.
+  litId: string | null
   onSelect: (id: string) => void
+  onClear: () => void
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
@@ -45,6 +52,38 @@ export default function TreeCanvas({
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // Who is in the lit person's line: ancestors, descendants and partners. Read from the drawn stems.
+  const kin = useMemo(() => {
+    if (!litId) return null
+    const up = new Map<string, string[]>()
+    const down = new Map<string, string[]>()
+    const mates = new Map<string, string[]>()
+    const add = (m: Map<string, string[]>, k: string, v: string) => m.set(k, [...(m.get(k) ?? []), v])
+    for (const e of layout.edges) {
+      if (e.kind === 'parent') {
+        for (const parent of e.parents ?? []) for (const kid of e.kids ?? []) {
+          add(down, parent, kid)
+          add(up, kid, parent)
+        }
+      } else if (e.kind === 'partner' && e.parents) {
+        add(mates, e.parents[0], e.parents[1])
+        add(mates, e.parents[1], e.parents[0])
+      }
+    }
+    const out = new Set<string>([litId])
+    const walk = (start: string, map: Map<string, string[]>) => {
+      const todo = [start]
+      while (todo.length) {
+        const id = todo.pop() as string
+        for (const next of map.get(id) ?? []) if (!out.has(next)) { out.add(next); todo.push(next) }
+      }
+    }
+    walk(litId, up)
+    walk(litId, down)
+    for (const m of mates.get(litId) ?? []) out.add(m)
+    return out
+  }, [layout, litId])
 
   const nodeCenter = useCallback(
     (id: string) => {
@@ -71,12 +110,18 @@ export default function TreeCanvas({
     setView({ k, x: (size.w - layout.width * k) / 2, y: Math.max(8, (size.h - layout.height * k) / 2) })
   }, [size.w, size.h, layout.width, layout.height])
 
-  // First view: the full tree.
+  // First view: a small tree is shown whole; a bigger one opens on you (or the oldest couple) at a readable size.
   useEffect(() => {
     if (started.current || size.w === 0 || layout.nodes.length === 0) return
     started.current = true
-    fit()
-  }, [size.w, layout, fit])
+    const whole = Math.min(size.w / layout.width, size.h / layout.height)
+    if (whole >= 0.6) {
+      fit()
+      return
+    }
+    const start = (meId && layout.nodes.find((n) => n.id === meId)) || layout.nodes[0]
+    centerOn(start.id, READABLE_K)
+  }, [size.w, layout, fit, centerOn, meId])
 
   // Jump to someone chosen from the search box.
   useEffect(() => {
@@ -152,6 +197,7 @@ export default function TreeCanvas({
       const hit = document.elementFromPoint(e.clientX, e.clientY)
       const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
       if (id) onSelect(id)
+      else onClear()
     }
   }
 
@@ -182,7 +228,7 @@ export default function TreeCanvas({
   )
 
   return (
-    <div className="relative">
+    <div className="relative h-full w-full">
       <div
         ref={box}
         tabIndex={0}
@@ -193,7 +239,7 @@ export default function TreeCanvas({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
-        className="family-tree-stage h-[72dvh] min-h-[26rem] w-full touch-none select-none overflow-hidden rounded-[var(--radius-card)] border border-line"
+        className="family-tree-stage h-full w-full touch-none select-none overflow-hidden"
       >
         <svg
           width={layout.width}
@@ -206,46 +252,66 @@ export default function TreeCanvas({
           }}
         >
           {(() => {
-            const roots = layout.edges.filter((e) => e.segs)
+            const dimmed = (e: (typeof layout.edges)[number]) => {
+              if (!kin) return false
+              if (e.kind === 'tip') return !kin.has(e.person ?? '')
+              if (e.kind === 'partner') return !((e.parents ?? []).every((id) => kin.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
+              return !((e.parents ?? []).some((id) => kin.has(id)) && (e.kids ?? []).some((id) => kin.has(id)))
+            }
+            const roots = layout.edges
+              .filter((e) => e.segs)
+              .map((e) => ({
+                e,
+                dim: dimmed(e),
+                parts: (e.segs ?? []).map((seg, i) => ({ seg, hairs: e.kind === 'parent' ? rootlets(seg, `${e.id}:${i}`) : [] })),
+              }))
             const partners = layout.edges.filter((e) => e.kind === 'partner')
-            // Every root is a ribbon: wide where it leaves the parents, thin where it reaches the child.
-            const parts = roots.flatMap((e) =>
-              (e.segs ?? []).flatMap((seg, i) => [
-                { seg, tip: e.kind === 'tip', hairs: e.kind === 'parent' ? rootlets(seg, `${e.id}:${i}`) : [] },
-              ]),
-            )
             return (
               <g pointerEvents="none">
                 <g className="root-aura">
-                  {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 2.6 + 6, seg.w1 * 2.6 + 4)} />)}
+                  {roots.map(({ e, dim, parts }) => (
+                    <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
+                      {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 2.6 + 6, seg.w1 * 2.6 + 4)} />)}
+                    </g>
+                  ))}
                 </g>
                 <g className="root-body">
-                  {parts.map(({ seg, tip, hairs }, i) => (
-                    <g key={i} className={tip ? 'root-tip' : undefined}>
-                      <path d={taperPath(seg.d, seg.w0, seg.w1)} />
-                      {hairs.map((h, j) => <path key={j} d={taperPath(h.d, h.w0, h.w1)} />)}
+                  {roots.map(({ e, dim, parts }) => (
+                    <g key={e.id} className={`${e.kind === 'tip' ? 'root-tip ' : ''}${dim ? 'root-dim' : 'root-lit'}`}>
+                      {parts.map(({ seg, hairs }, i) => (
+                        <g key={i}>
+                          <path d={taperPath(seg.d, seg.w0, seg.w1)} />
+                          {hairs.map((h, j) => <path key={j} d={taperPath(h.d, h.w0, h.w1)} />)}
+                        </g>
+                      ))}
                     </g>
                   ))}
                 </g>
                 <g className="root-core">
-                  {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 0.3, Math.max(0.5, seg.w1 * 0.3))} />)}
+                  {roots.map(({ e, dim, parts }) => (
+                    <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
+                      {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 0.3, Math.max(0.5, seg.w1 * 0.3))} />)}
+                    </g>
+                  ))}
                 </g>
-                {partners.map((e) => <path key={e.id} d={e.d} className="root-partner" />)}
+                {partners.map((e) => <path key={e.id} d={e.d} className={`root-partner ${dimmed(e) ? 'root-dim' : ''}`} />)}
               </g>
             )
           })()}
           {layout.nodes.map((n) => {
             const p = people.get(n.id)
             if (!p) return null
-            const sub = p.nickname ? `“${clip(p.nickname, 12)}”` : p.birth_date ? p.birth_date.slice(0, 4) : ''
+            const year = p.birth_date ? p.birth_date.slice(0, 4) : ''
             const classes = ['tnode-rect']
             if (n.id === meId) classes.push('tnode-me')
-            if (n.id === selectedId) classes.push('tnode-sel')
+            if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
             if (p.is_deceased) classes.push('tnode-gone')
+            const dim = kin ? !kin.has(n.id) : false
             return (
               <g
                 key={n.id}
                 data-pid={n.id}
+                className={`tnode ${dim ? 'tnode-dim' : ''}`}
                 transform={`translate(${n.x} ${n.y})`}
                 tabIndex={0}
                 role="button"
@@ -258,18 +324,22 @@ export default function TreeCanvas({
                 }}
               >
                 <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
-                <text x={NODE_W / 2} y={26} textAnchor="middle" className="fill-ink" fontSize="13" fontWeight="700">{clip(p.full_name, 15)}</text>
-                <text x={NODE_W / 2} y={44} textAnchor="middle" className="fill-muted" fontSize="11">{sub}</text>
+                <text x={NODE_W / 2} y={p.nickname ? 30 : 36} textAnchor="middle" className="fill-ink" fontSize="15" fontWeight="700">{clip(p.full_name, 13)}</text>
+                {p.nickname && <text x={NODE_W / 2} y={50} textAnchor="middle" className="fill-muted" fontSize="13">{`“${clip(p.nickname, 14)}”`}</text>}
+                <text x={NODE_W / 2} y={p.nickname ? 69 : 60} textAnchor="middle" className="fill-muted" fontSize="12.5">
+                  {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `† b. ${year}` : '†') : year ? `b. ${year}` : ''}
+                </text>
               </g>
             )
           })}
         </svg>
       </div>
 
-      <div className="absolute bottom-3 right-3 flex flex-col gap-2">
+      <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 flex flex-col gap-2">
         {centerButton('+', () => zoomAt(size.w / 2, size.h / 2, 1.25))}
         {centerButton('−', () => zoomAt(size.w / 2, size.h / 2, 1 / 1.25))}
         {centerButton('Fit', fit)}
+        {meId && centerButton('Me', () => centerOn(meId, Math.max(view.k, READABLE_K)))}
       </div>
     </div>
   )

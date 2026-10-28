@@ -48,7 +48,7 @@ export default function PlaceMap({
       style: OPENFREEMAP_STYLE,
       center: [90.4125, 23.8103],
       zoom: 7,
-      attributionControl: true,
+      attributionControl: {},
       cooperativeGestures: true,
     })
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')

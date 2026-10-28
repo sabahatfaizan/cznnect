@@ -1,18 +1,22 @@
 // Standard themes: Light and Dark. Red Dead and Uncharted are exclusive unlocks; Liquid Glass is owner-only.
-// The choice is saved on this device, so each cousin picks their own.
+// The choice (and which exclusives are unlocked) is saved on this device, so each cousin has their own.
 export type ThemePref = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'glass'
-type Theme = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'glass'
+export type ExclusiveTheme = 'rdr2' | 'uncharted'
+
+export const EXCLUSIVE_THEMES: ExclusiveTheme[] = ['rdr2', 'uncharted']
+const ALL_THEMES: ThemePref[] = ['light', 'dark', 'rdr2', 'uncharted', 'glass']
 
 const KEY = 'cznnect-theme'
 const UNLOCKS_KEY = 'cznnect-unlocked-themes'
 const UNLOCK_EVENT = 'cznnect-theme-unlocked'
+const CHANGE_EVENT = 'cznnect-unlocks-changed'
 
-export type ExclusiveTheme = 'rdr2' | 'uncharted'
+const isExclusive = (t: string): t is ExclusiveTheme => (EXCLUSIVE_THEMES as string[]).includes(t)
 
 export function getUnlockedThemes(): ExclusiveTheme[] {
   try {
     const saved = JSON.parse(localStorage.getItem(UNLOCKS_KEY) || '[]')
-    return (Array.isArray(saved) ? saved : []).filter((v): v is ExclusiveTheme => v === 'rdr2' || v === 'uncharted')
+    return (Array.isArray(saved) ? saved : []).filter(isExclusive)
   } catch {
     return []
   }
@@ -22,27 +26,50 @@ export function isThemeUnlocked(theme: ExclusiveTheme): boolean {
   return getUnlockedThemes().includes(theme)
 }
 
+// Returns true only the first time, so callers can tell a new unlock from a repeat.
 export function unlockTheme(theme: ExclusiveTheme): boolean {
   const unlocked = getUnlockedThemes()
   if (unlocked.includes(theme)) return false
-  try { localStorage.setItem(UNLOCKS_KEY, JSON.stringify([...unlocked, theme])) } catch { /* This visit can still unlock it. */ }
+  try {
+    localStorage.setItem(UNLOCKS_KEY, JSON.stringify([...unlocked, theme]))
+  } catch {
+    // Storage can be blocked; this visit can still use it.
+  }
   window.dispatchEvent(new CustomEvent(UNLOCK_EVENT, { detail: theme }))
+  window.dispatchEvent(new Event(CHANGE_EVENT))
   return true
 }
 
+// Owner testing only: put the exclusives back behind their locks on this device.
+export function relockThemes() {
+  try {
+    localStorage.removeItem(UNLOCKS_KEY)
+  } catch {
+    // Nothing to clear.
+  }
+  applyTheme(getThemePref())
+  window.dispatchEvent(new Event(CHANGE_EVENT))
+}
+
+// Fires when a theme is newly unlocked (for the celebration).
 export function onThemeUnlocked(callback: (theme: ExclusiveTheme) => void) {
   const handler = (event: Event) => callback((event as CustomEvent<ExclusiveTheme>).detail)
   window.addEventListener(UNLOCK_EVENT, handler)
   return () => window.removeEventListener(UNLOCK_EVENT, handler)
 }
 
+// Fires whenever the unlocked set changes in either direction (for screens that list themes).
+export function onUnlocksChanged(callback: () => void) {
+  window.addEventListener(CHANGE_EVENT, callback)
+  return () => window.removeEventListener(CHANGE_EVENT, callback)
+}
+
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'rdr2' && !isThemeUnlocked('rdr2')) return 'dark'
-    if (v === 'uncharted' && !isThemeUnlocked('uncharted')) return 'dark'
-    if (v === 'light' || v === 'dark' || v === 'rdr2' || v === 'uncharted' || v === 'glass') return v
-    // Migrate removed Call of Duty / Tactical / Midnight themes to the plain Dark theme.
+    if (v && isExclusive(v) && !isThemeUnlocked(v)) return 'dark'
+    if (v && (ALL_THEMES as string[]).includes(v)) return v as ThemePref
+    // Retired themes (Call of Duty, Tactical, Midnight) become the plain Dark theme.
     if (v === 'tactical' || v === 'mw4' || v === 'midnight') return 'dark'
   } catch {
     // Storage can be blocked. Fall back to the default.
@@ -51,7 +78,8 @@ export function getThemePref(): ThemePref {
 }
 
 // Liquid Glass is cosmetic and owner-only. Shell tells us who is signed in; until then, or for anyone
-// else, a saved "glass" choice falls back to Dark, so there is no flash of a retired theme before sign-in. (Hiding the option is not a security boundary.)
+// else, a saved "glass" choice falls back to Dark, so there is no flash before sign-in.
+// (Hiding the option is not a security boundary.)
 let glassAllowed = false
 export function setGlassAllowed(allowed: boolean) {
   if (glassAllowed === allowed) return
@@ -59,23 +87,22 @@ export function setGlassAllowed(allowed: boolean) {
   applyTheme(getThemePref())
 }
 
-function resolve(pref: ThemePref): Theme {
-  if (pref === 'rdr2' || pref === 'uncharted') return pref
-  if (pref === 'glass') return glassAllowed ? 'glass' : 'dark'
-  return pref
+const THEME_COLOR: Record<ThemePref, string> = {
+  light: '#ffffff',
+  dark: '#111318',
+  rdr2: '#171310',
+  uncharted: '#e8d9b5',
+  glass: '#070b16',
 }
 
 export function applyTheme(pref: ThemePref) {
-  const theme = resolve(pref)
+  const theme: ThemePref = pref === 'glass' && !glassAllowed ? 'dark' : pref
   document.documentElement.dataset.theme = theme
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'light' ? '#ffffff' : theme === 'dark' ? '#111318' : theme === 'rdr2' ? '#171310' : theme === 'uncharted' ? '#e8d9b5' : '#070b16')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[theme])
 }
 
 export function setThemePref(pref: ThemePref) {
-  if (pref === 'rdr2' && !isThemeUnlocked('rdr2')) pref = 'dark'
-  if (pref === 'uncharted' && !isThemeUnlocked('uncharted')) pref = 'dark'
+  if (isExclusive(pref) && !isThemeUnlocked(pref)) pref = 'dark'
   try {
     localStorage.setItem(KEY, pref)
   } catch {
@@ -83,5 +110,3 @@ export function setThemePref(pref: ThemePref) {
   }
   applyTheme(pref)
 }
-
-

@@ -1295,9 +1295,189 @@ input[type="checkbox"] {
 
 /* The coin is only shown by the Uncharted theme; the worn-poster wordmark only by Red Dead. */
 .brand-coin { display: none; }
-.coin-easter-egg { padding: 0; border: 0; background: transparent; cursor: pointer; }
-.coin-easter-egg:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 50%; }
 .brand-rdr2 { display: none; }
 
 /* Extra mark details that only some themes show. */
 .mk-deco { display: none; }
+
+/* ------------------------------------------------------------------
+   Exclusive themes: the secret coin, the redeem code and the unlock celebration
+   ------------------------------------------------------------------ */
+
+/* Expanders: their content eases in instead of snapping open. */
+.expander[open] > :not(summary) { animation: expander-in 0.32s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes expander-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.expander > summary { transition: opacity 0.15s; }
+.expander > summary:active { opacity: 0.7; }
+
+/* Theme cards */
+.theme-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  transition: transform 0.25s cubic-bezier(.34, 1.4, .64, 1), box-shadow 0.25s, border-color 0.2s;
+}
+.expander[open] .theme-card { animation: theme-in 0.45s cubic-bezier(.2, .8, .2, 1) calc(var(--i, 0) * 70ms + 80ms) both; }
+@keyframes theme-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+.theme-card:active { transform: scale(0.97); }
+.theme-card-on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+.theme-badge {
+  align-self: flex-start;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  padding: 0.05rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.theme-badge-new {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+  background-image: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  background-size: 220% 100%;
+  animation: badge-shine 2.2s ease-in-out infinite;
+}
+@keyframes badge-shine { from { background-position: 160% 0; } to { background-position: -60% 0; } }
+
+/* Redeem code */
+.redeem-key {
+  display: grid;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.redeem-input {
+  text-align: center;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.redeem-input::placeholder { letter-spacing: 0.18em; font-weight: 600; opacity: 0.5; }
+.redeem-bad .redeem-input { border-color: var(--danger); }
+.redeem-shake { animation: redeem-shake 0.45s cubic-bezier(.36, .07, .19, .97); }
+@keyframes redeem-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+.redeem-ok { display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; font-weight: 700; color: var(--accent-text); animation: expander-in 0.3s ease-out both; }
+.redeem-ok-ring, .redeem-ok-tick { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.redeem-ok-ring { animation: redeem-draw 0.5s ease-out forwards; }
+.redeem-ok-tick { animation: redeem-draw 0.35s ease-out 0.4s forwards; }
+@keyframes redeem-draw { to { stroke-dashoffset: 0; } }
+
+/* Unlock celebration: a card springs up from the bottom with a burst of sparks */
+.unlock-layer {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding-inline: 1rem;
+  pointer-events: none;
+}
+.unlock-toast {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 26rem;
+  gap: 1rem;
+  align-items: flex-start;
+  pointer-events: auto;
+  animation: unlock-in 0.6s cubic-bezier(.34, 1.45, .64, 1) both;
+}
+.unlock-leave { animation: unlock-out 0.24s ease-in both; }
+@keyframes unlock-in { from { opacity: 0; transform: translateY(40px) scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes unlock-out { to { opacity: 0; transform: translateY(24px) scale(0.96); } }
+.unlock-badge {
+  position: relative;
+  display: grid;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 9999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
+  animation: unlock-pulse 1.6s ease-out 0.3s 2;
+}
+@keyframes unlock-pulse { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); } to { box-shadow: 0 0 0 18px transparent; } }
+.unlock-burst { position: absolute; left: 2.5rem; top: 2.5rem; width: 0; height: 0; pointer-events: none; }
+.unlock-burst span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 9999px;
+  background: var(--accent);
+  opacity: 0;
+  animation: unlock-spark 0.9s cubic-bezier(.2, .7, .3, 1) 0.25s both;
+}
+@keyframes unlock-spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateX(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) scale(0.2); }
+}
+
+/* The secret coin: it bumps on every tap, a ring fills towards seven, and it flips when it opens */
+.coin-easter-egg {
+  position: relative;
+  z-index: 20;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.coin-easter-egg:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 50%; }
+.coin-body { display: block; border-radius: 50%; }
+.coin-bump { animation: coin-bump 0.32s cubic-bezier(.34, 1.8, .64, 1); }
+@keyframes coin-bump { 0% { transform: scale(1); } 35% { transform: scale(0.9) rotate(-6deg); } 100% { transform: scale(1) rotate(0); } }
+.coin-flip { animation: coin-flip 1s cubic-bezier(.3, .8, .3, 1); }
+@keyframes coin-flip { 0% { transform: rotateY(0) scale(1); } 50% { transform: rotateY(540deg) scale(1.18); } 100% { transform: rotateY(720deg) scale(1); } }
+.coin-ring {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.coin-ring circle { stroke: var(--accent); transition: stroke-dashoffset 0.25s ease-out; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 70%, transparent)); }
+.coin-hint {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.6rem);
+  translate: 0 -50%;
+  border-radius: 9999px;
+  padding: 0.2rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--accent-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  animation: expander-in 0.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expander[open] > :not(summary), .expander[open] .theme-card, .theme-badge-new, .redeem-shake, .redeem-ok,
+  .redeem-ok-ring, .redeem-ok-tick, .unlock-toast, .unlock-leave, .unlock-badge, .unlock-burst span,
+  .coin-bump, .coin-flip, .coin-hint { animation: none !important; }
+  .redeem-ok-ring, .redeem-ok-tick { stroke-dashoffset: 0; }
+  .unlock-burst { display: none; }
+  .theme-card, .coin-ring circle { transition: none; }
+}

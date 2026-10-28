@@ -1,25 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
-import { getThemePref, getUnlockedThemes, onThemeUnlocked, setThemePref, unlockTheme, type ThemePref } from '../theme'
-import { ICONS, ICON_GROUPS, getIconPref, renderIcon, setIconPref, type IconId } from '../appIcon'
-
-const OWNER_EMAIL = 'faizanplayz11@gmail.com'
-
-const THEMES: { id: ThemePref; label: string; hint: string }[] = [
-  { id: 'light', label: 'Light', hint: 'Clean, bright, everyday use' },
-  { id: 'dark', label: 'Dark', hint: 'Clean, comfortable low-light use' },
-  { id: 'rdr2', label: 'Red Dead', hint: 'Outlaw frontier' },
-  { id: 'uncharted', label: 'Uncharted', hint: 'Treasure-map adventure' },
-  { id: 'glass', label: 'Liquid Glass', hint: 'Glass-inspired finish' },
-]
+import { getThemePref, getUnlockedThemes, onThemeUnlocked, onUnlocksChanged, setThemePref, type ExclusiveTheme, type ThemePref } from '../theme'
+import { themeLabel } from '../themes/catalog'
+import { ICONS, ICON_GROUPS, getIconPref, iconGroupAvailable, renderIcon, setIconPref, type IconId } from '../appIcon'
+import { isOwnerEmail } from '../owner'
+import ThemePicker from '../components/ThemePicker'
+import RedeemCard from '../components/RedeemCard'
 
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [unlockedThemes, setUnlockedThemes] = useState(() => getUnlockedThemes())
   const [icon, setIcon] = useState<IconId>(getIconPref())
-  const [redeemCode, setRedeemCode] = useState('')
-  const [redeemNotice, setRedeemNotice] = useState('')
+  const [fresh, setFresh] = useState<ExclusiveTheme | null>(null)
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
   const [isFamilyOwner, setIsFamilyOwner] = useState(false)
@@ -29,16 +22,14 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
 
-  useEffect(() => onThemeUnlocked(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
+  // Keep the theme list in step with unlocks from a code, the secret coin, or an owner re-lock.
+  useEffect(() => onUnlocksChanged(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
+  useEffect(() => onThemeUnlocked(setFresh), [])
 
-  const availableIconGroups = ICON_GROUPS.filter((group) =>
-    group === 'Classic' ||
-    (group === 'Uncharted' && unlockedThemes.includes('uncharted')) ||
-    (group === 'Red Dead' && unlockedThemes.includes('rdr2'))
-  )
+  const availableIconGroups = ICON_GROUPS.filter((group) => iconGroupAvailable(group, unlockedThemes))
   const isIconAvailable = (id: IconId) => {
     const item = ICONS.find((candidate) => candidate.id === id)
-    return Boolean(item && (item.group === 'Classic' || availableIconGroups.includes(item.group)))
+    return Boolean(item && availableIconGroups.includes(item.group))
   }
 
   useEffect(() => {
@@ -68,21 +59,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   function pickTheme(id: ThemePref) {
     setThemePref(id)
     setTheme(id)
-  }
-
-  function redeemExclusiveTheme(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const normalized = redeemCode.toUpperCase().replace(/[^A-Z0-9]/g, '')
-    if (normalized === 'SIRFRANCISDRAKE') {
-      const wasNew = unlockTheme('uncharted')
-      setThemePref('uncharted')
-      setTheme('uncharted')
-      setUnlockedThemes(getUnlockedThemes())
-      setRedeemNotice(wasNew ? 'Code accepted! Uncharted theme unlocked and equipped.' : 'Uncharted is already unlocked. Theme equipped.')
-      setRedeemCode('')
-    } else {
-      setRedeemNotice('That code is not recognized. Check it and try again.')
-    }
   }
 
   return (
@@ -116,72 +92,16 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
         </section>
       )}
-      <details className="card expander" aria-label="Redeem code">
-        <summary>
-          <span className="min-w-0">
-            <span className="font-display block text-lg font-bold">Redeem code</span>
-            <span className="block text-sm text-muted">Unlock exclusive themes</span>
-          </span>
-          <span aria-hidden="true" className="expander-chevron">›</span>
-        </summary>
-        <div className="mt-3">
-          <p className="pb-2 text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
-          <form className="flex flex-col gap-2" onSubmit={redeemExclusiveTheme}>
-            <label className="sr-only" htmlFor="exclusive-theme-code">Redeem code</label>
-            <input id="exclusive-theme-code" className="input" value={redeemCode} onChange={(e) => { setRedeemCode(e.target.value); setRedeemNotice('') }} placeholder="Enter code" autoCapitalize="characters" autoComplete="off" required />
-            <button className="btn btn-primary w-full" type="submit">Redeem</button>
-            {redeemNotice && <p role="status" className="text-sm text-muted">{redeemNotice}</p>}
-          </form>
-        </div>
-      </details>
+      <RedeemCard isOwner={isOwnerEmail(email)} onRedeemed={(t) => { setTheme(t); setUnlockedThemes(getUnlockedThemes()) }} />
       <details className="card expander" aria-label="Appearance themes">
         <summary>
           <span className="min-w-0">
             <span className="font-display block text-lg font-bold">Appearance</span>
-            <span className="block text-sm text-muted">Choose your theme · {theme === 'rdr2' ? 'Red Dead' : theme === 'uncharted' ? 'Uncharted' : theme === 'glass' ? 'Liquid Glass' : theme === 'dark' ? 'Dark' : 'Light'}</span>
+            <span className="block text-sm text-muted">Choose your theme · {themeLabel(theme)}</span>
           </span>
           <span aria-hidden="true" className="expander-chevron">›</span>
         </summary>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {THEMES.filter((t) => (t.id !== 'glass' || email.toLowerCase() === OWNER_EMAIL) && (t.id !== 'rdr2' || unlockedThemes.includes('rdr2')) && (t.id !== 'uncharted' || unlockedThemes.includes('uncharted'))).map((t) => {
-            const preview = ({
-              light: { page: '#f1f4f8', surface: '#ffffff', ink: '#172333', muted: '#657287', accent: '#2457d6', soft: '#e5edff', border: '#d9e0ea' },
-              dark: { page: '#111318', surface: '#1b1e25', ink: '#edf0f5', muted: '#a0a7b4', accent: '#7ea7ff', soft: '#26334d', border: '#343945' },
-              rdr2: { page: '#211710', surface: '#392719', ink: '#f6e7c9', muted: '#c3a987', accent: '#d49a4e', soft: '#4d3421', border: '#745034' },
-              uncharted: { page: '#14251f', surface: '#203b31', ink: '#e9f3df', muted: '#a9c2aa', accent: '#d5b76a', soft: '#354b35', border: '#4c6850' },
-              glass: { page: '#101b35', surface: 'rgba(116,151,213,.24)', ink: '#eaf1ff', muted: '#b6c8e8', accent: '#75b8ff', soft: 'rgba(117,184,255,.18)', border: 'rgba(205,225,255,.3)' },
-            } as Record<string, { page: string; surface: string; ink: string; muted: string; accent: string; soft: string; border: string }>)[t.id]
-            return (
-              <div key={t.id} className={`overflow-hidden rounded-xl border ${theme === t.id ? 'border-accent ring-2 ring-accent/30' : 'border-line'}`}>
-                <div className="p-2" style={{ background: preview.page, color: preview.ink }}>
-                  <div className="mb-2 flex items-center justify-between gap-1">
-                    <span className="truncate text-xs font-bold">{t.label}</span>
-                    <span className="h-2 w-2 flex-none rounded-full" style={{ background: preview.accent }} />
-                  </div>
-                  <div className="rounded-lg border p-2" style={{ background: preview.surface, borderColor: preview.border }}>
-                    <div className="mb-2 h-1.5 w-2/3 rounded-full" style={{ background: preview.ink, opacity: 0.8 }} />
-                    <div className="mb-2 h-1 w-1/2 rounded-full" style={{ background: preview.muted, opacity: 0.85 }} />
-                    <div className="flex items-center gap-1">
-                      <span className="h-4 flex-1 rounded-md" style={{ background: preview.soft, border: `1px solid ${preview.border}` }} />
-                      <span className="h-4 w-8 rounded-md" style={{ background: preview.accent }} />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 p-2">
-                  <p className="min-h-8 text-xs text-muted">{t.hint}</p>
-                  <button
-                    type="button"
-                    aria-pressed={theme === t.id}
-                    className={`btn w-full !min-h-0 !px-2 !py-1.5 text-xs ${theme === t.id ? 'btn-primary' : 'btn-plain'}`}
-                    onClick={() => pickTheme(t.id)}
-                  >
-                    {theme === t.id ? 'Selected' : 'Use theme'}
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <ThemePicker theme={theme} unlocked={unlockedThemes} isOwner={isOwnerEmail(email)} fresh={fresh} onPick={pickTheme} />
       </details>
       <details className="card expander" aria-label="Custom app icon">
         <summary>

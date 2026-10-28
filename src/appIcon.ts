@@ -1,6 +1,8 @@
 // Custom app icon: a colour variant for the Cznnect mark. It recolours the logo inside the app and the
 // icon the browser uses for the tab and for new Home Screen shortcuts. An icon that is already on a
 // phone's Home Screen keeps its look until the app is removed and added again.
+import type { ExclusiveTheme } from './theme'
+
 export type IconId =
   | 'ocean' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
   | 'treasure' | 'libertalia' | 'outlaw' | 'dust'
@@ -20,6 +22,13 @@ export const ICONS: { id: IconId; label: string; group: string; a: string; b: st
   { id: 'dust', label: 'Dust & Leather', group: 'Red Dead', a: '#dcbd8e', b: '#4a2c17' },
 ]
 export const ICON_GROUPS = ['Classic', 'Uncharted', 'Red Dead']
+
+// The Uncharted and Red Dead colour sets belong to those themes, so they appear once the theme is unlocked.
+export function iconGroupAvailable(group: string, unlocked: ExclusiveTheme[]): boolean {
+  if (group === 'Uncharted') return unlocked.includes('uncharted')
+  if (group === 'Red Dead') return unlocked.includes('rdr2')
+  return true
+}
 
 const KEY = 'cznnect-icon'
 

@@ -15,8 +15,10 @@ import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import rdr2Logo from '../assets/rdr2-logo.svg'
-import CoinMark from './CoinMark'
-import { isThemeUnlocked, setGlassAllowed, unlockTheme } from '../theme'
+import { setGlassAllowed } from '../theme'
+import { isOwnerEmail } from '../owner'
+import SecretCoin from './SecretCoin'
+import UnlockToast from './UnlockToast'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
@@ -31,7 +33,6 @@ const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   scoreboard: { rdr2: 'The Bounty Board', unc: 'Treasure Tally' },
   settings: { rdr2: 'Camp Supplies', unc: 'Gear & Supplies' },
 }
-const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'irl', label: 'Convoy', icon: 'irl' },
@@ -45,11 +46,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [coinTaps, setCoinTaps] = useState(0)
-  const [coinNotice, setCoinNotice] = useState('')
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
-  const isOwner = email.toLowerCase() === OWNER_EMAIL
+  const isOwner = isOwnerEmail(email)
 
   // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
   const bday = useFamilyBirthdays(family.id, userId)
@@ -60,20 +59,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
   }, [bday.loaded, bday.people])
   const current: Tab = tab
-
-  function handlePirateCoinTap() {
-    if (isThemeUnlocked('rdr2')) {
-      setCoinNotice('Red Dead is already unlocked.')
-      return
-    }
-    const next = coinTaps + 1
-    setCoinTaps(next)
-    if (next >= 7) {
-      unlockTheme('rdr2')
-      setCoinNotice('Secret unlocked: Red Dead Redemption theme.')
-      setCoinTaps(0)
-    }
-  }
 
   // Liquid Glass is only allowed for the owner; anyone else is switched back to a dark fallback.
   useEffect(() => {
@@ -122,16 +107,15 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
 
   return (
     <div className="mx-auto min-h-full max-w-xl">
+      <UnlockToast />
       <main data-tab={tab} className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
             </div>
-            {/* The pirate coin is the seven-tap Easter egg for Red Dead. It appears with the Uncharted theme. */}
-            <button type="button" className="brand-coin coin-easter-egg" aria-label="Pirate coin Easter egg" onClick={handlePirateCoinTap}>
-              <CoinMark />
-            </button>
+            {/* The pirate coin is the seven-tap secret for Red Dead. Only the Uncharted theme shows it. */}
+            <SecretCoin />
             {/* Only the Red Dead theme shows this worn-poster wordmark, in place of the plain one. */}
             <img src={rdr2Logo} alt="Cznnect" className="brand-rdr2" draggable={false} />
           </div>
@@ -221,7 +205,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             </div>
-            {coinNotice && <p role="status" className="mt-2 px-3 text-sm text-accent-text">{coinNotice}</p>}
             <div className="mt-4 border-t border-line pt-4">
               <p className="eyebrow px-3 pb-1">Settings</p>
               <button

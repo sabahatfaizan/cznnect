@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import Avatar from './Avatar'
 import { achievements, joinNames, rankRows, timeAgo, type Recent, type Row } from '../lib/irl'
 
 type Period = 'all' | 'month'
@@ -80,6 +81,7 @@ export default function IrlScoreboard({
                 >
                   <span aria-hidden="true" className="irl-bar" style={{ width: `${Math.round((r.points / top) * 100)}%` }} />
                   <span className={`irl-rank ${r.rank <= 3 && r.points > 0 ? 'irl-rank-top' : ''}`}>{r.rank}</span>
+                  <Avatar value={r.avatar} name={r.name} size={32} className="relative" />
                   <span className="relative min-w-0 flex-1">
                     <span className="block truncate font-semibold">
                       {r.name}

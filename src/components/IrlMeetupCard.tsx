@@ -1,3 +1,4 @@
+import Avatar from './Avatar'
 import QrCode from './QrCode'
 import { groupPayload, joinNames, minutesLeft, pointsFor, readableCode, type Meetup } from '../lib/irl'
 
@@ -69,6 +70,7 @@ export default function IrlMeetupCard({
           >
             {p.confirmed ? '✓' : ''}
           </span>
+          <Avatar value={p.avatar} name={p.name} size={28} />
           <span className="min-w-0 flex-1 truncate font-semibold">
             {p.name}
             {p.user_id === userId ? ' (you)' : ''}

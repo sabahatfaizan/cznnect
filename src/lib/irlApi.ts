@@ -3,6 +3,7 @@
 import { supabase } from '../supabase'
 import { withTimeout } from './net'
 import type { LedgerLine, Meetup, Recent, Row } from './irl'
+import { familyProfiles, withProfiles } from './profiles'
 
 export type Out<T> = { ok: true; data: T } | { ok: false; message: string }
 
@@ -48,9 +49,21 @@ export const removePerson = (mid: string, uid: string) => call<{ ok: boolean }>(
 export const lockGroup = (mid: string) => call<{ ok: boolean }>('irl_lock_group', { mid })
 export const finishGroup = (mid: string) => call<{ ok: boolean }>('irl_finish_group', { mid })
 
-export const mine = (fid: string) => call<Meetup[]>('irl_mine', { fid })
-export const scoreboard = (fid: string) => call<Row[]>('irl_scoreboard', { fid })
-export const recent = (fid: string, lim = 20) => call<Recent[]>('irl_recent', { fid, lim })
+// Convoy lists come back with real names. These add each person's nickname and avatar on top.
+export async function mine(fid: string): Promise<Out<Meetup[]>> {
+  const [r, pm] = await Promise.all([call<Meetup[]>('irl_mine', { fid }), familyProfiles(fid)])
+  if (!r.ok) return r
+  return { ok: true, data: (r.data ?? []).map((m) => ({ ...m, people: withProfiles(m.people ?? [], pm) })) }
+}
+export async function scoreboard(fid: string): Promise<Out<Row[]>> {
+  const [r, pm] = await Promise.all([call<Row[]>('irl_scoreboard', { fid }), familyProfiles(fid)])
+  return r.ok ? { ok: true, data: withProfiles(r.data ?? [], pm) } : r
+}
+export async function recent(fid: string, lim = 20): Promise<Out<Recent[]>> {
+  const [r, pm] = await Promise.all([call<Recent[]>('irl_recent', { fid, lim }), familyProfiles(fid)])
+  if (!r.ok) return r
+  return { ok: true, data: (r.data ?? []).map((m) => ({ ...m, people: withProfiles(m.people ?? [], pm) })) }
+}
 
 // Points earned this month (the family may read the ledger; nobody can write to it).
 export async function ledgerSince(fid: string, sinceIso: string): Promise<Out<LedgerLine[]>> {

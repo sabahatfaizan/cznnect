@@ -2,7 +2,7 @@
 // No network and no screens in here, so they can be tested alone.
 // The database decides every point. Nothing here can award or change points.
 
-export type Person = { user_id: string; name: string; confirmed: boolean }
+export type Person = { user_id: string; name: string; confirmed: boolean; avatar?: string | null }
 export type Meetup = {
   id: string
   kind: 'pair' | 'group'
@@ -20,6 +20,7 @@ export type Meetup = {
 export type Row = {
   user_id: string
   name: string
+  avatar?: string | null
   points: number
   meetups: number
   cousins_met: number
@@ -34,7 +35,7 @@ export type Recent = {
   title: string | null
   verified_at: string
   points_each: number | null
-  people: { user_id: string; name: string; points: number }[]
+  people: { user_id: string; name: string; points: number; avatar?: string | null }[]
 }
 
 // ---------- QR text ----------

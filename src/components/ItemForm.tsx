@@ -95,19 +95,6 @@ export default function ItemForm({
         <p className="mt-1 text-sm text-muted">Points are awarded once when a cousin marks this plan done.</p>
       </div>
 
-      <div>
-        <span className="label">Difficulty and reward</span>
-        <div className="grid grid-cols-2 gap-2">
-          {DIFFICULTIES.map((d) => (
-            <button key={d.id} type="button" aria-pressed={difficulty === d.id}
-              className={`seg !min-h-11 items-center ${difficulty === d.id ? 'seg-on' : ''}`}
-              onClick={() => setDifficulty(d.id)}>
-              {d.label} · {difficultyPoints(d.id)} pts
-            </button>
-          ))}
-        </div>
-        <p className="mt-1 text-sm text-muted">Points are awarded once when a cousin marks this plan done.</p>
-      </div>
 
       <div>
         <label className="label" htmlFor="bi-due">

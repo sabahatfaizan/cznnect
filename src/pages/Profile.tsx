@@ -90,13 +90,12 @@ export default function Profile({ userId }: { userId: string }) {
   }
 
   const avatarValue = emoji ? encodeAvatar({ emoji, color }) : null
-  const tile = (id: 'about' | 'contact', label: string, icon: IconName, hint: string) => (
+  const tile = (id: 'about' | 'contact', label: string, icon: IconName) => (
     <button type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
       <span className="set-tile-icon" aria-hidden="true">
         <Icon name={icon} size={20} />
       </span>
       <span className="set-tile-label">{label}</span>
-      <span className="set-tile-hint">{hint}</span>
     </button>
   )
 
@@ -129,10 +128,9 @@ export default function Profile({ userId }: { userId: string }) {
           <button type="button" className="set-tile" onClick={() => setPanel('avatar')} aria-haspopup="dialog">
             <Avatar value={avatarValue} name={nickname || name} size={34} />
             <span className="set-tile-label">Avatar</span>
-            <span className="set-tile-hint">{emoji ? 'Chosen' : 'Pick one'}</span>
           </button>
-          {tile('about', 'About you', 'me', nickname || bio || 'Nickname, bio')}
-          {tile('contact', 'Contact', 'phone', share ? 'Shared' : 'Private')}
+          {tile('about', 'Nickname', 'me')}
+          {tile('contact', 'Contact', 'phone')}
         </div>
 
         {msg && (

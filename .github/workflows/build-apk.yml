@@ -13,10 +13,39 @@ jobs:
       - name: Check out Cznnect
         uses: actions/checkout@v4
 
-      - name: Build Android APK
-        uses: cemcoe/web-to-apk-action@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          app_name: "Cznnect"
-          app_id: "com.sabahatfaizan.cznnect"
-          build_command: "npm install && npm run build"
-          web_dir: "dist"
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install Capacitor
+        run: npm install --no-save @capacitor/core @capacitor/android @capacitor/cli
+
+      - name: Create Android wrapper
+        run: |
+          npx cap init Cznnect com.sabahatfaizan.cznnect --web-dir dist
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        run: cd android && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: cznnect-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

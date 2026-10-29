@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Sheet from './Sheet'
 import ItemForm, { type Who } from './ItemForm'
-import { dueState, dueText, horizonLabel, type BucketItem } from '../lib/plans'
+import { dueState, dueText, horizonLabel, difficultyPoints, type BucketItem } from '../lib/plans'
 import { deleteItem, setImIn, setItemDone, updateItem } from '../lib/plansApi'
 
 type Mode = 'view' | 'edit' | 'delete'
@@ -85,7 +85,7 @@ export default function ItemSheet({
     return (
       <Sheet title="Edit" onClose={() => setMode('view')}>
         <ItemForm
-          initial={{ title: item.title, notes: item.notes ?? '', horizon: item.horizon, due_date: item.due_date ?? '', assigned_to: item.assigned_to ?? '' }}
+          initial={{ title: item.title, notes: item.notes ?? '', horizon: item.horizon, due_date: item.due_date ?? '', assigned_to: item.assigned_to ?? '', difficulty: item.difficulty }}
           members={members}
           existing={items.filter((i) => i.id !== item.id)}
           submitLabel="Save"
@@ -137,6 +137,8 @@ export default function ItemSheet({
             {horizonLabel(item.horizon)}
             {item.done ? ' · Done' : ''}
           </p>
+          <p className="mt-1 font-semibold">{item.difficulty[0].toUpperCase() + item.difficulty.slice(1)} · {difficultyPoints(item.difficulty)} points</p>
+          {item.done && <p className="text-sm text-muted">This plan’s reward is recorded once on the family Scoreboard.</p>}
           {item.due_date && !item.done && (
             <p className={state === 'overdue' ? 'font-bold text-danger' : 'text-muted'}>{dueText(item.due_date, today)}</p>
           )}

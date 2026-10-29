@@ -2,7 +2,7 @@
 // plain sentences the screens can show.
 import { supabase } from '../supabase'
 import { withTimeout } from './net'
-import type { Horizon } from './plans'
+import type { Horizon, Difficulty } from './plans'
 
 type DbError = { message: string; code?: string }
 
@@ -66,6 +66,7 @@ export type ItemValues = {
   horizon: Horizon
   due_date: string // '' when there is no deadline
   assigned_to: string // '' when nobody
+  difficulty: Difficulty
 }
 
 function clean(v: ItemValues) {
@@ -75,6 +76,7 @@ function clean(v: ItemValues) {
     horizon: v.horizon,
     due_date: v.due_date || null,
     assigned_to: v.assigned_to || null,
+    difficulty: v.difficulty,
   }
 }
 

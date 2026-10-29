@@ -4,7 +4,6 @@ import './index.css'
 import './themes/rdr2.css'
 import './themes/uncharted.css'
 import '@fontsource/cinzel/latin-600.css'
-import './themes/calm.css' // minimal finish, loaded last so it overrides the heavier decoration
 import App from './App'
 import { applyTheme, getThemePref } from './theme'
 import { applyIcon } from './appIcon'

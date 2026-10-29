@@ -106,18 +106,24 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
     noticeTimer.current = window.setTimeout(() => setNotice(''), 3500)
   }, [])
 
-  // Open a plan directly when arriving from a shared ?plan=<id> link.
+  // Open a shared plan once, then remove the query parameter so navigating
+  // back to Plans later does not keep reopening the same sheet.
   useEffect(() => {
     if (status !== 'ready') return
-    const sharedPlanId = new URLSearchParams(window.location.search).get('plan')
+    const url = new URL(window.location.href)
+    const sharedPlanId = url.searchParams.get('plan')
     if (!sharedPlanId) return
+
+    url.searchParams.delete('plan')
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+
     const sharedPlan = items.find((item) => item.id === sharedPlanId)
     if (sharedPlan) {
       setView('lists')
       setHorizon(sharedPlan.horizon)
       setShow(sharedPlan.done ? 'done' : 'open')
       setSelectedId(sharedPlan.id)
-    } else if (items.length > 0) {
+    } else {
       say('This plan is unavailable or you do not have access to it.')
     }
   }, [status, items, say])

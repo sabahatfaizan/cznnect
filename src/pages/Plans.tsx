@@ -100,6 +100,22 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
     load()
   }, [load])
 
+  // Open a plan directly when arriving from a shared ?plan=<id> link.
+  useEffect(() => {
+    if (status !== 'ready') return
+    const sharedPlanId = new URLSearchParams(window.location.search).get('plan')
+    if (!sharedPlanId) return
+    const sharedPlan = items.find((item) => item.id === sharedPlanId)
+    if (sharedPlan) {
+      setView('lists')
+      setHorizon(sharedPlan.horizon)
+      setShow(sharedPlan.done ? 'done' : 'open')
+      setSelectedId(sharedPlan.id)
+    } else if (items.length > 0) {
+      say('This plan is unavailable or you do not have access to it.')
+    }
+  }, [status, items, say])
+
   const say = useCallback((message: string) => {
     setNotice(message)
     window.clearTimeout(noticeTimer.current)

@@ -100,6 +100,12 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
     load()
   }, [load])
 
+  const say = useCallback((message: string) => {
+    setNotice(message)
+    window.clearTimeout(noticeTimer.current)
+    noticeTimer.current = window.setTimeout(() => setNotice(''), 3500)
+  }, [])
+
   // Open a plan directly when arriving from a shared ?plan=<id> link.
   useEffect(() => {
     if (status !== 'ready') return
@@ -115,12 +121,6 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
       say('This plan is unavailable or you do not have access to it.')
     }
   }, [status, items, say])
-
-  const say = useCallback((message: string) => {
-    setNotice(message)
-    window.clearTimeout(noticeTimer.current)
-    noticeTimer.current = window.setTimeout(() => setNotice(''), 3500)
-  }, [])
 
   const votesByItem = useMemo(() => groupBy(itemVotes, (v) => v.item_id), [itemVotes])
   const optionsByPoll = useMemo(() => groupBy(options, (o) => o.poll_id), [options])

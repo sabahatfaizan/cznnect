@@ -109,7 +109,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     <div className="mx-auto min-h-full max-w-xl">
       <UnlockToast />
       <main data-tab={tab} className="p-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))]">
-        <header className="mb-3 flex min-h-12 items-center justify-between gap-3">
+        <header className="mb-4 flex items-center justify-between gap-3">
           <div>
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />

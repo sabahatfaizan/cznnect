@@ -1,6 +1,14 @@
 // Pure helpers for polls and bucket lists. No network and no screens in here, so they can be tested alone.
 
 export type Horizon = 'month' | 'year' | 'life'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'epic'
+export const DIFFICULTIES: { id: Difficulty; label: string }[] = [
+  { id: 'easy', label: 'Easy' }, { id: 'medium', label: 'Medium' },
+  { id: 'hard', label: 'Hard' }, { id: 'epic', label: 'Epic' },
+]
+export function difficultyPoints(difficulty: Difficulty): number {
+  return difficulty === 'easy' ? 5 : difficulty === 'medium' ? 10 : difficulty === 'hard' ? 20 : 50
+}
 
 export type Poll = {
   id: string
@@ -21,6 +29,7 @@ export type BucketItem = {
   horizon: Horizon
   due_date: string | null
   assigned_to: string | null
+  difficulty: Difficulty
   done: boolean
   done_at: string | null
   done_by: string | null

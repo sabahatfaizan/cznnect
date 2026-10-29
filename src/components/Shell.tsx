@@ -60,6 +60,11 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   }, [bday.loaded, bday.people])
   const current: Tab = tab
 
+  // Shared plan links should route straight to Plans, not leave the user on Home.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('plan')) setTab('plans')
+  }, [])
+
   // Liquid Glass is only allowed for the owner; anyone else is switched back to a dark fallback.
   useEffect(() => {
     setGlassAllowed(isOwner)

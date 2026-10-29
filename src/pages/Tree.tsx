@@ -20,6 +20,7 @@ import PersonCard from '../components/PersonCard'
 import PersonPicker from '../components/PersonPicker'
 import PersonForm from '../components/PersonForm'
 import Sheet from '../components/Sheet'
+import { Icon } from '../components/Icons'
 
 type View = 'tree' | 'generations' | 'people'
 type Mode = 'none' | 'add' | 'claim'
@@ -248,23 +249,23 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
     return (
       <div className="tree-full fixed inset-0 z-40 flex flex-col bg-page">
         <div className="tree-bar flex items-center gap-2 border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <button className="btn btn-plain !min-h-11 !px-3" onClick={onExit} aria-label="Back to Home">
-            ←
+          <button className="btn btn-plain tree-icon-btn" onClick={onExit} aria-label="Back to Home">
+            <Icon name="back" size={22} />
           </button>
           <div className="min-w-0 flex-1">
             <h1 className="tree-title truncate">Family Tree</h1>
             <p className="truncate text-xs text-muted">
-              {people.length} {people.length === 1 ? 'person' : 'people'} · tap someone to light up their line
+              {people.length} {people.length === 1 ? 'person' : 'people'}
             </p>
           </div>
-          <button className="btn btn-plain !min-h-11 !px-3" onClick={() => setSearching((v) => !v)} aria-label="Find someone" aria-pressed={searching}>
-            Find
+          <button className="btn btn-plain tree-icon-btn" onClick={() => setSearching((v) => !v)} aria-label="Find someone" aria-pressed={searching}>
+            <Icon name="search" size={22} />
           </button>
-          <button className="btn btn-plain !min-h-11 !px-3" onClick={() => setView('people')}>
-            List
+          <button className="btn btn-plain tree-icon-btn" onClick={() => setView('people')} aria-label="Show as list">
+            <Icon name="list" size={22} />
           </button>
-          <button className="btn btn-primary !min-h-11 !px-3" onClick={() => setMode('add')}>
-            + Add
+          <button className="btn btn-primary tree-icon-btn" onClick={() => setMode('add')} aria-label="Add a person">
+            <Icon name="plus" size={22} />
           </button>
         </div>
 

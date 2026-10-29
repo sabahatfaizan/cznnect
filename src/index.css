@@ -1521,3 +1521,14 @@ input[type="checkbox"] {
   letter-spacing: normal;
   word-spacing: normal;
 }
+
+/* Square icon buttons in the full-screen tree's top bar. Keeps the bar tidy so the title has room. */
+.tree-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.75rem;
+  min-height: 2.75rem !important;
+  padding: 0 !important;
+}

@@ -14,7 +14,6 @@ import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
-import rdr2Logo from '../assets/rdr2-logo.svg'
 import { setGlassAllowed } from '../theme'
 import { isOwnerEmail } from '../owner'
 import SecretCoin from './SecretCoin'
@@ -121,8 +120,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>
             {/* The pirate coin is the seven-tap secret for Red Dead. Only the Uncharted theme shows it. */}
             <SecretCoin />
-            {/* Only the Red Dead theme shows this worn-poster wordmark, in place of the plain one. */}
-            <img src={rdr2Logo} alt="Cznnect" className="brand-rdr2" draggable={false} />
+            {/* Compact Red Dead wordmark; CSS applies the Chinese Rocks typeface only in this theme. */}
+            <span className="brand-rdr2-text">Cznnect</span>
           </div>
           <button
             type="button"

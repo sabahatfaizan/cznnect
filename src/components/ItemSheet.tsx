@@ -48,7 +48,7 @@ export default function ItemSheet({
       item.due_date ? `Date: ${item.due_date}` : '',
       item.assigned_to ? `Organiser: ${name(item.assigned_to)}` : '',
       item.notes?.trim() ? `Details: ${item.notes.trim()}` : '',
-      `Open Cznnect: ${window.location.href.split('#')[0]}`,
+      `Open this plan: ${window.location.origin}${window.location.pathname}?plan=${encodeURIComponent(item.id)}`,
     ].filter(Boolean).join('\n')
     try {
       if (navigator.share) {

@@ -26,7 +26,6 @@ export default function ItemForm({
   const [who, setWho] = useState(initial?.assigned_to ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
-  const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 

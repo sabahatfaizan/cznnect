@@ -411,7 +411,7 @@
 :root[data-theme="rdr2"] .brand-default { display: none; }
 :root[data-theme="rdr2"] .brand-rdr2 {
   display: block;
-  width: min(12.5rem, 48vw);
+  width: min(15.5rem, 62vw);
   height: auto;
   filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.55));
 }

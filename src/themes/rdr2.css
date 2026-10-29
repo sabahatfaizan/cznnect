@@ -407,12 +407,17 @@
   :root[data-theme="rdr2"] body::after { display: none; }
 }
 
-/* ---- the worn-poster wordmark replaces the plain one at the top of the home screen ---- */
+/* ---- compact Red Dead wordmark used consistently across every screen ---- */
 :root[data-theme="rdr2"] .brand-default { display: none; }
-:root[data-theme="rdr2"] .brand-rdr2 {
+:root[data-theme="rdr2"] .brand-rdr2-text {
   display: block;
-  width: min(15.5rem, 62vw);
-  height: auto;
-  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.55));
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.045em;
+  color: #f0dfbd;
+  text-shadow: 0 2px 0 #2a0904, 0 3px 5px rgb(0 0 0 / 0.55);
+  white-space: nowrap;
 }
 :root[data-theme="rdr2"] .mk-rdr2 { display: inline; }

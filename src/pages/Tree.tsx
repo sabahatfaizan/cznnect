@@ -248,25 +248,28 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
   if (people.length > 0 && view === 'tree') {
     return (
       <div className="tree-full fixed inset-0 z-40 flex flex-col bg-page">
-        <div className="tree-bar flex items-center gap-2 border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <button className="btn btn-plain tree-icon-btn" onClick={onExit} aria-label="Back to Home">
-            <Icon name="back" size={22} />
-          </button>
-          <div className="min-w-0 flex-1">
-            <h1 className="tree-title truncate">Family Tree</h1>
-            <p className="truncate text-xs text-muted">
-              {people.length} {people.length === 1 ? 'person' : 'people'}
-            </p>
+        <div className="tree-bar border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
+            <button className="btn btn-plain tree-icon-btn" onClick={onExit} aria-label="Back to Home">
+              <Icon name="back" size={22} />
+            </button>
+            <div className="min-w-0 text-center">
+              <h1 className="tree-title">Family Tree</h1>
+              <p className="text-xs text-muted">{people.length} {people.length === 1 ? 'person' : 'people'}</p>
+            </div>
+            <span aria-hidden="true" />
           </div>
-          <button className="btn btn-plain tree-icon-btn" onClick={() => setSearching((v) => !v)} aria-label="Find someone" aria-pressed={searching}>
-            <Icon name="search" size={22} />
-          </button>
-          <button className="btn btn-plain tree-icon-btn" onClick={() => setView('people')} aria-label="Show as list">
-            <Icon name="list" size={22} />
-          </button>
-          <button className="btn btn-primary tree-icon-btn" onClick={() => setMode('add')} aria-label="Add a person">
-            <Icon name="plus" size={22} />
-          </button>
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <button className="btn btn-plain tree-icon-btn" onClick={() => setSearching((v) => !v)} aria-label="Find someone" aria-pressed={searching}>
+              <Icon name="search" size={20} />
+            </button>
+            <button className="btn btn-plain tree-icon-btn" onClick={() => setView('people')} aria-label="Show as list">
+              <Icon name="list" size={20} />
+            </button>
+            <button className="btn btn-primary tree-icon-btn" onClick={() => setMode('add')} aria-label="Add a person">
+              <Icon name="plus" size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="relative min-h-0 flex-1">

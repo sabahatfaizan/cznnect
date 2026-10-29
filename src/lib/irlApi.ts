@@ -56,8 +56,16 @@ export async function mine(fid: string): Promise<Out<Meetup[]>> {
   return { ok: true, data: (r.data ?? []).map((m) => ({ ...m, people: withProfiles(m.people ?? [], pm) })) }
 }
 export async function scoreboard(fid: string): Promise<Out<Row[]>> {
-  const [r, pm] = await Promise.all([call<Row[]>('irl_scoreboard', { fid }), familyProfiles(fid)])
-  return r.ok ? { ok: true, data: withProfiles(r.data ?? [], pm) } : r
+  const [r, pm, pp] = await Promise.all([
+    call<Row[]>('irl_scoreboard', { fid }),
+    familyProfiles(fid),
+    withTimeout(supabase.from('plan_points').select('user_id, points').eq('family_id', fid)),
+  ])
+  if (!r.ok) return r
+  if (pp.error) return { ok: false, message: friendly(pp.error) }
+  const totals = new Map<string, number>()
+  for (const p of pp.data ?? []) totals.set(p.user_id, (totals.get(p.user_id) ?? 0) + p.points)
+  return { ok: true, data: withProfiles((r.data ?? []).map((row) => ({ ...row, points: row.points + (totals.get(row.user_id) ?? 0) })), pm) }
 }
 export async function recent(fid: string, lim = 20): Promise<Out<Recent[]>> {
   const [r, pm] = await Promise.all([call<Recent[]>('irl_recent', { fid, lim }), familyProfiles(fid)])
@@ -68,11 +76,13 @@ export async function recent(fid: string, lim = 20): Promise<Out<Recent[]>> {
 // Points earned this month (the family may read the ledger; nobody can write to it).
 export async function ledgerSince(fid: string, sinceIso: string): Promise<Out<LedgerLine[]>> {
   try {
-    const r = await withTimeout(
-      supabase.from('point_ledger').select('user_id, points, created_at').eq('family_id', fid).gte('created_at', sinceIso),
-    )
+    const [r, plans] = await Promise.all([
+      withTimeout(supabase.from('point_ledger').select('user_id, points, created_at').eq('family_id', fid).gte('created_at', sinceIso)),
+      withTimeout(supabase.from('plan_points').select('user_id, points, created_at').eq('family_id', fid).gte('created_at', sinceIso)),
+    ])
     if (r.error) return { ok: false, message: friendly(r.error) }
-    return { ok: true, data: (r.data ?? []) as LedgerLine[] }
+    if (plans.error) return { ok: false, message: friendly(plans.error) }
+    return { ok: true, data: [...(r.data ?? []), ...(plans.data ?? [])] as LedgerLine[] }
   } catch {
     return { ok: false, message: OFFLINE }
   }

@@ -1,0 +1,22 @@
+name: Build Cznnect APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Cznnect
+        uses: actions/checkout@v4
+
+      - name: Build Android APK
+        uses: cemcoe/web-to-apk-action@v1
+        with:
+          app_name: "Cznnect"
+          app_id: "com.sabahatfaizan.cznnect"
+          build_command: "npm install && npm run build"
+          web_dir: "dist"

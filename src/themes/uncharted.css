@@ -275,16 +275,7 @@
   --accent-text: #ffdf8e;
 }
 /* a red ribbon bookmark hanging from the cover */
-:root[data-theme="uncharted"] .menu-panel::after {
-  content: "";
-  position: absolute;
-  top: 0; right: 26px;
-  width: 22px; height: 64px;
-  background: linear-gradient(180deg, #b13226, #8a1f15);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.5);
-  pointer-events: none;
-}
+
 :root[data-theme="uncharted"] .menu-item { font-family: var(--font-heading); font-size: 1.1rem; letter-spacing: 0.05em; border-radius: 3px; }
 :root[data-theme="uncharted"] .menu-item:hover { background: rgb(217 178 106 / 0.14); }
 :root[data-theme="uncharted"] .menu-item-on { color: #ffdf8e; background: rgb(0 0 0 / 0.25); box-shadow: inset 3px 0 0 #d9b26a; font-weight: 400; }

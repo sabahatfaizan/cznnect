@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { HORIZONS, type BucketItem, type Horizon } from '../lib/plans'
+import { HORIZONS, type BucketItem, type Horizon, type Difficulty, DIFFICULTIES, difficultyPoints } from '../lib/plans'
 import type { ItemValues } from '../lib/plansApi'
 
 export type Who = { id: string; name: string }
@@ -25,6 +25,7 @@ export default function ItemForm({
   const [due, setDue] = useState(initial?.due_date ?? '')
   const [who, setWho] = useState(initial?.assigned_to ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
+  const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -39,7 +40,7 @@ export default function ItemForm({
     }
     setBusy(true)
     setError('')
-    const problem = await onSubmit({ title, notes, horizon, due_date: due, assigned_to: who })
+    const problem = await onSubmit({ title, notes, horizon, due_date: due, assigned_to: who, difficulty })
     setBusy(false)
     if (problem) setError(problem)
   }
@@ -78,6 +79,20 @@ export default function ItemForm({
             </button>
           ))}
         </div>
+      </div>
+
+      <div>
+        <span className="label">Difficulty and reward</span>
+        <div className="grid grid-cols-2 gap-2">
+          {DIFFICULTIES.map((d) => (
+            <button key={d.id} type="button" aria-pressed={difficulty === d.id}
+              className={`seg !min-h-11 items-center ${difficulty === d.id ? 'seg-on' : ''}`}
+              onClick={() => setDifficulty(d.id)}>
+              {d.label} · {difficultyPoints(d.id)} pts
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-sm text-muted">Points are awarded once when a cousin marks this plan done.</p>
       </div>
 
       <div>

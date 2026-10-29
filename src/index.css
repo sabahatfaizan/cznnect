@@ -1532,3 +1532,29 @@ input[type="checkbox"] {
   min-height: 2.75rem !important;
   padding: 0 !important;
 }
+
+
+/* Compact, theme-aware option tiles: retain each theme's colours, borders and surfaces. */
+.set-grid { gap: 0.5rem; }
+.set-grid .set-tile {
+  min-height: 5.25rem !important;
+  padding: 0.55rem 0.35rem !important;
+  gap: 0.2rem !important;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.set-grid .set-tile-icon {
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  margin-bottom: 0.1rem;
+}
+.set-grid .set-tile-icon svg { width: 1.15rem; height: 1.15rem; }
+.set-grid .set-tile-label { font-size: 0.78rem !important; line-height: 1.15 !important; }
+.set-grid .set-tile-hint { font-size: 0.65rem !important; line-height: 1.1 !important; }
+@media (max-width: 360px) {
+  .set-grid { gap: 0.35rem; }
+  .set-grid .set-tile { padding-inline: 0.2rem !important; }
+  .set-grid .set-tile-label { font-size: 0.72rem !important; }
+}

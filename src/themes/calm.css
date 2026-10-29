@@ -1,0 +1,264 @@
+/* ==================================================================
+   CALM - the minimal finish. Loaded last, so it quietly overrides the heavier decoration in the
+   rest of the styles. To go back to the old look, remove the "./themes/calm.css" import in main.tsx.
+
+   What it does:
+   - Light and Dark: flat page, softer shadows, lighter buttons, no animated shine.
+   - Red Dead and Uncharted: KEEP the palettes, the scenes behind the app, and every texture
+     (paper, grain, scratches, stains, burnt corners, leather, planks). REMOVE the clutter on top
+     of them: display fonts, washi tape, nails, stitching, ribbons, torn edges, double borders,
+     text shadows, wax-ball buttons and the rotated stamps.
+   - Liquid Glass is left alone.
+   ================================================================== */
+
+/* ---------------- Light and Dark ---------------- */
+:root[data-theme="light"] {
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05);
+}
+:root[data-theme="dark"] {
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+:root[data-theme="light"] body {
+  background: var(--page);
+}
+.btn { font-weight: 600; }
+.eyebrow { letter-spacing: 0.06em; }
+.convoy-hero-icon { box-shadow: none; }
+.coin-hint { box-shadow: 0 2px 6px rgb(0 0 0 / 0.18); }
+.theme-badge-new { background-image: none; animation: none; }
+.tnode-rect { stroke-width: 1.25; }
+
+/* ---------------- Uncharted: field journal, simplified ---------------- */
+:root[data-theme="uncharted"] {
+  /* A clean serif instead of the handwritten display face. Same family as the body text. */
+  --font-heading: "Crimson Pro", "Iowan Old Style", Georgia, serif;
+  --heading-track: 0.01em;
+  --shadow-card: 0 1px 2px rgb(80 50 20 / 0.18), 0 4px 10px rgb(60 35 10 / 0.1);
+}
+:root[data-theme="uncharted"] body { font-size: 1.05rem; }
+
+/* Pages: same paper, wear, burnt corners and grain. No ruled lines, spine, stitches or tape. */
+:root[data-theme="uncharted"] .card,
+:root[data-theme="uncharted"] .bd-hero,
+:root[data-theme="uncharted"] .convoy-hero {
+  background:
+    var(--wear),
+    var(--corner-burn),
+    var(--grain),
+    linear-gradient(172deg, #faf0d6, #f3e4bb);
+  border: 1px solid #a98a55;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgb(60 35 10 / 0.22), 0 4px 10px rgb(60 35 10 / 0.12), inset 0 0 18px rgb(120 75 25 / 0.14);
+}
+:root[data-theme="uncharted"] .card { padding: 1.1rem; margin-top: 0; }
+:root[data-theme="uncharted"] .card::before,
+:root[data-theme="uncharted"] .card::after,
+:root[data-theme="uncharted"] .card:nth-of-type(even)::after,
+:root[data-theme="uncharted"] .card:nth-of-type(3n)::after { display: none; }
+:root[data-theme="uncharted"] .bd-hero,
+:root[data-theme="uncharted"] .convoy-hero { padding: 1rem; }
+:root[data-theme="uncharted"] .sheet-panel {
+  background: var(--wear), var(--corner-burn), var(--grain), linear-gradient(172deg, #faf0d6, #f1e1b4);
+  border-top: 1px solid #a98a55;
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -6px 18px rgb(40 22 8 / 0.3);
+}
+
+/* Type */
+:root[data-theme="uncharted"] .font-display,
+:root[data-theme="uncharted"] .btn { font-weight: 700; }
+:root[data-theme="uncharted"] .btn { font-size: 1rem; letter-spacing: 0.01em; padding-inline: 1rem; }
+:root[data-theme="uncharted"] h1.font-display { font-size: 1.9rem; line-height: 1.15; text-shadow: none; }
+:root[data-theme="uncharted"] .eyebrow { letter-spacing: 0.12em; font-size: 0.75rem; }
+:root[data-theme="uncharted"] .eyebrow::before { content: none; }
+:root[data-theme="uncharted"] .label { letter-spacing: 0.02em; }
+:root[data-theme="uncharted"] .link { text-decoration-style: solid; text-decoration-thickness: 1px; }
+:root[data-theme="uncharted"] .wordmark { letter-spacing: normal; text-shadow: none; }
+
+/* Controls: leather stays on the main button, minus the dashed stitching and heavy edge */
+:root[data-theme="uncharted"] .btn-primary {
+  outline: none;
+  border-color: rgb(201 161 78 / 0.55);
+  box-shadow: 0 1px 0 rgb(40 22 8 / 0.5);
+}
+:root[data-theme="uncharted"] .btn-primary:active:not(:disabled) { box-shadow: none; }
+:root[data-theme="uncharted"] .btn-plain { box-shadow: none; }
+:root[data-theme="uncharted"] .btn-danger {
+  background: var(--danger);
+  border-color: transparent;
+  box-shadow: none;
+}
+:root[data-theme="uncharted"] .input { box-shadow: none; font-size: 1.05rem; }
+:root[data-theme="uncharted"] .input:focus { box-shadow: 0 0 0 2px rgb(168 67 26 / 0.25); }
+
+/* Bars: leather stays, stitches and diamond go */
+:root[data-theme="uncharted"] .app-nav {
+  border-top: 1px solid rgb(217 178 106 / 0.6);
+  box-shadow: 0 -4px 12px rgb(40 22 8 / 0.3);
+}
+:root[data-theme="uncharted"] .app-nav::before,
+:root[data-theme="uncharted"] .tab-active::after { display: none; }
+:root[data-theme="uncharted"] .tab { letter-spacing: 0; }
+:root[data-theme="uncharted"] .tab-active { box-shadow: none; background: rgb(0 0 0 / 0.24); }
+:root[data-theme="uncharted"] .menu-btn { box-shadow: none; }
+:root[data-theme="uncharted"] .menu-panel {
+  border: 1px solid rgb(217 178 106 / 0.6);
+  box-shadow: 0 12px 30px rgb(30 15 4 / 0.55);
+}
+:root[data-theme="uncharted"] .menu-panel::after { display: none; }
+:root[data-theme="uncharted"] .menu-item { font-size: 1.05rem; letter-spacing: 0.01em; }
+:root[data-theme="uncharted"] .menu-item-on { font-weight: 700; }
+
+/* The ribbon banner becomes a quiet one-line heading */
+:root[data-theme="uncharted"] .screen-banner {
+  display: block;
+  margin: 0 0 1rem;
+  padding: 0 0 0.5rem;
+  background: none;
+  clip-path: none;
+  filter: none;
+  border-bottom: 1px solid rgb(93 42 16 / 0.25);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+:root[data-theme="uncharted"] .screen-banner::before { content: none; }
+
+/* Screens */
+:root[data-theme="uncharted"] .bd-count { box-shadow: none; }
+:root[data-theme="uncharted"] .irl-row { border-left-width: 1px; }
+:root[data-theme="uncharted"] .irl-win { border: 1px solid #a8431a; }
+:root[data-theme="uncharted"] .qr-frame { border-width: 1px; }
+:root[data-theme="uncharted"] .family-tree-stage {
+  border: 1px solid #6d4f26;
+  box-shadow: inset 0 0 18px rgb(120 75 25 / 0.14);
+}
+:root[data-theme="uncharted"] .family-tree-stage .tnode-rect { filter: none; stroke-width: 1.25; }
+:root[data-theme="uncharted"] .family-tree-stage .tnode-me { stroke-width: 2; }
+:root[data-theme="uncharted"] .family-tree-stage .tnode-sel { stroke-width: 2.5; }
+:root[data-theme="uncharted"] .map-wrap { border: 1px solid #6d4f26; box-shadow: none; }
+:root[data-theme="uncharted"] .pin { box-shadow: 0 0 0 2px #faf0d6; }
+:root[data-theme="uncharted"] .motto { font-size: 1.1rem; letter-spacing: 0.08em; text-shadow: none; }
+:root[data-theme="uncharted"] .motto::before,
+:root[data-theme="uncharted"] .motto::after { content: none; }
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-theme="uncharted"] .card { animation: calm-fade 240ms ease both; }
+}
+@keyframes calm-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------------- Red Dead: frontier, simplified ---------------- */
+:root[data-theme="rdr2"] {
+  /* A clean slab serif instead of the distressed display face. Same family as the body text. */
+  --font-heading: "Rokkitt", "Rockwell", "Roboto Slab", Georgia, serif;
+  --heading-case: none;
+  --heading-track: 0.01em;
+  --shadow-card: 0 4px 10px rgb(0 0 0 / 0.35);
+}
+:root[data-theme="rdr2"] body { font-size: 1.05rem; text-shadow: none; }
+
+/* Paper: same aged-paper texture, no nails, blobby corners or torn edge */
+:root[data-theme="rdr2"] .card,
+:root[data-theme="rdr2"] .sheet-panel,
+:root[data-theme="rdr2"] .bd-hero,
+:root[data-theme="rdr2"] .convoy-hero {
+  border: 1px solid #5a3f23;
+  border-radius: 4px;
+  box-shadow: inset 0 0 20px rgb(120 70 20 / 0.25), 0 4px 10px rgb(0 0 0 / 0.35);
+}
+:root[data-theme="rdr2"] .card { padding: 1.1rem; }
+:root[data-theme="rdr2"] .card::before,
+:root[data-theme="rdr2"] .card::after { display: none; }
+:root[data-theme="rdr2"] .sheet-panel {
+  clip-path: none;
+  border-width: 2px 0 0;
+  border-radius: 12px 12px 0 0;
+  padding-top: 1.1rem;
+  box-shadow: 0 -6px 18px rgb(0 0 0 / 0.4);
+}
+:root[data-theme="rdr2"] .bd-hero,
+:root[data-theme="rdr2"] .convoy-hero { border-style: solid; border-width: 1px; border-color: #5a3f23; }
+
+/* Type: sentence case, normal tracking */
+:root[data-theme="rdr2"] .font-display,
+:root[data-theme="rdr2"] .btn,
+:root[data-theme="rdr2"] .label,
+:root[data-theme="rdr2"] .tab,
+:root[data-theme="rdr2"] .seg,
+:root[data-theme="rdr2"] .menu-item { font-weight: 700; text-transform: none; }
+:root[data-theme="rdr2"] h1.font-display,
+:root[data-theme="rdr2"] .card h1.font-display { font-size: 1.9rem; line-height: 1.15; text-shadow: none; }
+:root[data-theme="rdr2"] .eyebrow { font-weight: 700; letter-spacing: 0.12em; font-size: 0.75rem; }
+:root[data-theme="rdr2"] .eyebrow::before { content: none; }
+:root[data-theme="rdr2"] .label { letter-spacing: 0.02em; font-size: 0.85rem; }
+:root[data-theme="rdr2"] .link { text-decoration-style: solid; }
+:root[data-theme="rdr2"] .wordmark { text-shadow: none; letter-spacing: normal; }
+
+/* Controls */
+:root[data-theme="rdr2"] .btn { letter-spacing: 0.02em; border-width: 1px; }
+:root[data-theme="rdr2"] .btn:active:not(:disabled) { transform: translateY(1px); }
+:root[data-theme="rdr2"] .btn-primary { box-shadow: 0 1px 0 #2a0904; }
+:root[data-theme="rdr2"] .btn-primary:active:not(:disabled) { box-shadow: none; }
+:root[data-theme="rdr2"] .btn-plain { box-shadow: none; }
+:root[data-theme="rdr2"] .btn-danger { box-shadow: none; }
+:root[data-theme="rdr2"] .input {
+  border: 1px solid #a88a58;
+  border-radius: 3px;
+  box-shadow: none;
+  font-size: 1.05rem;
+}
+:root[data-theme="rdr2"] .input:focus { border-color: #b23a22; box-shadow: 0 0 0 2px rgb(178 58 34 / 0.25); }
+:root[data-theme="rdr2"] .seg { border-width: 1px; letter-spacing: 0.01em; }
+:root[data-theme="rdr2"] .seg-on { box-shadow: none; }
+
+/* Bars: planks stay, rivets go */
+:root[data-theme="rdr2"] .app-nav {
+  border-top: 2px solid #7a552d;
+  box-shadow: 0 -4px 12px rgb(0 0 0 / 0.4);
+}
+:root[data-theme="rdr2"] .app-nav::before { display: none; }
+:root[data-theme="rdr2"] .tab { font-size: 0.72rem; letter-spacing: 0.02em; text-shadow: none; }
+:root[data-theme="rdr2"] .tab-active { border: 0; box-shadow: none; }
+:root[data-theme="rdr2"] .menu-btn { border-width: 1px; box-shadow: none; }
+:root[data-theme="rdr2"] .menu-panel {
+  border-width: 1px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="rdr2"] .menu-item { letter-spacing: 0.01em; }
+
+/* The poster banner becomes a quiet one-line heading */
+:root[data-theme="rdr2"] .screen-banner {
+  display: block;
+  margin: 0 0 1rem;
+  padding: 0 0 0.5rem;
+  background: none;
+  border-top: 0;
+  border-bottom: 1px solid rgb(210 173 112 / 0.35);
+  box-shadow: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e8c88a;
+  text-shadow: none;
+}
+:root[data-theme="rdr2"] .screen-banner::before { content: none; }
+:root[data-theme="rdr2"] .screen-banner::after { margin-left: 0; color: inherit; }
+
+/* Screens */
+:root[data-theme="rdr2"] .bd-count { transform: none; border: 2px solid #8e2a1b; }
+:root[data-theme="rdr2"] .convoy-hero-icon { box-shadow: none; }
+:root[data-theme="rdr2"] .qr-frame { border: 1px solid #5a3f23; }
+:root[data-theme="rdr2"] .family-tree-stage {
+  border: 1px solid #7a552d;
+  box-shadow: inset 0 0 30px rgb(0 0 0 / 0.4);
+}
+:root[data-theme="rdr2"] .family-tree-stage .tnode-rect { filter: none; stroke-width: 1.25; }
+:root[data-theme="rdr2"] .family-tree-stage .tnode-me { stroke-width: 2; }
+:root[data-theme="rdr2"] .family-tree-stage .tnode-sel { stroke-width: 2.5; }
+:root[data-theme="rdr2"] .map-wrap { border: 1px solid #7a552d; box-shadow: none; }
+:root[data-theme="rdr2"] .pin { box-shadow: 0 0 0 2px #e6d2a4; }
+:root[data-theme="rdr2"] .motto { font-size: 1.1rem; letter-spacing: 0.14em; text-shadow: none; }
+:root[data-theme="rdr2"] .motto-sub { text-shadow: none; }

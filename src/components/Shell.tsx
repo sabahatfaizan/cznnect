@@ -162,16 +162,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <p className="font-display text-xl font-extrabold">Menu</p>
                 <p className="text-xs text-muted">Cznnect navigation</p>
               </div>
-              <button
-                type="button"
-                aria-label="Close menu"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-line text-current hover:bg-surface/70"
-                onClick={() => setMenuOpen(false)}
-              >
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
-              </button>
             </div>
             <div className="grid gap-1">
               {([

@@ -41,6 +41,32 @@ export default function ItemSheet({
   const canRemove = item.created_by === userId || isOwner
   const state = item.done ? 'none' : dueState(item.due_date, today)
 
+  async function sharePlan() {
+    const details = [
+      `Cznnect plan: ${item.title}`,
+      `List: ${horizonLabel(item.horizon)}`,
+      item.due_date ? `Date: ${item.due_date}` : '',
+      item.assigned_to ? `Organiser: ${name(item.assigned_to)}` : '',
+      item.notes?.trim() ? `Details: ${item.notes.trim()}` : '',
+      `Open Cznnect: ${window.location.href.split('#')[0]}`,
+    ].filter(Boolean).join('\n')
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: item.title, text: details })
+        onNotice('Share sheet opened')
+        return
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(details)
+        onNotice('Plan details copied — paste them anywhere')
+        return
+      }
+      window.prompt('Copy your plan details:', details)
+    } catch (e) {
+      if (e instanceof Error && e.name !== 'AbortError') onNotice('Could not share this plan')
+    }
+  }
+
   async function act(fn: () => Promise<string | null>, message: string) {
     setBusy(true)
     setError('')
@@ -119,6 +145,15 @@ export default function ItemSheet({
         </div>
 
         {item.notes && <p className="whitespace-pre-wrap">{item.notes}</p>}
+
+        <button type="button" className="btn btn-plain w-full" onClick={sharePlan}>
+          <span className="inline-flex items-center justify-center gap-2">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.7 10.6l6.6-4.2M8.7 13.4l6.6 4.2" />
+            </svg>
+            Share plan
+          </span>
+        </button>
 
         <section className="card flex flex-col gap-2">
           <h3 className="font-display text-lg font-bold">Who is in?</h3>

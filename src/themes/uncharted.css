@@ -359,6 +359,18 @@
 :root[data-theme="uncharted"] .leaflet-tile-pane { filter: sepia(0.65) saturate(0.85) contrast(0.95) brightness(0.98); }
 :root[data-theme="uncharted"] .pin { border-radius: 50%; box-shadow: 0 0 0 2px #faf0d6, 0 2px 4px rgb(60 35 10 / 0.6); }
 
+
+/* Family names: explorer's engraved map cartouches with a double-line frame. */
+:root[data-theme="uncharted"] .family-tree-stage .tnode-rect {
+  stroke: #62401f; stroke-width: 2.1;
+  filter: drop-shadow(0 4px 4px rgb(70 42 15 / 0.42));
+}
+:root[data-theme="uncharted"] .family-tree-stage .tnode-me { fill: #efd39d; stroke: #a8431a; stroke-width: 3; }
+:root[data-theme="uncharted"] .family-tree-stage .tnode-ornament {
+  fill: none; stroke: #b17a32; stroke-width: 1.25; opacity: 0.88;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
 /* ---- loading screen ---- */
 :root[data-theme="uncharted"] .motto {
   display: flex;

@@ -153,6 +153,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
       {panel === 'icon' && (
         <Sheet title="App icon" onClose={() => setPanel(null)}>
           <div className="flex flex-col gap-4" role="radiogroup" aria-label="App icon colour">
+            <p className="text-sm text-muted">This changes the Cznnect logo and browser shortcut icon. Android APK launcher icons are fixed when the APK is built, so this selection cannot change the icon on your phone's home screen.</p>
             {availableIconGroups.map((group) => (
               <div key={group} className="flex flex-col gap-2">
                 <h3 className="eyebrow">{group}</h3>

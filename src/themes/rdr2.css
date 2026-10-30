@@ -365,6 +365,20 @@
 :root[data-theme="rdr2"] .leaflet-tile-pane { filter: sepia(0.75) hue-rotate(-14deg) saturate(0.9) contrast(0.95) brightness(0.82); }
 :root[data-theme="rdr2"] .pin { border-radius: 2px; box-shadow: 0 0 0 2px #e6d2a4, 0 2px 4px rgb(0 0 0 / 0.6); }
 
+
+/* Family names: engraved outlaw wanted-poster plaques, not plain cards. */
+:root[data-theme="rdr2"] .family-tree-stage .tnode-rect {
+  stroke: #3b2114;
+  stroke-width: 2.2;
+  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.65));
+}
+:root[data-theme="rdr2"] .family-tree-stage .tnode-me { fill: #d7b77a; stroke: #a52e1d; stroke-width: 3; }
+:root[data-theme="rdr2"] .family-tree-stage .tnode-ornament {
+  fill: none; stroke: #9b6b36; stroke-width: 1.35; opacity: 0.9;
+  stroke-linecap: square; stroke-linejoin: bevel;
+}
+:root[data-theme="rdr2"] .family-tree-stage .tnode-sel .tnode-rect { stroke: #f0b36a; }
+
 /* ---- loading screen ---- */
 :root[data-theme="rdr2"] .motto {
   display: flex;

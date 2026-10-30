@@ -1613,3 +1613,26 @@ input[type="checkbox"] {
   gap: 0;
   font-size: 0.65rem;
 }
+
+
+/* Bottom navigation: readable frosted-glass surface across every theme.
+   Keep the page artwork softly blurred behind it without letting it compete
+   with labels or icons. The solid fallback also works in older WebViews. */
+.app-nav {
+  background: color-mix(in srgb, var(--surface) 94%, transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  backdrop-filter: blur(24px) saturate(165%);
+  border-top-color: color-mix(in srgb, var(--line) 85%, transparent) !important;
+  box-shadow: 0 -8px 28px rgb(0 0 0 / 0.08);
+  isolation: isolate;
+}
+:root[data-theme="glass"] .app-nav {
+  background: rgb(10 16 32 / 0.88) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  border-top-color: rgb(255 255 255 / 0.18) !important;
+  box-shadow: 0 -12px 34px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .app-nav { background: var(--surface) !important; }
+}

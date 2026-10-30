@@ -1670,3 +1670,15 @@ input[type="checkbox"] {
   backdrop-filter: var(--glass-blur);
 }
 :root[data-theme="glass"] .sheet-scrim { background: rgb(2 6 16 / 0.7); }
+
+/* Bottom bar icons: bigger for easier reading and tapping (all themes). Placed last so it wins. */
+.app-nav .tab,
+:root[data-theme="glass"] .app-nav .tab {
+  min-height: 56px;
+  gap: 3px;
+}
+.app-nav .tab svg,
+:root[data-theme="glass"] .app-nav .tab svg {
+  width: 30px;
+  height: 30px;
+}

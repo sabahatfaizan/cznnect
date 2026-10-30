@@ -112,7 +112,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   return (
     <div className="mx-auto min-h-full max-w-xl">
       <UnlockToast />
-      <main data-tab={tab} className="p-4 pb-36 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main data-tab={tab} className="p-4 pb-36 pt-[max(2.25rem,env(safe-area-inset-top),36px)]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
             <div className="brand-default">

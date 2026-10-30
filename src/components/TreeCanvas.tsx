@@ -112,7 +112,7 @@ export default function TreeCanvas({
     void document.fonts?.ready.then(() => { if (live) setFontTick((n) => n + 1) })
     return () => { live = false }
   }, [theme])
-  const fit = NAME_FIT[theme] ?? NAME_FIT.light
+  const nameBox = NAME_FIT[theme] ?? NAME_FIT.light
   const measure = useMemo<Measure>(() => {
     const ctx = document.createElement('canvas').getContext('2d')
     const family = box.current ? getComputedStyle(box.current).fontFamily : 'system-ui, sans-serif'
@@ -387,8 +387,8 @@ export default function TreeCanvas({
       if (p.is_deceased) classes.push('tnode-gone')
       const dim = kin ? !kin.has(n.id) : false
       // Name, nickname and year share an 80-high box: a two-line name moves everything up and shrinks the year.
-      const nameFit = fitName(measure, p.full_name, fit.w, fit.base, fit.min)
-      const nick = p.nickname ? fitLine(measure, `“${p.nickname}”`, fit.w, 13, 10.5) : null
+      const nameFit = fitName(measure, p.full_name, nameBox.w, nameBox.base, nameBox.min)
+      const nick = p.nickname ? fitLine(measure, `“${p.nickname}”`, nameBox.w, 13, 10.5) : null
       const two = nameFit.lines.length > 1
       const names = {
         lines: nameFit.lines,
@@ -427,7 +427,7 @@ export default function TreeCanvas({
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, fit],
+    [layout, people, kin, litId, selectedId, meId, measure, nameBox],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

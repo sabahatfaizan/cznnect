@@ -11,8 +11,8 @@
   z-index: 9998;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 50% 46%, transparent 42%, rgb(6 2 1 / 0.55) 78%, rgb(4 1 0 / 0.8) 100%),
-    linear-gradient(rgb(8 3 2 / 0.16), rgb(8 3 2 / 0.16));
+    radial-gradient(ellipse at 50% 46%, transparent 42%, rgb(6 2 1 / 0.06) 78%, rgb(4 1 0 / 0.10) 100%),
+    linear-gradient(rgb(8 3 2 / 0.02), rgb(8 3 2 / 0.02));
 }
 
 /* the sunset scene drifts slowly against the scroll (--rdr-par is set by rdr2-fx.ts) */

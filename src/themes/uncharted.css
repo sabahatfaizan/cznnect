@@ -245,15 +245,7 @@
   box-shadow: inset 0 0 0 1px rgb(240 210 140 / 0.35);
   backdrop-filter: none;
 }
-:root[data-theme="uncharted"] .tab-active::after {
-  content: "";
-  position: absolute;
-  bottom: 3px; left: 50%;
-  width: 6px; height: 6px;
-  margin-left: -3px;
-  transform: rotate(45deg);
-  background: #ffdf8e;
-}
+/* Removed the diamond marker from the active bottom-navigation tab. */
 :root[data-theme="uncharted"] .menu-btn {
   background: var(--leather);
   border: 1px solid #c9a14e;

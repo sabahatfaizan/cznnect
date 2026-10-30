@@ -1604,7 +1604,7 @@ input[type="checkbox"] {
    the camera cutout or system gesture area. */
 :root {
   --app-top-safe: max(env(safe-area-inset-top), 36px);
-  --app-bottom-safe: max(env(safe-area-inset-bottom), 16px);
+  --app-bottom-safe: max(env(safe-area-inset-bottom), 6px);
 }
 .app-nav {
   padding-bottom: var(--app-bottom-safe) !important;

@@ -44,6 +44,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
+  const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'Local build'
+  const buildCommit = import.meta.env.VITE_BUILD_COMMIT?.slice(0, 7) || ''
 
   // Keep the theme list in step with unlocks from a code, the secret coin, or an owner re-lock.
   useEffect(() => onUnlocksChanged(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
@@ -111,6 +113,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         <span className="set-tile-label flex-1 text-left">Redeem code</span>
         <span aria-hidden="true" className="expander-chevron">›</span>
       </button>
+
+      <p className="text-center text-xs text-muted" aria-label="App build version">Build {buildNumber}{buildCommit ? ` · ${buildCommit}` : ''}</p>
 
       {panel === 'family' && isFamilyOwner && (
         <Sheet title="Family settings" onClose={() => { setPanel(null); setEditingName(false); setError('') }}>

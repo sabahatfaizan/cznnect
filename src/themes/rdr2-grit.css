@@ -1,31 +1,18 @@
 /* ==================================================================
    RDR2 - grit pass. Loaded after rdr2.css, so it only layers wear, texture and motion on top.
    Everything lives under :root[data-theme="rdr2"], so no other theme is touched.
-   Textures: wood.png, foxing.png and film-grit.png are tileable; the rest are the shared grime overlays.
    ================================================================== */
 
-/* ---- 1. the film: vignette, dust and hairs, and a warm grade over the whole screen ---- */
+/* ---- 1. a soft vignette and warm grade over the whole screen ---- */
 :root[data-theme="rdr2"]::after {
   content: "";
   position: fixed;
-  inset: -64px;               /* oversized so the grain can jitter without showing an edge */
+  inset: 0;
   z-index: 9998;
   pointer-events: none;
   background:
-    url("./film-grit.png") 0 0 / 256px 256px,
     radial-gradient(ellipse at 50% 46%, transparent 50%, rgb(6 2 1 / 0.5) 82%, rgb(4 1 0 / 0.72) 100%),
     linear-gradient(rgb(150 80 20 / 0.07), rgb(150 80 20 / 0.07));
-  transform: translate3d(0, 0, 0);
-  will-change: transform;
-  animation: rdr-film 0.9s steps(1) infinite;
-}
-@keyframes rdr-film {
-  0%   { transform: translate3d(0, 0, 0); }
-  17%  { transform: translate3d(-23px, 14px, 0); }
-  33%  { transform: translate3d(19px, -26px, 0); }
-  50%  { transform: translate3d(-12px, -9px, 0); }
-  67%  { transform: translate3d(27px, 21px, 0); }
-  83%  { transform: translate3d(-30px, -17px, 0); }
 }
 
 /* the sunset scene drifts slowly against the scroll (--rdr-par is set by rdr2-fx.ts) */
@@ -41,7 +28,6 @@
 :root[data-theme="rdr2"] .convoy-hero {
   background:
     url("./unc-scratches.png") 30px 12px / 256px 256px,
-    url("./foxing.png") 0 0 / 320px 320px,
     url("./unc-stains-soft.png") 40px 60px / 360px 360px,
     radial-gradient(ellipse at 50% 50%, transparent 56%, rgb(96 52 14 / 0.4) 100%),
     url("./paper.png") 0 0 / 180px 180px,
@@ -59,7 +45,6 @@
     linear-gradient(90deg, transparent 49.6%, rgb(90 50 15 / 0.2) 50%, rgb(255 240 200 / 0.3) 50.5%, transparent 51%),
     linear-gradient(0deg, transparent 49.4%, rgb(90 50 15 / 0.16) 50%, rgb(255 240 200 / 0.26) 50.6%, transparent 51.2%),
     url("./unc-scratches.png") 30px 12px / 256px 256px,
-    url("./foxing.png") 0 0 / 320px 320px,
     url("./unc-stains-soft.png") 40px 60px / 360px 360px,
     radial-gradient(ellipse at 50% 50%, transparent 54%, rgb(96 52 14 / 0.42) 100%),
     url("./paper.png") 0 0 / 180px 180px,
@@ -76,8 +61,6 @@
 :root[data-theme="rdr2"] .screen-banner {
   padding: 0.55rem 1.7rem;
   background:
-    url("./mw4-dust.png") 0 0 / 256px 256px,
-    url("./mw4-grunge.png") 40px 20px / 256px 256px,
     linear-gradient(90deg, rgb(120 32 18 / 0.96), rgb(62 20 12 / 0.92));
   clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 0 100%, 14px 50%);
   box-shadow: none;
@@ -89,7 +72,6 @@
   background:
     radial-gradient(circle at 9px 50%, #e6c382 0 1.5px, rgb(0 0 0 / 0.55) 2.2px, transparent 2.7px),
     radial-gradient(circle at calc(100% - 9px) 50%, #e6c382 0 1.5px, rgb(0 0 0 / 0.55) 2.2px, transparent 2.7px),
-    url("./mw4-grunge.png") 0 0 / 256px 256px,
     linear-gradient(180deg, #b8402a, #771a0f);
   padding-inline: 1.6rem;
 }
@@ -97,10 +79,8 @@
   background:
     radial-gradient(circle at 9px 50%, #e6c382 0 1.5px, rgb(0 0 0 / 0.55) 2.2px, transparent 2.7px),
     radial-gradient(circle at calc(100% - 9px) 50%, #e6c382 0 1.5px, rgb(0 0 0 / 0.55) 2.2px, transparent 2.7px),
-    url("./mw4-grunge.png") 0 0 / 256px 256px,
     linear-gradient(180deg, #8f1d12, #5d0f08);
 }
-:root[data-theme="rdr2"] .btn-plain { background: url("./paper.png") 0 0 / 180px 180px, rgb(43 28 17 / 0.1); }
 :root[data-theme="rdr2"] .btn {
   transition: transform 0.09s ease-out, box-shadow 0.09s ease-out, filter 0.09s ease-out;
 }
@@ -112,69 +92,19 @@
 :root[data-theme="rdr2"] .input::placeholder { font-style: italic; color: rgb(106 82 52 / 0.7); }
 :root[data-theme="rdr2"] .input { caret-color: #8e2a1b; }
 
-/* ---- 5. wood: real planks on the tab bar, the menu button and the menu panel ---- */
-:root[data-theme="rdr2"] .app-nav {
-  background:
-    linear-gradient(180deg, rgb(255 200 130 / 0.1), transparent 30%, rgb(0 0 0 / 0.38)),
-    url("./wood.png") 0 0 / 384px 192px,
-    linear-gradient(180deg, #5d4029, #35231a);
-  box-shadow: inset 0 1px 0 rgb(255 215 160 / 0.25), 0 -8px 18px rgb(0 0 0 / 0.6);
-}
-:root[data-theme="rdr2"] .menu-btn {
-  background:
-    linear-gradient(180deg, rgb(255 200 130 / 0.12), rgb(0 0 0 / 0.3)),
-    url("./wood.png") 0 0 / 192px 96px,
-    linear-gradient(180deg, #5d4029, #35231a);
-}
+/* ---- 5. press feedback (the plank-wood bars keep their original look from rdr2.css) ---- */
 :root[data-theme="rdr2"] .menu-btn:active { transform: translateY(2px); box-shadow: 0 0 0 rgb(0 0 0 / 0.6); }
-:root[data-theme="rdr2"] .menu-panel {
-  background:
-    linear-gradient(180deg, rgb(255 200 130 / 0.07), transparent 22%, rgb(0 0 0 / 0.35)),
-    url("./wood.png") 0 0 / 384px 192px,
-    linear-gradient(180deg, #4d3322, #2a1b11);
-  /* stitched leather edge, a little inside the frame */
-  outline: 1px dashed rgb(210 173 112 / 0.55);
-  outline-offset: -10px;
-}
 :root[data-theme="rdr2"] .tab { transition: transform 0.08s ease-out, background 0.15s, color 0.15s; }
 :root[data-theme="rdr2"] .tab:active { transform: translateY(1px) scale(0.96); }
-:root[data-theme="rdr2"] .tab-active {
-  /* a brass plate screwed onto the plank */
-  background:
-    radial-gradient(circle at 5px 5px, #3a2414 0 1px, transparent 1.6px),
-    radial-gradient(circle at calc(100% - 5px) 5px, #3a2414 0 1px, transparent 1.6px),
-    radial-gradient(circle at 5px calc(100% - 5px), #3a2414 0 1px, transparent 1.6px),
-    radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), #3a2414 0 1px, transparent 1.6px),
-    url("./mw4-grunge.png") 0 0 / 256px 256px,
-    linear-gradient(180deg, #d2a550, #8c6422);
-}
 :root[data-theme="rdr2"] .menu-item { transition: background 0.15s, transform 0.08s ease-out; }
 :root[data-theme="rdr2"] .menu-item:active { background: rgb(201 154 72 / 0.28); transform: translateX(3px); }
 
-/* ---- 6. the family tree board and the map: the same stitched, worn frame ---- */
-:root[data-theme="rdr2"] .family-tree-stage {
-  --stage-bg:
-    url("./unc-scratches.png") 10px 30px / 256px 256px,
-    url("./mw4-grunge.png") 0 0 / 256px 256px,
-    radial-gradient(ellipse at 50% 0%, rgb(190 80 30 / 0.28), transparent 30rem),
-    linear-gradient(180deg, rgb(32 20 14 / 0.9), rgb(18 11 8 / 0.94));
-}
-:root[data-theme="rdr2"] .map-wrap::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 500;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgb(40 18 4 / 0.5) 100%);
-}
-:root[data-theme="rdr2"] .map-wrap { position: relative; }
-
-/* ---- 7. small details ---- */
+/* ---- 6. small details ---- */
 :root[data-theme="rdr2"] ::selection { background: #8e2a1b; color: #ffe9c4; }
 :root[data-theme="rdr2"] { scrollbar-color: #7a552d #1b110a; scrollbar-width: thin; }
 :root[data-theme="rdr2"] :focus-visible { outline: 2px dashed #efb06a; outline-offset: 3px; }
 
-/* ---- 8. motion: everything arrives like it was nailed up or dropped on a table ---- */
+/* ---- 7. motion: everything arrives like it was nailed up or dropped on a table ---- */
 /* Two identical keyframes, swapped per tab, so the animation restarts on every screen change. */
 @keyframes rdr-pin-a {
   0%   { opacity: 0; transform: translateY(-16px) rotate(-1.4deg) scale(1.04); }
@@ -227,8 +157,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root[data-theme="rdr2"]::after { animation: none; }
-  :root[data-theme="rdr2"] main .card,
+    :root[data-theme="rdr2"] main .card,
   :root[data-theme="rdr2"] main .screen-banner { animation: none; }
   .rdr-puff { display: none; }
 }

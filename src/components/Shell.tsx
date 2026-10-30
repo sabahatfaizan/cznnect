@@ -22,15 +22,15 @@ import UnlockToast from './UnlockToast'
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
 const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
-  home: { rdr2: "The Gang's Camp", unc: 'Expedition Base' },
-  tree: { rdr2: 'Kin & Kith', unc: 'The Lineage Chart' },
-  explore: { rdr2: 'Scouting Territory', unc: 'Uncharted Territory' },
-  plans: { rdr2: 'The Next Job', unc: 'The Next Expedition' },
-  birthdays: { rdr2: 'Days Worth Marking', unc: 'Dates in the Journal' },
-  me: { rdr2: 'Your Wanted Poster', unc: "Explorer's Dossier" },
-  irl: { rdr2: 'Riding Together', unc: 'The Field Team' },
-  scoreboard: { rdr2: 'The Bounty Board', unc: 'Treasure Tally' },
-  settings: { rdr2: 'Camp Supplies', unc: 'Gear & Supplies' },
+  home: { rdr2: 'Camp', unc: 'Expedition Base' },
+  tree: { rdr2: 'Kin', unc: 'The Lineage Chart' },
+  explore: { rdr2: 'Scouting', unc: 'Uncharted Territory' },
+  plans: { rdr2: 'Next Job', unc: 'The Next Expedition' },
+  birthdays: { rdr2: 'Marked Days', unc: 'Dates in the Journal' },
+  me: { rdr2: 'Wanted', unc: "Explorer's Dossier" },
+  irl: { rdr2: 'Riding', unc: 'The Field Team' },
+  scoreboard: { rdr2: 'Bounties', unc: 'Treasure Tally' },
+  settings: { rdr2: 'Supplies', unc: 'Gear & Supplies' },
 }
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },

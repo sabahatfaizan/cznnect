@@ -182,3 +182,19 @@
 :root[data-theme="moonpaper"] .family-tree-stage .fill-muted { fill: #5c5c5c; }
 :root[data-theme="moonpaper"] .map-wrap { border: 2px solid #0a0a0a; box-shadow: 4px 4px 0 #0a0a0a; }
 :root[data-theme="moonpaper"] .leaflet-tile-pane { filter: grayscale(1) contrast(1.1); }
+
+/* The menu button is the crescent moon instead of the three-line hamburger. */
+:root[data-theme="moonpaper"] .menu-btn svg { display: none; }
+:root[data-theme="moonpaper"] .menu-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  box-shadow: -8px 4px 0 0 #0a0a0a;
+  transform: translate(5px, -1px) rotate(-18deg);
+  pointer-events: none;
+}

@@ -221,3 +221,19 @@
 :root[data-theme="moonknight"] .family-tree-stage .fill-muted { fill: #a6a6a6; }
 :root[data-theme="moonknight"] .map-wrap { border: 1px solid rgb(255 255 255 / 0.5); box-shadow: 0 10px 24px rgb(0 0 0 / 0.55); }
 :root[data-theme="moonknight"] .leaflet-tile-pane { filter: invert(1) grayscale(1) brightness(0.75) contrast(1.05); }
+
+/* The menu button is the crescent moon instead of the three-line hamburger. */
+:root[data-theme="moonknight"] .menu-btn svg { display: none; }
+:root[data-theme="moonknight"] .menu-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  box-shadow: -8px 4px 0 0 #ffffff;
+  transform: translate(5px, -1px) rotate(-18deg);
+  pointer-events: none;
+}

@@ -17,35 +17,7 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ---- loading screen: the logo finishes its spin, then zooms out into the middle of the screen while the app,
-        starting a little too close, pulls back to its normal size around that same middle point ---- */
-.splash { z-index: 100; }
-.splash-zoom { display: grid; place-items: center; transform-origin: 50% 50%; }
-.splash-leave { pointer-events: none; }
-.splash-leave .splash-zoom {
-  animation: splash-zoom 720ms cubic-bezier(0.5, 0, 0.2, 1) forwards;
-  will-change: transform, opacity;
-}
-.splash-leave .copyright { animation: splash-fade 320ms ease-in forwards; }
-@keyframes splash-zoom {
-  0%   { transform: scale(1); opacity: 1; }
-  16%  { transform: scale(1.08); opacity: 1; }   /* a small breath in, then it pulls away */
-  70%  { opacity: 1; }
-  100% { transform: scale(0.1); opacity: 0; }
-}
-@keyframes splash-fade { to { opacity: 0; } }
-
 @media (prefers-reduced-motion: no-preference) {
-  /* ---- the app pulls back into place behind the logo (the html tag carries data-boot for about a second).
-          It scales around the middle of the screen: the page starts at the top, so 50vh is the middle. ---- */
-  :root[data-boot] main { transform-origin: 50% 50vh; }
-  :root[data-boot] .auth-screen { transform-origin: 50% 50%; }
-  :root[data-boot] main,
-  :root[data-boot] .auth-screen { animation: boot-in 760ms var(--ease-out) 80ms backwards; }
-  :root[data-boot] .app-nav { animation: boot-nav 520ms var(--ease-out) 260ms backwards; }
-  @keyframes boot-in  { from { opacity: 0; transform: scale(1.22); } }
-  @keyframes boot-nav { from { transform: translate3d(0, 100%, 0); } }
-
   /* ---- changing screens: the blocks of the new screen rise in one after another ---- */
   .screen-in > * > * { animation: item-in 420ms var(--ease-out) backwards; }
   .screen-in > * > *:nth-child(2) { animation-delay: 50ms; }

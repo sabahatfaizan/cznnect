@@ -1591,3 +1591,25 @@ input[type="checkbox"] {
 :root[data-theme="glass"] .app-nav > div {
   padding: 3px 6px;
 }
+
+
+/* Android APK safe-area and compact navigation fixes.
+   Android WebViews can report zero CSS safe-area insets, so retain a
+   conservative status/navigation-bar allowance instead of drawing under
+   the camera cutout or system gesture area. */
+:root {
+  --app-top-safe: max(env(safe-area-inset-top), 36px);
+  --app-bottom-safe: max(env(safe-area-inset-bottom), 16px);
+}
+.app-nav {
+  padding-bottom: var(--app-bottom-safe) !important;
+}
+.app-nav > div {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+.app-nav .tab {
+  min-height: 44px;
+  gap: 0;
+  font-size: 0.65rem;
+}

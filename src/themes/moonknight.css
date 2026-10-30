@@ -4,6 +4,13 @@
    scatter of stars. Everything lives under :root[data-theme="moonknight"],
    so no other theme is touched.
    ================================================================== */
+@font-face {
+  font-family: "Moonfark";
+  src: url("../assets/Moonfark.otf") format("opentype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root[data-theme="moonknight"] {
   --page: #05070d;
   --surface: #0e1424;
@@ -21,9 +28,9 @@
   --radius-ctl: 8px;
   --radius-avatar: 9999px;
   --shadow-card: 0 0 0 1px rgb(201 162 74 / 0.14), 0 10px 26px rgb(0 0 0 / 0.55);
-  --font-heading: "Cinzel", "Trajan Pro", "Optima", Georgia, serif;
+  --font-heading: "Moonfark", "Cinzel", "Trajan Pro", Georgia, serif;
   --heading-case: uppercase;
-  --heading-track: 0.1em;
+  --heading-track: 0.04em;
   --logo-hi: #fffdf2;
   --logo-a: #ece8d8;
   --logo-b: #b8892f;
@@ -108,17 +115,20 @@
 
 /* ---- type ---- */
 :root[data-theme="moonknight"] .font-display,
-:root[data-theme="moonknight"] .btn { font-family: var(--font-heading); }
+:root[data-theme="moonknight"] .btn,
+:root[data-theme="moonknight"] .menu-item,
+:root[data-theme="moonknight"] .wordmark,
+:root[data-theme="moonknight"] .eyebrow { font-family: var(--font-heading); font-weight: 400; }
 :root[data-theme="moonknight"] h1.font-display { color: #f6f3e6; text-shadow: 0 0 18px rgb(240 214 138 / 0.28); }
 :root[data-theme="moonknight"] h2.font-display { color: var(--gold-bright); }
-:root[data-theme="moonknight"] .eyebrow { color: var(--gold); letter-spacing: 0.18em; }
+:root[data-theme="moonknight"] .eyebrow { color: var(--gold); letter-spacing: 0.14em; }
 :root[data-theme="moonknight"] .eyebrow::before { content: "\263E\00a0"; }
 :root[data-theme="moonknight"] .label { color: var(--muted); letter-spacing: 0.06em; }
 :root[data-theme="moonknight"] .link { color: var(--gold-bright); text-decoration-color: rgb(201 162 74 / 0.6); }
-:root[data-theme="moonknight"] .wordmark { letter-spacing: 0.08em; }
+:root[data-theme="moonknight"] .wordmark { letter-spacing: 0.06em; }
 
 /* ---- controls ---- */
-:root[data-theme="moonknight"] .btn { letter-spacing: 0.1em; }
+:root[data-theme="moonknight"] .btn { letter-spacing: 0.06em; }
 :root[data-theme="moonknight"] .btn-primary {
   background: linear-gradient(180deg, #f6f2e2, #cfc9b2);
   color: #0a0d16;
@@ -171,7 +181,7 @@
   background: linear-gradient(160deg, #151c33, #080c19);
   border: 1px solid rgb(201 162 74 / 0.4);
 }
-:root[data-theme="moonknight"] .menu-item { letter-spacing: 0.06em; }
+:root[data-theme="moonknight"] .menu-item { letter-spacing: 0.05em; }
 :root[data-theme="moonknight"] .menu-item:hover { background: rgb(201 162 74 / 0.1); }
 :root[data-theme="moonknight"] .menu-item-on {
   color: var(--gold-bright);

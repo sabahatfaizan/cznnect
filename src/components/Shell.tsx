@@ -132,26 +132,23 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             onClick={() => setMenuOpen((open) => !open)}
           >
             {dueNow && !menuOpen && <span aria-hidden="true" className="menu-dot" />}
-            {menuOpen ? (
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            {/* Always the hamburger: the menu covers this button when open, so swapping to an X only flashed through the scrim. */}
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
         </header>
         <div
-          className={`fixed inset-0 z-50 transition-opacity duration-300 ${menuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+          /* Toggle visibility, not opacity: an opacity fade on this wrapper would hold back the glass blur on the
+             panel and scrim until the fade ended. Only the scrim fades, and the panel slides. */
+          className={`fixed inset-0 z-50 transition-[visibility] duration-300 ${menuOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}
           aria-hidden={!menuOpen}
         >
           <button
             type="button"
             tabIndex={menuOpen ? 0 : -1}
             aria-label="Close menu"
-            className="menu-scrim absolute inset-0 h-full w-full cursor-default bg-black/50"
+            className={`menu-scrim absolute inset-0 h-full w-full cursor-default bg-black/50 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setMenuOpen(false)}
           />
           <aside

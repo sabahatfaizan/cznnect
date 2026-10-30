@@ -1648,10 +1648,10 @@ input[type="checkbox"] {
 }
 
 
-/* Full-width bottom bar (every theme except Liquid Glass): sit on the bottom edge. The app already ends above the
-   Android navigation buttons, so the bar only needs the real safe-area inset plus a small gap, not a lift of 20px
-   and 16px or more of padding under the tabs. Liquid Glass keeps its floating pill above. */
+/* Full-width bottom bar (every theme except Liquid Glass): the bar runs to the very bottom edge, full screen, and the
+   tabs stay a safe distance above the Android navigation buttons through the bar's own bottom padding
+   (--app-bottom-safe). It used to be lifted 20px as well, which left a gap under it and doubled the space. */
 :root:not([data-theme="glass"]) .app-nav {
   bottom: 0;
-  padding-bottom: max(env(safe-area-inset-bottom), 6px) !important;
+  padding-bottom: var(--app-bottom-safe) !important;
 }

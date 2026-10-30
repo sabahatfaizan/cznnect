@@ -430,7 +430,7 @@ export default function TreeCanvas({
           {theme === 'uncharted' && (
             <g className="tnode-ornament" pointerEvents="none">
               <path d="M7 18 L18 7 H114 L125 18 V62 L114 73 H18 L7 62 Z" />
-              <path d="M66 4 l3 5 -3 5 -3 -5 Z M66 66 l3 5 -3 5 -3 -5 Z" />
+              <path d="M66 4 l3 5 -3 5 -3 -5 Z" />
             </g>
           )}
           {names.lines.map((line, i) => (

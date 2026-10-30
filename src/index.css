@@ -1613,25 +1613,3 @@ input[type="checkbox"] {
   gap: 0;
   font-size: 0.65rem;
 }
-
-
-/* Main slide-out menu: subtle translucency with a restrained frosted blur.
-   Keep the selected theme visible instead of turning the panel into a solid dark slab. */
-.menu-panel {
-  background: color-mix(in srgb, var(--surface) 74%, transparent) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(145%);
-  backdrop-filter: blur(14px) saturate(145%);
-  border-color: color-mix(in srgb, var(--line) 72%, transparent) !important;
-  box-shadow: -12px 0 36px rgb(0 0 0 / 0.16);
-}
-:root[data-theme="glass"] .menu-panel {
-  background: rgb(13 24 48 / 0.68) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(155%);
-  backdrop-filter: blur(16px) saturate(155%);
-  border-color: rgb(255 255 255 / 0.22) !important;
-  box-shadow: -16px 0 42px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 255 255 / 0.14);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .menu-panel { background: color-mix(in srgb, var(--surface) 90%, transparent) !important; }
-  :root[data-theme="glass"] .menu-panel { background: rgb(13 24 48 / 0.9) !important; }
-}

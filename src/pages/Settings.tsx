@@ -12,6 +12,24 @@ import { Icon, type IconName } from '../components/Icons'
 
 type Panel = 'family' | 'theme' | 'icon' | 'redeem'
 
+// Picking a theme also picks a matching home-screen/browser icon. Exclusive themes
+// choose one of their own unlocked icon variants; the user can still change it manually.
+function iconForTheme(theme: ThemePref): IconId {
+  const group = theme === 'rdr2' ? 'Red Dead'
+    : theme === 'uncharted' ? 'Uncharted'
+    : 'Classic'
+  const choices = ICONS.filter((item) => item.group === group)
+  if (theme === 'rdr2' || theme === 'uncharted') {
+    return choices[Math.floor(Math.random() * choices.length)]?.id ?? 'ocean'
+  }
+  const matching: Record<'light' | 'dark' | 'glass', IconId> = {
+    light: 'ocean',
+    dark: 'graphite',
+    glass: 'aurora',
+  }
+  return matching[theme as 'light' | 'dark' | 'glass'] ?? 'ocean'
+}
+
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [unlockedThemes, setUnlockedThemes] = useState(() => getUnlockedThemes())
@@ -64,6 +82,9 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   function pickTheme(id: ThemePref) {
     setThemePref(id)
     setTheme(id)
+    const nextIcon = iconForTheme(id)
+    setIconPref(nextIcon)
+    setIcon(nextIcon)
   }
 
   const currentIcon = previews.find((p) => p.id === (isIconAvailable(icon) ? icon : 'ocean'))

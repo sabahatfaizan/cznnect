@@ -1646,3 +1646,12 @@ input[type="checkbox"] {
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
+
+
+/* Full-width bottom bar (every theme except Liquid Glass): sit on the bottom edge. The app already ends above the
+   Android navigation buttons, so the bar only needs the real safe-area inset plus a small gap, not a lift of 20px
+   and 16px or more of padding under the tabs. Liquid Glass keeps its floating pill above. */
+:root:not([data-theme="glass"]) .app-nav {
+  bottom: 0;
+  padding-bottom: max(env(safe-area-inset-bottom), 6px) !important;
+}

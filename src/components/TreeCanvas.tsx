@@ -19,6 +19,7 @@ const NAME_FIT: Record<string, { w: number; base: number; min: number }> = {
   glass: { w: 118, base: 15, min: 11.5 },
   rdr2: { w: 116, base: 15, min: 11.5 },
   uncharted: { w: 114, base: 14.5, min: 11 },
+  moonknight: { w: 116, base: 14.5, min: 11.5 },
 }
 
 // Longest start of the text that fits, ending in an ellipsis when something was cut.

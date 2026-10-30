@@ -1,0 +1,195 @@
+/* ==================================================================
+   MOON KNIGHT - "Midnight". A night sky over the desert: near-black blue,
+   moon-white ink, Egyptian gold trim, a crescent hanging in the corner and a
+   scatter of stars. Everything lives under :root[data-theme="moonknight"],
+   so no other theme is touched.
+   ================================================================== */
+:root[data-theme="moonknight"] {
+  --page: #05070d;
+  --surface: #0e1424;
+  --surface-2: #161d33;
+  --ink: #f1efe6;
+  --muted: #9aa3b8;
+  --line: #2a2f44;
+  --accent: #ece8d8;
+  --accent-ink: #0a0d16;
+  --accent-soft: #1a2238;
+  --accent-text: #e3c878;
+  --ok: #7fd6a4;
+  --danger: #ff7a7a;
+  --radius-card: 10px;
+  --radius-ctl: 8px;
+  --radius-avatar: 9999px;
+  --shadow-card: 0 0 0 1px rgb(201 162 74 / 0.14), 0 10px 26px rgb(0 0 0 / 0.55);
+  --font-heading: "Cinzel", "Trajan Pro", "Optima", Georgia, serif;
+  --heading-case: uppercase;
+  --heading-track: 0.1em;
+  --logo-hi: #fffdf2;
+  --logo-a: #ece8d8;
+  --logo-b: #b8892f;
+  --logo-edge: #05070d;
+  --gold: #c9a24a;
+  --gold-bright: #f0d68a;
+  color-scheme: dark;
+}
+
+/* ---- the sky: moon glow, desert horizon, stars, and a crescent ---- */
+:root[data-theme="moonknight"] body {
+  background: #05070d;
+}
+:root[data-theme="moonknight"] body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  z-index: -2;
+  pointer-events: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  background:
+    radial-gradient(1.4px 1.4px at 12% 16%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 27% 8%, #dfe6ff 55%, transparent 60%),
+    radial-gradient(1.6px 1.6px at 41% 24%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 58% 12%, #fff 55%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 69% 31%, #dfe6ff 55%, transparent 60%),
+    radial-gradient(1px 1px at 8% 44%, #fff 55%, transparent 60%),
+    radial-gradient(1.4px 1.4px at 33% 52%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 52% 61%, #dfe6ff 55%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 90% 47%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 76% 72%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 18% 82%, #dfe6ff 55%, transparent 60%),
+    radial-gradient(ellipse 60% 28% at 50% 108%, rgb(201 162 74 / 0.16), transparent 70%),
+    radial-gradient(circle at 88% 7%, rgb(236 232 216 / 0.16), transparent 38%),
+    linear-gradient(180deg, #080c1a 0%, #05070d 60%);
+}
+:root[data-theme="moonknight"] body::after {
+  content: "";
+  position: fixed;
+  top: calc(max(env(safe-area-inset-top), 0px) + 22px);
+  right: 22px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  box-shadow: -9px 4px 0 0 rgb(240 236 220 / 0.7), -9px 4px 14px 1px rgb(240 236 220 / 0.25);
+  transform: rotate(-18deg);
+}
+
+/* ---- panels: dark glass with a gold hairline ---- */
+:root[data-theme="moonknight"] .card,
+:root[data-theme="moonknight"] .bd-hero,
+:root[data-theme="moonknight"] .convoy-hero {
+  background: linear-gradient(180deg, rgb(22 29 51 / 0.92), rgb(12 17 32 / 0.96));
+  border: 1px solid rgb(201 162 74 / 0.28);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgb(240 214 138 / 0.12);
+}
+:root[data-theme="moonknight"] .card { position: relative; }
+:root[data-theme="moonknight"] .card::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  opacity: 0.75;
+  pointer-events: none;
+}
+:root[data-theme="moonknight"] .sheet-panel {
+  background: linear-gradient(180deg, #151c33, #0a0f1e);
+  border-top: 1px solid rgb(201 162 74 / 0.4);
+}
+:root[data-theme="moonknight"] .sheet-scrim,
+:root[data-theme="moonknight"] .menu-scrim { background: rgb(2 3 8 / 0.72); }
+
+/* ---- type ---- */
+:root[data-theme="moonknight"] .font-display,
+:root[data-theme="moonknight"] .btn { font-family: var(--font-heading); }
+:root[data-theme="moonknight"] h1.font-display { color: #f6f3e6; text-shadow: 0 0 18px rgb(240 214 138 / 0.28); }
+:root[data-theme="moonknight"] h2.font-display { color: var(--gold-bright); }
+:root[data-theme="moonknight"] .eyebrow { color: var(--gold); letter-spacing: 0.18em; }
+:root[data-theme="moonknight"] .eyebrow::before { content: "\263E\00a0"; }
+:root[data-theme="moonknight"] .label { color: var(--muted); letter-spacing: 0.06em; }
+:root[data-theme="moonknight"] .link { color: var(--gold-bright); text-decoration-color: rgb(201 162 74 / 0.6); }
+:root[data-theme="moonknight"] .wordmark { letter-spacing: 0.08em; }
+
+/* ---- controls ---- */
+:root[data-theme="moonknight"] .btn { letter-spacing: 0.1em; }
+:root[data-theme="moonknight"] .btn-primary {
+  background: linear-gradient(180deg, #f6f2e2, #cfc9b2);
+  color: #0a0d16;
+  border: 1px solid #f0d68a;
+  box-shadow: 0 0 16px rgb(240 214 138 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+:root[data-theme="moonknight"] .btn-plain {
+  background: rgb(22 29 51 / 0.6);
+  color: var(--ink);
+  border: 1px solid rgb(201 162 74 / 0.4);
+}
+:root[data-theme="moonknight"] .btn-plain:hover:not(:disabled) { background: rgb(201 162 74 / 0.14); }
+:root[data-theme="moonknight"] .input {
+  background: #090d1a;
+  border: 1px solid #343a55;
+  color: var(--ink);
+}
+:root[data-theme="moonknight"] .input:focus {
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(201 162 74 / 0.3);
+}
+:root[data-theme="moonknight"] .seg { background: #0e1424; border: 1px solid #2a2f44; }
+:root[data-theme="moonknight"] .seg-on {
+  background: #1a2238;
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgb(201 162 74 / 0.22);
+}
+
+/* ---- bottom bar and menu ---- */
+:root[data-theme="moonknight"] .app-nav {
+  background: linear-gradient(180deg, rgb(14 20 36 / 0.97), rgb(5 7 13 / 0.99));
+  border-top: 1px solid rgb(201 162 74 / 0.45);
+  box-shadow: 0 -10px 26px rgb(0 0 0 / 0.6);
+}
+:root[data-theme="moonknight"] .tab { color: #8e97ad; letter-spacing: 0.03em; }
+:root[data-theme="moonknight"] .tab-active {
+  background: linear-gradient(180deg, rgb(201 162 74 / 0.2), rgb(201 162 74 / 0.06));
+  color: var(--gold-bright);
+  border: 1px solid rgb(201 162 74 / 0.5);
+  box-shadow: 0 0 14px rgb(201 162 74 / 0.18);
+}
+:root[data-theme="moonknight"] .menu-btn {
+  background: #0e1424;
+  border: 1px solid rgb(201 162 74 / 0.5);
+  color: var(--gold-bright);
+}
+:root[data-theme="moonknight"] .menu-dot { background: #d6403a; box-shadow: 0 0 0 2px #0e1424; }
+:root[data-theme="moonknight"] .menu-panel {
+  background: linear-gradient(160deg, #151c33, #080c19);
+  border: 1px solid rgb(201 162 74 / 0.4);
+}
+:root[data-theme="moonknight"] .menu-item { letter-spacing: 0.06em; }
+:root[data-theme="moonknight"] .menu-item:hover { background: rgb(201 162 74 / 0.1); }
+:root[data-theme="moonknight"] .menu-item-on {
+  color: var(--gold-bright);
+  background: rgb(201 162 74 / 0.1);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+:root[data-theme="moonknight"] .menu-badge { background: #d6403a; color: #fff; }
+:root[data-theme="moonknight"] .screen-banner { display: none; }
+
+/* ---- family tree and map ---- */
+:root[data-theme="moonknight"] .family-tree-stage .tnode-rect {
+  fill: #0e1424;
+  stroke: rgb(201 162 74 / 0.55);
+  stroke-width: 1.4;
+}
+:root[data-theme="moonknight"] .family-tree-stage .tnode-me { fill: #1d2644; stroke: var(--gold-bright); stroke-width: 2.2; }
+:root[data-theme="moonknight"] .family-tree-stage .tnode-sel { stroke: #fff; stroke-width: 3; }
+:root[data-theme="moonknight"] .family-tree-stage .fill-ink { fill: #f1efe6; }
+:root[data-theme="moonknight"] .family-tree-stage .fill-muted { fill: #9aa3b8; }
+:root[data-theme="moonknight"] .map-wrap { border: 1px solid rgb(201 162 74 / 0.5); box-shadow: 0 10px 24px rgb(0 0 0 / 0.55); }
+:root[data-theme="moonknight"] .leaflet-tile-pane { filter: invert(1) hue-rotate(200deg) brightness(0.8) contrast(0.95) saturate(0.55); }

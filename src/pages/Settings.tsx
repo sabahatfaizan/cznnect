@@ -17,9 +17,10 @@ type Panel = 'family' | 'theme' | 'icon' | 'redeem'
 function iconForTheme(theme: ThemePref): IconId {
   const group = theme === 'rdr2' ? 'Red Dead'
     : theme === 'uncharted' ? 'Uncharted'
+    : theme === 'moonknight' ? 'Moon Knight'
     : 'Classic'
   const choices = ICONS.filter((item) => item.group === group)
-  if (theme === 'rdr2' || theme === 'uncharted') {
+  if (theme === 'rdr2' || theme === 'uncharted' || theme === 'moonknight') {
     return choices[Math.floor(Math.random() * choices.length)]?.id ?? 'ocean'
   }
   const matching: Record<'light' | 'dark' | 'glass', IconId> = {

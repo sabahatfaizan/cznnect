@@ -5,7 +5,7 @@ import type { ExclusiveTheme } from './theme'
 
 export type IconId =
   | 'ocean' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
-  | 'treasure' | 'libertalia' | 'outlaw' | 'dust'
+  | 'treasure' | 'libertalia' | 'outlaw' | 'dust' | 'khonshu' | 'crescent'
 
 // "a" is the main colour and "b" the deep end of the gradient. The Uncharted and Red Dead sets follow the
 // colours of those two app themes (parchment, gold and leather; ember red and oxblood).
@@ -20,13 +20,16 @@ export const ICONS: { id: IconId; label: string; group: string; a: string; b: st
   { id: 'libertalia', label: 'Libertalia', group: 'Uncharted', a: '#ffd36b', b: '#6b3410' },
   { id: 'outlaw', label: 'Outlaw', group: 'Red Dead', a: '#e8603f', b: '#4a0f0a' },
   { id: 'dust', label: 'Dust & Leather', group: 'Red Dead', a: '#dcbd8e', b: '#4a2c17' },
+  { id: 'khonshu', label: 'Khonshu', group: 'Moon Knight', a: '#f2efe3', b: '#1a2238' },
+  { id: 'crescent', label: 'Gold Crescent', group: 'Moon Knight', a: '#e3c878', b: '#3a2a0c' },
 ]
-export const ICON_GROUPS = ['Classic', 'Uncharted', 'Red Dead']
+export const ICON_GROUPS = ['Classic', 'Uncharted', 'Red Dead', 'Moon Knight']
 
 // The Uncharted and Red Dead colour sets belong to those themes, so they appear once the theme is unlocked.
 export function iconGroupAvailable(group: string, unlocked: ExclusiveTheme[]): boolean {
   if (group === 'Uncharted') return unlocked.includes('uncharted')
   if (group === 'Red Dead') return unlocked.includes('rdr2')
+  if (group === 'Moon Knight') return unlocked.includes('moonknight')
   return true
 }
 

@@ -7,6 +7,7 @@ import { unlockTheme, type ExclusiveTheme } from '../theme'
 const SALT = 'cznnect-redeem-v1:'
 const CODES: Record<string, ExclusiveTheme> = {
   '2875f31b486cae39686871a25ab4f872b36a655e014261f90b0f6e6afefd75c2': 'uncharted',
+  'c4aed9ed16e3ff8c230f0f8781cb327c4cff310a1f33af6bf0100ae70d9cfdcc': 'moonknight',
 }
 
 export type RedeemResult =

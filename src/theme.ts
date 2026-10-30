@@ -1,10 +1,10 @@
-// Standard themes: Light and Dark. Red Dead and Uncharted are exclusive unlocks; Liquid Glass is owner-only.
+// Standard themes: Light and Dark. Red Dead, Uncharted and Moon Knight are exclusive unlocks; Liquid Glass is owner-only.
 // The choice (and which exclusives are unlocked) is saved on this device, so each cousin has their own.
-export type ThemePref = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'glass'
-export type ExclusiveTheme = 'rdr2' | 'uncharted'
+export type ThemePref = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'moonknight' | 'glass'
+export type ExclusiveTheme = 'rdr2' | 'uncharted' | 'moonknight'
 
-export const EXCLUSIVE_THEMES: ExclusiveTheme[] = ['rdr2', 'uncharted']
-const ALL_THEMES: ThemePref[] = ['light', 'dark', 'rdr2', 'uncharted', 'glass']
+export const EXCLUSIVE_THEMES: ExclusiveTheme[] = ['rdr2', 'uncharted', 'moonknight']
+const ALL_THEMES: ThemePref[] = ['light', 'dark', 'rdr2', 'uncharted', 'moonknight', 'glass']
 
 const KEY = 'cznnect-theme'
 const UNLOCKS_KEY = 'cznnect-unlocked-themes'
@@ -92,6 +92,7 @@ const THEME_COLOR: Record<ThemePref, string> = {
   dark: '#111318',
   rdr2: '#171310',
   uncharted: '#e8d9b5',
+  moonknight: '#05070d',
   glass: '#070b16',
 }
 

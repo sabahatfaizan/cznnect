@@ -414,7 +414,25 @@ export default function TreeCanvas({
             }
           }}
         >
-          <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
+          {theme === 'rdr2' ? (
+            <path className={classes.join(' ')} d="M10 0 H122 L132 11 V69 L122 80 H10 L0 69 V11 Z" />
+          ) : theme === 'uncharted' ? (
+            <path className={classes.join(' ')} d="M0 15 L15 0 H117 L132 15 V65 L117 80 H15 L0 65 Z" />
+          ) : (
+            <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
+          )}
+          {theme === 'rdr2' && (
+            <g className="tnode-ornament" pointerEvents="none">
+              <path d="M8 17 V11 L14 5 H118 L124 11 V17 M8 63 V69 L14 75 H118 L124 69 V63" />
+              <path d="M61 5 L66 10 L71 5 M61 75 L66 70 L71 75" />
+            </g>
+          )}
+          {theme === 'uncharted' && (
+            <g className="tnode-ornament" pointerEvents="none">
+              <path d="M7 18 L18 7 H114 L125 18 V62 L114 73 H18 L7 62 Z" />
+              <path d="M66 4 l3 5 -3 5 -3 -5 Z M66 66 l3 5 -3 5 -3 -5 Z" />
+            </g>
+          )}
           {names.lines.map((line, i) => (
             <text key={i} x={NODE_W / 2} y={names.y[i]} textAnchor="middle" className="fill-ink" fontSize={names.size} fontWeight="700">{line}</text>
           ))}

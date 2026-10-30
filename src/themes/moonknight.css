@@ -1,7 +1,6 @@
 /* ==================================================================
-   MOON KNIGHT - "Midnight". A night sky over the desert: near-black blue,
-   moon-white ink, Egyptian gold trim, a crescent hanging in the corner and a
-   scatter of stars. Everything lives under :root[data-theme="moonknight"],
+   MOON KNIGHT - "Ink". Black and white comic night: pure black, bone-white ink,
+   halftone cloud, a crescent, stars and a burst of light. Everything lives under :root[data-theme="moonknight"],
    so no other theme is touched.
    ================================================================== */
 @font-face {
@@ -12,38 +11,36 @@
 }
 
 :root[data-theme="moonknight"] {
-  --page: #05070d;
-  --surface: #0e1424;
-  --surface-2: #161d33;
-  --ink: #f1efe6;
-  --muted: #9aa3b8;
-  --line: #2a2f44;
-  --accent: #ece8d8;
+  --page: #000000;
+  --surface: #0b0b0b;
+  --surface-2: #151515;
+  --ink: #f4f4f4;
+  --muted: #a6a6a6;
+  --line: #2a2a2a;
+  --accent: #f2f2f2;
   --accent-ink: #0a0d16;
-  --accent-soft: #1a2238;
-  --accent-text: #e3c878;
+  --accent-soft: #1c1c1c;
+  --accent-text: #ffffff;
   --ok: #7fd6a4;
   --danger: #ff7a7a;
   --radius-card: 10px;
   --radius-ctl: 8px;
   --radius-avatar: 9999px;
-  --shadow-card: 0 0 0 1px rgb(201 162 74 / 0.14), 0 10px 26px rgb(0 0 0 / 0.55);
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.14), 0 10px 26px rgb(0 0 0 / 0.55);
   --font-heading: "Moonfark", "Cinzel", "Trajan Pro", Georgia, serif;
   --heading-case: uppercase;
   --heading-track: 0.04em;
-  --logo-hi: #fffdf2;
-  --logo-a: #ece8d8;
-  --logo-b: #b8892f;
-  --logo-edge: #05070d;
-  --gold: #c9a24a;
-  --gold-bright: #f0d68a;
+  --logo-hi: #ffffff;
+  --logo-a: #f2f2f2;
+  --logo-b: #9a9a9a;
+  --logo-edge: #000000;
+  --gold: #bdbdbd;
+  --gold-bright: #ffffff;
   color-scheme: dark;
 }
 
-/* ---- the sky: moon glow, desert horizon, stars, and a crescent ---- */
-:root[data-theme="moonknight"] body {
-  background: #05070d;
-}
+/* ---- the sky: ink-black night, halftone cloud, a speckled moon, a crescent and a burst of light ---- */
+:root[data-theme="moonknight"] body { background: #000; }
 :root[data-theme="moonknight"] body::before {
   content: "";
   position: fixed;
@@ -57,42 +54,63 @@
   transform: translateZ(0);
   backface-visibility: hidden;
   background:
-    radial-gradient(1.4px 1.4px at 12% 16%, #fff 55%, transparent 60%),
-    radial-gradient(1px 1px at 27% 8%, #dfe6ff 55%, transparent 60%),
-    radial-gradient(1.6px 1.6px at 41% 24%, #fff 55%, transparent 60%),
-    radial-gradient(1px 1px at 58% 12%, #fff 55%, transparent 60%),
-    radial-gradient(1.2px 1.2px at 69% 31%, #dfe6ff 55%, transparent 60%),
-    radial-gradient(1px 1px at 8% 44%, #fff 55%, transparent 60%),
-    radial-gradient(1.4px 1.4px at 33% 52%, #fff 55%, transparent 60%),
-    radial-gradient(1px 1px at 52% 61%, #dfe6ff 55%, transparent 60%),
-    radial-gradient(1.2px 1.2px at 90% 47%, #fff 55%, transparent 60%),
-    radial-gradient(1px 1px at 76% 72%, #fff 55%, transparent 60%),
-    radial-gradient(1px 1px at 18% 82%, #dfe6ff 55%, transparent 60%),
-    radial-gradient(ellipse 60% 28% at 50% 108%, rgb(201 162 74 / 0.16), transparent 70%),
-    radial-gradient(circle at 88% 7%, rgb(236 232 216 / 0.16), transparent 38%),
-    linear-gradient(180deg, #080c1a 0%, #05070d 60%);
+    /* crescent: a white disc with a black disc bitten out of it */
+    radial-gradient(circle 21px at calc(86% + 9px) calc(8% - 3px), #000 98%, transparent 100%),
+    radial-gradient(circle 25px at 86% 8%, #f4f4f4 98%, transparent 100%),
+    /* stars */
+    radial-gradient(1.4px 1.4px at 11% 14%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 24% 7%, #fff 55%, transparent 60%),
+    radial-gradient(1.6px 1.6px at 38% 21%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 55% 11%, #fff 55%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 67% 29%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 7% 41%, #fff 55%, transparent 60%),
+    radial-gradient(1.4px 1.4px at 31% 49%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 50% 58%, #fff 55%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 92% 44%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 78% 66%, #fff 55%, transparent 60%),
+    radial-gradient(1px 1px at 16% 79%, #fff 55%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 63% 88%, #fff 55%, transparent 60%),
+    /* the full moon, low and cratered, behind everything */
+    radial-gradient(circle 150px at 16% 96%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.06) 70%, transparent 72%),
+    /* ink burst of light rising from the bottom edge */
+    repeating-conic-gradient(from 0deg at 50% 112%, rgb(255 255 255 / 0.07) 0deg 0.7deg, transparent 0.7deg 3.6deg);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
 }
+/* halftone cloud: a dot screen that only shows in a few soft patches, like a printed comic */
 :root[data-theme="moonknight"] body::after {
   content: "";
   position: fixed;
-  top: calc(max(env(safe-area-inset-top), 0px) + 22px);
-  right: 22px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
   z-index: -1;
   pointer-events: none;
-  box-shadow: -9px 4px 0 0 rgb(240 236 220 / 0.7), -9px 4px 14px 1px rgb(240 236 220 / 0.25);
-  transform: rotate(-18deg);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.55) 0 1.1px, transparent 1.5px) 0 0 / 6px 6px,
+    radial-gradient(circle, rgb(255 255 255 / 0.3) 0 0.8px, transparent 1.2px) 3px 3px / 6px 6px;
+  -webkit-mask-image:
+    radial-gradient(ellipse 55% 22% at 85% 14%, #000, transparent 72%),
+    radial-gradient(ellipse 60% 20% at 8% 46%, rgb(0 0 0 / 0.8), transparent 72%),
+    radial-gradient(ellipse 70% 20% at 70% 84%, rgb(0 0 0 / 0.9), transparent 72%);
+  mask-image:
+    radial-gradient(ellipse 55% 22% at 85% 14%, #000, transparent 72%),
+    radial-gradient(ellipse 60% 20% at 8% 46%, rgb(0 0 0 / 0.8), transparent 72%),
+    radial-gradient(ellipse 70% 20% at 70% 84%, rgb(0 0 0 / 0.9), transparent 72%);
+  opacity: 0.5;
 }
 
 /* ---- panels: dark glass with a gold hairline ---- */
 :root[data-theme="moonknight"] .card,
 :root[data-theme="moonknight"] .bd-hero,
 :root[data-theme="moonknight"] .convoy-hero {
-  background: linear-gradient(180deg, rgb(22 29 51 / 0.92), rgb(12 17 32 / 0.96));
-  border: 1px solid rgb(201 162 74 / 0.28);
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgb(240 214 138 / 0.12);
+  background: linear-gradient(180deg, rgb(20 20 20 / 0.92), rgb(8 8 8 / 0.96));
+  border: 1px solid rgb(255 255 255 / 0.28);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgb(255 255 255 / 0.12);
 }
 :root[data-theme="moonknight"] .card { position: relative; }
 :root[data-theme="moonknight"] .card::before {
@@ -107,11 +125,11 @@
   pointer-events: none;
 }
 :root[data-theme="moonknight"] .sheet-panel {
-  background: linear-gradient(180deg, #151c33, #0a0f1e);
-  border-top: 1px solid rgb(201 162 74 / 0.4);
+  background: linear-gradient(180deg, #151515, #050505);
+  border-top: 1px solid rgb(255 255 255 / 0.4);
 }
 :root[data-theme="moonknight"] .sheet-scrim,
-:root[data-theme="moonknight"] .menu-scrim { background: rgb(2 3 8 / 0.72); }
+:root[data-theme="moonknight"] .menu-scrim { background: rgb(0 0 0 / 0.72); }
 
 /* ---- type ---- */
 :root[data-theme="moonknight"] .font-display,
@@ -119,73 +137,73 @@
 :root[data-theme="moonknight"] .menu-item,
 :root[data-theme="moonknight"] .wordmark,
 :root[data-theme="moonknight"] .eyebrow { font-family: var(--font-heading); font-weight: 400; }
-:root[data-theme="moonknight"] h1.font-display { color: #f6f3e6; text-shadow: 0 0 18px rgb(240 214 138 / 0.28); }
+:root[data-theme="moonknight"] h1.font-display { color: #ffffff; text-shadow: 0 0 18px rgb(255 255 255 / 0.28); }
 :root[data-theme="moonknight"] h2.font-display { color: var(--gold-bright); }
 :root[data-theme="moonknight"] .eyebrow { color: var(--gold); letter-spacing: 0.14em; }
 :root[data-theme="moonknight"] .eyebrow::before { content: "\263E\00a0"; }
 :root[data-theme="moonknight"] .label { color: var(--muted); letter-spacing: 0.06em; }
-:root[data-theme="moonknight"] .link { color: var(--gold-bright); text-decoration-color: rgb(201 162 74 / 0.6); }
+:root[data-theme="moonknight"] .link { color: var(--gold-bright); text-decoration-color: rgb(255 255 255 / 0.6); }
 :root[data-theme="moonknight"] .wordmark { letter-spacing: 0.06em; }
 
 /* ---- controls ---- */
 :root[data-theme="moonknight"] .btn { letter-spacing: 0.06em; }
 :root[data-theme="moonknight"] .btn-primary {
-  background: linear-gradient(180deg, #f6f2e2, #cfc9b2);
+  background: linear-gradient(180deg, #ffffff, #cfcfcf);
   color: #0a0d16;
-  border: 1px solid #f0d68a;
-  box-shadow: 0 0 16px rgb(240 214 138 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.7);
+  border: 1px solid #ffffff;
+  box-shadow: 0 0 16px rgb(255 255 255 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.7);
 }
 :root[data-theme="moonknight"] .btn-plain {
-  background: rgb(22 29 51 / 0.6);
+  background: rgb(20 20 20 / 0.6);
   color: var(--ink);
-  border: 1px solid rgb(201 162 74 / 0.4);
+  border: 1px solid rgb(255 255 255 / 0.4);
 }
-:root[data-theme="moonknight"] .btn-plain:hover:not(:disabled) { background: rgb(201 162 74 / 0.14); }
+:root[data-theme="moonknight"] .btn-plain:hover:not(:disabled) { background: rgb(255 255 255 / 0.14); }
 :root[data-theme="moonknight"] .input {
-  background: #090d1a;
-  border: 1px solid #343a55;
+  background: #080808;
+  border: 1px solid #3a3a3a;
   color: var(--ink);
 }
 :root[data-theme="moonknight"] .input:focus {
   border-color: var(--gold);
   outline: none;
-  box-shadow: 0 0 0 2px rgb(201 162 74 / 0.3);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.3);
 }
-:root[data-theme="moonknight"] .seg { background: #0e1424; border: 1px solid #2a2f44; }
+:root[data-theme="moonknight"] .seg { background: #0b0b0b; border: 1px solid #2a2a2a; }
 :root[data-theme="moonknight"] .seg-on {
-  background: #1a2238;
+  background: #1c1c1c;
   border-color: var(--gold);
-  box-shadow: 0 0 14px rgb(201 162 74 / 0.22);
+  box-shadow: 0 0 14px rgb(255 255 255 / 0.22);
 }
 
 /* ---- bottom bar and menu ---- */
 :root[data-theme="moonknight"] .app-nav {
-  background: linear-gradient(180deg, rgb(14 20 36 / 0.97), rgb(5 7 13 / 0.99));
-  border-top: 1px solid rgb(201 162 74 / 0.45);
+  background: linear-gradient(180deg, rgb(10 10 10 / 0.97), rgb(0 0 0 / 0.99));
+  border-top: 1px solid rgb(255 255 255 / 0.45);
   box-shadow: 0 -10px 26px rgb(0 0 0 / 0.6);
 }
-:root[data-theme="moonknight"] .tab { color: #8e97ad; letter-spacing: 0.03em; }
+:root[data-theme="moonknight"] .tab { color: #8c8c8c; letter-spacing: 0.03em; }
 :root[data-theme="moonknight"] .tab-active {
-  background: linear-gradient(180deg, rgb(201 162 74 / 0.2), rgb(201 162 74 / 0.06));
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.06));
   color: var(--gold-bright);
-  border: 1px solid rgb(201 162 74 / 0.5);
-  box-shadow: 0 0 14px rgb(201 162 74 / 0.18);
+  border: 1px solid rgb(255 255 255 / 0.5);
+  box-shadow: 0 0 14px rgb(255 255 255 / 0.18);
 }
 :root[data-theme="moonknight"] .menu-btn {
-  background: #0e1424;
-  border: 1px solid rgb(201 162 74 / 0.5);
+  background: #0b0b0b;
+  border: 1px solid rgb(255 255 255 / 0.5);
   color: var(--gold-bright);
 }
-:root[data-theme="moonknight"] .menu-dot { background: #d6403a; box-shadow: 0 0 0 2px #0e1424; }
+:root[data-theme="moonknight"] .menu-dot { background: #d6403a; box-shadow: 0 0 0 2px #0b0b0b; }
 :root[data-theme="moonknight"] .menu-panel {
-  background: linear-gradient(160deg, #151c33, #080c19);
-  border: 1px solid rgb(201 162 74 / 0.4);
+  background: linear-gradient(160deg, #151515, #050505);
+  border: 1px solid rgb(255 255 255 / 0.4);
 }
 :root[data-theme="moonknight"] .menu-item { letter-spacing: 0.05em; }
-:root[data-theme="moonknight"] .menu-item:hover { background: rgb(201 162 74 / 0.1); }
+:root[data-theme="moonknight"] .menu-item:hover { background: rgb(255 255 255 / 0.1); }
 :root[data-theme="moonknight"] .menu-item-on {
   color: var(--gold-bright);
-  background: rgb(201 162 74 / 0.1);
+  background: rgb(255 255 255 / 0.1);
   box-shadow: inset 3px 0 0 var(--gold);
 }
 :root[data-theme="moonknight"] .menu-badge { background: #d6403a; color: #fff; }
@@ -193,13 +211,13 @@
 
 /* ---- family tree and map ---- */
 :root[data-theme="moonknight"] .family-tree-stage .tnode-rect {
-  fill: #0e1424;
-  stroke: rgb(201 162 74 / 0.55);
+  fill: #0b0b0b;
+  stroke: rgb(255 255 255 / 0.55);
   stroke-width: 1.4;
 }
-:root[data-theme="moonknight"] .family-tree-stage .tnode-me { fill: #1d2644; stroke: var(--gold-bright); stroke-width: 2.2; }
+:root[data-theme="moonknight"] .family-tree-stage .tnode-me { fill: #1f1f1f; stroke: var(--gold-bright); stroke-width: 2.2; }
 :root[data-theme="moonknight"] .family-tree-stage .tnode-sel { stroke: #fff; stroke-width: 3; }
-:root[data-theme="moonknight"] .family-tree-stage .fill-ink { fill: #f1efe6; }
-:root[data-theme="moonknight"] .family-tree-stage .fill-muted { fill: #9aa3b8; }
-:root[data-theme="moonknight"] .map-wrap { border: 1px solid rgb(201 162 74 / 0.5); box-shadow: 0 10px 24px rgb(0 0 0 / 0.55); }
-:root[data-theme="moonknight"] .leaflet-tile-pane { filter: invert(1) hue-rotate(200deg) brightness(0.8) contrast(0.95) saturate(0.55); }
+:root[data-theme="moonknight"] .family-tree-stage .fill-ink { fill: #f4f4f4; }
+:root[data-theme="moonknight"] .family-tree-stage .fill-muted { fill: #a6a6a6; }
+:root[data-theme="moonknight"] .map-wrap { border: 1px solid rgb(255 255 255 / 0.5); box-shadow: 0 10px 24px rgb(0 0 0 / 0.55); }
+:root[data-theme="moonknight"] .leaflet-tile-pane { filter: invert(1) grayscale(1) brightness(0.75) contrast(1.05); }

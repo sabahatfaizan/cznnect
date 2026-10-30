@@ -92,7 +92,7 @@ const THEME_COLOR: Record<ThemePref, string> = {
   dark: '#111318',
   rdr2: '#171310',
   uncharted: '#e8d9b5',
-  moonknight: '#05070d',
+  moonknight: '#000000',
   glass: '#070b16',
 }
 

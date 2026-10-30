@@ -20,8 +20,8 @@ export const ICONS: { id: IconId; label: string; group: string; a: string; b: st
   { id: 'libertalia', label: 'Libertalia', group: 'Uncharted', a: '#ffd36b', b: '#6b3410' },
   { id: 'outlaw', label: 'Outlaw', group: 'Red Dead', a: '#e8603f', b: '#4a0f0a' },
   { id: 'dust', label: 'Dust & Leather', group: 'Red Dead', a: '#dcbd8e', b: '#4a2c17' },
-  { id: 'khonshu', label: 'Khonshu', group: 'Moon Knight', a: '#f2efe3', b: '#1a2238' },
-  { id: 'crescent', label: 'Gold Crescent', group: 'Moon Knight', a: '#e3c878', b: '#3a2a0c' },
+  { id: 'khonshu', label: 'Khonshu', group: 'Moon Knight', a: '#f4f4f4', b: '#111111' },
+  { id: 'crescent', label: 'Crescent', group: 'Moon Knight', a: '#111111', b: '#f4f4f4' },
 ]
 export const ICON_GROUPS = ['Classic', 'Uncharted', 'Red Dead', 'Moon Knight']
 

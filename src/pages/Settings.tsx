@@ -94,7 +94,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         {id === 'icon' && currentIcon ? <img src={currentIcon.src} alt="" width={30} height={30} className="rounded-[22%]" /> : <Icon name={name} size={26} />}
       </span>
       <span className="set-tile-label">{label}</span>
-      <span className="set-tile-hint">{hint}</span>
     </button>
   )
 
@@ -109,12 +108,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
       <button type="button" className="set-redeem" onClick={() => setPanel('redeem')} aria-haspopup="dialog">
         <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>
-        <span className="min-w-0 flex-1 text-left">
-          <span className="set-tile-label block">Redeem code</span>
-          <span className="set-tile-hint block">
-            {unlockedThemes.length > 0 ? `${unlockedThemes.length} exclusive ${unlockedThemes.length === 1 ? 'theme' : 'themes'} unlocked` : 'Unlock exclusive themes'}
-          </span>
-        </span>
+        <span className="set-tile-label flex-1 text-left">Redeem code</span>
         <span aria-hidden="true" className="expander-chevron">›</span>
       </button>
 

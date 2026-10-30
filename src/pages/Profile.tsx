@@ -116,7 +116,6 @@ export default function Profile({ userId }: { userId: string }) {
               Birthday
             </label>
             <input id="p-birthday" type="date" className="input" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
-            <p className="mt-1 text-sm text-muted">Shown to your family on the Birthdays page.</p>
           </div>
           <div>
             <p className="label">Email</p>
@@ -152,7 +151,6 @@ export default function Profile({ userId }: { userId: string }) {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <Avatar value={avatarValue} name={nickname || name} size={64} />
-              <p className="text-sm text-muted">Nothing is uploaded, so it costs no storage. Remember to press Save.</p>
             </div>
           <div role="radiogroup" aria-label="Avatar symbol" className="grid grid-cols-8 gap-1.5">
             {AVATAR_EMOJI.map((em) => (
@@ -209,7 +207,6 @@ export default function Profile({ userId }: { userId: string }) {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="What the family calls you"
             />
-            <p className="mt-1 text-sm text-muted">Shown instead of your name around the app.</p>
           </div>
           <div>
             <label className="label" htmlFor="p-bio">

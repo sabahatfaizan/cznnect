@@ -71,7 +71,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
       <QrCode text={payload} label="Your personal QR code. Another cousin can scan it." />
       <p className="select-all text-center font-mono text-sm font-semibold tracking-wider text-accent-text">{readableCode(payload)}</p>
       <p className="text-center text-sm text-muted">
-        New code in {mm}:{ss}. It refreshes by itself, so keep this screen open while your cousin scans.
+        New code in {mm}:{ss}
       </p>
       {error && (
         <p role="status" className="text-center text-sm font-bold text-danger">

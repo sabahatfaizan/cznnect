@@ -68,7 +68,6 @@ export default function RedeemCard({ isOwner, onRedeemed }: { isOwner: boolean; 
 
   return (
     <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted">Enter an explorer's code to unlock an exclusive theme.</p>
         <form className="flex flex-col gap-3" onSubmit={submit}>
           <label className="sr-only" htmlFor="redeem-code">Redeem code</label>
           <div key={shake} className={`redeem-field ${shake ? 'redeem-shake' : ''} ${state.kind === 'bad' ? 'redeem-bad' : ''}`}>

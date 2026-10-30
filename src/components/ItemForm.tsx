@@ -92,7 +92,6 @@ export default function ItemForm({
             </button>
           ))}
         </div>
-        <p className="mt-1 text-sm text-muted">Points are awarded once when a cousin marks this plan done.</p>
       </div>
 
 

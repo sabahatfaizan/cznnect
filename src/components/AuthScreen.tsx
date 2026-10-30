@@ -66,7 +66,6 @@ export default function AuthScreen() {
       <div className="flex flex-col gap-3">
         <Logo />
         <h1 className="font-display text-3xl font-extrabold leading-tight">Stay connected.</h1>
-        <p className="text-lg text-muted">Your people, your moments, all in one place.</p>
       </div>
 
       <form onSubmit={submit} className="card flex flex-col gap-4 p-5">

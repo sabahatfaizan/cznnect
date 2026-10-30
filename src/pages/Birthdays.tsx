@@ -95,7 +95,6 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="font-display text-2xl font-extrabold">Birthdays</h1>
-        <p className="text-sm text-muted">Never miss a cousin's day.</p>
       </header>
 
       {error && (
@@ -159,7 +158,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
       })}
 
       {loaded && upcoming.length === 0 && !error && (
-        <p className="px-1 text-sm text-muted">No birthdays yet. Add yours in My Profile and ask your cousins to add theirs.</p>
+        <p className="px-1 text-sm text-muted">No birthdays yet.</p>
       )}
 
       {missing.length > 0 && (
@@ -181,7 +180,6 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
               </li>
             ))}
           </ul>
-          {meMissing && <p className="px-1 text-sm text-muted">Your birthday is shown to your family only.</p>}
         </section>
       )}
 
@@ -189,7 +187,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 className="font-display text-lg font-bold">Reminders</h2>
-            <p className="text-sm text-muted">Get a notification on this device when you open the app.</p>
+            <p className="text-sm text-muted">Shown when you open the app.</p>
           </div>
           <button
             type="button"
@@ -224,9 +222,6 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
             ))}
           </div>
         )}
-        <p className="text-xs text-muted">
-          Reminders show when the app is opened. Alerts while the app is closed need a push service, which is not set up yet.
-        </p>
       </section>
     </div>
   )

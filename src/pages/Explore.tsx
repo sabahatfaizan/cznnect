@@ -293,7 +293,6 @@ export default function Explore({ family, userId }: { family: Family; userId: st
       {places.length === 0 && !picking && (
         <div className="card">
           <p className="font-semibold">No places yet.</p>
-          <p className="text-muted">Add somewhere the family has been, or a restaurant you want to try. Everyone in the family sees it and can rate it.</p>
         </div>
       )}
 

@@ -81,7 +81,6 @@ export default function PersonPicker({
       </ul>
 
       {q && shown.length === 0 && <p className="text-muted">No one in the tree matches “{q}”.</p>}
-      {!q && people.length > 40 && <p className="text-sm text-muted">Type a name to search everyone.</p>}
       {!q && people.length === 0 && <p className="text-muted">No one to choose from yet.</p>}
 
       {allowNew && onCreate && (

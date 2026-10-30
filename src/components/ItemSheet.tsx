@@ -138,7 +138,6 @@ export default function ItemSheet({
             {item.done ? ' · Done' : ''}
           </p>
           <p className="mt-1 font-semibold">{item.difficulty[0].toUpperCase() + item.difficulty.slice(1)} · {difficultyPoints(item.difficulty)} points</p>
-          {item.done && <p className="text-sm text-muted">This plan’s reward is recorded once on the family Scoreboard.</p>}
           {item.due_date && !item.done && (
             <p className={state === 'overdue' ? 'font-bold text-danger' : 'text-muted'}>{dueText(item.due_date, today)}</p>
           )}

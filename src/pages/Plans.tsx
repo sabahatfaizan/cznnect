@@ -183,7 +183,6 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold">Plans</h1>
-          <p className="text-sm text-muted">Bucket lists and polls for the family</p>
         </div>
         <button className="btn btn-primary" onClick={() => setFlow(view === 'lists' ? 'item' : 'poll')}>
           {view === 'lists' ? '+ Add' : '+ New poll'}
@@ -299,7 +298,6 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
           {sortedPolls.length === 0 && (
             <div className="card">
               <p className="font-semibold">No polls yet.</p>
-              <p className="text-muted">Start one to decide where to eat, where to go, or when to meet.</p>
             </div>
           )}
           {sortedPolls.map((p) => (

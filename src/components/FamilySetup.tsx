@@ -45,7 +45,6 @@ export default function FamilySetup({ onDone }: { onDone: () => void }) {
 
       <form onSubmit={create} className="card flex flex-col gap-3 p-5">
         <h2 className="font-display text-lg font-bold">Start a family space</h2>
-        <p className="text-sm text-muted">You will get an invite code to share with your cousins.</p>
         <div>
           <label className="label" htmlFor="family-name">
             Family name

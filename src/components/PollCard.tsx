@@ -81,7 +81,6 @@ export default function PollCard({
           {winner.length === 1 ? `Winner: ${winner[0].option.label}` : `Tie: ${winner.map((w) => w.option.label).join(', ')}`}
         </p>
       )}
-      {!poll.closed && <p className="text-sm text-muted">Tap a choice to vote. Tap your choice again to take your vote back.</p>}
 
       {error && (
         <p role="alert" className="text-sm font-bold text-danger">

@@ -154,10 +154,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
                 </div>
               </div>
             ))}
-            <p className="text-sm text-muted">
-              It recolours the logo in the app and the icon for new Home Screen shortcuts. An icon already on your Home Screen
-              keeps its look until you remove it and add Cznnect again.
-            </p>
           </div>
         </Sheet>
       )}

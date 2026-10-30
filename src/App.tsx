@@ -41,10 +41,8 @@ function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () =
         <Logo big />
       </button>
       <div className="card">
-        <p className="eyebrow">Service notice</p>
-        <h1 className="mt-2 font-display text-2xl font-bold">Cznnect is getting an update</h1>
+        <h1 className="font-display text-2xl font-bold">Cznnect is getting an update</h1>
         <p className="mt-3 text-muted">{message}</p>
-        <p className="mt-4 text-sm text-muted">Thanks for your patience.</p>
         {onUnlock && showPinUnlock && (
           <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
             <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>

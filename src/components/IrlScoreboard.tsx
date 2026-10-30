@@ -121,7 +121,7 @@ export default function IrlScoreboard({
         <h2 className="eyebrow mb-2">Recent meetups</h2>
         <div className="card">
           {recent.length === 0 ? (
-            <p className="text-muted">No verified meetups yet. Be the first: start a Convoy with a cousin the next time you meet.</p>
+            <p className="text-muted">No verified meetups yet.</p>
           ) : (
             <ul className="divide-y divide-line">
               {recent.map((m) => (

@@ -35,7 +35,6 @@ export default function Scoreboard({ family, userId }: { family: Family; userId:
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="font-display text-2xl font-extrabold">Scoreboard</h1>
-        <p className="text-sm text-muted">How the family ranks, your badges, and the latest verified meetups.</p>
       </header>
       {error ? (
         <div className="card flex flex-col gap-3">

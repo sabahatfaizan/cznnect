@@ -84,9 +84,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-display text-lg font-bold">Invite your cousins</h2>
-        <p className="text-sm text-muted">
-          They create an account, then enter this code. Only people with the code can join.
-        </p>
         <p className="select-all rounded-[var(--radius-ctl)] border border-dashed border-line bg-surface-2 py-3 text-center font-mono text-2xl font-semibold tracking-[0.25em] text-accent-text">
           {code}
         </p>

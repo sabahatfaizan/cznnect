@@ -121,7 +121,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
       <header className="convoy-hero">
         <span className="convoy-hero-icon" aria-hidden="true"><Icon name="irl" size={28} /></span>
         <div className="min-w-0">
-          <p className="eyebrow">In person</p>
           <h1 className="font-display text-2xl font-extrabold">Convoy</h1>
         </div>
       </header>

@@ -161,7 +161,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="font-display text-xl font-extrabold">Menu</p>
-                <p className="text-xs text-muted">Cznnect navigation</p>
               </div>
             </div>
             <div className="grid gap-1">

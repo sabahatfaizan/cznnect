@@ -103,6 +103,8 @@ export default function TreeCanvas({
   onClear: () => void
 }) {
   const box = useRef<HTMLDivElement>(null)
+  const drawing = useRef<SVGSVGElement>(null)
+  const settle = useRef<number | undefined>(undefined)
   const [size, setSize] = useState({ w: 0, h: 0 })
   const theme = useThemeId()
   const [fontTick, setFontTick] = useState(0)
@@ -231,6 +233,19 @@ export default function TreeCanvas({
     // Only when a new jump is asked for, not on every pan.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.tick])
+
+  // The picture is lifted onto its own layer while it moves, so pan and pinch stay smooth, and let go a moment
+  // after it stops, so the browser redraws it sharp at the new zoom instead of leaving it blurry.
+  useEffect(() => {
+    const el = drawing.current
+    if (!el) return
+    el.style.willChange = 'transform'
+    window.clearTimeout(settle.current)
+    settle.current = window.setTimeout(() => { el.style.willChange = 'auto' }, gliding ? 700 : 260)
+    // Only the view matters here; whether it glides just sets how long to wait.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view])
+  useEffect(() => () => window.clearTimeout(settle.current), [])
 
   const zoomAt = useCallback((cx: number, cy: number, factor: number) => {
     setView((v) => {
@@ -415,6 +430,11 @@ export default function TreeCanvas({
           }}
         >
           {theme === 'rdr2' ? (
+            <path className="tnode-shadow" transform="translate(0 3)" pointerEvents="none" d="M10 0 H122 L132 11 V69 L122 80 H10 L0 69 V11 Z" />
+          ) : theme === 'uncharted' ? (
+            <path className="tnode-shadow" transform="translate(0 3)" pointerEvents="none" d="M0 15 L15 0 H117 L132 15 V65 L117 80 H15 L0 65 Z" />
+          ) : null}
+          {theme === 'rdr2' ? (
             <path className={classes.join(' ')} d="M10 0 H122 L132 11 V69 L122 80 H10 L0 69 V11 Z" />
           ) : theme === 'uncharted' ? (
             <path className={classes.join(' ')} d="M0 15 L15 0 H117 L132 15 V65 L117 80 H15 L0 65 Z" />
@@ -474,13 +494,13 @@ export default function TreeCanvas({
         className="family-tree-stage h-full w-full touch-none select-none overflow-hidden"
       >
         <svg
+          ref={drawing}
           width={layout.width}
           height={layout.height}
           style={{
             transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`,
             transformOrigin: '0 0',
             transition: gliding ? 'transform 0.45s cubic-bezier(.2,.8,.2,1)' : 'none',
-            willChange: 'transform',
             overflow: 'visible',
             display: 'block',
           }}

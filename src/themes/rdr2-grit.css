@@ -8,12 +8,15 @@
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  /* Below the bottom sheets (40), the menu (50) and the unlock card (60), so none of them are darkened. */
+  z-index: 30;
   pointer-events: none;
   background:
     radial-gradient(ellipse at 50% 46%, transparent 42%, rgb(6 2 1 / 0.06) 78%, rgb(4 1 0 / 0.10) 100%),
     linear-gradient(rgb(8 3 2 / 0.02), rgb(8 3 2 / 0.02));
 }
+/* The tree is panned and pinched all the time, so it skips the full-screen overlay to keep every frame cheap. */
+:root[data-theme="rdr2"]:has(.family-tree-stage)::after { display: none; }
 
 /* the sunset scene drifts slowly against the scroll (--rdr-par is set by rdr2-fx.ts) */
 :root[data-theme="rdr2"] body::before {

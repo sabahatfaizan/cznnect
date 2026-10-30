@@ -348,15 +348,14 @@
   border-radius: 3px;
   box-shadow: inset 0 0 0 2px #1b110a, inset 0 0 40px rgb(0 0 0 / 0.5), 0 10px 22px rgb(0 0 0 / 0.55);
 }
-:root[data-theme="rdr2"] .family-tree-stage .root-aura { mix-blend-mode: screen; }
 :root[data-theme="rdr2"] .family-tree-stage .tnode-rect {
   fill: #e6d2a4;
   stroke: #4a3320;
   stroke-width: 2;
   rx: 2px;
   ry: 2px;
-  filter: drop-shadow(0 3px 3px rgb(0 0 0 / 0.55));
 }
+:root[data-theme="rdr2"] .family-tree-stage .tnode-shadow { display: block; fill: rgb(0 0 0 / 0.6); }
 :root[data-theme="rdr2"] .family-tree-stage .tnode-me { fill: #d8b87c; stroke: #8e2a1b; stroke-width: 2.6; }
 :root[data-theme="rdr2"] .family-tree-stage .tnode-sel { stroke: #f0b36a; stroke-width: 3.4; }
 :root[data-theme="rdr2"] .family-tree-stage .fill-ink { fill: #2b1c11; }
@@ -370,7 +369,6 @@
 :root[data-theme="rdr2"] .family-tree-stage .tnode-rect {
   stroke: #3b2114;
   stroke-width: 2.2;
-  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.65));
 }
 :root[data-theme="rdr2"] .family-tree-stage .tnode-me { fill: #d7b77a; stroke: #a52e1d; stroke-width: 3; }
 :root[data-theme="rdr2"] .family-tree-stage .tnode-ornament {

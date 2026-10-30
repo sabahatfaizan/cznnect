@@ -341,8 +341,8 @@
   stroke-width: 1.8;
   rx: 3px;
   ry: 3px;
-  filter: drop-shadow(0 3px 3px rgb(60 35 10 / 0.35));
 }
+:root[data-theme="uncharted"] .family-tree-stage .tnode-shadow { display: block; fill: rgb(70 42 15 / 0.38); }
 :root[data-theme="uncharted"] .family-tree-stage .tnode-me { fill: #efd39d; stroke: #a8431a; stroke-width: 2.6; }
 :root[data-theme="uncharted"] .family-tree-stage .tnode-sel { stroke: #2a1c10; stroke-width: 3.4; }
 :root[data-theme="uncharted"] .family-tree-stage .fill-ink { fill: #2a1c10; }
@@ -355,7 +355,6 @@
 /* Family names: explorer's engraved map cartouches with a double-line frame. */
 :root[data-theme="uncharted"] .family-tree-stage .tnode-rect {
   stroke: #62401f; stroke-width: 2.1;
-  filter: drop-shadow(0 4px 4px rgb(70 42 15 / 0.42));
 }
 :root[data-theme="uncharted"] .family-tree-stage .tnode-me { fill: #efd39d; stroke: #a8431a; stroke-width: 3; }
 :root[data-theme="uncharted"] .family-tree-stage .tnode-ornament {

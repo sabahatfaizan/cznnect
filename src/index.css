@@ -1682,3 +1682,10 @@ input[type="checkbox"] {
   width: 30px;
   height: 30px;
 }
+
+/* Themes with a dotted/ornament line along the top of the bottom bar: push the tabs down so the icons and the
+   active tab's box no longer touch it. */
+:root[data-theme="rdr2"] .app-nav > div,
+:root[data-theme="uncharted"] .app-nav > div {
+  padding-top: 14px !important;
+}

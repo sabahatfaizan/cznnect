@@ -9,6 +9,8 @@ import Authed from './Authed'
 import { isOwnerEmail } from './owner'
 
 const SPLASH_MS = 4500
+// How long the logo takes to zoom away once the app is ready.
+const LEAVE_MS = 700
 const MAINTENANCE_PIN = '4124'
 
 function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () => void }) {
@@ -75,6 +77,22 @@ export default function App() {
   const [held, setHeld] = useState(true)
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null)
   const [pinUnlocked, setPinUnlocked] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [splashGone, setSplashGone] = useState(false)
+  const splashDone = ready && !held
+
+  // When the loading screen has spun twice and the app is ready, the logo zooms away over the app, which settles in
+  // behind it. The splash stays mounted until then, so its spin is never restarted.
+  useEffect(() => {
+    if (!splashDone) return
+    if (prefersReducedMotion()) { setSplashGone(true); return }
+    const root = document.documentElement
+    setLeaving(true)
+    root.dataset.boot = 'in'
+    const gone = setTimeout(() => setSplashGone(true), LEAVE_MS)
+    const settled = setTimeout(() => { delete root.dataset.boot }, LEAVE_MS + 600)
+    return () => { clearTimeout(gone); clearTimeout(settled) }
+  }, [splashDone])
 
   useEffect(() => {
     const id = setTimeout(() => setHeld(false), prefersReducedMotion() ? 1200 : SPLASH_MS)
@@ -109,11 +127,17 @@ export default function App() {
   }, [])
 
   if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
-  if (!ready || held) return <Splash />
   const isOwner = isOwnerEmail(session?.user.email)
-  if (maintenance?.enabled && !isOwner && !pinUnlocked) {
-    return <ServiceNotice message={maintenance.message} onUnlock={() => setPinUnlocked(true)} />
-  }
-  if (!session) return <AuthScreen />
-  return <Authed userId={session.user.id} email={session.user.email ?? ''} />
+  const screen = maintenance?.enabled && !isOwner && !pinUnlocked
+    ? <ServiceNotice message={maintenance.message} onUnlock={() => setPinUnlocked(true)} />
+    : !session
+      ? <AuthScreen />
+      : <Authed userId={session.user.id} email={session.user.email ?? ''} />
+  // One stable list: the app (once ready) and the splash on top of it until its exit has played.
+  return (
+    <>
+      {splashDone && screen}
+      {!splashGone && <Splash leaving={leaving} />}
+    </>
+  )
 }

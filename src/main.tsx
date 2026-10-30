@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './motion.css'
 import './themes/rdr2.css'
 import './themes/rdr2-grit.css'
 import './themes/uncharted.css'

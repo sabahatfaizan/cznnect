@@ -62,7 +62,7 @@ export default function AuthScreen() {
   }
 
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-8 p-6">
+    <div className="auth-screen mx-auto flex min-h-full max-w-md flex-col justify-center gap-8 p-6">
       <div className="flex flex-col gap-3">
         <Logo />
         <h1 className="font-display text-3xl font-extrabold leading-tight">Stay connected.</h1>

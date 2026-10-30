@@ -143,6 +143,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
              panel and scrim until the fade ended. Only the scrim fades, and the panel slides. */
           className={`fixed inset-0 z-50 transition-[visibility] duration-300 ${menuOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'}`}
           aria-hidden={!menuOpen}
+          data-open={menuOpen ? 'true' : 'false'}
         >
           <button
             type="button"
@@ -229,18 +230,20 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>}
           </aside>
         </div>
-        <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
-        {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-        {tab === 'irl' && <Irl family={family} userId={userId} />}
-        {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
-        {tab === 'birthdays' && (
-          <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />
-        )}
-        {tab === 'tree' && <Tree family={family} userId={userId} onExit={() => setTab('home')} />}
-        {tab === 'explore' && <Explore family={family} userId={userId} />}
-        {tab === 'plans' && <Plans family={family} userId={userId} />}
-        {tab === 'me' && <Profile userId={userId} />}
-        {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+        <div key={tab} className="screen-in">
+          <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
+          {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+          {tab === 'irl' && <Irl family={family} userId={userId} />}
+          {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
+          {tab === 'birthdays' && (
+            <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />
+          )}
+          {tab === 'tree' && <Tree family={family} userId={userId} onExit={() => setTab('home')} />}
+          {tab === 'explore' && <Explore family={family} userId={userId} />}
+          {tab === 'plans' && <Plans family={family} userId={userId} />}
+          {tab === 'me' && <Profile userId={userId} />}
+          {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+        </div>
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">

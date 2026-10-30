@@ -1,0 +1,104 @@
+/* ==================================================================
+   Motion. Shared by every theme; themes that animate their own cards (Red Dead, Glass) keep theirs because
+   their selectors are more specific.
+
+   Rules this file follows so it stays cheap on a phone:
+   - only transform and opacity move, so nothing is re-laid-out;
+   - each effect plays once when something arrives, never in a loop (one tiny dot excepted);
+   - "backwards" fill, not "both": after an effect ends, the element goes back to its normal style, so it can
+     still change its own opacity or transform later (dimmed tree nodes, disabled buttons);
+   - a wrapper never fades. A faded ancestor turns off the blur of the glass cards inside it, so wrappers only
+     move and the blocks inside them fade on their own;
+   - everything is switched off when the phone asks for reduced motion.
+   ================================================================== */
+
+:root {
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- loading screen: the logo finishes its spin, then flies toward you as the app appears behind it ---- */
+.splash { z-index: 100; }
+.splash-zoom { display: grid; place-items: center; }
+.splash-leave { pointer-events: none; }
+.splash-leave .splash-zoom {
+  animation: splash-zoom 680ms cubic-bezier(0.55, 0, 0.85, 0.4) forwards;
+  will-change: transform, opacity;
+}
+.splash-leave .copyright { animation: splash-fade 320ms ease-in forwards; }
+@keyframes splash-zoom {
+  0%   { transform: scale(1); opacity: 1; }
+  18%  { transform: scale(0.9); opacity: 1; }   /* a small breath in before the rush */
+  70%  { opacity: 0.7; }
+  100% { transform: scale(9); opacity: 0; }
+}
+@keyframes splash-fade { to { opacity: 0; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---- the app settles in behind the logo (the html tag carries data-boot for about a second) ---- */
+  :root[data-boot] main,
+  :root[data-boot] .auth-screen { animation: boot-in 640ms var(--ease-out) 120ms backwards; }
+  :root[data-boot] .app-nav { animation: boot-nav 520ms var(--ease-out) 240ms backwards; }
+  @keyframes boot-in  { from { opacity: 0; transform: scale(1.05); } }
+  @keyframes boot-nav { from { transform: translate3d(0, 100%, 0); } }
+
+  /* ---- changing screens: the blocks of the new screen rise in one after another ---- */
+  .screen-in > * > * { animation: item-in 420ms var(--ease-out) backwards; }
+  .screen-in > * > *:nth-child(2) { animation-delay: 50ms; }
+  .screen-in > * > *:nth-child(3) { animation-delay: 100ms; }
+  .screen-in > * > *:nth-child(4) { animation-delay: 150ms; }
+  .screen-in > * > *:nth-child(5) { animation-delay: 190ms; }
+  .screen-in > * > *:nth-child(6) { animation-delay: 230ms; }
+  .screen-in > * > *:nth-child(n + 7) { animation-delay: 260ms; }
+  @keyframes item-in { from { opacity: 0; transform: translate3d(0, 14px, 0); } }
+  /* Glass: its blocks hold blur, so they slide without fading and the blur is never switched off. */
+  :root[data-theme="glass"] .screen-in > * > * { animation-name: item-in-glass; }
+  @keyframes item-in-glass { from { transform: translate3d(0, 14px, 0); } }
+
+  /* ---- touch feedback: everything you press gives a little ---- */
+  .btn, .tab, .menu-item, .menu-btn, .seg {
+    transition-property: transform, background-color, border-color, box-shadow, color, opacity, filter;
+    transition-duration: 160ms;
+    transition-timing-function: var(--ease-out);
+  }
+  .btn:active:not(:disabled), .seg:active { transform: scale(0.97); }
+  .tab:active { transform: scale(0.92); }
+  .menu-btn:active { transform: scale(0.92); }
+  .menu-item:active { transform: scale(0.98); }
+  .input { transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
+
+  /* ---- the tab you pick: its icon pops ---- */
+  .tab-active svg { animation: tab-pop 440ms var(--ease-spring) backwards; }
+  @keyframes tab-pop {
+    0%   { transform: scale(0.7) translate3d(0, 3px, 0); }
+    60%  { transform: scale(1.16); }
+    100% { transform: none; }
+  }
+
+  /* ---- the slide-out menu: its rows slide in after the panel starts to move ---- */
+  [data-open="true"] .menu-item { animation: menu-item-in 360ms var(--ease-out) 330ms backwards; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(1) { animation-delay: 70ms; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(2) { animation-delay: 105ms; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(3) { animation-delay: 140ms; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(4) { animation-delay: 175ms; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(5) { animation-delay: 210ms; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(6) { animation-delay: 245ms; }
+  [data-open="true"] .menu-panel .grid > .menu-item:nth-child(n + 7) { animation-delay: 280ms; }
+  @keyframes menu-item-in { from { opacity: 0; transform: translate3d(20px, 0, 0); } }
+
+  /* ---- bottom sheets: the dim layer eases in (its colour, not its opacity, so the sheet's blur stays on) and
+          the sheet rises ---- */
+  .sheet-scrim { animation: scrim-in 220ms ease-out backwards; }
+  .sheet-panel { animation: sheet-up 360ms var(--ease-out) backwards; }
+  @keyframes scrim-in { from { background-color: transparent; } }
+  @keyframes sheet-up { from { transform: translate3d(0, 48px, 0); } }
+
+  /* ---- little things ---- */
+  .menu-dot { animation: dot-pulse 2.4s ease-in-out infinite; }
+  @keyframes dot-pulse { 50% { transform: scale(1.3); } }
+  .menu-badge { animation: badge-pop 420ms var(--ease-spring) backwards; }
+  @keyframes badge-pop { from { transform: scale(0.4); opacity: 0; } }
+  /* the family-tree person you tap */
+  .tnode-sel { transform-box: fill-box; transform-origin: center; animation: node-pop 380ms var(--ease-spring); }
+  @keyframes node-pop { 0% { transform: scale(0.94); } 60% { transform: scale(1.04); } 100% { transform: none; } }
+}

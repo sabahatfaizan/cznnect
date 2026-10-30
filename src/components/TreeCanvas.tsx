@@ -9,9 +9,76 @@ const MAX_K = 2.4
 const READABLE_K = 0.85
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
 
-function clip(text: string, max: number): string {
+type Measure = (text: string, px: number, weight?: number) => number
+
+// How much room names get, per theme. The box is the same size everywhere, but each theme draws it with a
+// different border and font, so the usable width and the largest and smallest type size differ.
+const NAME_FIT: Record<string, { w: number; base: number; min: number }> = {
+  light: { w: 118, base: 15, min: 11.5 },
+  dark: { w: 118, base: 15, min: 11.5 },
+  glass: { w: 118, base: 15, min: 11.5 },
+  rdr2: { w: 116, base: 15, min: 11.5 },
+  uncharted: { w: 114, base: 14.5, min: 11 },
+}
+
+// Longest start of the text that fits, ending in an ellipsis when something was cut.
+function clipToWidth(measure: Measure, text: string, px: number, maxW: number, weight = 400): string {
+  if (measure(text, px, weight) <= maxW) return text
   const chars = Array.from(text)
-  return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : text
+  for (let n = chars.length - 1; n > 0; n--) {
+    const cut = chars.slice(0, n).join('').trimEnd() + '…'
+    if (measure(cut, px, weight) <= maxW) return cut
+  }
+  return '…'
+}
+
+// One line of text: shrink it until it fits, and cut it only if the smallest size still does not.
+function fitLine(measure: Measure, text: string, maxW: number, base: number, min: number, weight = 400): { text: string; size: number } {
+  for (let s = base; s >= min; s -= 0.5) if (measure(text, s, weight) <= maxW) return { text, size: s }
+  return { text: clipToWidth(measure, text, min, maxW, weight), size: min }
+}
+
+// A person's name: one line if it fits at a readable size, otherwise two balanced lines, and only then cut.
+function fitName(measure: Measure, text: string, maxW: number, base: number, min: number): { lines: string[]; size: number } {
+  const name = text.trim()
+  for (let s = base; s >= min; s -= 0.5) if (measure(name, s, 700) <= maxW) return { lines: [name], size: s }
+  const words = name.split(/\s+/)
+  const split = (s: number): { lines: string[]; width: number } | null => {
+    if (words.length < 2) return null
+    let best: string[] | null = null
+    let bestW = Infinity
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' ')
+      const b = words.slice(i).join(' ')
+      const w = Math.max(measure(a, s, 700), measure(b, s, 700))
+      if (w < bestW) { bestW = w; best = [a, b] }
+    }
+    return best ? { lines: best, width: bestW } : null
+  }
+  for (let s = Math.min(base - 1.5, 13.5); s >= min; s -= 0.5) {
+    const two = split(s)
+    if (two && two.width <= maxW) return { lines: two.lines, size: s }
+  }
+  // Still too long: two lines at the smallest size, each cut if it must be.
+  const two = split(min)
+  if (two) return { lines: two.lines.map((l) => clipToWidth(measure, l, min, maxW, 700)), size: min }
+  // One very long word: fill the first line, then the rest on the second.
+  const chars = Array.from(name)
+  let n = chars.length
+  while (n > 1 && measure(chars.slice(0, n).join(''), min, 700) > maxW) n--
+  return { lines: [chars.slice(0, n).join(''), clipToWidth(measure, chars.slice(n).join(''), min, maxW, 700)].filter(Boolean), size: min }
+}
+
+// Follows the app theme so the boxes refit when it changes.
+function useThemeId(): string {
+  const [id, setId] = useState(() => document.documentElement.dataset.theme ?? 'light')
+  useEffect(() => {
+    const el = document.documentElement
+    const obs = new MutationObserver(() => setId(el.dataset.theme ?? 'light'))
+    obs.observe(el, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+  return id
 }
 
 // The drawn tree. Drag to move, pinch or use the buttons to zoom, tap a person to open them.
@@ -37,6 +104,33 @@ export default function TreeCanvas({
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
+  const theme = useThemeId()
+  const [fontTick, setFontTick] = useState(0)
+  // Names are measured with the font the theme really draws them in; refit once web fonts have loaded.
+  useEffect(() => {
+    let live = true
+    void document.fonts?.ready.then(() => { if (live) setFontTick((n) => n + 1) })
+    return () => { live = false }
+  }, [theme])
+  const fit = NAME_FIT[theme] ?? NAME_FIT.light
+  const measure = useMemo<Measure>(() => {
+    const ctx = document.createElement('canvas').getContext('2d')
+    const family = box.current ? getComputedStyle(box.current).fontFamily : 'system-ui, sans-serif'
+    const cache = new Map<string, number>()
+    return (text, px, weight = 400) => {
+      if (!ctx) return Array.from(text).length * px * 0.6
+      const key = `${weight}|${px}|${text}`
+      let w = cache.get(key)
+      if (w === undefined) {
+        ctx.font = `${weight} ${px}px ${family}`
+        w = ctx.measureText(text).width
+        cache.set(key, w)
+      }
+      return w
+    }
+    // fontTick and theme are the reasons to measure again: the font behind `family` may have changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, fontTick])
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 })
   // True only while the view glides to a new place (Me, Fit, search). Dragging and pinching stay instant.
   const [gliding, setGliding] = useState(false)
@@ -292,6 +386,18 @@ export default function TreeCanvas({
       if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
       if (p.is_deceased) classes.push('tnode-gone')
       const dim = kin ? !kin.has(n.id) : false
+      // Name, nickname and year share an 80-high box: a two-line name moves everything up and shrinks the year.
+      const nameFit = fitName(measure, p.full_name, fit.w, fit.base, fit.min)
+      const nick = p.nickname ? fitLine(measure, `“${p.nickname}”`, fit.w, 13, 10.5) : null
+      const two = nameFit.lines.length > 1
+      const names = {
+        lines: nameFit.lines,
+        size: nameFit.size,
+        y: two ? (nick ? [24, 39] : [28, 44]) : [nick ? 30 : 36],
+        nickY: two ? 55 : 50,
+        yearY: two ? (nick ? 71 : 66) : nick ? 69 : 60,
+        yearSize: two ? 11.5 : 12.5,
+      }
       return (
         <g
           key={n.id}
@@ -309,9 +415,11 @@ export default function TreeCanvas({
           }}
         >
           <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
-          <text x={NODE_W / 2} y={p.nickname ? 30 : 36} textAnchor="middle" className="fill-ink" fontSize="15" fontWeight="700">{clip(p.full_name, 13)}</text>
-          {p.nickname && <text x={NODE_W / 2} y={50} textAnchor="middle" className="fill-muted" fontSize="13">{`“${clip(p.nickname, 14)}”`}</text>}
-          <text x={NODE_W / 2} y={p.nickname ? 69 : 60} textAnchor="middle" className="fill-muted" fontSize="12.5">
+          {names.lines.map((line, i) => (
+            <text key={i} x={NODE_W / 2} y={names.y[i]} textAnchor="middle" className="fill-ink" fontSize={names.size} fontWeight="700">{line}</text>
+          ))}
+          {nick && <text x={NODE_W / 2} y={names.nickY} textAnchor="middle" className="fill-muted" fontSize={nick.size}>{nick.text}</text>}
+          <text x={NODE_W / 2} y={names.yearY} textAnchor="middle" className="fill-muted" fontSize={names.yearSize}>
             {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `† b. ${year}` : '†') : year ? `b. ${year}` : ''}
           </text>
         </g>
@@ -319,7 +427,7 @@ export default function TreeCanvas({
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId],
+    [layout, people, kin, litId, selectedId, meId, measure, fit],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

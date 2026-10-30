@@ -10,7 +10,7 @@ import { isOwnerEmail } from './owner'
 
 const SPLASH_MS = 4500
 // How long the logo takes to zoom away once the app is ready.
-const LEAVE_MS = 700
+const LEAVE_MS = 760
 const MAINTENANCE_PIN = '4124'
 
 function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () => void }) {

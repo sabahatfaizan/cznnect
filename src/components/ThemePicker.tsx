@@ -17,7 +17,7 @@ export default function ThemePicker({
 }) {
   const visible = THEMES.filter((t) => {
     if (t.id === 'glass') return isOwner
-    if (t.id === 'rdr2' || t.id === 'uncharted' || t.id === 'moonknight') return unlocked.includes(t.id)
+    if (t.id === 'rdr2' || t.id === 'uncharted' || t.id === 'moonknight' || t.id === 'moonpaper') return unlocked.includes(t.id)
     return true
   })
 

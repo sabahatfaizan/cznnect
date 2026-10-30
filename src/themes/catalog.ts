@@ -22,8 +22,12 @@ export const THEMES: ThemeMeta[] = [
     preview: { page: '#14251f', surface: '#203b31', ink: '#e9f3df', muted: '#a9c2aa', accent: '#d5b76a', soft: '#354b35', border: '#4c6850' },
   },
   {
-    id: 'moonknight', label: 'Moon Knight', hint: 'Ink-black comic night', badge: 'Exclusive',
+    id: 'moonknight', label: 'Moon Knight Ink', hint: 'Ink-black comic night', badge: 'Exclusive',
     preview: { page: '#000000', surface: '#0b0b0b', ink: '#f4f4f4', muted: '#a6a6a6', accent: '#ffffff', soft: '#1c1c1c', border: '#3a3a3a' },
+  },
+  {
+    id: 'moonpaper', label: 'Moon Knight Paper', hint: 'Black ink on white newsprint', badge: 'Exclusive',
+    preview: { page: '#f7f7f5', surface: '#ffffff', ink: '#0a0a0a', muted: '#5c5c5c', accent: '#0a0a0a', soft: '#e9e9e6', border: '#0a0a0a' },
   },
   {
     id: 'glass', label: 'Liquid Glass', hint: 'Glass-inspired finish', badge: 'Owner',

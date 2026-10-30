@@ -1,10 +1,10 @@
 // Standard themes: Light and Dark. Red Dead, Uncharted and Moon Knight are exclusive unlocks; Liquid Glass is owner-only.
 // The choice (and which exclusives are unlocked) is saved on this device, so each cousin has their own.
-export type ThemePref = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'moonknight' | 'glass'
-export type ExclusiveTheme = 'rdr2' | 'uncharted' | 'moonknight'
+export type ThemePref = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'moonknight' | 'moonpaper' | 'glass'
+export type ExclusiveTheme = 'rdr2' | 'uncharted' | 'moonknight' | 'moonpaper'
 
-export const EXCLUSIVE_THEMES: ExclusiveTheme[] = ['rdr2', 'uncharted', 'moonknight']
-const ALL_THEMES: ThemePref[] = ['light', 'dark', 'rdr2', 'uncharted', 'moonknight', 'glass']
+export const EXCLUSIVE_THEMES: ExclusiveTheme[] = ['rdr2', 'uncharted', 'moonknight', 'moonpaper']
+const ALL_THEMES: ThemePref[] = ['light', 'dark', 'rdr2', 'uncharted', 'moonknight', 'moonpaper', 'glass']
 
 const KEY = 'cznnect-theme'
 const UNLOCKS_KEY = 'cznnect-unlocked-themes'
@@ -16,7 +16,10 @@ const isExclusive = (t: string): t is ExclusiveTheme => (EXCLUSIVE_THEMES as str
 export function getUnlockedThemes(): ExclusiveTheme[] {
   try {
     const saved = JSON.parse(localStorage.getItem(UNLOCKS_KEY) || '[]')
-    return (Array.isArray(saved) ? saved : []).filter(isExclusive)
+    const list = (Array.isArray(saved) ? saved : []).filter(isExclusive)
+    // The Moon Knight code unlocks both of its looks (Ink and Paper).
+    if (list.includes('moonknight') && !list.includes('moonpaper')) list.push('moonpaper')
+    return list
   } catch {
     return []
   }
@@ -93,6 +96,7 @@ const THEME_COLOR: Record<ThemePref, string> = {
   rdr2: '#171310',
   uncharted: '#e8d9b5',
   moonknight: '#000000',
+  moonpaper: '#f7f7f5',
   glass: '#070b16',
 }
 

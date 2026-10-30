@@ -278,10 +278,33 @@ export default function Explore({ family, userId }: { family: Family; userId: st
             pin={pin}
             focus={focus}
           />
-          <p className="text-sm text-muted">
-            Round = place, square = restaurant. Filled = been there, hollow = want to go.
-            {places.length > 0 && shown.length === 0 ? ' Nothing matches your filters.' : ''}
-          </p>
+          <section className="card !p-3" aria-label="Map legend">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="font-display text-sm font-extrabold">Map key</h2>
+              <span className="text-xs text-muted">Your family, on the map</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+              <div className="flex items-center gap-2">
+                <span className="pin pin-round pin-been !static !block shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium">Place visited</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="pin pin-sq pin-been !static !block shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium">Restaurant visited</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="pin pin-round pin-want !static !block shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium">Place to explore</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="pin pin-sq pin-want !static !block shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium">Restaurant to try</span>
+              </div>
+            </div>
+            {places.length > 0 && shown.length === 0 && (
+              <p className="mt-3 border-t border-line pt-3 text-sm font-semibold text-muted">No places match these filters. Try changing your selection.</p>
+            )}
+          </section>
         </>
       )}
 

@@ -42,7 +42,7 @@ export default function QrScanner({ onText }: { onText: (text: string) => void }
         const name = e instanceof DOMException ? e.name : ''
         setProblem(
           name === 'NotAllowedError' || name === 'SecurityError'
-            ? 'Camera access was blocked. Allow the camera for this site in your browser settings, or type the code below.'
+            ? 'Camera access was blocked. Allow the camera for Cznnect (in your phone\'s app settings, or the browser\'s site settings), or type the code below.'
             : name === 'NotFoundError'
               ? 'No camera was found. Type the code below instead.'
               : 'Could not start the camera. Type the code below instead.',

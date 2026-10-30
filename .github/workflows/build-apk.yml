@@ -45,6 +45,27 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: Allow the camera in the APK
+        # Capacitor's generated manifest has no camera permission, so Android refuses every camera request
+        # (the QR scanner in Convoy) before the app can even ask. Declare it, and mark the camera optional so
+        # the app still installs on devices without one.
+        run: |
+          python3 - <<'PY'
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          lines = [
+              '<uses-permission android:name="android.permission.CAMERA" />',
+              '<uses-feature android:name="android.hardware.camera" android:required="false" />',
+              '<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />',
+          ]
+          need = [l for l in lines if l.split('"')[1] not in s]
+          if need:
+              s = s.replace('<application', '\n    '.join(need) + '\n\n    <application', 1)
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+          grep -n "uses-permission\|uses-feature" android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.CAMERA" android/app/src/main/AndroidManifest.xml
+
       - name: Build debug APK
         run: cd android && ./gradlew assembleDebug
 

@@ -50,6 +50,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   const [view, setView] = useState<View>('map')
   const [kind, setKind] = useState<KindFilter>('all')
   const [state, setState] = useState<StatusFilter>('all')
+  const [visitedBy, setVisitedBy] = useState('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [focus, setFocus] = useState<{ lat: number; lng: number; tick: number } | null>(null)
@@ -100,7 +101,12 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   }, [])
 
   const byPlace = useMemo(() => groupRatings(ratings), [ratings])
-  const shown = useMemo(() => filterPlaces(places, { kind, status: state, query }), [places, kind, state, query])
+  // A cousin's rating is the existing signal that they have personally been to a place.
+  const shown = useMemo(() => {
+    const filtered = filterPlaces(places, { kind, status: state, query })
+    if (visitedBy === 'all') return filtered
+    return filtered.filter((p) => byPlace.get(p.id)?.some((r) => r.user_id === visitedBy))
+  }, [places, kind, state, query, visitedBy, byPlace])
   const selected = selectedId ? (places.find((p) => p.id === selectedId) ?? null) : null
 
   // If a place was removed by someone else while its card was open, close the card.
@@ -225,6 +231,24 @@ export default function Explore({ family, userId }: { family: Family; userId: st
                 {s.label}
               </button>
             ))}
+          </div>
+
+          <div>
+            <label className="label" htmlFor="ex-visited-by">See where a cousin has been</label>
+            <select
+              id="ex-visited-by"
+              className="input"
+              value={visitedBy}
+              onChange={(e) => setVisitedBy(e.target.value)}
+            >
+              <option value="all">Everyone · all saved places</option>
+              {[...names.entries()]
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .map(([id, name]) => (
+                  <option key={id} value={id}>{id === userId ? 'You' : name}</option>
+                ))}
+            </select>
+            <p className="mt-1 text-xs text-muted">Shows places that cousin has rated, as a record of places they’ve been.</p>
           </div>
 
           <div role="tablist" aria-label="How to view places" className="grid grid-cols-2 gap-2">

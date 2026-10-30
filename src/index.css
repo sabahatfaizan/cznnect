@@ -1615,24 +1615,24 @@ input[type="checkbox"] {
 }
 
 
-/* Bottom navigation: readable frosted-glass surface across every theme.
-   Keep the page artwork softly blurred behind it without letting it compete
-   with labels or icons. The solid fallback also works in older WebViews. */
-.app-nav {
-  background: color-mix(in srgb, var(--surface) 94%, transparent) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(165%);
-  backdrop-filter: blur(24px) saturate(165%);
-  border-top-color: color-mix(in srgb, var(--line) 85%, transparent) !important;
-  box-shadow: 0 -8px 28px rgb(0 0 0 / 0.08);
-  isolation: isolate;
+/* Main slide-out menu: stronger frosted surface in every theme.
+   Keep the selected theme's palette, but prevent the page artwork from
+   showing through the menu and competing with its labels. */
+.menu-panel {
+  background: color-mix(in srgb, var(--surface) 96%, transparent) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(165%);
+  backdrop-filter: blur(26px) saturate(165%);
+  border-color: color-mix(in srgb, var(--line) 88%, transparent) !important;
+  box-shadow: -12px 0 36px rgb(0 0 0 / 0.18);
 }
-:root[data-theme="glass"] .app-nav {
-  background: rgb(10 16 32 / 0.88) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  backdrop-filter: blur(30px) saturate(180%);
-  border-top-color: rgb(255 255 255 / 0.18) !important;
-  box-shadow: 0 -12px 34px rgb(0 0 0 / 0.32), inset 0 1px 0 rgb(255 255 255 / 0.12);
+:root[data-theme="glass"] .menu-panel {
+  background: rgb(10 16 32 / 0.96) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(175%);
+  backdrop-filter: blur(30px) saturate(175%);
+  border-color: rgb(255 255 255 / 0.2) !important;
+  box-shadow: -16px 0 42px rgb(0 0 0 / 0.42), inset 0 1px 0 rgb(255 255 255 / 0.12);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .app-nav { background: var(--surface) !important; }
+  .menu-panel { background: var(--surface) !important; }
+  :root[data-theme="glass"] .menu-panel { background: rgb(10 16 32 / 0.98) !important; }
 }

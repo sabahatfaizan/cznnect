@@ -213,25 +213,38 @@
   background: linear-gradient(160deg, #151515, #050505);
   border: 1px solid rgb(255 255 255 / 0.4);
 }
-:root[data-theme="moonknight"] .menu-item { letter-spacing: 0.05em; }
-:root[data-theme="moonknight"] .menu-item:hover { background: rgb(255 255 255 / 0.1); }
-:root[data-theme="moonknight"] .menu-item-on {
+:root[data-theme="moonknight"] .menu-item {
   position: relative;
-  padding-left: 2.6rem;
+  min-height: 3.25rem;
+  padding: 0.75rem 0.9rem 0.75rem 1rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.025);
+  color: #f4f4f4;
+  letter-spacing: 0.05em;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+:root[data-theme="moonknight"] .menu-item:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+:root[data-theme="moonknight"] .menu-item-on {
+  border-color: rgb(255 255 255 / 0.24);
+  background: rgb(255 255 255 / 0.055);
   color: #ffffff;
-  background: transparent !important;
-  box-shadow: none !important;
+  box-shadow: none;
 }
 :root[data-theme="moonknight"] .menu-item-on::before {
   content: "";
   position: absolute;
-  left: 12px;
+  left: -1px;
   top: 50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  box-shadow: -5px 3px 0 0 #ffffff;
-  transform: translate(5px, -8px) rotate(-18deg);
+  width: 13px;
+  height: 72%;
+  min-height: 25px;
+  transform: translateY(-50%);
+  border: 1.5px solid #ffffff;
+  border-right-color: transparent;
+  border-radius: 100% 0 0 100% / 50% 0 0 50%;
   pointer-events: none;
 }
 :root[data-theme="moonknight"] .menu-badge { background: #d6403a; color: #fff; }

@@ -2,7 +2,7 @@
    MOON KNIGHT - comic panels. Loaded after moonknight.css and moonpaper.css and shared by both (Ink and Paper).
    The page background is left exactly as those themes draw it; this file only restyles the interface into inked
    comic panels: thick borders, hard offset shadows, halftone shading in a corner, caption boxes for labels,
-   buttons that stamp down when pressed, and a small rooftop skyline on the bottom bar.
+   buttons that stamp down when pressed.
    Only these two themes are touched (the selector :root[data-theme^="moon"] matches moonknight and moonpaper).
    ================================================================== */
 
@@ -99,22 +99,8 @@
 }
 :root[data-theme^="moon"] .seg-on small { color: inherit; }
 
-/* ---- bottom bar: it stands on a rooftop skyline ---- */
+/* ---- bottom bar ---- */
 :root[data-theme^="moon"] .app-nav { border-top: 3px solid var(--mc-line); }
-:root[data-theme^="moon"] .app-nav::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  height: 28px;
-  background-repeat: repeat-x;
-  background-position: left bottom;
-  background-size: auto 28px;
-  pointer-events: none;
-}
-:root[data-theme="moonknight"] .app-nav::before { background-image: url("./moon-skyline-ink.svg"); }
-:root[data-theme="moonpaper"] .app-nav::before { background-image: url("./moon-skyline-paper.svg"); }
 :root[data-theme="moonpaper"] .app-nav { background: #ffffff; }
 :root[data-theme^="moon"] .tab-active {
   background: var(--mc-pop);

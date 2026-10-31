@@ -117,7 +117,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
       </button>
 
       <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('password')} aria-haspopup="dialog">
-        <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>
+        <span className="set-tile-icon" aria-hidden="true"><Icon name="lock" size={22} /></span>
         <span className="set-tile-label flex-1 text-left">Change password</span>
         <span aria-hidden="true" className="expander-chevron">›</span>
       </button>

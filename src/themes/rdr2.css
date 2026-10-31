@@ -230,8 +230,8 @@
   pointer-events: none;
 }
 :root[data-theme="rdr2"] .tab {
-  font-size: 0.64rem;
-  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #bfa57d;
   border-radius: 2px;

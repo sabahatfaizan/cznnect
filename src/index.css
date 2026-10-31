@@ -1574,16 +1574,16 @@ input[type="checkbox"] {
   padding-bottom: 4px;
 }
 .app-nav > div {
-  padding: 3px 6px;
+  padding: 6px 6px;
 }
 .app-nav .tab {
-  min-height: 44px;
-  gap: 1px;
-  font-size: 0.625rem;
+  min-height: 58px;
+  gap: 3px;
+  font-size: 0.75rem;
 }
 .app-nav .tab svg {
-  width: 19px;
-  height: 19px;
+  width: 25px;
+  height: 25px;
 }
 .menu-panel {
   top: max(8px, env(safe-area-inset-top));
@@ -1594,7 +1594,7 @@ input[type="checkbox"] {
   padding-bottom: 4px;
 }
 :root[data-theme="glass"] .app-nav > div {
-  padding: 3px 6px;
+  padding: 6px 6px;
 }
 
 
@@ -1610,13 +1610,13 @@ input[type="checkbox"] {
   padding-bottom: var(--app-bottom-safe) !important;
 }
 .app-nav > div {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
 .app-nav .tab {
-  min-height: 44px;
-  gap: 0;
-  font-size: 0.65rem;
+  min-height: 58px;
+  gap: 3px;
+  font-size: 0.75rem;
 }
 
 
@@ -1632,12 +1632,12 @@ input[type="checkbox"] {
   gap: 2px;
 }
 :root[data-theme="glass"] .app-nav .tab {
-  min-height: 48px;
-  font-size: 0.68rem;
+  min-height: 54px;
+  font-size: 0.72rem;
 }
 :root[data-theme="glass"] .app-nav .tab svg {
-  width: 21px;
-  height: 21px;
+  width: 24px;
+  height: 24px;
 }
 /* A blur inside the bar's own blur does nothing but cost speed on phones. */
 :root[data-theme="glass"] .app-nav .tab-active {

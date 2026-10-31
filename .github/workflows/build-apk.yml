@@ -45,6 +45,13 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: Use the Cznnect app icon
+        # Capacitor's generated project ships its own default launcher icon. Replace it with the Cznnect mark
+        # (android-icons/res holds the legacy PNGs plus the adaptive icon's background and foreground layers).
+        run: |
+          cp -r android-icons/res/. android/app/src/main/res/
+          cat android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+
       - name: Allow the camera in the APK
         # Capacitor's generated manifest has no camera permission, so Android refuses every camera request
         # (the QR scanner in Convoy) before the app can even ask. Declare it, and mark the camera optional so

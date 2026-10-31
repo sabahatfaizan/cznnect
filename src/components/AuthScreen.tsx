@@ -105,29 +105,43 @@ export default function AuthScreen() {
         </div>
 
         <div>
-          <div className="flex items-baseline justify-between">
-            <label className="label" htmlFor="password">
-              Password
-            </label>
+          <label className="label" htmlFor="password">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              className="input pr-12"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
+              minLength={6}
+              required
+            />
             <button
               type="button"
-              className="min-h-8 px-1 text-sm font-bold text-accent-text underline underline-offset-2"
+              className="absolute inset-y-0 right-0 grid w-12 place-items-center text-muted"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
               aria-pressed={showPassword}
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? 'Hide' : 'Show'}
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                {showPassword ? (
+                  <>
+                    <path d="M3 3l18 18" />
+                    <path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4.1M6.6 6.6A16.6 16.6 0 0 0 2.5 12S6 19 12 19a9.6 9.6 0 0 0 4.2-1" />
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7S2.5 12 2.5 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </>
+                )}
+              </svg>
             </button>
           </div>
-          <input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
-            minLength={6}
-            required
-          />
         </div>
 
         {msg && (

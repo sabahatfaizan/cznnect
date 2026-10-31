@@ -210,20 +210,7 @@
 :root[data-theme="moonknight"] .menu-item-on {
   color: #ffffff;
   background: rgb(255 255 255 / 0.1);
-  box-shadow: none;
-  position: relative;
-}
-:root[data-theme="moonknight"] .menu-item-on::before {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 50%;
-  width: 26px;
-  height: 26px;
-  margin-top: -13px;
-  border-radius: 50%;
-  box-shadow: inset 8px 0 0 0 #ffffff;
-  pointer-events: none;
+  box-shadow: inset 4px 0 0 #ffffff;
 }
 :root[data-theme="moonknight"] .menu-badge { background: #d6403a; color: #fff; }
 :root[data-theme="moonknight"] .screen-banner { display: none; }
@@ -256,6 +243,3 @@
   transform: translate(6.9px, -6.8px) rotate(-18deg);
   pointer-events: none;
 }
-
-/* room on the left for the crescent marker */
-:root[data-theme^="moon"] .menu-item { padding-left: 1.3rem; }

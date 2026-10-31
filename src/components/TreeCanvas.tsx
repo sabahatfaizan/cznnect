@@ -460,7 +460,7 @@ export default function TreeCanvas({
           ))}
           {nick && <text x={NODE_W / 2} y={names.nickY} textAnchor="middle" className="fill-muted" fontSize={nick.size}>{nick.text}</text>}
           <text x={NODE_W / 2} y={names.yearY} textAnchor="middle" className="fill-muted" fontSize={names.yearSize}>
-            {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `† b. ${year}` : '†') : year ? `b. ${year}` : ''}
+            {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `b. ${year}` : '') : year ? `b. ${year}` : ''}
           </text>
         </g>
       )

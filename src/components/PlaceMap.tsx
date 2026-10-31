@@ -7,6 +7,21 @@ type Spot = { lat: number; lng: number }
 
 const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
+// Backup basemap (plain OpenStreetMap pictures), used when the vector map does not load.
+const RASTER_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+}
+
 // OpenFreeMap vector basemap with MapLibre. Saved places stay interactive:
 // round for places, square for restaurants, filled for visited, hollow for wanted.
 export default function PlaceMap({
@@ -57,9 +72,25 @@ export default function PlaceMap({
     })
     map.current = m
 
+    // If the vector style fails or is too slow, switch to the backup basemap so the map is never blank.
+    let usedBackup = false
+    const useBackup = () => {
+      if (usedBackup) return
+      usedBackup = true
+      m.setStyle(RASTER_STYLE)
+    }
+    const slow = window.setTimeout(() => {
+      if (!m.isStyleLoaded()) useBackup()
+    }, 7000)
+    m.on('error', () => {
+      if (!m.isStyleLoaded()) useBackup()
+    })
+    m.on('load', () => window.clearTimeout(slow))
+
     const ro = new ResizeObserver(() => m.resize())
     ro.observe(el)
     return () => {
+      window.clearTimeout(slow)
       ro.disconnect()
       markers.current.forEach((marker) => marker.remove())
       markers.current.clear()

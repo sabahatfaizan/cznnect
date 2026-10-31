@@ -7,10 +7,11 @@ import { ICONS, ICON_GROUPS, getIconPref, iconGroupAvailable, renderIcon, setIco
 import { isOwnerEmail } from '../owner'
 import ThemePicker from '../components/ThemePicker'
 import RedeemCard from '../components/RedeemCard'
+import ChangePassword from '../components/ChangePassword'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
 
-type Panel = 'family' | 'theme' | 'icon' | 'redeem'
+type Panel = 'family' | 'theme' | 'icon' | 'redeem' | 'password'
 
 // Picking a theme also picks a matching home-screen/browser icon. Exclusive themes
 // choose one of their own unlocked icon variants; the user can still change it manually.
@@ -115,6 +116,12 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         <span aria-hidden="true" className="expander-chevron">›</span>
       </button>
 
+      <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('password')} aria-haspopup="dialog">
+        <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>
+        <span className="set-tile-label flex-1 text-left">Change password</span>
+        <span aria-hidden="true" className="expander-chevron">›</span>
+      </button>
+
       <p className="text-center text-xs text-muted" aria-label="App build version">Build {buildNumber}{buildCommit ? ` · ${buildCommit}` : ''}</p>
 
       {panel === 'family' && isFamilyOwner && (
@@ -175,6 +182,12 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
               </div>
             ))}
           </div>
+        </Sheet>
+      )}
+
+      {panel === 'password' && (
+        <Sheet title="Change password" onClose={() => setPanel(null)}>
+          <ChangePassword email={email} onDone={() => setPanel(null)} />
         </Sheet>
       )}
 

@@ -130,12 +130,12 @@ export default function Music() {
         </div>
       </div>
 
-      <ListenTogether getAudio={() => audioRef.current} current={current} />
-
       <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
         + Add songs from your phone
         <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
       </label>
+
+      <ListenTogether getAudio={() => audioRef.current} current={current} />
 
       {tracks.length === 0 ? (
         <p className="text-center text-xs text-muted">Songs stay on this device and are cleared when you close the app.</p>

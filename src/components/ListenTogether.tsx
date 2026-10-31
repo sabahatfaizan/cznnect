@@ -28,6 +28,7 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
   const [progress, setProgress] = useState(0)
   const [title, setTitle] = useState('')
   const [needTap, setNeedTap] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const me = useRef(newId())
   const channel = useRef<RealtimeChannel | null>(null)
@@ -254,17 +255,24 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
   }
   return (
     <div className={box}>
-      <div className="font-semibold">Listen together</div>
-      <p className="mb-3 text-sm text-muted">Play a song on everyone’s phone at once. Nothing is saved or uploaded.</p>
-      <button className="btn btn-primary w-full" disabled={!current} onClick={startHost}>
-        {current ? `Host “${current.name}”` : 'Pick a song to host'}
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
+        <span className="font-semibold">Listen together</span>
+        <span aria-hidden="true" className={`text-lg leading-none text-muted transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
       </button>
-      <div className="mt-3 flex gap-2">
-        <input className="input !w-28 text-center font-bold uppercase tracking-widest" maxLength={4} placeholder="CODE" value={typed}
-          onChange={(e) => setTyped(e.target.value.replace(/[^a-zA-Z]/g, ''))} aria-label="Room code" />
-        <button className="btn btn-plain flex-1" onClick={startGuest}>Join</button>
-      </div>
-      {status && <p className="mt-2 text-sm text-danger">{status}</p>}
+      {open && (
+        <div className="mt-2">
+          <p className="mb-3 text-sm text-muted">Play a song on everyone’s phone at once. Nothing is saved or uploaded.</p>
+          <button className="btn btn-primary w-full" disabled={!current} onClick={startHost}>
+            {current ? `Host “${current.name}”` : 'Pick a song to host'}
+          </button>
+          <div className="mt-3 flex gap-2">
+            <input className="input !w-28 text-center font-bold uppercase tracking-widest" maxLength={4} placeholder="CODE" value={typed}
+              onChange={(e) => setTyped(e.target.value.replace(/[^a-zA-Z]/g, ''))} aria-label="Room code" />
+            <button className="btn btn-plain flex-1" onClick={startGuest}>Join</button>
+          </div>
+          {status && <p className="mt-2 text-sm text-danger">{status}</p>}
+        </div>
+      )}
     </div>
   )
 }

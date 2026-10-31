@@ -121,13 +121,6 @@
   border-radius: 4px;
   box-shadow: -6px 6px 0 var(--mc-soft);
 }
-:root[data-theme^="moon"] .menu-item { border-radius: 3px; }
-:root[data-theme^="moon"] .menu-item-on {
-  background: var(--mc-pop);
-  color: var(--mc-pop-ink);
-  box-shadow: none;
-}
-:root[data-theme^="moon"] .menu-item-on svg { color: inherit; }
 
 /* ---- sheets rise with a torn top edge ---- */
 :root[data-theme^="moon"] .sheet-panel {

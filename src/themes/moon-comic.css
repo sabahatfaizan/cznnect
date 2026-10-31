@@ -1,10 +1,9 @@
 /* ==================================================================
-   MOON KNIGHT - comic night. Loaded after moonknight.css and moonpaper.css and shared by both (Ink and Paper):
-   a night city of lit towers frames the screen, a rooftop skyline sits on the bottom bar, birds cross the sky,
-   a cobweb hangs in the corner, and the interface becomes inked comic panels: thick borders, hard offset
-   shadows, halftone shading, caption boxes for labels, and buttons that stamp down when pressed.
+   MOON KNIGHT - comic panels. Loaded after moonknight.css and moonpaper.css and shared by both (Ink and Paper).
+   The page background is left exactly as those themes draw it; this file only restyles the interface into inked
+   comic panels: thick borders, hard offset shadows, halftone shading in a corner, caption boxes for labels,
+   buttons that stamp down when pressed, and a small rooftop skyline on the bottom bar.
    Only these two themes are touched (the selector :root[data-theme^="moon"] matches moonknight and moonpaper).
-   All of the art here is original; the pictures are fixed, static layers, so nothing costs anything while scrolling.
    ================================================================== */
 
 :root[data-theme="moonknight"] {
@@ -27,27 +26,6 @@
   --mc-dot: rgb(0 0 0 / 0.45);
   --mc-input: #ffffff;
 }
-
-/* ---- the night city: towers with lit windows frame the screen, birds fly, a cobweb hangs top right ---- */
-:root[data-theme="moonknight"]::before,
-:root[data-theme="moonpaper"]::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100lvh;
-  z-index: -1;
-  pointer-events: none;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  background-position: center bottom;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-:root[data-theme="moonknight"]::before { background-image: url("./moon-city-ink.svg"); }
-:root[data-theme="moonpaper"]::before { background-image: url("./moon-city-paper.svg"); }
 
 /* ---- inked panels ---- */
 :root[data-theme^="moon"] .card,

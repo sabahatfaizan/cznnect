@@ -67,14 +67,11 @@
     radial-gradient(1px 1px at 78% 66%, #fff 55%, transparent 60%),
     radial-gradient(1px 1px at 16% 79%, #fff 55%, transparent 60%),
     radial-gradient(1.2px 1.2px at 63% 88%, #fff 55%, transparent 60%),
-    /* the full moon, low and cratered, behind everything */
-    radial-gradient(circle 150px at 16% 96%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.06) 70%, transparent 72%),
     /* ink burst of light rising from the bottom edge */
     repeating-conic-gradient(from 0deg at 50% 112%, rgb(255 255 255 / 0.07) 0deg 0.7deg, transparent 0.7deg 3.6deg),
-    /* the big moon: one huge, faint crescent that fills the page (a black disc bitten out of a pale one), so
-       it never sits behind the small crescent on the menu button. Everything above it stays readable. */
-    radial-gradient(circle min(72vw, 44vh) at calc(50% + min(30vw, 18vh)) calc(44% - min(10vw, 6vh)), #000 99%, transparent 100%),
-    radial-gradient(circle min(78vw, 48vh) at 50% 46%, rgb(255 255 255 / 0.17) 99%, transparent 100%);
+    /* the scene: a huge cratered moon, a caped figure gliding across it, and rooftops with wires below
+       (original artwork, one static image, so scrolling and zooming stay smooth) */
+    url("./moonknight-scene.svg") 50% 0 / cover no-repeat;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
 }
@@ -277,4 +274,14 @@
   box-shadow: -8px 4px 0 0 #ffffff;
   transform: translate(6.9px, -6.8px) rotate(-18deg);
   pointer-events: none;
+}
+
+/* ---- the ring emblem next to the wordmark ---- */
+:root[data-theme="moonknight"] .brand-row { display: flex; align-items: center; gap: 0.7rem; }
+:root[data-theme="moonknight"] .brand-emblem {
+  display: block;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  background: url("./moonknight-emblem.svg") center / contain no-repeat;
 }

@@ -128,7 +128,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       <UnlockToast />
       <main data-tab={tab} className="p-4 pb-36 pt-[max(2.25rem,env(safe-area-inset-top),36px)]">
         <header className="mb-4 flex items-center justify-between gap-3">
-          <div>
+          <div className="brand-row">
+            {/* A ring with a winged, caped figure: only the Moon Knight themes show it, beside the wordmark. */}
+            <span className="brand-emblem" aria-hidden="true" />
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
             </div>

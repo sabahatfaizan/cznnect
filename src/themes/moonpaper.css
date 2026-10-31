@@ -170,7 +170,20 @@
 :root[data-theme="moonpaper"] .menu-item-on {
   color: #0a0a0a;
   background: #ececea;
-  box-shadow: inset 4px 0 0 #0a0a0a;
+  box-shadow: none;
+  position: relative;
+}
+:root[data-theme="moonpaper"] .menu-item-on::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  border-radius: 50%;
+  box-shadow: inset 8px 0 0 0 #0a0a0a;
+  pointer-events: none;
 }
 :root[data-theme="moonpaper"] .menu-badge { background: #c4262e; color: #fff; }
 :root[data-theme="moonpaper"] .screen-banner { display: none; }

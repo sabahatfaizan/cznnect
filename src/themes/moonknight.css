@@ -53,7 +53,7 @@
   pointer-events: none;
   transform: translateZ(0);
   backface-visibility: hidden;
-  --R: min(44vw, 28vh);
+  --R: 62vh;
   background:
     /* stars */
     radial-gradient(1.4px 1.4px at 11% 14%, #fff 55%, transparent 60%),
@@ -72,17 +72,10 @@
     radial-gradient(circle 150px at 16% 96%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.06) 70%, transparent 72%),
     /* ink burst of light rising from the bottom edge */
     repeating-conic-gradient(from 0deg at 50% 112%, rgb(255 255 255 / 0.035) 0deg 0.7deg, transparent 0.7deg 3.6deg),
-    /* comic ink on the crescent: cross-hatching in comic-ink lines, drawn in black so they only show
-       where the pale moon is, and kept to the top-right where the crescent sits */
-    repeating-linear-gradient(118deg, #000 0 1.4px, transparent 1.4px 9px),
-    repeating-linear-gradient(62deg, #000 0 1px, transparent 1px 15px),
     /* the big moon: a large pale crescent on the right (a black disc bitten out of a pale one). Pale, not white, so
        text on the page stays readable. */
-    radial-gradient(circle calc(var(--R) * 0.95) at calc(100% - var(--R) - 10px - var(--R) * 0.42) calc(30% - var(--R) * 0.1), #000 99%, transparent 100%),
-    radial-gradient(circle var(--R) at calc(100% - var(--R) - 10px) 30%, rgb(222 222 222 / 0.6) 99%, transparent 100%);
-  background-size: auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, 75% 62%, 75% 62%, auto, auto;
-  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 100% 0, 100% 0, 0 0, 0 0;
-  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, repeat, repeat;
+    radial-gradient(circle calc(var(--R) * 0.97) at calc(100% - var(--R) * 0.78 - var(--R) * 0.2) calc(50% - var(--R) * 0.06), #000 99%, transparent 100%),
+    radial-gradient(circle var(--R) at calc(100% - var(--R) * 0.78) 50%, rgb(222 222 222 / 0.6) 99%, transparent 100%);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
 }

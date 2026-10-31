@@ -3,7 +3,8 @@ import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
-import { AVATAR_COLORS, AVATAR_EMOJI, encodeAvatar, parseAvatar } from '../lib/avatars'
+import { AVATAR_COLORS, AVATAR_EMOJI, TYPO_AVATARS, TYPO_PACKS, encodeAvatar, encodeTypoAvatar, parseAvatar, parseTypoAvatar } from '../lib/avatars'
+import { getUnlockedThemes, onUnlocksChanged } from '../theme'
 
 const BIO_MAX = 140
 
@@ -14,6 +15,9 @@ export default function Profile({ userId }: { userId: string }) {
   const [birthday, setBirthday] = useState('')
   const [emoji, setEmoji] = useState('')
   const [color, setColor] = useState(0)
+  const [typo, setTypo] = useState('')
+  const [unlocked, setUnlocked] = useState(getUnlockedThemes)
+  useEffect(() => onUnlocksChanged(() => setUnlocked(getUnlockedThemes())), [])
   const [phone, setPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [share, setShare] = useState(false)
@@ -36,6 +40,8 @@ export default function Profile({ userId }: { userId: string }) {
       setBirthday(d.birthday ?? '')
       setNickname(d.nickname ?? '')
       setBio(d.bio ?? '')
+      const t = parseTypoAvatar(d.avatar)
+      if (t) setTypo(t.id)
       const a = parseAvatar(d.avatar)
       if (a) {
         setEmoji(a.emoji)
@@ -62,7 +68,7 @@ export default function Profile({ userId }: { userId: string }) {
         birthday: birthday || null,
         nickname: nickname.trim() || null,
         bio: bio.trim() || null,
-        avatar: emoji ? encodeAvatar({ emoji, color }) : null,
+        avatar: typo ? encodeTypoAvatar(typo) : emoji ? encodeAvatar({ emoji, color }) : null,
       })
       .eq('id', userId)
     let error = p.error
@@ -89,7 +95,7 @@ export default function Profile({ userId }: { userId: string }) {
     )
   }
 
-  const avatarValue = emoji ? encodeAvatar({ emoji, color }) : null
+  const avatarValue = typo ? encodeTypoAvatar(typo) : emoji ? encodeAvatar({ emoji, color }) : null
   const tile = (id: 'about' | 'contact', label: string, icon: IconName) => (
     <button type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
       <span className="set-tile-icon" aria-hidden="true">
@@ -158,11 +164,11 @@ export default function Profile({ userId }: { userId: string }) {
                 type="button"
                 key={em}
                 role="radio"
-                aria-checked={emoji === em}
+                aria-checked={!typo && emoji === em}
                 aria-label={em}
-                onClick={() => setEmoji(em)}
+                onClick={() => { setEmoji(em); setTypo('') }}
                 className={`flex aspect-square items-center justify-center rounded-[var(--radius-ctl)] border text-xl ${
-                  emoji === em ? 'border-accent bg-accent-soft' : 'border-line bg-surface-2'
+                  !typo && emoji === em ? 'border-accent bg-accent-soft' : 'border-line bg-surface-2'
                 }`}
               >
                 {em}
@@ -175,16 +181,36 @@ export default function Profile({ userId }: { userId: string }) {
                 type="button"
                 key={i}
                 role="radio"
-                aria-checked={color === i}
+                aria-checked={!typo && color === i}
                 aria-label={`Colour ${i + 1}`}
-                onClick={() => setColor(i)}
+                onClick={() => { setColor(i); setTypo('') }}
                 style={{ backgroundImage: `linear-gradient(145deg, ${c[0]}, ${c[1]})` }}
-                className={`size-9 rounded-full ${color === i ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
+                className={`size-9 rounded-full ${!typo && color === i ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
               />
             ))}
           </div>
-          {emoji && (
-            <button type="button" className="link self-start" onClick={() => setEmoji('')}>
+          {TYPO_PACKS.filter((pack) => !pack.requires || unlocked.includes(pack.requires)).map((pack) => (
+            <div key={pack.name} role="radiogroup" aria-label={`${pack.name} avatars`}>
+              <p className="label mb-1.5">{pack.name}</p>
+              <div className="flex flex-wrap gap-2.5">
+                {TYPO_AVATARS.filter((t) => t.pack === pack.name).map((t) => (
+                  <button
+                    type="button"
+                    key={t.id}
+                    role="radio"
+                    aria-checked={typo === t.id}
+                    aria-label={`${pack.name} ${t.text || 'plain'}`}
+                    onClick={() => setTypo(t.id)}
+                    className={`rounded-full ${typo === t.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
+                  >
+                    <Avatar value={encodeTypoAvatar(t.id)} name={nickname || name} size={44} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {(emoji || typo) && (
+            <button type="button" className="link self-start" onClick={() => { setEmoji(''); setTypo('') }}>
               Use my initial instead
             </button>
           )}

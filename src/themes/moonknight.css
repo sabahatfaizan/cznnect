@@ -54,9 +54,6 @@
   transform: translateZ(0);
   backface-visibility: hidden;
   background:
-    /* crescent: a white disc with a black disc bitten out of it */
-    radial-gradient(circle 21px at calc(86% + 9px) calc(8% - 3px), #000 98%, transparent 100%),
-    radial-gradient(circle 25px at 86% 8%, #f4f4f4 98%, transparent 100%),
     /* stars */
     radial-gradient(1.4px 1.4px at 11% 14%, #fff 55%, transparent 60%),
     radial-gradient(1px 1px at 24% 7%, #fff 55%, transparent 60%),
@@ -73,7 +70,11 @@
     /* the full moon, low and cratered, behind everything */
     radial-gradient(circle 150px at 16% 96%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.06) 70%, transparent 72%),
     /* ink burst of light rising from the bottom edge */
-    repeating-conic-gradient(from 0deg at 50% 112%, rgb(255 255 255 / 0.07) 0deg 0.7deg, transparent 0.7deg 3.6deg);
+    repeating-conic-gradient(from 0deg at 50% 112%, rgb(255 255 255 / 0.07) 0deg 0.7deg, transparent 0.7deg 3.6deg),
+    /* the big moon: one huge, faint crescent that fills the page (a black disc bitten out of a pale one), so
+       it never sits behind the small crescent on the menu button. Everything above it stays readable. */
+    radial-gradient(circle min(72vw, 44vh) at calc(50% + min(30vw, 18vh)) calc(44% - min(10vw, 6vh)), #000 99%, transparent 100%),
+    radial-gradient(circle min(78vw, 48vh) at 50% 46%, rgb(255 255 255 / 0.17) 99%, transparent 100%);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
 }

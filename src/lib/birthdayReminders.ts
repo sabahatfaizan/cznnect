@@ -24,13 +24,44 @@ export function savePrefs(p: ReminderPrefs) {
   }
 }
 
-export function notificationState(): 'unsupported' | 'denied' | 'default' | 'granted' {
+type Perm = 'unsupported' | 'denied' | 'default' | 'granted'
+
+// In the Android app the web view has no Notification support, so the app's own notification plugin is used
+// (added when the APK is built). It is reached through the global the app wrapper provides.
+type NativeNotifications = {
+  checkPermissions: () => Promise<{ display: string }>
+  requestPermissions: () => Promise<{ display: string }>
+  schedule: (o: { notifications: { id: number; title: string; body: string; schedule: { at: Date } }[] }) => Promise<unknown>
+}
+function nativePlugin(): NativeNotifications | null {
+  const c = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: Record<string, unknown> } }).Capacitor
+  if (!c?.isNativePlatform?.()) return null
+  return (c.Plugins?.LocalNotifications as NativeNotifications | undefined) ?? null
+}
+function fromNative(display: string): Perm {
+  return display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'default'
+}
+
+export function notificationState(): Perm {
+  if (nativePlugin()) return nativeKnown
   if (typeof Notification === 'undefined') return 'unsupported'
   return Notification.permission
+}
+let nativeKnown: Perm = 'default'
+
+function hash(t: string): number {
+  let h = 0
+  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0
+  return Math.abs(h) % 2147483000
 }
 
 async function show(title: string, body: string, tag: string) {
   try {
+    const native = nativePlugin()
+    if (native) {
+      await native.schedule({ notifications: [{ id: hash(tag + Date.now()), title, body, schedule: { at: new Date(Date.now() + 800) } }] })
+      return
+    }
     const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined
     if (reg) {
       await reg.showNotification(title, { body, tag, icon: import.meta.env.BASE_URL + 'icons/icon-192.png' })
@@ -43,7 +74,17 @@ async function show(title: string, body: string, tag: string) {
 }
 
 export function runReminders(upcoming: Upcoming[], prefs: ReminderPrefs, now = new Date()) {
-  if (!prefs.enabled || notificationState() !== 'granted') return
+  if (!prefs.enabled) return
+  const native = nativePlugin()
+  if (native && nativeKnown !== 'granted') {
+    // Ask the phone once, then run again if it is allowed.
+    void native.checkPermissions().then((r) => {
+      nativeKnown = fromNative(r.display)
+      if (nativeKnown === 'granted') runReminders(upcoming, prefs, now)
+    }).catch(() => {})
+    return
+  }
+  if (notificationState() !== 'granted') return
   let seen: Record<string, true> = {}
   const day = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
   try {
@@ -80,7 +121,16 @@ export function runReminders(upcoming: Upcoming[], prefs: ReminderPrefs, now = n
   }
 }
 
-export async function askPermission(): Promise<'unsupported' | 'denied' | 'default' | 'granted'> {
+export async function askPermission(): Promise<Perm> {
+  const native = nativePlugin()
+  if (native) {
+    try {
+      nativeKnown = fromNative((await native.requestPermissions()).display)
+    } catch {
+      nativeKnown = 'unsupported'
+    }
+    return nativeKnown
+  }
   if (typeof Notification === 'undefined') return 'unsupported'
   try {
     await Notification.requestPermission()

@@ -86,7 +86,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
     setPerm(state)
     if (state === 'granted') update({ ...prefs, enabled: true })
     else if (state === 'denied') setNote('Notifications are blocked for this app. Allow them in your phone or browser settings, then try again.')
-    else setNote('This browser cannot show notifications here. On iPhone, add Cznnect to your Home Screen first.')
+    else setNote('This browser cannot show notifications here. On iPhone, add Cznnect to your Home Screen first. In the Android app, install the newest APK.')
   }
 
   const meMissing = missing.some((p) => p.isMe)

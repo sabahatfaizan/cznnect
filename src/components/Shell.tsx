@@ -42,7 +42,7 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'me', label: 'My Profile', icon: 'me' },
 ]
 
-const SECRET_HOLD_MS = 7000
+const SECRET_HOLD_MS = 4000
 
 export default function Shell({ family, userId, email, onFamilyChanged }: { family: Family; userId: string; email: string; onFamilyChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home')

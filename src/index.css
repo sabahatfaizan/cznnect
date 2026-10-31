@@ -1391,7 +1391,7 @@ input[type="checkbox"] {
 .unlock-layer {
   position: fixed;
   inset-inline: 0;
-  bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  top: calc(var(--app-top-safe, 0px) + 0.5rem);
   z-index: 60;
   display: flex;
   justify-content: center;
@@ -1403,26 +1403,30 @@ input[type="checkbox"] {
   display: flex;
   width: 100%;
   max-width: 26rem;
-  gap: 1rem;
-  align-items: flex-start;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  border-radius: 1.1rem;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.35);
   pointer-events: auto;
-  animation: unlock-in 0.6s cubic-bezier(.34, 1.45, .64, 1) both;
+  cursor: pointer;
+  animation: unlock-in 0.45s cubic-bezier(.2, .9, .3, 1.15) both;
 }
 .unlock-leave { animation: unlock-out 0.24s ease-in both; }
-@keyframes unlock-in { from { opacity: 0; transform: translateY(40px) scale(0.92); } to { opacity: 1; transform: none; } }
-@keyframes unlock-out { to { opacity: 0; transform: translateY(24px) scale(0.96); } }
+@keyframes unlock-in { from { opacity: 0; transform: translateY(-120%); } to { opacity: 1; transform: none; } }
+@keyframes unlock-out { to { opacity: 0; transform: translateY(-120%); } }
 .unlock-badge {
   position: relative;
   display: grid;
   flex: none;
-  width: 3rem;
-  height: 3rem;
+  width: 2.4rem;
+  height: 2.4rem;
   place-items: center;
   border-radius: 9999px;
   background: var(--accent);
   color: var(--accent-ink);
   box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
-  animation: unlock-pulse 1.6s ease-out 0.3s 2;
+  animation: unlock-pulse 1.2s ease-out 0.3s 2;
 }
 @keyframes unlock-pulse { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); } to { box-shadow: 0 0 0 18px transparent; } }
 .unlock-burst { position: absolute; left: 2.5rem; top: 2.5rem; width: 0; height: 0; pointer-events: none; }

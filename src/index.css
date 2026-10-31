@@ -1689,3 +1689,16 @@ input[type="checkbox"] {
 :root[data-theme="uncharted"] .app-nav > div {
   padding-top: 14px !important;
 }
+
+/* Text can't be selected, except codes, links (emails, phone numbers), anything typed into a field, and
+   anything marked .selectable. Elements with the .select-all class (the invite and meetup codes) stay selectable. */
+html, body, #root {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, select, [contenteditable='true'], a[href], .selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}

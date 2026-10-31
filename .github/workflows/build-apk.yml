@@ -45,12 +45,11 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Use the Cznnect app icon
-        # Capacitor's generated project ships its own default launcher icon. Replace it with the Cznnect mark
-        # (android-icons/res holds the legacy PNGs plus the adaptive icon's background and foreground layers).
-        run: |
-          cp -r android-icons/res/. android/app/src/main/res/
-          cat android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+      - name: Add the Cznnect icons and native share
+        # Capacitor's generated project ships its own default launcher icon and can't open the Android share
+        # sheet from the web view. android-native/apply.py adds the Cznnect icons (one launcher entry per app
+        # icon colour, so the home-screen icon follows the theme) and a small native plugin.
+        run: python3 android-native/apply.py
 
       - name: Allow the camera in the APK
         # Capacitor's generated manifest has no camera permission, so Android refuses every camera request

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { appUrl, canShare, shareText } from '../lib/native'
 import Avatar from '../components/Avatar'
 import { shownName } from '../lib/avatars'
 import type { Family, Member } from '../types'
@@ -44,7 +45,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   const me = members.find((m) => m.user_id === userId)
   const isOwner = me?.role === 'owner'
   const code = family.invite_code.toUpperCase()
-  const inviteText = `Join ${family.name} on Cznnect. Open ${location.href.split('?')[0]}, create an account, then enter this invite code: ${code}`
+  const inviteText = `Join ${family.name} on Cznnect. Open ${appUrl()}, create an account, then enter this invite code: ${code}`
 
   async function copy() {
     try {
@@ -91,8 +92,8 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
           <button className="btn btn-primary" onClick={copy}>
             {copied ? 'Copied' : 'Copy invite'}
           </button>
-          {'share' in navigator && (
-            <button className="btn btn-plain" onClick={() => navigator.share({ text: inviteText }).catch(() => {})}>
+          {canShare() && (
+            <button className="btn btn-plain" onClick={() => shareText(inviteText, `Join ${family.name} on Cznnect`).catch(() => {})}>
               Share
             </button>
           )}

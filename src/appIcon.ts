@@ -2,6 +2,7 @@
 // icon the browser uses for the tab and for new Home Screen shortcuts. An icon that is already on a
 // phone's Home Screen keeps its look until the app is removed and added again.
 import type { ExclusiveTheme } from './theme'
+import { setLauncherIcon } from './lib/native'
 
 export type IconId =
   | 'ocean' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
@@ -162,6 +163,8 @@ export function applyIcon(id: IconId = getIconPref()) {
     setLink('icon', renderIcon(id, 192))
     setLink('apple-touch-icon', renderIcon(id, 180))
   }
+  // In the Android app this also switches the launcher icon on the home screen.
+  setLauncherIcon(id)
 }
 
 export function setIconPref(id: IconId) {

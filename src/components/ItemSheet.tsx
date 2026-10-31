@@ -1,3 +1,4 @@
+import { appUrl, canShare, shareText } from '../lib/native'
 import { useState } from 'react'
 import Sheet from './Sheet'
 import ItemForm, { type Who } from './ItemForm'
@@ -48,11 +49,11 @@ export default function ItemSheet({
       item.due_date ? `Date: ${item.due_date}` : '',
       item.assigned_to ? `Organiser: ${name(item.assigned_to)}` : '',
       item.notes?.trim() ? `Details: ${item.notes.trim()}` : '',
-      `Open this plan: ${window.location.origin}${window.location.pathname}?plan=${encodeURIComponent(item.id)}`,
+      `Open this plan: ${appUrl()}?plan=${encodeURIComponent(item.id)}`,
     ].filter(Boolean).join('\n')
     try {
-      if (navigator.share) {
-        await navigator.share({ title: item.title, text: details })
+      if (canShare()) {
+        await shareText(details, item.title)
         onNotice('Share sheet opened')
         return
       }

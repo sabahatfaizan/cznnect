@@ -62,12 +62,13 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
   }, [bday.loaded, bday.people])
   const current: Tab = tab
+  const [musicUnlocked, setMusicUnlocked] = useState(false)
   const holdTimer = useRef<number | undefined>(undefined)
   const heldOpen = useRef(false)
   const startHold = () => {
     heldOpen.current = false
     window.clearTimeout(holdTimer.current)
-    holdTimer.current = window.setTimeout(() => { heldOpen.current = true; setTab('music') }, SECRET_HOLD_MS)
+    holdTimer.current = window.setTimeout(() => { heldOpen.current = true; setMusicUnlocked(true); setTab('music') }, SECRET_HOLD_MS)
   }
   const cancelHold = () => window.clearTimeout(holdTimer.current)
   useEffect(() => cancelHold, [])
@@ -219,6 +220,16 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span className="menu-item-label"><Icon name="settings" size={22} />Settings</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
+              {musicUnlocked && (
+                <button
+                  type="button"
+                  className={`menu-item ${tab === 'music' ? 'menu-item-on' : ''}`}
+                  onClick={() => { setTab('music'); setMenuOpen(false) }}
+                >
+                  <span className="menu-item-label"><span aria-hidden="true" className="grid h-[22px] w-[22px] place-items-center text-lg leading-none">♪</span>Music</span>
+                  <span aria-hidden="true" className="menu-chevron">›</span>
+                </button>
+              )}
             </div>
             {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
               <p className="eyebrow">Owner controls</p>
@@ -255,9 +266,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           {tab === 'explore' && <Explore family={family} userId={userId} />}
           {tab === 'plans' && <Plans family={family} userId={userId} />}
           {tab === 'me' && <Profile userId={userId} />}
-          {tab === 'music' && <Music />}
           {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         </div>
+        {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">

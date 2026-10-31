@@ -226,7 +226,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                   className={`menu-item ${tab === 'music' ? 'menu-item-on' : ''}`}
                   onClick={() => { setTab('music'); setMenuOpen(false) }}
                 >
-                  <span className="menu-item-label"><span aria-hidden="true" className="grid h-[22px] w-[22px] place-items-center text-lg leading-none">♪</span>Music</span>
+                  <span className="menu-item-label"><Icon name="music" size={22} />Music</span>
                   <span aria-hidden="true" className="menu-chevron">›</span>
                 </button>
               )}

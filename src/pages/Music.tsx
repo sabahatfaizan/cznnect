@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ListenTogether from '../components/ListenTogether'
 
 type Track = { id: string; name: string; url: string }
 
@@ -128,6 +129,8 @@ export default function Music() {
           <button aria-label="Repeat" aria-pressed={repeat} onClick={() => setRepeat((r) => !r)} className={`${ctl} ${repeat ? 'text-[var(--accent-text)]' : 'opacity-50'}`}><RepeatI /></button>
         </div>
       </div>
+
+      <ListenTogether getAudio={() => audioRef.current} current={current} />
 
       <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
         + Add songs from your phone

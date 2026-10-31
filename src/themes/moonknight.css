@@ -210,7 +210,21 @@
 :root[data-theme="moonknight"] .menu-item-on {
   color: #ffffff;
   background: rgb(255 255 255 / 0.1);
-  box-shadow: inset 4px 0 0 #ffffff;
+  box-shadow: none;
+  position: relative;
+  padding-left: 1.5rem;
+}
+/* the crescent marker: a thick "(" hugging the left edge, as tall as the row */
+:root[data-theme="moonknight"] .menu-item-on::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: -3px;
+  height: calc(100% + 6px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: inset 9px 0 0 0 #ffffff;
+  pointer-events: none;
 }
 :root[data-theme="moonknight"] .menu-badge { background: #d6403a; color: #fff; }
 :root[data-theme="moonknight"] .screen-banner { display: none; }

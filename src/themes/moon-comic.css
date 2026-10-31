@@ -1,0 +1,179 @@
+/* ==================================================================
+   MOON KNIGHT - comic night. Loaded after moonknight.css and moonpaper.css and shared by both (Ink and Paper):
+   a night city of lit towers frames the screen, a rooftop skyline sits on the bottom bar, birds cross the sky,
+   a cobweb hangs in the corner, and the interface becomes inked comic panels: thick borders, hard offset
+   shadows, halftone shading, caption boxes for labels, and buttons that stamp down when pressed.
+   Only these two themes are touched (the selector :root[data-theme^="moon"] matches moonknight and moonpaper).
+   All of the art here is original; the pictures are fixed, static layers, so nothing costs anything while scrolling.
+   ================================================================== */
+
+:root[data-theme="moonknight"] {
+  --mc-line: #f2f2f2;       /* ink lines and text accents */
+  --mc-fill: #070707;       /* panel fill */
+  --mc-pop: #f2f2f2;        /* the inverted "caption" colour: buttons, captions, the current tab */
+  --mc-pop-ink: #050505;
+  --mc-hard: rgb(255 255 255 / 0.3);   /* the hard offset shadow under panels */
+  --mc-soft: rgb(255 255 255 / 0.3);   /* the smaller one under buttons */
+  --mc-dot: rgb(255 255 255 / 0.5);    /* halftone dots */
+  --mc-input: #000000;
+}
+:root[data-theme="moonpaper"] {
+  --mc-line: #0a0a0a;
+  --mc-fill: #ffffff;
+  --mc-pop: #0a0a0a;
+  --mc-pop-ink: #ffffff;
+  --mc-hard: #0a0a0a;
+  --mc-soft: rgb(0 0 0 / 0.35);
+  --mc-dot: rgb(0 0 0 / 0.45);
+  --mc-input: #ffffff;
+}
+
+/* ---- the night city: towers with lit windows frame the screen, birds fly, a cobweb hangs top right ---- */
+:root[data-theme="moonknight"]::before,
+:root[data-theme="moonpaper"]::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  z-index: -1;
+  pointer-events: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  background-position: center bottom;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+:root[data-theme="moonknight"]::before { background-image: url("./moon-city-ink.svg"); }
+:root[data-theme="moonpaper"]::before { background-image: url("./moon-city-paper.svg"); }
+
+/* ---- inked panels ---- */
+:root[data-theme^="moon"] .card,
+:root[data-theme^="moon"] .bd-hero,
+:root[data-theme^="moon"] .convoy-hero {
+  position: relative;
+  background: var(--mc-fill);
+  border: 2px solid var(--mc-line);
+  border-radius: 3px 8px 4px 9px / 8px 3px 9px 4px;   /* hand-cut, never quite square */
+  box-shadow: 4px 4px 0 var(--mc-hard);
+}
+:root[data-theme^="moon"] .card::before { display: none; }
+/* halftone shading gathers in the lower-right corner, as printed comics shade a panel */
+:root[data-theme^="moon"] .card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--mc-dot) 0 1px, transparent 1.5px) 0 0 / 5px 5px;
+  -webkit-mask-image: linear-gradient(135deg, transparent 74%, #000 100%);
+  mask-image: linear-gradient(135deg, transparent 74%, #000 100%);
+  opacity: 0.55;
+}
+
+/* ---- type: captions in a box, headlines with a stamped shadow ---- */
+:root[data-theme^="moon"] .eyebrow {
+  display: inline-block;
+  padding: 0.12rem 0.55rem 0.06rem;
+  background: var(--mc-pop);
+  color: var(--mc-pop-ink);
+  letter-spacing: 0.14em;
+  transform: rotate(-1.4deg);
+}
+:root[data-theme^="moon"] h1.font-display { text-shadow: 3px 3px 0 var(--mc-soft); }
+:root[data-theme="moonknight"] h1.font-display { color: #ffffff; }
+
+/* ---- controls: inked, and they stamp down ---- */
+:root[data-theme^="moon"] .btn {
+  border: 2px solid var(--mc-line);
+  border-radius: 3px;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background-color 0.15s;
+}
+:root[data-theme^="moon"] .btn-primary {
+  background: var(--mc-pop);
+  color: var(--mc-pop-ink);
+  box-shadow: 3px 3px 0 var(--mc-soft);
+}
+:root[data-theme^="moon"] .btn-plain {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--mc-soft);
+}
+:root[data-theme^="moon"] .btn-danger { border-color: var(--danger); box-shadow: 3px 3px 0 var(--mc-soft); }
+:root[data-theme^="moon"] .btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--mc-soft);
+}
+:root[data-theme^="moon"] .input {
+  background: var(--mc-input);
+  border: 2px solid var(--mc-line);
+  border-radius: 3px;
+}
+:root[data-theme^="moon"] .input:focus { border-color: var(--mc-line); box-shadow: 3px 3px 0 var(--mc-soft); }
+:root[data-theme^="moon"] .seg { border: 2px solid var(--mc-line); border-radius: 3px; background: transparent; }
+:root[data-theme^="moon"] .seg-on {
+  background: var(--mc-pop);
+  color: var(--mc-pop-ink);
+  border-color: var(--mc-line);
+  box-shadow: 3px 3px 0 var(--mc-soft);
+}
+:root[data-theme^="moon"] .seg-on small { color: inherit; }
+
+/* ---- bottom bar: it stands on a rooftop skyline ---- */
+:root[data-theme^="moon"] .app-nav { border-top: 3px solid var(--mc-line); }
+:root[data-theme^="moon"] .app-nav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-size: auto 28px;
+  pointer-events: none;
+}
+:root[data-theme="moonknight"] .app-nav::before { background-image: url("./moon-skyline-ink.svg"); }
+:root[data-theme="moonpaper"] .app-nav::before { background-image: url("./moon-skyline-paper.svg"); }
+:root[data-theme="moonpaper"] .app-nav { background: #ffffff; }
+:root[data-theme^="moon"] .tab-active {
+  background: var(--mc-pop);
+  color: var(--mc-pop-ink);
+  border: 2px solid var(--mc-line);
+  border-radius: 3px;
+  box-shadow: 2px 2px 0 var(--mc-soft);
+}
+
+/* ---- menu: the crescent button and an inked slide-out panel ---- */
+:root[data-theme^="moon"] .menu-btn {
+  border: 2px solid var(--mc-line);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--mc-soft);
+}
+:root[data-theme^="moon"] .menu-panel {
+  border: 3px solid var(--mc-line);
+  border-radius: 4px;
+  box-shadow: -6px 6px 0 var(--mc-soft);
+}
+:root[data-theme^="moon"] .menu-item { border-radius: 3px; }
+:root[data-theme^="moon"] .menu-item-on {
+  background: var(--mc-pop);
+  color: var(--mc-pop-ink);
+  box-shadow: none;
+}
+:root[data-theme^="moon"] .menu-item-on svg { color: inherit; }
+
+/* ---- sheets rise with a torn top edge ---- */
+:root[data-theme^="moon"] .sheet-panel {
+  border-top: 3px solid var(--mc-line);
+  border-radius: 0;
+  clip-path: polygon(0 6px, 7% 0, 15% 5px, 26% 1px, 38% 6px, 49% 0, 61% 5px, 72% 1px, 84% 6px, 93% 0, 100% 4px, 100% 100%, 0 100%);
+  padding-top: 1.3rem;
+}
+
+/* ---- list dividers, tree people and the map ---- */
+:root[data-theme^="moon"] .divide-line > * + * { border-top-style: dashed; }
+:root[data-theme^="moon"] .family-tree-stage .tnode-rect { stroke-width: 2.2; }
+:root[data-theme^="moon"] .map-wrap { border: 2px solid var(--mc-line); border-radius: 3px; box-shadow: 4px 4px 0 var(--mc-hard); }

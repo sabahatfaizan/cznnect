@@ -216,9 +216,23 @@
 :root[data-theme="moonknight"] .menu-item { letter-spacing: 0.05em; }
 :root[data-theme="moonknight"] .menu-item:hover { background: rgb(255 255 255 / 0.1); }
 :root[data-theme="moonknight"] .menu-item-on {
-  color: var(--gold-bright);
-  background: rgb(255 255 255 / 0.1);
-  box-shadow: inset 3px 0 0 var(--gold);
+  position: relative;
+  padding-left: 2.6rem;
+  color: #ffffff;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-theme="moonknight"] .menu-item-on::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: -5px 3px 0 0 #ffffff;
+  transform: translate(5px, -8px) rotate(-18deg);
+  pointer-events: none;
 }
 :root[data-theme="moonknight"] .menu-badge { background: #d6403a; color: #fff; }
 :root[data-theme="moonknight"] .screen-banner { display: none; }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Family } from '../types'
 import { supabase } from '../supabase'
 import Home from '../pages/Home'
@@ -9,6 +9,7 @@ import Tree from '../pages/Tree'
 import Irl from '../pages/Irl'
 import Scoreboard from '../pages/Scoreboard'
 import Birthdays from '../pages/Birthdays'
+import Music from '../pages/Music'
 import { rank, useFamilyBirthdays } from '../lib/birthdays'
 import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
@@ -19,7 +20,7 @@ import { isOwnerEmail } from '../owner'
 import SecretCoin from './SecretCoin'
 import UnlockToast from './UnlockToast'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings' | 'music'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
 const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   home: { rdr2: 'Camp', unc: 'Expedition Base' },
@@ -31,6 +32,7 @@ const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   irl: { rdr2: 'Riding', unc: 'The Field Team' },
   scoreboard: { rdr2: 'Bounties', unc: 'Treasure Tally' },
   settings: { rdr2: 'Supplies', unc: 'Gear & Supplies' },
+  music: { rdr2: 'Campfire Songs', unc: 'The Soundtrack' },
 }
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
@@ -39,6 +41,8 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'My Profile', icon: 'me' },
 ]
+
+const SECRET_HOLD_MS = 7000
 
 export default function Shell({ family, userId, email, onFamilyChanged }: { family: Family; userId: string; email: string; onFamilyChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home')
@@ -58,6 +62,15 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
   }, [bday.loaded, bday.people])
   const current: Tab = tab
+  const holdTimer = useRef<number | undefined>(undefined)
+  const heldOpen = useRef(false)
+  const startHold = () => {
+    heldOpen.current = false
+    window.clearTimeout(holdTimer.current)
+    holdTimer.current = window.setTimeout(() => { heldOpen.current = true; setTab('music') }, SECRET_HOLD_MS)
+  }
+  const cancelHold = () => window.clearTimeout(holdTimer.current)
+  useEffect(() => cancelHold, [])
 
   // Shared plan links should route straight to Plans, not leave the user on Home.
   useEffect(() => {
@@ -242,12 +255,21 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           {tab === 'explore' && <Explore family={family} userId={userId} />}
           {tab === 'plans' && <Plans family={family} userId={userId} />}
           {tab === 'me' && <Profile userId={userId} />}
+          {tab === 'music' && <Music />}
           {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         </div>
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
-          {TABS.map((t) => <button key={t.id} onClick={() => { setTab(t.id) }} aria-current={current === t.id ? 'page' : undefined} className={`tab ${current === t.id ? 'tab-active' : ''}`}><Icon name={t.icon} />{t.label}</button>)}
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { if (t.id === 'explore' && heldOpen.current) { heldOpen.current = false; return } setTab(t.id) }}
+              {...(t.id === 'explore' ? { onPointerDown: startHold, onPointerUp: cancelHold, onPointerLeave: cancelHold, onPointerCancel: cancelHold, onContextMenu: (e: React.MouseEvent) => e.preventDefault() } : {})}
+              aria-current={current === t.id ? 'page' : undefined}
+              className={`tab ${current === t.id ? 'tab-active' : ''}`}
+            ><Icon name={t.icon} />{t.label}</button>
+          ))}
         </div>
       </nav>
     </div>

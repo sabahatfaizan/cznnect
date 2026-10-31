@@ -134,3 +134,18 @@
 :root[data-theme^="moon"] .divide-line > * + * { border-top-style: dashed; }
 :root[data-theme^="moon"] .family-tree-stage .tnode-rect { stroke-width: 2.2; }
 :root[data-theme^="moon"] .map-wrap { border: 2px solid var(--mc-line); border-radius: 3px; box-shadow: 4px 4px 0 var(--mc-hard); }
+
+/* ---- tree zoom buttons: solid, inked, with a halftone texture so they read over any tree background ---- */
+:root[data-theme="moonknight"] .tree-ctl {
+  background: radial-gradient(circle, rgb(255 255 255 / 0.16) 0 1px, transparent 1.5px) 0 0 / 5px 5px, #0b0b0b;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  box-shadow: 3px 3px 0 rgb(255 255 255 / 0.35);
+}
+:root[data-theme="moonpaper"] .tree-ctl {
+  background: radial-gradient(circle, rgb(0 0 0 / 0.14) 0 1px, transparent 1.5px) 0 0 / 5px 5px, #ffffff;
+  color: #0a0a0a;
+  border: 2px solid #0a0a0a;
+  box-shadow: 3px 3px 0 #0a0a0a;
+}
+:root[data-theme^="moon"] .tree-ctl { opacity: 1; font-weight: 700; }

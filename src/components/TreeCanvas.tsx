@@ -474,7 +474,7 @@ export default function TreeCanvas({
     <button
       type="button"
       onClick={onClick}
-      className="btn btn-plain !min-h-11 !min-w-11 !px-3 shadow-[var(--shadow-card)]"
+      className="btn btn-plain tree-ctl !min-h-11 !min-w-11 !px-3 shadow-[var(--shadow-card)]"
     >
       {label}
     </button>

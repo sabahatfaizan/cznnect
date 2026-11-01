@@ -51,6 +51,16 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [tab, setTab] = useState<Tab>('home')
   const [menuOpen, setMenuOpen] = useState(false)
   const isOwner = isOwnerEmail(email)
+  // The family role (owner / moderator / member) decides who gets the Admin page's member tools.
+  const [familyRole, setFamilyRole] = useState<string | null>(null)
+  useEffect(() => {
+    let alive = true
+    void supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle().then(({ data }) => {
+      if (alive) setFamilyRole((data as { role?: string } | null)?.role ?? null)
+    })
+    return () => { alive = false }
+  }, [family.id, userId])
+  const canAdmin = isOwner || familyRole === 'moderator'
   const { settings: appSettings } = useAppSettings()
 
   // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
@@ -193,7 +203,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span className="menu-item-label"><Icon name="settings" size={22} />Settings</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
-              {isOwner && (
+              {canAdmin && (
                 <button
                   type="button"
                   className={`menu-item ${tab === 'admin' ? 'menu-item-on' : ''}`}
@@ -229,7 +239,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           {tab === 'plans' && <Plans family={family} userId={userId} />}
           {tab === 'me' && <Profile userId={userId} />}
           {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-          {tab === 'admin' && isOwner && <Admin family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+          {tab === 'admin' && canAdmin && <Admin family={family} userId={userId} isOwner={isOwner} onFamilyChanged={onFamilyChanged} />}
         </div>
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>

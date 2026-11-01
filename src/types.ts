@@ -4,8 +4,10 @@ export type Family = {
   invite_code: string
 }
 
+export type FamilyRole = 'owner' | 'moderator' | 'member'
+
 export type Member = {
   user_id: string
-  role: 'owner' | 'member'
+  role: FamilyRole
   profiles: { display_name: string; nickname: string | null; bio: string | null; avatar: string | null } | null
 }

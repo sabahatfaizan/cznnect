@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Family } from '../types'
+import type { Family, FamilyRole } from '../types'
+import MemberSheet from '../components/MemberSheet'
 import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
 import { Icon } from '../components/Icons'
@@ -8,9 +9,9 @@ import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_RELEASE_API, thisBuild, useAppSetti
 
 type AdminMember = {
   user_id: string
-  role: 'owner' | 'member'
+  role: FamilyRole
   joined_at: string | null
-  profiles: { display_name: string; nickname?: string | null; avatar?: string | null } | null
+  profiles: { display_name: string; nickname?: string | null; bio?: string | null; avatar?: string | null } | null
 }
 
 function Switch({ on, onChange, label, disabled, onColor = 'green' }: { on: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean; onColor?: 'green' | 'red' }) {
@@ -42,7 +43,7 @@ function Row({ title, hint, children }: { title: string; hint: string; children:
   )
 }
 
-export default function Admin({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
+export default function Admin({ family, userId, isOwner, onFamilyChanged }: { family: Family; userId: string; isOwner: boolean; onFamilyChanged: () => void }) {
   const { settings, error: settingsError, reload } = useAppSettings(60000)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
@@ -51,6 +52,7 @@ export default function Admin({ family, userId, onFamilyChanged }: { family: Fam
   const [minBuildInput, setMinBuildInput] = useState('')
   const [latestBuild, setLatestBuild] = useState<number | null>(null)
   const [members, setMembers] = useState<AdminMember[]>([])
+  const [viewing, setViewing] = useState<AdminMember | null>(null)
   const [copied, setCopied] = useState(false)
   const [loadedFields, setLoadedFields] = useState(false)
   const myBuild = thisBuild()
@@ -80,7 +82,7 @@ export default function Admin({ family, userId, onFamilyChanged }: { family: Fam
   const loadMembers = useCallback(async () => {
     const q = (cols: string) =>
       supabase.from('family_members').select(`user_id, role, joined_at, profiles(${cols})`).eq('family_id', family.id).order('joined_at')
-    let { data, error } = await q('display_name, nickname, avatar')
+    let { data, error } = await q('display_name, nickname, bio, avatar')
     if (error) ({ data, error } = await q('display_name'))
     if (error) setNotice(error.message)
     else setMembers((data ?? []) as unknown as AdminMember[])
@@ -103,7 +105,7 @@ export default function Admin({ family, userId, onFamilyChanged }: { family: Fam
     } finally { setBusy(false) }
   }
 
-  async function rpc(name: 'remove_member' | 'regenerate_invite', args: Record<string, unknown>, done: string, after: () => void) {
+  async function rpc(name: 'regenerate_invite', args: Record<string, unknown>, done: string, after: () => void) {
     setBusy(true)
     setNotice('')
     try {
@@ -114,12 +116,6 @@ export default function Admin({ family, userId, onFamilyChanged }: { family: Fam
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Something went wrong.')
     } finally { setBusy(false) }
-  }
-
-  function removeMember(m: AdminMember) {
-    const name = shownName(m.profiles)
-    if (!window.confirm(`Remove ${name} from the family? They lose access until they join again with a code.`)) return
-    void rpc('remove_member', { fid: family.id, target: m.user_id }, `${name} was removed.`, () => void loadMembers())
   }
 
   function newInviteCode() {
@@ -146,13 +142,17 @@ export default function Admin({ family, userId, onFamilyChanged }: { family: Fam
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl font-bold">Admin</h1>
-        <p className="mt-1 text-sm text-muted">Owner controls. Only your account can use this page.</p>
+        <p className="mt-1 text-sm text-muted">
+          {isOwner ? 'Owner controls. Only your account can use this page.' : 'Moderator tools. Tap a member to see their role or remove them.'}
+        </p>
       </div>
 
       {(settingsError || notice) && (
         <p role="status" className="card text-sm">{notice || settingsError}</p>
       )}
 
+      {isOwner && (
+        <>
       <section className="card flex flex-col gap-4">
         <p className="eyebrow">Maintenance</p>
         <Row title="Maintenance mode" hint={settings?.maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}>
@@ -225,33 +225,48 @@ export default function Admin({ family, userId, onFamilyChanged }: { family: Fam
         <button type="button" className="btn btn-plain" disabled={busy} onClick={newInviteCode}>Make a new code</button>
       </section>
 
+        </>
+      )}
+
       <section className="card flex flex-col gap-3">
         <p className="eyebrow">Members ({members.length})</p>
         {members.map((m) => {
           const name = shownName(m.profiles)
           const isMe = m.user_id === userId
           return (
-            <div key={m.user_id} className="flex items-center gap-3">
+            <button
+              type="button"
+              key={m.user_id}
+              className="flex w-full items-center gap-3 text-left"
+              onClick={() => setViewing(m)}
+              aria-label={`${name}, ${m.role}. Open details`}
+            >
               <Avatar value={m.profiles?.avatar} name={name} size={40} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{name}{isMe ? ' (you)' : ''}</p>
                 <p className="text-sm text-muted">
-                  {m.role === 'owner' ? 'Owner' : 'Member'}
+                  {m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Moderator' : 'Member'}
                   {m.joined_at ? ` · joined ${new Date(m.joined_at).toLocaleDateString()}` : ''}
                 </p>
               </div>
-              {m.role !== 'owner' && (
-                <button type="button" className="btn btn-danger" disabled={busy} onClick={() => removeMember(m)} aria-label={`Remove ${name}`}>
-                  Remove
-                </button>
-              )}
-            </div>
+              <span aria-hidden="true" className="menu-chevron">›</span>
+            </button>
           )
         })}
         {members.length === 0 && <p className="text-sm text-muted">No members loaded.</p>}
+        {viewing && (
+          <MemberSheet
+            member={viewing}
+            viewerId={userId}
+            viewerRole={members.find((x) => x.user_id === userId)?.role ?? null}
+            familyId={family.id}
+            onClose={() => setViewing(null)}
+            onChanged={() => void loadMembers()}
+          />
+        )}
       </section>
 
-      <p className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted"><Icon name="admin" size={14} />Owner only</p>
+      <p className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted"><Icon name="admin" size={14} />{isOwner ? 'Owner only' : 'Owner and moderators only'}</p>
     </div>
   )
 }

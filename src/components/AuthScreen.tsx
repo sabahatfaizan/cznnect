@@ -20,7 +20,7 @@ function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
 }
 
 export default function AuthScreen() {
-  const [mode, setMode] = useState<'in' | 'up'>('up')
+  const [mode, setMode] = useState<'in' | 'up' | 'reset'>('up')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,6 +44,13 @@ export default function AuthScreen() {
         if (error) setMsg({ kind: 'error', text: error.message })
         else if (!data.session)
           setMsg({ kind: 'info', text: 'Account created. Check your email to confirm it, then sign in.' })
+      } else if (mode === 'reset') {
+        const redirectTo = new URL('.', window.location.href).toString()
+        const { error } = await withTimeout(
+          supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo }),
+        )
+        if (error) setMsg({ kind: 'error', text: error.message })
+        else setMsg({ kind: 'info', text: 'Password reset email sent. Open the newest email on this device to choose a new password.' })
       } else {
         const { error } = await withTimeout(
           supabase.auth.signInWithPassword({ email: email.trim(), password }),
@@ -70,7 +77,7 @@ export default function AuthScreen() {
 
       <form onSubmit={submit} className="card flex flex-col gap-4 p-5">
         <h2 className="font-display text-xl font-bold">
-          {mode === 'in' ? 'Welcome back' : 'Create your account'}
+          {mode === 'in' ? 'Welcome back' : mode === 'reset' ? 'Reset your password' : 'Create your account'}
         </h2>
 
         {mode === 'up' && (
@@ -104,7 +111,7 @@ export default function AuthScreen() {
           />
         </div>
 
-        <div>
+        {mode !== 'reset' && <div>
           <label className="label" htmlFor="password">
             Password
           </label>
@@ -142,7 +149,13 @@ export default function AuthScreen() {
               </svg>
             </button>
           </div>
-        </div>
+        </div>}
+
+        {mode === 'in' && (
+          <button type="button" className="link self-start text-sm" onClick={() => { setMode('reset'); setMsg(null) }}>
+            Forgot password?
+          </button>
+        )}
 
         {msg && (
           <p role="status" className={`text-sm font-bold ${msg.kind === 'error' ? 'text-danger' : 'text-ok'}`}>
@@ -151,7 +164,7 @@ export default function AuthScreen() {
         )}
 
         <button className="btn btn-primary w-full" disabled={busy}>
-          {busy ? 'Please wait...' : mode === 'in' ? 'Sign in' : 'Get started'}
+          {busy ? 'Please wait...' : mode === 'in' ? 'Sign in' : mode === 'reset' ? 'Send reset link' : 'Get started'}
         </button>
       </form>
 
@@ -159,11 +172,11 @@ export default function AuthScreen() {
         type="button"
         className="link"
         onClick={() => {
-          setMode(mode === 'in' ? 'up' : 'in')
+          setMode(mode === 'up' ? 'in' : 'up')
           setMsg(null)
         }}
       >
-        {mode === 'in' ? 'New to Cznnect? Join Cznnect' : 'Already a member? Sign in'}
+        {mode === 'up' ? 'Already a member? Sign in' : mode === 'reset' ? 'Back to sign in' : 'New to Cznnect? Join Cznnect'}
       </button>
     </div>
   )

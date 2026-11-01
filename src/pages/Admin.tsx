@@ -197,9 +197,10 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       <section className="card flex flex-col gap-3">
         <p className="eyebrow">Force old Android apps to update</p>
         <p className="text-sm text-muted">
-          Android apps older than the build below show an “Update required” screen with the download. The website and
-          home-screen app update by themselves. Your own phone is forced too, but the access PIN (tap the logo 5 times) gets past the
-          screen. Apps installed before this feature existed cannot be forced and need one manual update.
+          Android apps older than the build below show an “Update required” screen and the database stops serving
+          them data. The website and home-screen app update by themselves, and your owner account is never blocked
+          (to see the screen, look at the app while signed out). Apps installed before this feature existed cannot be
+          forced and need one manual update. Run supabase/10_enforce_min_build.sql once to switch on the database check.
         </p>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p><span className="text-muted">Latest app build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>

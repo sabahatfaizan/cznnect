@@ -11,6 +11,7 @@ import Authed from './Authed'
 import { isOwnerEmail } from './owner'
 import { isPasswordRecoveryEvent } from './lib/auth'
 import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
+import { mustUpdate } from './lib/updateGate'
 
 const SPLASH_MS = 4500
 
@@ -101,9 +102,7 @@ function ServiceNotice({ message, showApk = false, title = 'Cznnect is getting a
             <a
               className="flex items-center gap-4 rounded-2xl border border-line p-4 no-underline transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
               href={LATEST_APK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              download="cznnect.apk"
+              {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
             >
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon name="download" size={24} /></span>
               <span className="font-bold">Download the new app</span>
@@ -192,11 +191,9 @@ export default function App() {
       /><NetworkStatus /></>
     )
   }
-  // Old Android apps are asked to update, owner included, so a forced update can be tested on your own phone.
-  // The owner account can still access the app for update testing.
-  // An app with no build number counts as the oldest. Only the installed app can be forced: the website and the
-  // home-screen web app update themselves.
-  if (maintenance && isNativeApp() && !isOwner && maintenance.minBuild > (thisBuild() ?? 0)) {
+  // Old Android apps must update before they can be used. The owner account is never blocked, so to test this on
+  // your own phone, look at the app while signed out. The database refuses old apps too (supabase/10_enforce_min_build.sql).
+  if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp(), owner: isOwner })) {
     return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk /><NetworkStatus /></>
   }
   if (!session) return <><AuthScreen /><NetworkStatus /></>

@@ -19,7 +19,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   const [contacts, setContacts] = useState<Map<string, Contact>>(new Map())
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
-  // Which in-page confirmation is open: 'newcode', 'leave', or 'remove:<user id>'.
+  // Which in-page confirmation is open: 'newcode' or 'leave'.
   const [confirm, setConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -71,8 +71,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
     else after()
   }
 
-  const removeMember = (uid: string) =>
-    run(() => supabase.rpc('remove_member', { fid: family.id, target: uid }), loadMembers)
   const leave = () => run(() => supabase.rpc('leave_family', { fid: family.id }), onFamilyChanged)
   const newCode = () =>
     run(() => supabase.rpc('regenerate_invite', { fid: family.id }), onFamilyChanged)
@@ -137,8 +135,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
             const real = m.profiles?.display_name
             const bio = m.profiles?.bio?.trim()
             const ct = m.user_id !== userId ? contacts.get(m.user_id) : undefined
-            const canRemove = isOwner && m.role !== 'owner'
-            const asking = confirm === 'remove:' + m.user_id
             return (
               <li key={m.user_id} className="flex flex-wrap items-center gap-x-3">
                 <Avatar value={m.profiles?.avatar} name={name} size={40} className="my-2" />
@@ -165,31 +161,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
                   <span className="rounded-[var(--radius-ctl)] bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-text">
                     Owner
                   </span>
-                )}
-                {canRemove && !asking && (
-                  <button
-                    className="min-h-11 px-1 text-sm font-bold text-danger underline underline-offset-2"
-                    onClick={() => setConfirm('remove:' + m.user_id)}
-                    aria-label={`Remove ${name}`}
-                  >
-                    Remove
-                  </button>
-                )}
-                {asking && (
-                  <div className="mb-3 flex w-full flex-col gap-3 rounded-[var(--radius-ctl)] border border-line bg-surface-2 p-3">
-                    <p className="text-sm">
-                      Remove {name} from the family? They lose access right away. They can only rejoin with
-                      the invite code.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button className="btn btn-plain" onClick={() => setConfirm(null)}>
-                        Cancel
-                      </button>
-                      <button className="btn btn-danger" disabled={busy} onClick={() => removeMember(m.user_id)}>
-                        Remove
-                      </button>
-                    </div>
-                  </div>
                 )}
               </li>
             )

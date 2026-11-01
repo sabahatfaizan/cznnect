@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { configured } from './config'
 import AuthScreen from './components/AuthScreen'
+import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
 import Logo from './components/Logo'
 import { Icon } from './components/Icons'
@@ -138,6 +139,7 @@ function ServiceNotice({ message, onUnlock, showApk = false, title = 'Cznnect is
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
+  const [recoveryMode, setRecoveryMode] = useState(false)
   const [ready, setReady] = useState(false)
   const [held, setHeld] = useState(true)
   const [maintenance, setMaintenance] = useState<AppSettings | null>(null)
@@ -151,11 +153,19 @@ export default function App() {
   useEffect(() => {
     if (!configured) return
     const timer = setTimeout(() => setReady(true), 8000)
+
+    // Subscribe before reading the initial session so a recovery callback cannot be
+    // missed while the app is booting. Supabase processes the PKCE/hash callback
+    // and emits PASSWORD_RECOVERY when the recovery session is established.
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      setSession(s)
+      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
+    })
+
     supabase.auth.getSession().then(({ data }) => setSession(data.session)).catch(() => {}).finally(() => {
       clearTimeout(timer)
       setReady(true)
     })
-    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => { clearTimeout(timer); data.subscription.unsubscribe() }
   }, [])
 
@@ -200,6 +210,7 @@ export default function App() {
   if (maintenance && isNativeApp() && !pinUnlocked && maintenance.minBuild > (thisBuild() ?? 0)) {
     return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk onUnlock={() => setPinUnlocked(true)} />
   }
+  if (recoveryMode) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />
 }

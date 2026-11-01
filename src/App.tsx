@@ -94,7 +94,7 @@ function InstallHelp({ onClose, focus = 'android' }: { onClose: () => void; focu
   )
 }
 
-function ServiceNotice({ message, onUnlock, onContinue, showApk = false, showIos = false, androidLabel = 'Download the new app', title = 'Cznnect is getting an update' }: { message: string; onUnlock?: () => void; onContinue?: () => void; showApk?: boolean; showIos?: boolean; androidLabel?: string; title?: string }) {
+function ServiceNotice({ message, detail, onUnlock, onContinue, showApk = false, showIos = false, androidLabel = 'Download the new app', title = 'Cznnect is getting an update' }: { message: string; detail?: string; onUnlock?: () => void; onContinue?: () => void; showApk?: boolean; showIos?: boolean; androidLabel?: string; title?: string }) {
   const [help, setHelp] = useState<null | 'android' | 'ios'>(null)
   // An iPhone cannot install the Android file and an Android phone has no use for the iPhone steps, so each phone
   // only sees the card that can work for it. Computers see both.
@@ -135,6 +135,7 @@ function ServiceNotice({ message, onUnlock, onContinue, showApk = false, showIos
       <div className="card">
         <h1 className="font-display text-2xl font-bold">{title}</h1>
         <p className="mt-3 text-muted">{message}</p>
+        {detail && <p className="mt-2 text-sm font-bold tabular-nums">{detail}</p>}
         {(androidCard || iosCard) && (
           <div className="mt-5 flex flex-col gap-3">
             {androidCard && (
@@ -292,7 +293,7 @@ export default function App() {
   // so the owner can always sign in there to change the required build. The database refuses old apps too
   // (supabase/10_enforce_min_build.sql).
   if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp() })) {
-    return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk /><NetworkStatus /></>
+    return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." detail={`Your version: build ${thisBuild() ?? 'unknown'} · Required: build ${maintenance.minBuild}`} showApk /><NetworkStatus /></>
   }
   // On the website there is always a way to get the app from the sign-in screen, even after "Continue on the web".
   const canOfferApp = Boolean(

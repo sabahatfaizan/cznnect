@@ -4,7 +4,6 @@ import { appUrl, canShare, shareText } from '../lib/native'
 import Avatar from '../components/Avatar'
 import { shownName } from '../lib/avatars'
 import type { Family, Member } from '../types'
-import MemberSheet from '../components/MemberSheet'
 
 type Contact = { user_id: string; phone: string | null; contact_email: string | null }
 
@@ -23,7 +22,6 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   // Which in-page confirmation is open: 'newcode' or 'leave'.
   const [confirm, setConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [viewing, setViewing] = useState<Member | null>(null)
 
   const loadMembers = useCallback(async () => {
     const q = (cols: string) =>
@@ -138,11 +136,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
             const bio = m.profiles?.bio?.trim()
             const ct = m.user_id !== userId ? contacts.get(m.user_id) : undefined
             return (
-              <li
-                key={m.user_id}
-                className="flex cursor-pointer flex-wrap items-center gap-x-3"
-                onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) setViewing(m) }}
-              >
+              <li key={m.user_id} className="flex flex-wrap items-center gap-x-3">
                 <Avatar value={m.profiles?.avatar} name={name} size={40} className="my-2" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{name}</span>
@@ -168,21 +162,10 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
                     {m.role === 'owner' ? 'Owner' : 'Moderator'}
                   </span>
                 )}
-                <span aria-hidden="true" className="menu-chevron">›</span>
               </li>
             )
           })}
         </ul>
-        {viewing && (
-          <MemberSheet
-            member={viewing}
-            viewerId={userId}
-            viewerRole={me?.role ?? null}
-            familyId={family.id}
-            onClose={() => setViewing(null)}
-            onChanged={loadMembers}
-          />
-        )}
 
         {me && !isOwner &&
           (confirm === 'leave' ? (

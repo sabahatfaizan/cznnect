@@ -12,18 +12,26 @@ export default function Authed({ userId, email }: { userId: string; email: strin
 
   const load = useCallback(async () => {
     setError('')
-    const { data, error } = await supabase
-      .from('family_members')
-      .select('families(id, name, invite_code)')
-      .eq('user_id', userId)
-      .order('joined_at')
-      .limit(1)
-      .maybeSingle()
-    if (error) {
-      setError(error.message)
-      return
+    try {
+      const request = supabase
+        .from('family_members')
+        .select('families(id, name, invite_code)')
+        .eq('user_id', userId)
+        .order('joined_at')
+        .limit(1)
+        .maybeSingle()
+      const result = await Promise.race([
+        request,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('This is taking longer than expected. Check your connection and try again.')), 15000)),
+      ])
+      if (result.error) {
+        setError(result.error.message)
+        return
+      }
+      setFamily((result.data?.families as unknown as Family | undefined) ?? null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load your family. Check your connection and try again.')
     }
-    setFamily((data?.families as unknown as Family | undefined) ?? null)
   }, [userId])
 
   useEffect(() => {
@@ -36,6 +44,7 @@ export default function Authed({ userId, email }: { userId: string; email: strin
         <div className="card">
           <h1 className="font-display text-2xl font-bold">Could not load your family</h1>
           <p className="mt-2 text-sm">{error}</p>
+          <p className="mt-2 text-sm text-muted">Your account is still signed in. No family data has been changed.</p>
           <p className="mt-2 text-sm text-muted">
             If this mentions a missing table, run supabase/01_accounts.sql in Supabase first.
           </p>

@@ -9,6 +9,7 @@ import Logo from './components/Logo'
 import { Icon } from './components/Icons'
 import Authed from './Authed'
 import { isOwnerEmail } from './owner'
+import { isPasswordRecoveryEvent } from './lib/auth'
 import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 
 const SPLASH_MS = 4500
@@ -143,7 +144,7 @@ export default function App() {
     // and emits PASSWORD_RECOVERY when the recovery session is established.
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s)
-      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
+      if (isPasswordRecoveryEvent(event)) setRecoveryMode(true)
     })
 
     withTimeout(supabase.auth.getSession(), 12000).then(({ data }) => setSession(data.session)).catch(() => {}).finally(() => {

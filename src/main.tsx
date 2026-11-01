@@ -28,6 +28,8 @@ createRoot(document.getElementById('root')!).render(
 // Offline support and "Install app". Only in the built site, not while developing.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', { updateViaCache: 'none' }).catch((error) => {\n      console.warn('Cznnect offline support could not start:', error)\n    })
+    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', { updateViaCache: 'none' }).catch((error) => {
+      console.warn('Cznnect offline support could not start:', error)
+    })
   })
 }

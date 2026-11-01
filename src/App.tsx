@@ -10,6 +10,8 @@ import { isOwnerEmail } from './owner'
 
 const SPLASH_MS = 4500
 const MAINTENANCE_PIN = '4124'
+// Always the newest APK: the build workflow republishes it under this fixed name on every push to main.
+const LATEST_APK_URL = 'https://github.com/sabahatfaizan/cznnect/releases/download/latest-apk/cznnect.apk'
 
 function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () => void }) {
   const [pin, setPin] = useState('')
@@ -43,6 +45,12 @@ function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () =
       <div className="card">
         <h1 className="font-display text-2xl font-bold">Cznnect is getting an update</h1>
         <p className="mt-3 text-muted">{message}</p>
+        <div className="mt-5 flex flex-col gap-2">
+          <a className="btn btn-plain w-full" href={LATEST_APK_URL} target="_blank" rel="noopener noreferrer" download="cznnect.apk">
+            Download the latest Android app (APK)
+          </a>
+          <p className="text-center text-xs text-muted">If Android asks, allow installing from this source. Your data stays as it is.</p>
+        </div>
         {onUnlock && showPinUnlock && (
           <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
             <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>

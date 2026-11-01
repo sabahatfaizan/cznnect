@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -86,3 +86,16 @@ jobs:
           name: cznnect-apk-${{ github.run_number }}-${{ github.sha }}
           path: android/app/build/outputs/apk/debug/cznnect-${{ github.run_number }}-${{ github.sha }}.apk
           if-no-files-found: error
+
+      - name: Publish newest APK to the latest-apk release
+        # A rolling release with a fixed file name, so the maintenance screen can link to
+        # https://github.com/sabahatfaizan/cznnect/releases/download/latest-apk/cznnect.apk
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "android/app/build/outputs/apk/debug/cznnect-${GITHUB_RUN_NUMBER}-${GITHUB_SHA}.apk" cznnect.apk
+          if ! gh release view latest-apk >/dev/null 2>&1; then
+            gh release create latest-apk --title "Latest Cznnect APK" --notes "Always the newest build. Updated automatically on every push to main." --target "$GITHUB_SHA"
+          fi
+          gh release upload latest-apk cznnect.apk --clobber
+          gh release edit latest-apk --notes "Build ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7}). Updated automatically on every push to main."

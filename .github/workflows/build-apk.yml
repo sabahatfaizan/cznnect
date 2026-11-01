@@ -132,26 +132,22 @@ jobs:
         # When the owner has forced updates on (min_build above 0), every new APK becomes the required build, so old
         # apps are asked to update without anyone pressing a button. It runs after the APK is published, so people
         # sent to the download always get the new file. Turn forced updates off in Admin and this leaves it alone.
-        # Needs the repository secret SUPABASE_SERVICE_KEY; without it this step is skipped and the build still passes.
+        # Uses the repository secret BUILD_TOKEN, which can only call raise_min_build (supabase/12_build_token.sql)
+        # and cannot read or change anything else. Without the secret this step is skipped and the build still passes.
         continue-on-error: true
         env:
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          BUILD_TOKEN: ${{ secrets.BUILD_TOKEN }}
         run: |
-          if [ -z "$SUPABASE_SERVICE_KEY" ]; then
-            echo "SUPABASE_SERVICE_KEY is not set, so the required build was not changed."
+          if [ -z "$BUILD_TOKEN" ]; then
+            echo "BUILD_TOKEN is not set, so the required build was not changed."
             exit 0
           fi
           URL=$(grep -oE "https://[a-z0-9]+\.supabase\.co" src/config.ts | head -1)
-          [ -n "$URL" ] || { echo "Could not read the Supabase URL from src/config.ts"; exit 1; }
-          BODY=$(curl -sS --fail-with-body -X PATCH \
-            "$URL/rest/v1/app_settings?id=eq.1&min_build=gt.0&min_build=lt.${GITHUB_RUN_NUMBER}" \
-            -H "apikey: $SUPABASE_SERVICE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+          ANON=$(grep "SUPABASE_ANON_KEY =" src/config.ts | sed -E "s/.*'([^']+)'.*/\1/")
+          [ -n "$URL" ] && [ -n "$ANON" ] || { echo "Could not read the Supabase settings from src/config.ts"; exit 1; }
+          BODY=$(curl -sS --fail-with-body -X POST "$URL/rest/v1/rpc/raise_min_build" \
+            -H "apikey: $ANON" \
+            -H "Authorization: Bearer $ANON" \
             -H "Content-Type: application/json" \
-            -H "Prefer: return=representation" \
-            -d "{\"min_build\": ${GITHUB_RUN_NUMBER}}")
-          if [ "$BODY" = "[]" ]; then
-            echo "Required build left as it was (forced updates are off, or already at this build or newer)."
-          else
-            echo "Required build is now ${GITHUB_RUN_NUMBER}."
-          fi
+            -d "{\"token\": \"${BUILD_TOKEN}\", \"build\": ${GITHUB_RUN_NUMBER}}")
+          echo "Result: $BODY"

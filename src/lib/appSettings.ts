@@ -42,6 +42,15 @@ export function isNativeApp(): boolean {
   return Boolean(cap?.isNativePlatform?.())
 }
 
+/** True for the website added to a phone's home screen. It runs as an app and updates itself. */
+export function isInstalledWebApp(): boolean {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
+  } catch {
+    return false
+  }
+}
+
 export function useAppSettings(pollMs = 30000) {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [error, setError] = useState('')

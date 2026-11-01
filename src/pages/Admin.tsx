@@ -169,12 +169,12 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           <textarea id="admin-maint-msg" className="input min-h-20" maxLength={240} value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} placeholder={DEFAULT_MAINTENANCE_MESSAGE} />
           <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, 'Message saved.')}>Save message</button>
         </div>
-        <Row title="Download card" hint={settings?.apkDownloadEnabled ? 'Maintenance screen offers the new app' : 'Download card is hidden'}>
+        <Row title="Send website visitors to the app" hint={settings?.apkDownloadEnabled ? 'The website shows the download page instead of sign-in. The installed apps, home-screen web app and you still get in.' : 'Anyone can sign in on the website'}>
           <Switch
             on={Boolean(settings?.apkDownloadEnabled)}
-            label="Show app download on maintenance screen"
+            label="Send website visitors to the app"
             disabled={busy || !ready}
-            onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Download card is shown.' : 'Download card is hidden.')}
+            onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Website visitors now see the download page.' : 'The website lets people sign in again.')}
           />
         </Row>
       </section>

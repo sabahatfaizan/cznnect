@@ -8,7 +8,7 @@ import Logo from './components/Logo'
 import { Icon } from './components/Icons'
 import Authed from './Authed'
 import { isOwnerEmail } from './owner'
-import { LATEST_APK_URL, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
+import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 
 const SPLASH_MS = 4500
 const MAINTENANCE_PIN = '4124'
@@ -180,6 +180,18 @@ export default function App() {
   const isOwner = isOwnerEmail(session?.user.email)
   if (maintenance?.maintenanceEnabled && !isOwner && !pinUnlocked) {
     return <ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} onUnlock={() => setPinUnlocked(true)} />
+  }
+  // With the download option on, people on the plain website (not the Android app, not the home-screen web app)
+  // see the download page instead of signing in. The owner and anyone with the access PIN still get through.
+  if (maintenance?.apkDownloadEnabled && !isNativeApp() && !isInstalledWebApp() && !isOwner && !pinUnlocked) {
+    return (
+      <ServiceNotice
+        title="Get the Cznnect app"
+        message="Cznnect now runs as an app. Download it below, or open the app if you already have it. On iPhone, tap Learn more."
+        showApk
+        onUnlock={() => setPinUnlocked(true)}
+      />
+    )
   }
   // Old Android apps are asked to update. Only the installed app can be forced; the owner is never blocked.
   const build = thisBuild()

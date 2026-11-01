@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildHeaderValue, deviceKind, mustUpdate } from './updateGate'
 
-const base = { minBuild: 100, build: 90, native: true, owner: false }
+const base = { minBuild: 100, build: 90, native: true }
 
 describe('mustUpdate', () => {
   it('blocks an installed app older than the minimum', () => {
@@ -17,9 +17,8 @@ describe('mustUpdate', () => {
     expect(mustUpdate({ ...base, minBuild: 0 })).toBe(false)
   })
 
-  it('never blocks the website or the owner', () => {
+  it('never blocks the website', () => {
     expect(mustUpdate({ ...base, native: false })).toBe(false)
-    expect(mustUpdate({ ...base, owner: true })).toBe(false)
   })
 
   it('treats an installed app with no build number as the oldest', () => {

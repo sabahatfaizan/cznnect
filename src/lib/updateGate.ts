@@ -8,13 +8,12 @@ export type UpdateCheck = {
   build: number | null
   /** True only inside the installed Android app. */
   native: boolean
-  /** The owner account is never blocked. */
-  owner: boolean
 }
 
-/** Only the installed Android app can be forced. The website and the home-screen web app update by themselves. */
-export function mustUpdate({ minBuild, build, native, owner }: UpdateCheck): boolean {
-  if (!native || owner || minBuild <= 0) return false
+/** Only the installed Android app can be forced, and everyone on it is, the owner included. The website and the
+ * home-screen web app update by themselves. */
+export function mustUpdate({ minBuild, build, native }: UpdateCheck): boolean {
+  if (!native || minBuild <= 0) return false
   // An app with no build number counts as the oldest.
   return minBuild > (build ?? 0)
 }

@@ -287,9 +287,10 @@ export default function App() {
       /><NetworkStatus /></>
     )
   }
-  // Old Android apps must update before they can be used. The owner account is never blocked, so to test this on
-  // your own phone, look at the app while signed out. The database refuses old apps too (supabase/10_enforce_min_build.sql).
-  if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp(), owner: isOwner })) {
+  // Old Android apps must update before they can be used, the owner's phone included. The website is never forced,
+  // so the owner can always sign in there to change the required build. The database refuses old apps too
+  // (supabase/10_enforce_min_build.sql).
+  if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp() })) {
     return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk /><NetworkStatus /></>
   }
   if (!session) return <><AuthScreen /><NetworkStatus /></>

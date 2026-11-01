@@ -2,8 +2,9 @@
 -- shown an "Update required" screen. Run after 09_admin.sql in the Supabase SQL Editor. Safe to run again.
 --
 -- How it works: newer Android apps send their build number in an "x-app-build" header. While the owner has set a
--- minimum build, requests from an app below it are refused on every table. Requests with no header (the website,
--- older apps) and the owner's account are always allowed, and any problem reading the header allows the request.
+-- minimum build, requests from an app below it are refused on every table, the owner's phone included. Requests
+-- with no header (the website, older apps) are always allowed, so the owner can still use the website to change the
+-- required build. Any problem reading the header allows the request.
 --
 -- Run this file again after adding a new table, so the new table gets the same rule.
 
@@ -18,9 +19,6 @@ declare
   hdr text;
   minimum integer;
 begin
-  if lower(coalesce(auth.jwt() ->> 'email', '')) = 'faizanplayz11@gmail.com' then
-    return true;
-  end if;
   hdr := (current_setting('request.headers', true)::json) ->> 'x-app-build';
   if hdr is null or hdr !~ '^[0-9]{1,9}$' then
     return true;

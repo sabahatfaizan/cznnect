@@ -33,10 +33,21 @@ type NativeNotifications = {
   requestPermissions: () => Promise<{ display: string }>
   schedule: (o: { notifications: { id: number; title: string; body: string; schedule: { at: Date } }[] }) => Promise<unknown>
 }
+// The notification plugin is added to the APK when it is built, after the web code is bundled, so the web code never
+// imports it and it is not listed under Capacitor.Plugins. It is asked for by name instead. If the app was built
+// without the plugin, using it fails and the reminders switch explains that.
+let nativeInstance: NativeNotifications | null | undefined
 function nativePlugin(): NativeNotifications | null {
-  const c = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: Record<string, unknown> } }).Capacitor
+  const c = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: Record<string, unknown>; registerPlugin?: (name: string) => unknown } }).Capacitor
   if (!c?.isNativePlatform?.()) return null
-  return (c.Plugins?.LocalNotifications as NativeNotifications | undefined) ?? null
+  if (nativeInstance === undefined) {
+    try {
+      nativeInstance = ((c.Plugins?.LocalNotifications ?? c.registerPlugin?.('LocalNotifications')) as NativeNotifications | undefined) ?? null
+    } catch {
+      nativeInstance = null
+    }
+  }
+  return nativeInstance
 }
 function fromNative(display: string): Perm {
   return display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'default'

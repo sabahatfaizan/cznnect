@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+# Builds run one at a time, and a newer push replaces one still waiting, so an old build can never finish
+# after a newer one and put the old APK back on the download link.
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -122,6 +128,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp "android/app/build/outputs/apk/debug/cznnect-${GITHUB_RUN_NUMBER}-${GITHUB_SHA}.apk" cznnect.apk
+          # Never put an older build over a newer one (the notes always start with "Build <number>").
+          CURRENT=$(gh release view latest-apk --json body -q .body 2>/dev/null | sed -n 's/^Build \([0-9][0-9]*\).*/\1/p' | head -1)
+          if [ -n "$CURRENT" ] && [ "$CURRENT" -gt "$GITHUB_RUN_NUMBER" ]; then
+            echo "Build $CURRENT is already published and newer than $GITHUB_RUN_NUMBER, so the download link is left alone."
+            exit 0
+          fi
           if ! gh release view latest-apk >/dev/null 2>&1; then
             gh release create latest-apk --title "Latest Cznnect APK" --notes "Always the newest build. Updated automatically on every push to main." --target "$GITHUB_SHA"
           fi

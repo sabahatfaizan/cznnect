@@ -194,7 +194,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               </button>
             </div>
             <div className="mt-12 border-t border-line pt-8">
-              <p className="eyebrow px-3 pb-5">Settings</p>
+              <div className="pb-8"><p className="eyebrow px-3">Settings</p></div>
               <button
                 type="button"
                 className={`menu-item ${tab === 'settings' ? 'menu-item-on' : ''}`}

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Logo from './Logo'
+import { nextAuthMode, type AuthMode } from '../lib/auth'
 
 // Gives up after 20 seconds so the button never stays stuck.
 function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
@@ -20,7 +21,7 @@ function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
 }
 
 export default function AuthScreen() {
-  const [mode, setMode] = useState<'in' | 'up' | 'reset'>('up')
+  const [mode, setMode] = useState<AuthMode>('up')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -172,7 +173,7 @@ export default function AuthScreen() {
         type="button"
         className="link"
         onClick={() => {
-          setMode(mode === 'up' ? 'in' : 'up')
+          setMode(nextAuthMode(mode))
           setMsg(null)
         }}
       >

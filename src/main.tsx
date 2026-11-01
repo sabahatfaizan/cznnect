@@ -10,6 +10,7 @@ import './themes/moonpaper.css'
 import './themes/moon-comic.css'
 import '@fontsource/cinzel/latin-600.css'
 import App from './App'
+import AppErrorBoundary from './components/AppErrorBoundary'
 import { applyTheme, getThemePref } from './theme'
 import { applyIcon } from './appIcon'
 import { initRdr2Fx } from './themes/rdr2-fx'
@@ -20,13 +21,13 @@ initRdr2Fx()
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary><App /></AppErrorBoundary>
   </React.StrictMode>,
 )
 
 // Offline support and "Install app". Only in the built site, not while developing.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {})
+    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', { updateViaCache: 'none' }).catch((error) => {\n      console.warn('Cznnect offline support could not start:', error)\n    })
   })
 }

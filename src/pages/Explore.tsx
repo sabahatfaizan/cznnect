@@ -9,7 +9,6 @@ import {
   starText,
   statusLabel,
   validLatLng,
-  type KindFilter,
   type Place,
   type Rating,
   type StatusFilter,
@@ -29,11 +28,6 @@ type Flow =
   | { step: 'pick' }
   | { step: 'form'; lat: number; lng: number; name: string; address: string }
 
-const KINDS: { id: KindFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'place', label: 'Places' },
-  { id: 'restaurant', label: 'Restaurants' },
-]
 const STATUSES: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'been', label: 'Been' },
@@ -48,7 +42,6 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('map')
-  const [kind, setKind] = useState<KindFilter>('all')
   const [state, setState] = useState<StatusFilter>('all')
   const [visitedBy, setVisitedBy] = useState('all')
   const [query, setQuery] = useState('')
@@ -103,10 +96,10 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   const byPlace = useMemo(() => groupRatings(ratings), [ratings])
   // A cousin's rating is the existing signal that they have personally been to a place.
   const shown = useMemo(() => {
-    const filtered = filterPlaces(places, { kind, status: state, query })
+    const filtered = filterPlaces(places, { kind: 'all', status: state, query })
     if (visitedBy === 'all') return filtered
     return filtered.filter((p) => byPlace.get(p.id)?.some((r) => r.user_id === visitedBy))
-  }, [places, kind, state, query, visitedBy, byPlace])
+  }, [places, state, query, visitedBy, byPlace])
   const selected = selectedId ? (places.find((p) => p.id === selectedId) ?? null) : null
 
   // If a place was removed by someone else while its card was open, close the card.
@@ -208,18 +201,6 @@ export default function Explore({ family, userId }: { family: Family; userId: st
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2" role="group" aria-label="Show">
-            {KINDS.map((k) => (
-              <button
-                key={k.id}
-                aria-pressed={kind === k.id}
-                className={`seg !min-h-11 items-center ${kind === k.id ? 'seg-on' : ''}`}
-                onClick={() => setKind(k.id)}
-              >
-                {k.label}
-              </button>
-            ))}
-          </div>
           <div className="grid grid-cols-3 gap-2" role="group" aria-label="Status">
             {STATUSES.map((s) => (
               <button

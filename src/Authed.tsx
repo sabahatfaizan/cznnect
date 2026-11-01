@@ -12,6 +12,7 @@ export default function Authed({ userId, email }: { userId: string; email: strin
 
   const load = useCallback(async () => {
     setError('')
+    let timer: ReturnType<typeof setTimeout> | undefined
     try {
       const request = supabase
         .from('family_members')
@@ -20,10 +21,10 @@ export default function Authed({ userId, email }: { userId: string; email: strin
         .order('joined_at')
         .limit(1)
         .maybeSingle()
-      const result = await Promise.race([
-        request,
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('This is taking longer than expected. Check your connection and try again.')), 15000)),
-      ])
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('This is taking longer than expected. Check your connection and try again.')), 15000)
+      })
+      const result = await Promise.race([request, timeout])
       if (result.error) {
         setError(result.error.message)
         return
@@ -31,6 +32,8 @@ export default function Authed({ userId, email }: { userId: string; email: strin
       setFamily((result.data?.families as unknown as Family | undefined) ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load your family. Check your connection and try again.')
+    } finally {
+      if (timer) clearTimeout(timer)
     }
   }, [userId])
 

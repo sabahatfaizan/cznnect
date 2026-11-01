@@ -11,7 +11,7 @@ import {
   type Tier,
   type Upcoming,
 } from '../lib/birthdays'
-import { askPermission, loadPrefs, notificationState, savePrefs, type ReminderPrefs } from '../lib/birthdayReminders'
+import { askPermission, loadPrefs, notificationState, remindersAreScheduled, runReminders, savePrefs, sendTestReminder, type ReminderPrefs } from '../lib/birthdayReminders'
 
 type Props = {
   people: BirthdayPerson[]
@@ -73,6 +73,23 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
   function update(p: ReminderPrefs) {
     setPrefs(p)
     savePrefs(p)
+    // Plan (or cancel) the reminders again straight away.
+    runReminders(upcoming, p)
+  }
+
+  const [testing, setTesting] = useState(false)
+  async function test() {
+    setTesting(true)
+    setNote('')
+    const r = await sendTestReminder()
+    setTesting(false)
+    setNote(
+      r === 'sent'
+        ? 'Test sent. If nothing appears, check Cznnect in your phone’s notification settings.'
+        : r === 'blocked'
+          ? 'Notifications are blocked for this app. Allow them in your phone settings.'
+          : 'This version of the app cannot show notifications. Install the newest APK.',
+    )
   }
 
   async function toggleReminders() {
@@ -187,7 +204,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 className="font-display text-lg font-bold">Reminders</h2>
-            <p className="text-sm text-muted">Shown when you open the app.</p>
+            <p className="text-sm text-muted">{remindersAreScheduled() ? 'Sent at 9:00 am, even when the app is closed.' : 'Shown when you open the app.'}</p>
           </div>
           <button
             type="button"
@@ -200,7 +217,7 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
             <span />
           </button>
         </div>
-        {note && <p role="alert" className="text-sm font-bold text-danger">{note}</p>}
+        {note && <p role="alert" className={`text-sm font-bold ${note.startsWith('Test sent') ? 'text-accent-text' : 'text-danger'}`}>{note}</p>}
         {prefs.enabled && (
           <div className="flex flex-col gap-1 border-t border-line pt-3">
             {(
@@ -220,6 +237,9 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
                 />
               </label>
             ))}
+            <button type="button" className="btn btn-plain mt-2 w-full" disabled={testing} onClick={test}>
+              {testing ? 'Sending…' : 'Send a test reminder'}
+            </button>
           </div>
         )}
       </section>

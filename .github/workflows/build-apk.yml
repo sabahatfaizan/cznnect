@@ -127,3 +127,31 @@ jobs:
           fi
           gh release upload latest-apk cznnect.apk --clobber
           gh release edit latest-apk --notes "Build ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7}). Updated automatically on every push to main."
+
+      - name: Raise the required app build to this build (only while forced updates are on)
+        # When the owner has forced updates on (min_build above 0), every new APK becomes the required build, so old
+        # apps are asked to update without anyone pressing a button. It runs after the APK is published, so people
+        # sent to the download always get the new file. Turn forced updates off in Admin and this leaves it alone.
+        # Needs the repository secret SUPABASE_SERVICE_KEY; without it this step is skipped and the build still passes.
+        continue-on-error: true
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "SUPABASE_SERVICE_KEY is not set, so the required build was not changed."
+            exit 0
+          fi
+          URL=$(grep -oE "https://[a-z0-9]+\.supabase\.co" src/config.ts | head -1)
+          [ -n "$URL" ] || { echo "Could not read the Supabase URL from src/config.ts"; exit 1; }
+          BODY=$(curl -sS --fail-with-body -X PATCH \
+            "$URL/rest/v1/app_settings?id=eq.1&min_build=gt.0&min_build=lt.${GITHUB_RUN_NUMBER}" \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=representation" \
+            -d "{\"min_build\": ${GITHUB_RUN_NUMBER}}")
+          if [ "$BODY" = "[]" ]; then
+            echo "Required build left as it was (forced updates are off, or already at this build or newer)."
+          else
+            echo "Required build is now ${GITHUB_RUN_NUMBER}."
+          fi

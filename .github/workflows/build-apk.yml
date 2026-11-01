@@ -73,6 +73,34 @@ jobs:
           grep -n "uses-permission\|uses-feature" android/app/src/main/AndroidManifest.xml
           grep -q "android.permission.CAMERA" android/app/src/main/AndroidManifest.xml
 
+      - name: Sign with the fixed Cznnect key and raise the version
+        # GitHub makes a new throwaway debug key on every build, and Android refuses to update an app whose
+        # signing key changed. A fixed key plus a version number that rises each build lets a new APK
+        # install over the old one.
+        run: |
+          cp android-native/cznnect-debug.keystore android/app/cznnect-debug.keystore
+          python3 - <<'PY'
+          import re
+          p = 'android/app/build.gradle'
+          s = open(p, encoding='utf-8').read()
+          s = re.sub(r'versionCode\s+\d+', 'versionCode ' + __import__('os').environ['GITHUB_RUN_NUMBER'], s, count=1)
+          s = re.sub(r'versionName\s+"[^"]*"', 'versionName "1.0.' + __import__('os').environ['GITHUB_RUN_NUMBER'] + '"', s, count=1)
+          block = """
+              signingConfigs {
+                  debug {
+                      storeFile file('cznnect-debug.keystore')
+                      storePassword 'android'
+                      keyAlias 'cznnect'
+                      keyPassword 'android'
+                  }
+              }
+          """
+          assert 'buildTypes {' in s, 'buildTypes not found in build.gradle'
+          s = s.replace('buildTypes {', block.strip('\n') + '\n    buildTypes {', 1)
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+          grep -n "versionCode\|versionName\|cznnect-debug" android/app/build.gradle
+
       - name: Build debug APK
         run: cd android && ./gradlew assembleDebug
 

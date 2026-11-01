@@ -17,14 +17,13 @@ export default function Profile({ userId }: { userId: string }) {
   const [symbol, setSymbol] = useState('') // an emoji, or "i:<id>" for a drawn icon
   const [color, setColor] = useState(DEFAULT_AVATAR_COLOR)
   const [typo, setTypo] = useState('')
-  const [tab, setTab] = useState<'icons' | 'emoji' | 'letters'>('icons')
+  const [tab, setTab] = useState<'emoji' | 'letters'>('emoji')
   const [unlocked, setUnlocked] = useState(getUnlockedThemes)
   useEffect(() => onUnlocksChanged(() => setUnlocked(getUnlockedThemes())), [])
-  // Drawn icons belong to a theme: they are offered once it is unlocked (an icon already in use stays visible).
-  const iconsAvailable = AVATAR_ICONS.filter((ic) => !ic.requires || unlocked.includes(ic.requires) || symbol === `i:${ic.id}`)
-  useEffect(() => {
-    if (tab === 'icons' && iconsAvailable.length === 0) setTab('emoji')
-  }, [tab, iconsAvailable.length])
+  const [typoBg, setTypoBg] = useState('') // wheel colour for a lettering avatar; '' keeps its themed background
+  const [colorTouched, setColorTouched] = useState(false)
+  // A pack is offered once its theme is unlocked. The one already in use stays visible.
+  const inUse = typo ? TYPO_AVATARS.find((t) => t.id === typo)?.pack : AVATAR_ICONS.find((i) => symbol === `i:${i.id}`)?.pack
   const [phone, setPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [share, setShare] = useState(false)
@@ -51,12 +50,16 @@ export default function Profile({ userId }: { userId: string }) {
       if (t) {
         setTypo(t.id)
         setTab('letters')
+        if (t.custom) {
+          setTypoBg(t.custom)
+          setColor(t.custom)
+        }
       }
       const a = parseAvatar(d.avatar)
       if (a) {
         setSymbol(a.symbol)
         setColor(a.color)
-        setTab(a.symbol.startsWith('i:') ? 'icons' : 'emoji')
+        setTab(a.symbol.startsWith('i:') ? 'letters' : 'emoji')
       }
       const c = await supabase.from('profile_contacts').select('phone, contact_email, share_contact').eq('user_id', userId).maybeSingle()
       if (c.data) {
@@ -106,7 +109,7 @@ export default function Profile({ userId }: { userId: string }) {
     )
   }
 
-  const avatarValue = typo ? encodeTypoAvatar(typo) : symbol ? encodeAvatar({ symbol, color }) : null
+  const avatarValue = typo ? encodeTypoAvatar(typo, typoBg || undefined) : symbol ? encodeAvatar({ symbol, color }) : null
   const tile = (id: 'about' | 'contact', label: string, icon: IconName) => (
     <button type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
       <span className="set-tile-icon" aria-hidden="true">
@@ -170,7 +173,7 @@ export default function Profile({ userId }: { userId: string }) {
               <Avatar value={avatarValue} name={nickname || name} size={64} />
             </div>
           <div className="seg-row grid grid-cols-3 gap-2" role="tablist" aria-label="Avatar type">
-            {([['icons', 'Icons'], ['emoji', 'Emoji'], ['letters', 'Letters']] as const).filter(([id]) => id !== 'icons' || iconsAvailable.length > 0).map(([id, label]) => (
+            {([['emoji', 'Emoji'], ['letters', 'Letters']] as const).map(([id, label]) => (
               <button
                 key={id}
                 type="button"
@@ -183,29 +186,6 @@ export default function Profile({ userId }: { userId: string }) {
               </button>
             ))}
           </div>
-
-          {tab === 'icons' && (
-            <div role="radiogroup" aria-label="Avatar icons" className="avatar-grid grid grid-cols-4 gap-2.5">
-              {iconsAvailable.map((ic) => {
-                const value = `i:${ic.id}`
-                const on = !typo && symbol === value
-                return (
-                  <button
-                    type="button"
-                    key={ic.id}
-                    role="radio"
-                    aria-checked={on}
-                    aria-label={ic.label}
-                    onClick={() => { setSymbol(value); setTypo('') }}
-                    className={`avatar-pick flex flex-col items-center gap-1 rounded-[var(--radius-ctl)] border p-2 ${on ? 'border-accent bg-accent-soft' : 'border-line bg-surface-2'}`}
-                  >
-                    <Avatar value={encodeAvatar({ symbol: value, color })} name="" size={48} />
-                    <span className="text-[0.68rem] font-bold leading-tight text-muted">{ic.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
 
           {tab === 'emoji' && (
             <div className="flex flex-col gap-3">
@@ -235,24 +215,46 @@ export default function Profile({ userId }: { userId: string }) {
             </div>
           )}
 
-          {tab !== 'letters' && (
+          {(
             <details className="expander border-t border-line pt-3" open>
               <summary>
                 <span className="font-bold">Background colour</span>
                 <span aria-hidden="true" className="expander-chevron">›</span>
               </summary>
               <div className="mt-3">
-                <ColorWheel value={color} onChange={(c) => { setColor(c); setTypo('') }} />
+                <ColorWheel value={color} onChange={(c) => { setColor(c); setColorTouched(true); if (typo) setTypoBg(c) }} />
+                {typo && typoBg && (
+                  <button type="button" className="link mt-2" onClick={() => { setTypoBg(''); setColorTouched(false) }}>
+                    Use this avatar's own background
+                  </button>
+                )}
               </div>
             </details>
           )}
 
           {tab === 'letters' && (
             <>
-              {TYPO_PACKS.filter((pack) => !pack.requires || unlocked.includes(pack.requires)).map((pack) => (
+              {TYPO_PACKS.filter((pack) => !pack.requires || unlocked.includes(pack.requires) || inUse === pack.name).map((pack) => (
                 <div key={pack.name} role="radiogroup" aria-label={`${pack.name} avatars`}>
                   <p className="label mb-1.5">{pack.name}</p>
                   <div className="flex flex-wrap gap-2.5">
+                    {AVATAR_ICONS.filter((ic) => ic.pack === pack.name).map((ic) => {
+                      const value = `i:${ic.id}`
+                      const on = !typo && symbol === value
+                      return (
+                        <button
+                          type="button"
+                          key={ic.id}
+                          role="radio"
+                          aria-checked={on}
+                          aria-label={`${pack.name} ${ic.label}`}
+                          onClick={() => { setSymbol(value); setTypo('') }}
+                          className={`rounded-full ${on ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
+                        >
+                          <Avatar value={encodeAvatar({ symbol: value, color })} name="" size={44} />
+                        </button>
+                      )
+                    })}
                     {TYPO_AVATARS.filter((t) => t.pack === pack.name).map((t) => (
                       <button
                         type="button"
@@ -260,10 +262,10 @@ export default function Profile({ userId }: { userId: string }) {
                         role="radio"
                         aria-checked={typo === t.id}
                         aria-label={`${pack.name} ${t.text || 'plain'}`}
-                        onClick={() => setTypo(t.id)}
+                        onClick={() => { setTypo(t.id); setSymbol(''); setTypoBg(colorTouched ? color : '') }}
                         className={`rounded-full ${typo === t.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
                       >
-                        <Avatar value={encodeTypoAvatar(t.id)} name={nickname || name} size={44} />
+                        <Avatar value={encodeTypoAvatar(t.id, colorTouched ? color : undefined)} name={nickname || name} size={44} />
                       </button>
                     ))}
                   </div>
@@ -272,7 +274,7 @@ export default function Profile({ userId }: { userId: string }) {
             </>
           )}
           {(symbol || typo) && (
-            <button type="button" className="link self-start" onClick={() => { setSymbol(''); setTypo('') }}>
+            <button type="button" className="link self-start" onClick={() => { setSymbol(''); setTypo(''); setTypoBg('') }}>
               Use my initial instead
             </button>
           )}

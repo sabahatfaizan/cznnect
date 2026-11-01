@@ -24,6 +24,9 @@ export default function Avatar({
   if (t) {
     const label = t.text === null ? (name.trim()[0] || '?').toUpperCase() : t.text
     const len = Math.max(1, [...label].length)
+    // A colour picked on the wheel replaces the themed background; the lettering switches to a readable ink.
+    const c = t.custom
+    const ink = c ? inkFor(c) : t.fg
     return (
       <span
         aria-hidden="true"
@@ -31,11 +34,11 @@ export default function Avatar({
           width: size,
           height: size,
           fontSize: size * Math.min(0.5, 1.12 / len),
-          color: t.fg,
+          color: ink,
           fontFamily: FONTS[t.font],
           letterSpacing: len > 1 ? '0.03em' : undefined,
-          backgroundImage: `linear-gradient(145deg, ${t.bg[0]}, ${t.bg[1]})`,
-          boxShadow: t.ring ? `inset 0 0 0 ${Math.max(1.5, size * 0.045)}px ${t.ring}` : 'inset 0 0 0 1px rgba(255,255,255,.14)',
+          backgroundImage: c ? `linear-gradient(145deg, ${shade(c, 0.22)}, ${c} 55%, ${shade(c, -0.3)})` : `linear-gradient(145deg, ${t.bg[0]}, ${t.bg[1]})`,
+          boxShadow: t.ring ? `inset 0 0 0 ${Math.max(1.5, size * 0.045)}px ${c ? ink : t.ring}` : 'inset 0 0 0 1px rgba(255,255,255,.14)',
         }}
         className={`flex flex-none items-center justify-center overflow-hidden rounded-[var(--radius-avatar)] font-bold leading-none ${className}`}
       >

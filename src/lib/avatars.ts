@@ -2,19 +2,19 @@
 // The symbol is either an emoji or a drawn icon, and the disc colour is any colour from the colour wheel.
 // Stored in profiles.avatar (16 characters at most) as "<symbol>|#rrggbb", for example "🦊|#f59e0b" or
 // "i:lasso|#3b82f6". Older avatars saved as "<emoji>|<colour number>" still load.
-// Lettering avatars (below) are stored as "t:<id>", for example "t:mk-moon".
+// Lettering avatars (below) are stored as "t:<id>" or "t:<id>|<rrggbb>", for example "t:mk-moon".
 import type { ExclusiveTheme } from '../theme'
 
 // Drawn icons: a hand-sketched Wild West set plus a bat. The ids are short so the stored value fits.
-// requires = the theme that has to be unlocked on this device before the icon can be picked.
-export const AVATAR_ICONS: { id: string; label: string; requires: ExclusiveTheme | null }[] = [
-  { id: 'lasso', label: 'Lasso', requires: 'rdr2' },
-  { id: 'hat', label: 'Cowboy hat', requires: 'rdr2' },
-  { id: 'knife', label: 'Knife', requires: 'rdr2' },
-  { id: 'colt', label: 'Revolver', requires: 'rdr2' },
-  { id: 'wanted', label: 'Wanted poster', requires: 'rdr2' },
-  { id: 'lamp', label: 'Lantern', requires: 'rdr2' },
-  { id: 'bat', label: 'Bat', requires: 'moonknight' }, // the Batman pack also goes with the Moon Knight theme
+// Each drawn icon sits inside its theme's pack (see TYPO_PACKS), so it only shows once that theme is unlocked.
+export const AVATAR_ICONS: { id: string; label: string; pack: string }[] = [
+  { id: 'lasso', label: 'Lasso', pack: 'Arthur Morgan' },
+  { id: 'hat', label: 'Cowboy hat', pack: 'Arthur Morgan' },
+  { id: 'knife', label: 'Knife', pack: 'Arthur Morgan' },
+  { id: 'colt', label: 'Revolver', pack: 'Arthur Morgan' },
+  { id: 'wanted', label: 'Wanted poster', pack: 'Arthur Morgan' },
+  { id: 'lamp', label: 'Lantern', pack: 'Arthur Morgan' },
+  { id: 'bat', label: 'Bat', pack: 'Batman' },
 ]
 
 // Emoji people actually use, grouped so they are quick to find.
@@ -144,6 +144,7 @@ export type TypoAvatar = {
   bg: [string, string]
   fg: string
   ring?: string
+  custom?: string // a background picked on the colour wheel, when there is one
 }
 
 export const TYPO_PACKS: { name: string; requires: ExclusiveTheme | null }[] = [
@@ -170,33 +171,41 @@ export const TYPO_AVATARS: TypoAvatar[] = [
   // Moon Knight
   { id: 'mk-moon', pack: 'Moon Knight', text: '\u263E', font: 'plain', bg: MK, fg: '#ffffff', ring: '#ffffff' },
   { id: 'mk-mk', pack: 'Moon Knight', text: 'MK', font: 'moon', bg: MK, fg: '#ffffff' },
-  { id: 'mk-moonw', pack: 'Moon Knight', text: 'MOON', font: 'moon', bg: ['#ffffff', '#d9d9d9'], fg: '#000000' },
+  { id: 'mk-moow', pack: 'Moon Knight', text: 'MOON', font: 'moon', bg: ['#ffffff', '#d9d9d9'], fg: '#000000' },
   { id: 'mk-marc', pack: 'Moon Knight', text: 'MARC', font: 'moon', bg: MK, fg: '#e8c872', ring: '#e8c872' },
-  { id: 'mk-knight', pack: 'Moon Knight', text: 'KNIGHT', font: 'moon', bg: MK, fg: '#ffffff' },
+  { id: 'mk-knig', pack: 'Moon Knight', text: 'KNIGHT', font: 'moon', bg: MK, fg: '#ffffff' },
   // Batman
   { id: 'bm-b', pack: 'Batman', text: 'B', font: 'plain', bg: BAT, fg: '#f5c400', ring: '#f5c400' },
-  { id: 'bm-bruce', pack: 'Batman', text: 'BRUCE', font: 'plain', bg: BAT, fg: '#f5c400' },
-  { id: 'bm-wayne', pack: 'Batman', text: 'WAYNE', font: 'plain', bg: BAT, fg: '#b9c2d0' },
-  { id: 'bm-gotham', pack: 'Batman', text: 'GOTHAM', font: 'plain', bg: BAT, fg: '#f5c400' },
-  { id: 'bm-night', pack: 'Batman', text: 'NIGHT', font: 'plain', bg: ['#2a2d35', '#0a0a0c'], fg: '#ffffff' },
+  { id: 'bm-bru', pack: 'Batman', text: 'BRUCE', font: 'plain', bg: BAT, fg: '#f5c400' },
+  { id: 'bm-way', pack: 'Batman', text: 'WAYNE', font: 'plain', bg: BAT, fg: '#b9c2d0' },
+  { id: 'bm-got', pack: 'Batman', text: 'GOTHAM', font: 'plain', bg: BAT, fg: '#f5c400' },
+  { id: 'bm-nig', pack: 'Batman', text: 'NIGHT', font: 'plain', bg: ['#2a2d35', '#0a0a0c'], fg: '#ffffff' },
   // Arthur Morgan
   { id: 'am-am', pack: 'Arthur Morgan', text: 'AM', font: 'rdr2', bg: RDR, fg: '#f1dfb8' },
-  { id: 'am-arthur', pack: 'Arthur Morgan', text: 'ARTHUR', font: 'rdr2', bg: RDR, fg: '#f1dfb8' },
-  { id: 'am-morgan', pack: 'Arthur Morgan', text: 'MORGAN', font: 'rdr2', bg: RDR, fg: '#f1dfb8', ring: '#c8432b' },
-  { id: 'am-outlaw', pack: 'Arthur Morgan', text: 'OUTLAW', font: 'rdr2', bg: ['#c8432b', '#4a0f0a'], fg: '#fff1d6' },
-  { id: 'am-honor', pack: 'Arthur Morgan', text: 'HONOR', font: 'rdr2', bg: ['#e9d3a3', '#a98450'], fg: '#2a1608' },
+  { id: 'am-art', pack: 'Arthur Morgan', text: 'ARTHUR', font: 'rdr2', bg: RDR, fg: '#f1dfb8' },
+  { id: 'am-mor', pack: 'Arthur Morgan', text: 'MORGAN', font: 'rdr2', bg: RDR, fg: '#f1dfb8', ring: '#c8432b' },
+  { id: 'am-out', pack: 'Arthur Morgan', text: 'OUTLAW', font: 'rdr2', bg: ['#c8432b', '#4a0f0a'], fg: '#fff1d6' },
+  { id: 'am-hon', pack: 'Arthur Morgan', text: 'HONOR', font: 'rdr2', bg: ['#e9d3a3', '#a98450'], fg: '#2a1608' },
   { id: 'am-1899', pack: 'Arthur Morgan', text: '1899', font: 'rdr2', bg: RDR, fg: '#f1dfb8' },
   // Nathan Drake
   { id: 'nd-nd', pack: 'Nathan Drake', text: 'ND', font: 'nathan', bg: UNC, fg: '#f2d58f' },
   { id: 'nd-nate', pack: 'Nathan Drake', text: 'NATE', font: 'nathan', bg: UNC, fg: '#f2d58f' },
-  { id: 'nd-drake', pack: 'Nathan Drake', text: 'DRAKE', font: 'nathan', bg: ['#f2d58f', '#c98a3c'], fg: '#2a1608', ring: '#2a1608' },
-  { id: 'nd-nathan', pack: 'Nathan Drake', text: 'NATHAN', font: 'nathan', bg: UNC, fg: '#f2d58f' },
+  { id: 'nd-dra', pack: 'Nathan Drake', text: 'DRAKE', font: 'nathan', bg: ['#f2d58f', '#c98a3c'], fg: '#2a1608', ring: '#2a1608' },
+  { id: 'nd-nat', pack: 'Nathan Drake', text: 'NATHAN', font: 'nathan', bg: UNC, fg: '#f2d58f' },
   { id: 'nd-spm', pack: 'Nathan Drake', text: 'SPM', font: 'nathan', bg: ['#2a1608', '#120a04'], fg: '#ffd36b', ring: '#ffd36b' },
 ]
 
+// Ids used before they were shortened, so avatars saved earlier still load.
+const TYPO_ALIASES: Record<string, string> = {'mk-moonw': 'mk-moow', 'mk-knight': 'mk-knig', 'bm-bruce': 'bm-bru', 'bm-wayne': 'bm-way', 'bm-gotham': 'bm-got', 'bm-night': 'bm-nig', 'am-arthur': 'am-art', 'am-morgan': 'am-mor', 'am-outlaw': 'am-out', 'am-honor': 'am-hon', 'nd-drake': 'nd-dra', 'nd-nathan': 'nd-nat'}
+
+// Stored as "t:<id>", or "t:<id>|<rrggbb>" when a background was picked on the colour wheel.
 export function parseTypoAvatar(v: string | null | undefined): TypoAvatar | null {
   if (!v || !v.startsWith('t:')) return null
-  return TYPO_AVATARS.find((t) => t.id === v.slice(2)) ?? null
+  const [rawId, tail] = v.slice(2).split('|')
+  const id = TYPO_ALIASES[rawId] ?? rawId
+  const t = TYPO_AVATARS.find((x) => x.id === id)
+  if (!t) return null
+  return tail && /^[0-9a-fA-F]{6}$/.test(tail) ? { ...t, custom: `#${tail.toLowerCase()}` } : t
 }
 
-export const encodeTypoAvatar = (id: string) => `t:${id}`
+export const encodeTypoAvatar = (id: string, color?: string) => (color ? `t:${id}|${color.replace('#', '').toLowerCase()}` : `t:${id}`)

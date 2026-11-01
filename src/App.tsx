@@ -13,6 +13,35 @@ import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuil
 
 const SPLASH_MS = 4500
 
+function withTimeout<T>(promise: PromiseLike<T>, ms = 12000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Request timed out')), ms)
+    Promise.resolve(promise).then(
+      (value) => { clearTimeout(timer); resolve(value) },
+      (error) => { clearTimeout(timer); reject(error) },
+    )
+  })
+}
+
+function NetworkStatus() {
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine)
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine)
+    window.addEventListener('online', update)
+    window.addEventListener('offline', update)
+    return () => {
+      window.removeEventListener('online', update)
+      window.removeEventListener('offline', update)
+    }
+  }, [])
+  if (online) return null
+  return (
+    <div role="status" className="fixed inset-x-3 top-[max(.75rem,env(safe-area-inset-top))] z-[100] mx-auto max-w-md rounded-xl border border-amber-500/40 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-xl">
+      You're offline. Some Cznnect features may be unavailable. Your connection will be checked automatically.
+    </div>
+  )
+}
+
 // A plain white page that explains how to get the new app. Colours are fixed so it stays white in every theme.
 function InstallHelp({ onClose }: { onClose: () => void }) {
   const step = 'flex gap-3'
@@ -106,7 +135,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!configured) return
+    if (!configured) { setReady(true); return }
     const timer = setTimeout(() => setReady(true), 8000)
 
     // Subscribe before reading the initial session so a recovery callback cannot be
@@ -117,7 +146,7 @@ export default function App() {
       if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
     })
 
-    supabase.auth.getSession().then(({ data }) => setSession(data.session)).catch(() => {}).finally(() => {
+    withTimeout(supabase.auth.getSession(), 12000).then(({ data }) => setSession(data.session)).catch(() => {}).finally(() => {
       clearTimeout(timer)
       setReady(true)
     })
@@ -128,8 +157,12 @@ export default function App() {
     if (!configured) return
     let alive = true
     const load = async () => {
-      const { data } = await supabase.from('app_settings').select('*').eq('id', 1).maybeSingle()
-      if (alive && data) setMaintenance(parseSettings(data))
+      try {
+        const { data } = await withTimeout(supabase.from('app_settings').select('*').eq('id', 1).maybeSingle(), 10000)
+        if (alive && data) setMaintenance(parseSettings(data))
+      } catch {
+        // Keep the last known settings; a temporary network failure must not block the app.
+      }
     }
     void load()
     const channel = supabase.channel('app-maintenance-status').on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
@@ -141,7 +174,7 @@ export default function App() {
   }, [])
 
   if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
-  if (!ready || held) return <Splash />
+  if (!ready || held) return <><Splash /><NetworkStatus /></>
   const isOwner = isOwnerEmail(session?.user.email)
   if (recoveryMode) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
   if (maintenance?.maintenanceEnabled && !isOwner) {
@@ -165,6 +198,6 @@ export default function App() {
   if (maintenance && isNativeApp() && !isOwner && maintenance.minBuild > (thisBuild() ?? 0)) {
     return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk />
   }
-  if (!session) return <AuthScreen />
-  return <Authed userId={session.user.id} email={session.user.email ?? ''} />
+  if (!session) return <><AuthScreen /><NetworkStatus /></>
+  return <><Authed userId={session.user.id} email={session.user.email ?? ''} /><NetworkStatus /></>
 }

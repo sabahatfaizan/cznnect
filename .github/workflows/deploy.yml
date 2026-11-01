@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: 20
       - run: npm install --no-audit --no-fund
+      - name: Run automated regression tests
+        run: npm test
       - name: Type-check application
         run: npm run typecheck
       - name: Build production app

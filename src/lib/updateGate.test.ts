@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildHeaderValue, mustUpdate } from './updateGate'
+import { buildHeaderValue, deviceKind, mustUpdate } from './updateGate'
 
 const base = { minBuild: 100, build: 90, native: true, owner: false }
 
@@ -39,5 +39,21 @@ describe('buildHeaderValue', () => {
     expect(buildHeaderValue('abc')).toBeNull()
     expect(buildHeaderValue('0')).toBeNull()
     expect(buildHeaderValue('1.5')).toBeNull()
+  })
+})
+
+describe('deviceKind', () => {
+  it('recognises iPhones and iPads', () => {
+    expect(deviceKind('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari')).toBe('ios')
+    expect(deviceKind('Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)')).toBe('ios')
+  })
+
+  it('recognises Android', () => {
+    expect(deviceKind('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120 Mobile Safari')).toBe('android')
+  })
+
+  it('treats anything else as a computer', () => {
+    expect(deviceKind('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120')).toBe('other')
+    expect(deviceKind('')).toBe('other')
   })
 })

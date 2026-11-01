@@ -24,3 +24,12 @@ export function buildHeaderValue(raw: unknown): string | null {
   const n = Number(raw)
   return Number.isInteger(n) && n > 0 ? String(n) : null
 }
+
+export type DeviceKind = 'ios' | 'android' | 'other'
+
+/** Which kind of phone this is, from the browser's user-agent text. Used to show the download that can work. */
+export function deviceKind(userAgent: string): DeviceKind {
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return 'ios'
+  if (/Android/i.test(userAgent)) return 'android'
+  return 'other'
+}

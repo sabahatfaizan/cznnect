@@ -9,7 +9,14 @@ export const DEFAULT_MAINTENANCE_MESSAGE = 'We’re improving Cznnect. Please ch
 export type AppSettings = {
   maintenanceEnabled: boolean
   maintenanceMessage: string
+  /** Website visitors are sent to the download page instead of sign-in. */
   apkDownloadEnabled: boolean
+  /** The Android download card is shown. */
+  androidDownloadEnabled: boolean
+  /** The iPhone install card is shown. */
+  iosInstallEnabled: boolean
+  /** Website visitors may carry on in the browser from the download page. */
+  webContinueEnabled: boolean
   announcementEnabled: boolean
   announcementText: string
   /** Android app builds older than this are asked to update. 0 means nobody is forced. */
@@ -24,6 +31,9 @@ export function parseSettings(row: Record<string, unknown> | null | undefined): 
     maintenanceEnabled: Boolean(r.maintenance_enabled),
     maintenanceMessage: (typeof r.maintenance_message === 'string' && r.maintenance_message) || DEFAULT_MAINTENANCE_MESSAGE,
     apkDownloadEnabled: r.apk_download_enabled !== false,
+    androidDownloadEnabled: r.android_download_enabled !== false,
+    iosInstallEnabled: r.ios_install_enabled !== false,
+    webContinueEnabled: r.web_continue_enabled !== false,
     announcementEnabled: Boolean(r.announcement_enabled),
     announcementText: typeof r.announcement_text === 'string' ? r.announcement_text : '',
     minBuild: Number.isFinite(min) && min > 0 ? Math.floor(min) : 0,

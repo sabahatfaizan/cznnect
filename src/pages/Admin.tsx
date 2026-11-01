@@ -101,7 +101,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       setNotice(done)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Could not save.'
-      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql and supabase/09_admin.sql in Supabase.`)
+      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql and 11_download_options.sql in Supabase.`)
     } finally { setBusy(false) }
   }
 
@@ -169,12 +169,40 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           <textarea id="admin-maint-msg" className="input min-h-20" maxLength={240} value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} placeholder={DEFAULT_MAINTENANCE_MESSAGE} />
           <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, 'Message saved.')}>Save message</button>
         </div>
-        <Row title="Send website visitors to the app" hint={settings?.apkDownloadEnabled ? 'The website shows the download page instead of sign-in. The installed apps, home-screen web app and you still get in.' : 'Anyone can sign in on the website'}>
+      </section>
+
+      <section className="card flex flex-col gap-4">
+        <p className="eyebrow">App downloads</p>
+        <Row title="Send website visitors to the app" hint={settings?.apkDownloadEnabled ? 'The website shows the download page before sign-in. Installed apps, the home-screen web app and you still go straight in.' : 'Anyone can sign in on the website'}>
           <Switch
             on={Boolean(settings?.apkDownloadEnabled)}
             label="Send website visitors to the app"
             disabled={busy || !ready}
             onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Website visitors now see the download page.' : 'The website lets people sign in again.')}
+          />
+        </Row>
+        <Row title="Android download" hint={settings?.androidDownloadEnabled ? 'Android phones are offered the APK' : 'The Android download is hidden'}>
+          <Switch
+            on={Boolean(settings?.androidDownloadEnabled)}
+            label="Show the Android download"
+            disabled={busy || !ready}
+            onChange={(next) => void save({ android_download_enabled: next }, next ? 'Android download is shown.' : 'Android download is hidden.')}
+          />
+        </Row>
+        <Row title="iPhone install" hint={settings?.iosInstallEnabled ? 'iPhones are shown how to add it to the Home Screen' : 'The iPhone option is hidden'}>
+          <Switch
+            on={Boolean(settings?.iosInstallEnabled)}
+            label="Show the iPhone install option"
+            disabled={busy || !ready}
+            onChange={(next) => void save({ ios_install_enabled: next }, next ? 'iPhone option is shown.' : 'iPhone option is hidden.')}
+          />
+        </Row>
+        <Row title="Continue on the web" hint={settings?.webContinueEnabled ? 'Visitors can skip the download page and use the website' : 'Visitors must get the app'}>
+          <Switch
+            on={Boolean(settings?.webContinueEnabled)}
+            label="Let visitors continue on the web"
+            disabled={busy || !ready}
+            onChange={(next) => void save({ web_continue_enabled: next }, next ? 'Visitors can continue on the web.' : 'Visitors must get the app.')}
           />
         </Row>
       </section>

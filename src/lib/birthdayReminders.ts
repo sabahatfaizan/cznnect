@@ -1,4 +1,5 @@
 import type { Upcoming } from './birthdays'
+import { callPlugin, isNative } from './native'
 
 // Device reminders. In the Android app they are scheduled with the phone's own alarm clock (notification plugin), so they
 // arrive at 9:00 in the morning even when the app is closed; the app plans them again each time it is opened. In a
@@ -36,17 +37,18 @@ type NativeNotifications = {
   cancel: (o: { notifications: { id: number }[] }) => Promise<unknown>
 }
 // The notification plugin is added to the APK when it is built, after the web code is bundled, so the web code never
-// imports it and it is not listed under Capacitor.Plugins. It is asked for by name instead. If the app was built
-// without the plugin, using it fails and the reminders switch explains that.
+// imports it. The app's bridge script has no ready-made plugin objects, so each call goes through it by plugin name.
+// If the app was built without the plugin, the calls fail and the reminders switch explains that.
 let nativeInstance: NativeNotifications | null | undefined
 function nativePlugin(): NativeNotifications | null {
-  const c = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: Record<string, unknown>; registerPlugin?: (name: string) => unknown } }).Capacitor
-  if (!c?.isNativePlatform?.()) return null
+  if (!isNative()) return null
   if (nativeInstance === undefined) {
-    try {
-      nativeInstance = ((c.Plugins?.LocalNotifications ?? c.registerPlugin?.('LocalNotifications')) as NativeNotifications | undefined) ?? null
-    } catch {
-      nativeInstance = null
+    const call = (method: string, options: Record<string, unknown> = {}) => callPlugin('LocalNotifications', method, options)
+    nativeInstance = {
+      checkPermissions: () => call('checkPermissions') as Promise<{ display: string }>,
+      requestPermissions: () => call('requestPermissions') as Promise<{ display: string }>,
+      schedule: (o) => call('schedule', o),
+      cancel: (o) => call('cancel', o),
     }
   }
   return nativeInstance

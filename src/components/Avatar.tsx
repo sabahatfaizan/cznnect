@@ -1,4 +1,5 @@
-import { AVATAR_COLORS, parseAvatar, parseTypoAvatar, type TypoFont } from '../lib/avatars'
+import { iconIdOf, inkFor, isIconSymbol, parseAvatar, parseTypoAvatar, shade, type TypoFont } from '../lib/avatars'
+import { AvatarIconArt } from './AvatarIcons'
 
 const FONTS: Record<TypoFont, string> = {
   moon: '"Moonfark", var(--font-heading), system-ui, sans-serif',
@@ -43,21 +44,31 @@ export default function Avatar({
     )
   }
   const a = parseAvatar(value)
-  const style = {
-    width: size,
-    height: size,
-    fontSize: size * 0.52,
-    ...(a ? { backgroundImage: `linear-gradient(145deg, ${AVATAR_COLORS[a.color][0]}, ${AVATAR_COLORS[a.color][1]})` } : {}),
+  if (a) {
+    const icon = isIconSymbol(a.symbol)
+    return (
+      <span
+        aria-hidden="true"
+        style={{
+          width: size,
+          height: size,
+          fontSize: size * 0.52,
+          color: icon ? inkFor(a.color) : undefined,
+          backgroundImage: `linear-gradient(145deg, ${shade(a.color, 0.22)}, ${a.color} 55%, ${shade(a.color, -0.3)})`,
+        }}
+        className={`flex flex-none items-center justify-center overflow-hidden rounded-[var(--radius-avatar)] leading-none shadow-[inset_0_0_0_1.5px_rgba(255,255,255,.28)] ${className}`}
+      >
+        {icon ? <AvatarIconArt id={iconIdOf(a.symbol)} size={size * 0.72} /> : a.symbol}
+      </span>
+    )
   }
   return (
     <span
       aria-hidden="true"
-      style={style}
-      className={`flex flex-none items-center justify-center rounded-[var(--radius-avatar)] leading-none ${
-        a ? 'shadow-[inset_0_0_0_1.5px_rgba(255,255,255,.28)]' : 'bg-accent-soft font-display font-bold text-accent-text'
-      } ${className}`}
+      style={{ width: size, height: size, fontSize: size * 0.52 }}
+      className={`flex flex-none items-center justify-center rounded-[var(--radius-avatar)] bg-accent-soft font-display font-bold leading-none text-accent-text ${className}`}
     >
-      {a ? a.emoji : (name.trim()[0] || '?').toUpperCase()}
+      {(name.trim()[0] || '?').toUpperCase()}
     </span>
   )
 }

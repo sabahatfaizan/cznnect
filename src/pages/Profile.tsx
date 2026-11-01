@@ -3,7 +3,8 @@ import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
-import { AVATAR_COLORS, AVATAR_EMOJI, TYPO_AVATARS, TYPO_PACKS, encodeAvatar, encodeTypoAvatar, parseAvatar, parseTypoAvatar } from '../lib/avatars'
+import ColorWheel from '../components/ColorWheel'
+import { AVATAR_ICONS, DEFAULT_AVATAR_COLOR, EMOJI_GROUPS, TYPO_AVATARS, TYPO_PACKS, encodeAvatar, encodeTypoAvatar, parseAvatar, parseTypoAvatar } from '../lib/avatars'
 import { getUnlockedThemes, onUnlocksChanged } from '../theme'
 
 const BIO_MAX = 140
@@ -13,9 +14,10 @@ export default function Profile({ userId }: { userId: string }) {
   const [nickname, setNickname] = useState('')
   const [bio, setBio] = useState('')
   const [birthday, setBirthday] = useState('')
-  const [emoji, setEmoji] = useState('')
-  const [color, setColor] = useState(0)
+  const [symbol, setSymbol] = useState('') // an emoji, or "i:<id>" for a drawn icon
+  const [color, setColor] = useState(DEFAULT_AVATAR_COLOR)
   const [typo, setTypo] = useState('')
+  const [tab, setTab] = useState<'icons' | 'emoji' | 'letters'>('icons')
   const [unlocked, setUnlocked] = useState(getUnlockedThemes)
   useEffect(() => onUnlocksChanged(() => setUnlocked(getUnlockedThemes())), [])
   const [phone, setPhone] = useState('')
@@ -41,11 +43,15 @@ export default function Profile({ userId }: { userId: string }) {
       setNickname(d.nickname ?? '')
       setBio(d.bio ?? '')
       const t = parseTypoAvatar(d.avatar)
-      if (t) setTypo(t.id)
+      if (t) {
+        setTypo(t.id)
+        setTab('letters')
+      }
       const a = parseAvatar(d.avatar)
       if (a) {
-        setEmoji(a.emoji)
+        setSymbol(a.symbol)
         setColor(a.color)
+        setTab(a.symbol.startsWith('i:') ? 'icons' : 'emoji')
       }
       const c = await supabase.from('profile_contacts').select('phone, contact_email, share_contact').eq('user_id', userId).maybeSingle()
       if (c.data) {
@@ -68,7 +74,7 @@ export default function Profile({ userId }: { userId: string }) {
         birthday: birthday || null,
         nickname: nickname.trim() || null,
         bio: bio.trim() || null,
-        avatar: typo ? encodeTypoAvatar(typo) : emoji ? encodeAvatar({ emoji, color }) : null,
+        avatar: typo ? encodeTypoAvatar(typo) : symbol ? encodeAvatar({ symbol, color }) : null,
       })
       .eq('id', userId)
     let error = p.error
@@ -95,7 +101,7 @@ export default function Profile({ userId }: { userId: string }) {
     )
   }
 
-  const avatarValue = typo ? encodeTypoAvatar(typo) : emoji ? encodeAvatar({ emoji, color }) : null
+  const avatarValue = typo ? encodeTypoAvatar(typo) : symbol ? encodeAvatar({ symbol, color }) : null
   const tile = (id: 'about' | 'contact', label: string, icon: IconName) => (
     <button type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
       <span className="set-tile-icon" aria-hidden="true">
@@ -158,59 +164,110 @@ export default function Profile({ userId }: { userId: string }) {
             <div className="flex items-center gap-4">
               <Avatar value={avatarValue} name={nickname || name} size={64} />
             </div>
-          <div role="radiogroup" aria-label="Avatar symbol" className="grid grid-cols-8 gap-1.5">
-            {AVATAR_EMOJI.map((em) => (
+          <div className="seg-row grid grid-cols-3 gap-2" role="tablist" aria-label="Avatar type">
+            {([['icons', 'Icons'], ['emoji', 'Emoji'], ['letters', 'Letters']] as const).map(([id, label]) => (
               <button
+                key={id}
                 type="button"
-                key={em}
-                role="radio"
-                aria-checked={!typo && emoji === em}
-                aria-label={em}
-                onClick={() => { setEmoji(em); setTypo('') }}
-                className={`flex aspect-square items-center justify-center rounded-[var(--radius-ctl)] border text-xl ${
-                  !typo && emoji === em ? 'border-accent bg-accent-soft' : 'border-line bg-surface-2'
-                }`}
+                role="tab"
+                aria-selected={tab === id}
+                className={`seg !min-h-10 items-center justify-center ${tab === id ? 'seg-on' : ''}`}
+                onClick={() => setTab(id)}
               >
-                {em}
+                {label}
               </button>
             ))}
           </div>
-          <div role="radiogroup" aria-label="Avatar colour" className="flex flex-wrap gap-2.5">
-            {AVATAR_COLORS.map((c, i) => (
-              <button
-                type="button"
-                key={i}
-                role="radio"
-                aria-checked={!typo && color === i}
-                aria-label={`Colour ${i + 1}`}
-                onClick={() => { setColor(i); setTypo('') }}
-                style={{ backgroundImage: `linear-gradient(145deg, ${c[0]}, ${c[1]})` }}
-                className={`size-9 rounded-full ${!typo && color === i ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
-              />
-            ))}
-          </div>
-          {TYPO_PACKS.filter((pack) => !pack.requires || unlocked.includes(pack.requires)).map((pack) => (
-            <div key={pack.name} role="radiogroup" aria-label={`${pack.name} avatars`}>
-              <p className="label mb-1.5">{pack.name}</p>
-              <div className="flex flex-wrap gap-2.5">
-                {TYPO_AVATARS.filter((t) => t.pack === pack.name).map((t) => (
+
+          {tab === 'icons' && (
+            <div role="radiogroup" aria-label="Avatar icons" className="avatar-grid grid grid-cols-4 gap-2.5">
+              {AVATAR_ICONS.map((ic) => {
+                const value = `i:${ic.id}`
+                const on = !typo && symbol === value
+                return (
                   <button
                     type="button"
-                    key={t.id}
+                    key={ic.id}
                     role="radio"
-                    aria-checked={typo === t.id}
-                    aria-label={`${pack.name} ${t.text || 'plain'}`}
-                    onClick={() => setTypo(t.id)}
-                    className={`rounded-full ${typo === t.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
+                    aria-checked={on}
+                    aria-label={ic.label}
+                    onClick={() => { setSymbol(value); setTypo('') }}
+                    className={`avatar-pick flex flex-col items-center gap-1 rounded-[var(--radius-ctl)] border p-2 ${on ? 'border-accent bg-accent-soft' : 'border-line bg-surface-2'}`}
                   >
-                    <Avatar value={encodeTypoAvatar(t.id)} name={nickname || name} size={44} />
+                    <Avatar value={encodeAvatar({ symbol: value, color })} name="" size={48} />
+                    <span className="text-[0.68rem] font-bold leading-tight text-muted">{ic.label}</span>
                   </button>
-                ))}
-              </div>
+                )
+              })}
             </div>
-          ))}
-          {(emoji || typo) && (
-            <button type="button" className="link self-start" onClick={() => { setEmoji(''); setTypo('') }}>
+          )}
+
+          {tab === 'emoji' && (
+            <div className="flex flex-col gap-3">
+              {EMOJI_GROUPS.map((group) => (
+                <div key={group.name} role="radiogroup" aria-label={`${group.name} emoji`}>
+                  <p className="label mb-1.5">{group.name}</p>
+                  <div className="avatar-grid grid grid-cols-7 gap-1.5">
+                    {group.items.map((em) => {
+                      const on = !typo && symbol === em
+                      return (
+                        <button
+                          type="button"
+                          key={em}
+                          role="radio"
+                          aria-checked={on}
+                          aria-label={em}
+                          onClick={() => { setSymbol(em); setTypo('') }}
+                          className={`avatar-pick flex aspect-square items-center justify-center rounded-[var(--radius-ctl)] border text-xl ${on ? 'border-accent bg-accent-soft' : 'border-line bg-surface-2'}`}
+                        >
+                          {em}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab !== 'letters' && (
+            <details className="expander border-t border-line pt-3" open>
+              <summary>
+                <span className="font-bold">Background colour</span>
+                <span aria-hidden="true" className="expander-chevron">›</span>
+              </summary>
+              <div className="mt-3">
+                <ColorWheel value={color} onChange={(c) => { setColor(c); setTypo('') }} />
+              </div>
+            </details>
+          )}
+
+          {tab === 'letters' && (
+            <>
+              {TYPO_PACKS.filter((pack) => !pack.requires || unlocked.includes(pack.requires)).map((pack) => (
+                <div key={pack.name} role="radiogroup" aria-label={`${pack.name} avatars`}>
+                  <p className="label mb-1.5">{pack.name}</p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {TYPO_AVATARS.filter((t) => t.pack === pack.name).map((t) => (
+                      <button
+                        type="button"
+                        key={t.id}
+                        role="radio"
+                        aria-checked={typo === t.id}
+                        aria-label={`${pack.name} ${t.text || 'plain'}`}
+                        onClick={() => setTypo(t.id)}
+                        className={`rounded-full ${typo === t.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
+                      >
+                        <Avatar value={encodeTypoAvatar(t.id)} name={nickname || name} size={44} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+          {(symbol || typo) && (
+            <button type="button" className="link self-start" onClick={() => { setSymbol(''); setTypo('') }}>
               Use my initial instead
             </button>
           )}

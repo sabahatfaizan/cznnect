@@ -20,6 +20,11 @@ export default function Profile({ userId }: { userId: string }) {
   const [tab, setTab] = useState<'icons' | 'emoji' | 'letters'>('icons')
   const [unlocked, setUnlocked] = useState(getUnlockedThemes)
   useEffect(() => onUnlocksChanged(() => setUnlocked(getUnlockedThemes())), [])
+  // Drawn icons belong to a theme: they are offered once it is unlocked (an icon already in use stays visible).
+  const iconsAvailable = AVATAR_ICONS.filter((ic) => !ic.requires || unlocked.includes(ic.requires) || symbol === `i:${ic.id}`)
+  useEffect(() => {
+    if (tab === 'icons' && iconsAvailable.length === 0) setTab('emoji')
+  }, [tab, iconsAvailable.length])
   const [phone, setPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [share, setShare] = useState(false)
@@ -165,7 +170,7 @@ export default function Profile({ userId }: { userId: string }) {
               <Avatar value={avatarValue} name={nickname || name} size={64} />
             </div>
           <div className="seg-row grid grid-cols-3 gap-2" role="tablist" aria-label="Avatar type">
-            {([['icons', 'Icons'], ['emoji', 'Emoji'], ['letters', 'Letters']] as const).map(([id, label]) => (
+            {([['icons', 'Icons'], ['emoji', 'Emoji'], ['letters', 'Letters']] as const).filter(([id]) => id !== 'icons' || iconsAvailable.length > 0).map(([id, label]) => (
               <button
                 key={id}
                 type="button"
@@ -181,7 +186,7 @@ export default function Profile({ userId }: { userId: string }) {
 
           {tab === 'icons' && (
             <div role="radiogroup" aria-label="Avatar icons" className="avatar-grid grid grid-cols-4 gap-2.5">
-              {AVATAR_ICONS.map((ic) => {
+              {iconsAvailable.map((ic) => {
                 const value = `i:${ic.id}`
                 const on = !typo && symbol === value
                 return (

@@ -6,14 +6,15 @@
 import type { ExclusiveTheme } from '../theme'
 
 // Drawn icons: a hand-sketched Wild West set plus a bat. The ids are short so the stored value fits.
-export const AVATAR_ICONS: { id: string; label: string }[] = [
-  { id: 'lasso', label: 'Lasso' },
-  { id: 'hat', label: 'Cowboy hat' },
-  { id: 'knife', label: 'Knife' },
-  { id: 'colt', label: 'Revolver' },
-  { id: 'wanted', label: 'Wanted poster' },
-  { id: 'lamp', label: 'Lantern' },
-  { id: 'bat', label: 'Bat' },
+// requires = the theme that has to be unlocked on this device before the icon can be picked.
+export const AVATAR_ICONS: { id: string; label: string; requires: ExclusiveTheme | null }[] = [
+  { id: 'lasso', label: 'Lasso', requires: 'rdr2' },
+  { id: 'hat', label: 'Cowboy hat', requires: 'rdr2' },
+  { id: 'knife', label: 'Knife', requires: 'rdr2' },
+  { id: 'colt', label: 'Revolver', requires: 'rdr2' },
+  { id: 'wanted', label: 'Wanted poster', requires: 'rdr2' },
+  { id: 'lamp', label: 'Lantern', requires: 'rdr2' },
+  { id: 'bat', label: 'Bat', requires: 'moonknight' }, // the Batman pack also goes with the Moon Knight theme
 ]
 
 // Emoji people actually use, grouped so they are quick to find.

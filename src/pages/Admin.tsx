@@ -132,7 +132,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   }
 
   function saveMinBuild(value: number) {
-    if (value > 0 && !window.confirm(`Every Android app older than build ${value} will be blocked until it is updated. You are never blocked. Continue?`)) return
+    if (value > 0 && !window.confirm(`Every Android app older than build ${value} will be blocked until it is updated, including your own phone. The access PIN (tap the logo 5 times) gets past the screen. Continue?`)) return
     void save({ min_build: value }, value > 0 ? `Apps older than build ${value} must update.` : 'Forced updates are off.')
   }
 
@@ -198,8 +198,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
         <p className="eyebrow">Force old Android apps to update</p>
         <p className="text-sm text-muted">
           Android apps older than the build below show an “Update required” screen with the download. The website and
-          home-screen app update by themselves, and you are never blocked. Apps installed before this feature existed
-          cannot be forced and need one manual update.
+          home-screen app update by themselves. Your own phone is forced too, but the access PIN (tap the logo 5 times) gets past the
+          screen. Apps installed before this feature existed cannot be forced and need one manual update.
         </p>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p><span className="text-muted">Latest app build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>

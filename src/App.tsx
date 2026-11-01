@@ -193,10 +193,12 @@ export default function App() {
       />
     )
   }
-  // Old Android apps are asked to update. Only the installed app can be forced; the owner is never blocked.
-  const build = thisBuild()
-  if (!isOwner && maintenance && build !== null && isNativeApp() && maintenance.minBuild > build) {
-    return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk />
+  // Old Android apps are asked to update, owner included, so a forced update can be tested on your own phone.
+  // The access PIN (tap the logo 5 times) still gets past it, so the owner can never be locked out.
+  // An app with no build number counts as the oldest. Only the installed app can be forced: the website and the
+  // home-screen web app update themselves.
+  if (maintenance && isNativeApp() && !pinUnlocked && maintenance.minBuild > (thisBuild() ?? 0)) {
+    return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk onUnlock={() => setPinUnlocked(true)} />
   }
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />

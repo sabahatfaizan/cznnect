@@ -12,7 +12,6 @@ import { isOwnerEmail } from './owner'
 import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 
 const SPLASH_MS = 4500
-const MAINTENANCE_PIN = '4124'
 
 // A plain white page that explains how to get the new app. Colours are fixed so it stays white in every theme.
 function InstallHelp({ onClose }: { onClose: () => void }) {
@@ -54,38 +53,16 @@ function InstallHelp({ onClose }: { onClose: () => void }) {
   )
 }
 
-function ServiceNotice({ message, onUnlock, showApk = false, title = 'Cznnect is getting an update' }: { message: string; onUnlock?: () => void; showApk?: boolean; title?: string }) {
-  const [pin, setPin] = useState('')
-  const [pinError, setPinError] = useState('')
-  const [showPinUnlock, setShowPinUnlock] = useState(false)
-  const [logoTaps, setLogoTaps] = useState(0)
+function ServiceNotice({ message, showApk = false, title = 'Cznnect is getting an update' }: { message: string; showApk?: boolean; title?: string }) {
   const [showHelp, setShowHelp] = useState(false)
-
-  function handleLogoTap() {
-    if (!onUnlock || showPinUnlock) return
-    const next = logoTaps + 1
-    setLogoTaps(next)
-    if (next >= 5) setShowPinUnlock(true)
-  }
-
-  function submitPin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (pin === MAINTENANCE_PIN) {
-      setPinError('')
-      onUnlock?.()
-    } else {
-      setPinError('Incorrect PIN. Please try again.')
-      setPin('')
-    }
-  }
 
   if (showHelp) return <InstallHelp onClose={() => setShowHelp(false)} />
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-6 p-6">
-      <button type="button" className="mx-auto block cursor-default rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" aria-label="Cznnect logo" onClick={handleLogoTap}>
+      <div className="mx-auto block rounded-xl" aria-label="Cznnect logo">
         <Logo big />
-      </button>
+      </div>
       <div className="card">
         <h1 className="font-display text-2xl font-bold">{title}</h1>
         <p className="mt-3 text-muted">{message}</p>
@@ -111,27 +88,6 @@ function ServiceNotice({ message, onUnlock, showApk = false, title = 'Cznnect is
             </button>
           </div>
         )}
-        {onUnlock && showPinUnlock && (
-          <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
-            <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>
-            <input
-              id="maintenance-pin"
-              className="input text-center tracking-[0.45em]"
-              type="password"
-              inputMode="numeric"
-              pattern="[0-9]{4}"
-              maxLength={4}
-              autoComplete="off"
-              aria-describedby={pinError ? 'maintenance-pin-error' : undefined}
-              value={pin}
-              onChange={(e) => { setPin(e.target.value.replace(/\D/g, '').slice(0, 4)); setPinError('') }}
-              placeholder="••••"
-              required
-            />
-            {pinError && <p id="maintenance-pin-error" role="alert" className="text-sm text-danger">{pinError}</p>}
-            <button className="btn btn-primary w-full" type="submit">Unlock Cznnect</button>
-          </form>
-        )}
       </div>
     </div>
   )
@@ -143,7 +99,6 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [held, setHeld] = useState(true)
   const [maintenance, setMaintenance] = useState<AppSettings | null>(null)
-  const [pinUnlocked, setPinUnlocked] = useState(false)
 
   useEffect(() => {
     const id = setTimeout(() => setHeld(false), prefersReducedMotion() ? 1200 : SPLASH_MS)
@@ -189,18 +144,17 @@ export default function App() {
   if (!ready || held) return <Splash />
   const isOwner = isOwnerEmail(session?.user.email)
   if (recoveryMode) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
-  if (maintenance?.maintenanceEnabled && !isOwner && !pinUnlocked) {
-    return <ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} onUnlock={() => setPinUnlocked(true)} />
+  if (maintenance?.maintenanceEnabled && !isOwner) {
+    return <ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} />
   }
   // With the download option on, people on the plain website (not the Android app, not the home-screen web app)
   // see the download page instead of signing in. The owner and anyone with the access PIN still get through.
-  if (maintenance?.apkDownloadEnabled && !isNativeApp() && !isInstalledWebApp() && !isOwner && !pinUnlocked) {
+  if (maintenance?.apkDownloadEnabled && !isNativeApp() && !isInstalledWebApp() && !isOwner) {
     return (
       <ServiceNotice
         title="Get the Cznnect app"
         message="Cznnect now runs as an app. Download it below, or open the app if you already have it. On iPhone, tap Learn more."
         showApk
-        onUnlock={() => setPinUnlocked(true)}
       />
     )
   }
@@ -208,8 +162,8 @@ export default function App() {
   // The access PIN (tap the logo 5 times) still gets past it, so the owner can never be locked out.
   // An app with no build number counts as the oldest. Only the installed app can be forced: the website and the
   // home-screen web app update themselves.
-  if (maintenance && isNativeApp() && !pinUnlocked && maintenance.minBuild > (thisBuild() ?? 0)) {
-    return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk onUnlock={() => setPinUnlocked(true)} />
+  if (maintenance && isNativeApp() && !isOwner && maintenance.minBuild > (thisBuild() ?? 0)) {
+    return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk />
   }
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />

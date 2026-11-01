@@ -173,30 +173,30 @@ export default function App() {
     return () => { alive = false; clearInterval(poll); void supabase.removeChannel(channel) }
   }, [])
 
-  if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
+  if (!configured) return <><ServiceNotice message="Cznnect is not configured yet. Please check back later." /><NetworkStatus /></>
   if (!ready || held) return <><Splash /><NetworkStatus /></>
   const isOwner = isOwnerEmail(session?.user.email)
-  if (recoveryMode) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
+  if (recoveryMode) return <><PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} /><NetworkStatus /></>
   if (maintenance?.maintenanceEnabled && !isOwner) {
-    return <ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} />
+    return <><ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} /><NetworkStatus /></>
   }
   // With the download option on, people on the plain website (not the Android app, not the home-screen web app)
-  // see the download page instead of signing in. The owner and anyone with the access PIN still get through.
+  // see the download page instead of signing in. The owner account still gets through.
   if (maintenance?.apkDownloadEnabled && !isNativeApp() && !isInstalledWebApp() && !isOwner) {
     return (
-      <ServiceNotice
+      <><ServiceNotice
         title="Get the Cznnect app"
         message="Cznnect now runs as an app. Download it below, or open the app if you already have it. On iPhone, tap Learn more."
         showApk
-      />
+      /><NetworkStatus /></>
     )
   }
   // Old Android apps are asked to update, owner included, so a forced update can be tested on your own phone.
-  // The access PIN (tap the logo 5 times) still gets past it, so the owner can never be locked out.
+  // The owner account can still access the app for update testing.
   // An app with no build number counts as the oldest. Only the installed app can be forced: the website and the
   // home-screen web app update themselves.
   if (maintenance && isNativeApp() && !isOwner && maintenance.minBuild > (thisBuild() ?? 0)) {
-    return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk />
+    return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk /><NetworkStatus /></>
   }
   if (!session) return <><AuthScreen /><NetworkStatus /></>
   return <><Authed userId={session.user.id} email={session.user.email ?? ''} /><NetworkStatus /></>

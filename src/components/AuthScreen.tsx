@@ -20,7 +20,8 @@ function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
   })
 }
 
-export default function AuthScreen() {
+// onGetApp is given on the website (not inside the app) when there is an app to offer.
+export default function AuthScreen({ onGetApp }: { onGetApp?: () => void }) {
   const [mode, setMode] = useState<AuthMode>('up')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -179,6 +180,12 @@ export default function AuthScreen() {
       >
         {mode === 'up' ? 'Already a member? Sign in' : mode === 'reset' ? 'Back to sign in' : 'New to Cznnect? Join Cznnect'}
       </button>
+
+      {onGetApp && (
+        <button type="button" className="btn btn-plain w-full" onClick={onGetApp}>
+          Download the app
+        </button>
+      )}
     </div>
   )
 }

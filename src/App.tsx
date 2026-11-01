@@ -209,6 +209,7 @@ export default function App() {
   const [held, setHeld] = useState(true)
   const [maintenance, setMaintenance] = useState<AppSettings | null>(null)
   const [pinUnlocked, setPinUnlocked] = useState(false)
+  const [showDownload, setShowDownload] = useState(false) // the "Download the app" button on the sign-in screen
   // Someone who chose to carry on in the browser is not asked again on this device.
   const [webContinue, setWebContinue] = useState(() => {
     try { return localStorage.getItem('cznnect-web-continue') === '1' } catch { return false }
@@ -293,6 +294,20 @@ export default function App() {
   if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp() })) {
     return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk /><NetworkStatus /></>
   }
-  if (!session) return <><AuthScreen /><NetworkStatus /></>
+  // On the website there is always a way to get the app from the sign-in screen, even after "Continue on the web".
+  const canOfferApp = Boolean(maintenance && !isNativeApp() && !isInstalledWebApp() && (maintenance.androidDownloadEnabled || maintenance.iosInstallEnabled))
+  if (!session && canOfferApp && showDownload && maintenance) {
+    return (
+      <><ServiceNotice
+        title="Get the Cznnect app"
+        message="Cznnect works best as an app. Get it for your phone below, or carry on in your browser."
+        showApk={maintenance.androidDownloadEnabled}
+        showIos={maintenance.iosInstallEnabled}
+        androidLabel="Download for Android"
+        onContinue={() => setShowDownload(false)}
+      /><NetworkStatus /></>
+    )
+  }
+  if (!session) return <><AuthScreen onGetApp={canOfferApp ? () => setShowDownload(true) : undefined} /><NetworkStatus /></>
   return <><Authed userId={session.user.id} email={session.user.email ?? ''} /><NetworkStatus /></>
 }

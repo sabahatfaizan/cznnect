@@ -193,8 +193,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             </div>
-            <div className="mt-4 border-t border-line pt-4">
-              <p className="eyebrow px-3 pb-7">Settings</p>
+            <div className="mt-12 border-t border-line pt-8">
+              <p className="eyebrow px-3 pb-5">Settings</p>
               <button
                 type="button"
                 className={`menu-item ${tab === 'settings' ? 'menu-item-on' : ''}`}

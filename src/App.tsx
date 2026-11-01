@@ -8,11 +8,10 @@ import Logo from './components/Logo'
 import { Icon } from './components/Icons'
 import Authed from './Authed'
 import { isOwnerEmail } from './owner'
+import { LATEST_APK_URL, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 
 const SPLASH_MS = 4500
 const MAINTENANCE_PIN = '4124'
-// Always the newest APK: the build workflow republishes it under this fixed name on every push to main.
-const LATEST_APK_URL = 'https://github.com/sabahatfaizan/cznnect/releases/download/latest-apk/cznnect.apk'
 
 // A plain white page that explains how to get the new app. Colours are fixed so it stays white in every theme.
 function InstallHelp({ onClose }: { onClose: () => void }) {
@@ -54,7 +53,7 @@ function InstallHelp({ onClose }: { onClose: () => void }) {
   )
 }
 
-function ServiceNotice({ message, onUnlock, showApk = false }: { message: string; onUnlock?: () => void; showApk?: boolean }) {
+function ServiceNotice({ message, onUnlock, showApk = false, title = 'Cznnect is getting an update' }: { message: string; onUnlock?: () => void; showApk?: boolean; title?: string }) {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
   const [showPinUnlock, setShowPinUnlock] = useState(false)
@@ -87,7 +86,7 @@ function ServiceNotice({ message, onUnlock, showApk = false }: { message: string
         <Logo big />
       </button>
       <div className="card">
-        <h1 className="font-display text-2xl font-bold">Cznnect is getting an update</h1>
+        <h1 className="font-display text-2xl font-bold">{title}</h1>
         <p className="mt-3 text-muted">{message}</p>
         {showApk && (
           <div className="mt-5">
@@ -141,7 +140,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [ready, setReady] = useState(false)
   const [held, setHeld] = useState(true)
-  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string; apk: boolean } | null>(null)
+  const [maintenance, setMaintenance] = useState<AppSettings | null>(null)
   const [pinUnlocked, setPinUnlocked] = useState(false)
 
   useEffect(() => {
@@ -165,12 +164,12 @@ export default function App() {
     let alive = true
     const load = async () => {
       const { data } = await supabase.from('app_settings').select('*').eq('id', 1).maybeSingle()
-      if (alive && data) setMaintenance({ enabled: Boolean(data.maintenance_enabled), message: data.maintenance_message || 'We’re improving Cznnect. Please check back soon.', apk: data.apk_download_enabled !== false })
+      if (alive && data) setMaintenance(parseSettings(data))
     }
     void load()
     const channel = supabase.channel('app-maintenance-status').on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-      const row = payload.new as { maintenance_enabled?: boolean; maintenance_message?: string; apk_download_enabled?: boolean }
-      if (alive && typeof row.maintenance_enabled === 'boolean') setMaintenance({ enabled: row.maintenance_enabled, message: row.maintenance_message || 'We’re improving Cznnect. Please check back soon.', apk: row.apk_download_enabled !== false })
+      const row = payload.new as Record<string, unknown>
+      if (alive && typeof row.maintenance_enabled === 'boolean') setMaintenance(parseSettings(row))
     }).subscribe()
     const poll = setInterval(load, 20000)
     return () => { alive = false; clearInterval(poll); void supabase.removeChannel(channel) }
@@ -179,8 +178,13 @@ export default function App() {
   if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
   if (!ready || held) return <Splash />
   const isOwner = isOwnerEmail(session?.user.email)
-  if (maintenance?.enabled && !isOwner && !pinUnlocked) {
-    return <ServiceNotice message={maintenance.message} showApk={maintenance.apk} onUnlock={() => setPinUnlocked(true)} />
+  if (maintenance?.maintenanceEnabled && !isOwner && !pinUnlocked) {
+    return <ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} onUnlock={() => setPinUnlocked(true)} />
+  }
+  // Old Android apps are asked to update. Only the installed app can be forced; the owner is never blocked.
+  const build = thisBuild()
+  if (!isOwner && maintenance && build !== null && isNativeApp() && maintenance.minBuild > build) {
+    return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk />
   }
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />

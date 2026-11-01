@@ -13,6 +13,8 @@ import Music from '../pages/Music'
 import { rank, useFamilyBirthdays } from '../lib/birthdays'
 import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
+import Admin from '../pages/Admin'
+import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
@@ -20,7 +22,7 @@ import { isOwnerEmail } from '../owner'
 import SecretCoin from './SecretCoin'
 import UnlockToast from './UnlockToast'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings' | 'music'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings' | 'music' | 'admin'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
 const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   home: { rdr2: 'Camp', unc: 'Expedition Base' },
@@ -33,6 +35,7 @@ const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   scoreboard: { rdr2: 'Bounties', unc: 'Treasure Tally' },
   settings: { rdr2: 'Supplies', unc: 'Gear & Supplies' },
   music: { rdr2: 'Campfire Songs', unc: 'The Soundtrack' },
+  admin: { rdr2: 'The Law', unc: 'Command Post' },
 }
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
@@ -46,13 +49,9 @@ const SECRET_HOLD_MS = 4000
 
 export default function Shell({ family, userId, email, onFamilyChanged }: { family: Family; userId: string; email: string; onFamilyChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home')
-  const [notice, setNotice] = useState('')
-  const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
-  const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
-  const [apkEnabled, setApkEnabled] = useState(true)
   const isOwner = isOwnerEmail(email)
+  const { settings: appSettings } = useAppSettings()
 
   // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
   const bday = useFamilyBirthdays(family.id, userId)
@@ -94,51 +93,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [menuOpen])
 
-  useEffect(() => {
-    if (!isOwner) return
-    let active = true
-    void supabase.from('app_settings').select('*').eq('id', 1).maybeSingle().then(({ data, error }) => {
-      if (!active) return
-      if (error) setNotice(error.message)
-      else {
-        setMaintenanceEnabled(Boolean(data?.maintenance_enabled))
-        setApkEnabled(data?.apk_download_enabled !== false)
-      }
-      setMaintenanceLoaded(true)
-    })
-    return () => { active = false }
-  }, [isOwner])
-
-  async function saveMaintenance(enabled: boolean) {
-    let message = 'Cznnect is back online. Thanks for your patience!'
-    if (enabled) {
-      const entered = window.prompt('Message everyone will see:', 'We’re improving Cznnect. Please check back soon.')
-      if (entered === null) return
-      message = entered.trim() || 'We’re improving Cznnect. Please check back soon.'
-    }
-    setBusy(true)
-    try {
-      const { error } = await supabase.from('app_settings').update({ maintenance_enabled: enabled, maintenance_message: message, updated_at: new Date().toISOString() }).eq('id', 1)
-      if (error) throw error
-      setMaintenanceEnabled(enabled)
-      setNotice(enabled ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.')
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Could not update maintenance mode.')
-    } finally { setBusy(false) }
-  }
-
-  async function saveApkDownload(enabled: boolean) {
-    setBusy(true)
-    try {
-      const { error } = await supabase.from('app_settings').update({ apk_download_enabled: enabled, updated_at: new Date().toISOString() }).eq('id', 1)
-      if (error) throw error
-      setApkEnabled(enabled)
-      setNotice(enabled ? 'Download button is shown on the maintenance screen.' : 'Download button is hidden on the maintenance screen.')
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Could not update the download option. Run supabase/08_apk_download_toggle.sql first.')
-    } finally { setBusy(false) }
-  }
-
   return (
     <div className="mx-auto min-h-full max-w-xl">
       <UnlockToast />
@@ -168,6 +122,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </svg>
           </button>
         </header>
+        {appSettings?.announcementEnabled && appSettings.announcementText.trim() && (
+          <p role="status" className="card mb-4 text-sm font-semibold">{appSettings.announcementText}</p>
+        )}
         <div
           /* Toggle visibility, not opacity: an opacity fade on this wrapper would hold back the glass blur on the
              panel and scrim until the fade ended. Only the scrim fades, and the panel slides. */
@@ -236,6 +193,16 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span className="menu-item-label"><Icon name="settings" size={22} />Settings</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
+              {isOwner && (
+                <button
+                  type="button"
+                  className={`menu-item ${tab === 'admin' ? 'menu-item-on' : ''}`}
+                  onClick={() => { setTab('admin'); setMenuOpen(false) }}
+                >
+                  <span className="menu-item-label"><Icon name="admin" size={22} />Admin</span>
+                  <span aria-hidden="true" className="menu-chevron">›</span>
+                </button>
+              )}
               {musicUnlocked && (
                 <button
                   type="button"
@@ -247,44 +214,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 </button>
               )}
             </div>
-            {userId && isOwner && <div className="mt-5 border-t border-line pt-5">
-              <p className="eyebrow">Owner controls</p>
-              <div className="mt-2 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="font-bold">Maintenance mode</p>
-                  <p className="mt-1 text-sm text-muted">{maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={maintenanceEnabled}
-                  aria-label="Maintenance mode"
-                  disabled={busy || !maintenanceLoaded}
-                  onClick={() => void saveMaintenance(!maintenanceEnabled)}
-                  className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${maintenanceEnabled ? 'border-red-500 bg-red-500' : 'border-green-500 bg-green-500'}`}
-                >
-                  <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              <div className="mt-4 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="font-bold">App download on maintenance screen</p>
-                  <p className="mt-1 text-sm text-muted">{apkEnabled ? 'Visitors can download the latest APK' : 'Download option is hidden'}</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={apkEnabled}
-                  aria-label="Show app download on maintenance screen"
-                  disabled={busy || !maintenanceLoaded}
-                  onClick={() => void saveApkDownload(!apkEnabled)}
-                  className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${apkEnabled ? 'border-green-500 bg-green-500' : 'border-line bg-black/20'}`}
-                >
-                  <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${apkEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}
-            </div>}
           </aside>
         </div>
         <div key={tab} className="screen-in">
@@ -300,6 +229,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           {tab === 'plans' && <Plans family={family} userId={userId} />}
           {tab === 'me' && <Profile userId={userId} />}
           {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+          {tab === 'admin' && isOwner && <Admin family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         </div>
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>

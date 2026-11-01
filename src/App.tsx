@@ -188,6 +188,7 @@ export default function App() {
   if (!configured) return <ServiceNotice message="Cznnect is not configured yet. Please check back later." />
   if (!ready || held) return <Splash />
   const isOwner = isOwnerEmail(session?.user.email)
+  if (recoveryMode) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
   if (maintenance?.maintenanceEnabled && !isOwner && !pinUnlocked) {
     return <ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.apkDownloadEnabled} onUnlock={() => setPinUnlocked(true)} />
   }
@@ -210,7 +211,6 @@ export default function App() {
   if (maintenance && isNativeApp() && !pinUnlocked && maintenance.minBuild > (thisBuild() ?? 0)) {
     return <ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk onUnlock={() => setPinUnlocked(true)} />
   }
-  if (recoveryMode) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />
 }

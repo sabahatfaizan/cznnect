@@ -17,13 +17,19 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: npm run build
+      - run: npm install --no-audit --no-fund
+      - name: Type-check application
+        run: npm run typecheck
+      - name: Build production app
+        run: npm run build
+      - name: Verify deployment artifact
+        run: test -s dist/index.html && test -s dist/sw.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

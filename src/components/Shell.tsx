@@ -51,6 +51,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   const [menuOpen, setMenuOpen] = useState(false)
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false)
+  const [apkEnabled, setApkEnabled] = useState(true)
   const isOwner = isOwnerEmail(email)
 
   // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
@@ -96,10 +97,13 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   useEffect(() => {
     if (!isOwner) return
     let active = true
-    void supabase.from('app_settings').select('maintenance_enabled').eq('id', 1).maybeSingle().then(({ data, error }) => {
+    void supabase.from('app_settings').select('*').eq('id', 1).maybeSingle().then(({ data, error }) => {
       if (!active) return
       if (error) setNotice(error.message)
-      else setMaintenanceEnabled(Boolean(data?.maintenance_enabled))
+      else {
+        setMaintenanceEnabled(Boolean(data?.maintenance_enabled))
+        setApkEnabled(data?.apk_download_enabled !== false)
+      }
       setMaintenanceLoaded(true)
     })
     return () => { active = false }
@@ -120,6 +124,18 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       setNotice(enabled ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.')
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Could not update maintenance mode.')
+    } finally { setBusy(false) }
+  }
+
+  async function saveApkDownload(enabled: boolean) {
+    setBusy(true)
+    try {
+      const { error } = await supabase.from('app_settings').update({ apk_download_enabled: enabled, updated_at: new Date().toISOString() }).eq('id', 1)
+      if (error) throw error
+      setApkEnabled(enabled)
+      setNotice(enabled ? 'Download button is shown on the maintenance screen.' : 'Download button is hidden on the maintenance screen.')
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not update the download option. Run supabase/08_apk_download_toggle.sql first.')
     } finally { setBusy(false) }
   }
 
@@ -248,6 +264,23 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                   className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${maintenanceEnabled ? 'border-red-500 bg-red-500' : 'border-green-500 bg-green-500'}`}
                 >
                   <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="font-bold">App download on maintenance screen</p>
+                  <p className="mt-1 text-sm text-muted">{apkEnabled ? 'Visitors can download the latest APK' : 'Download option is hidden'}</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={apkEnabled}
+                  aria-label="Show app download on maintenance screen"
+                  disabled={busy || !maintenanceLoaded}
+                  onClick={() => void saveApkDownload(!apkEnabled)}
+                  className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${apkEnabled ? 'border-green-500 bg-green-500' : 'border-line bg-black/20'}`}
+                >
+                  <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${apkEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
               </div>
               {notice && <p role="status" className="mt-3 text-sm text-muted">{notice}</p>}

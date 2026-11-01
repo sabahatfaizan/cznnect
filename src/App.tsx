@@ -5,6 +5,7 @@ import { configured } from './config'
 import AuthScreen from './components/AuthScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
 import Logo from './components/Logo'
+import { Icon } from './components/Icons'
 import Authed from './Authed'
 import { isOwnerEmail } from './owner'
 
@@ -13,7 +14,7 @@ const MAINTENANCE_PIN = '4124'
 // Always the newest APK: the build workflow republishes it under this fixed name on every push to main.
 const LATEST_APK_URL = 'https://github.com/sabahatfaizan/cznnect/releases/download/latest-apk/cznnect.apk'
 
-function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () => void }) {
+function ServiceNotice({ message, onUnlock, showApk = false }: { message: string; onUnlock?: () => void; showApk?: boolean }) {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
   const [showPinUnlock, setShowPinUnlock] = useState(false)
@@ -45,12 +46,21 @@ function ServiceNotice({ message, onUnlock }: { message: string; onUnlock?: () =
       <div className="card">
         <h1 className="font-display text-2xl font-bold">Cznnect is getting an update</h1>
         <p className="mt-3 text-muted">{message}</p>
-        <div className="mt-5 flex flex-col gap-2">
-          <a className="btn btn-plain w-full" href={LATEST_APK_URL} target="_blank" rel="noopener noreferrer" download="cznnect.apk">
-            Download the latest Android app (APK)
+        {showApk && (
+          <a
+            className="mt-5 flex items-center gap-4 rounded-2xl border border-line p-4 no-underline transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            href={LATEST_APK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="cznnect.apk"
+          >
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon name="download" size={24} /></span>
+            <span className="min-w-0">
+              <span className="block font-bold">Get the latest app</span>
+              <span className="mt-0.5 block text-sm text-muted">Download the Android APK. If asked, allow installs from your browser.</span>
+            </span>
           </a>
-          <p className="text-center text-xs text-muted">If Android asks, allow installing from this source. Your data stays as it is.</p>
-        </div>
+        )}
         {onUnlock && showPinUnlock && (
           <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
             <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>
@@ -81,7 +91,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [ready, setReady] = useState(false)
   const [held, setHeld] = useState(true)
-  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null)
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string; apk: boolean } | null>(null)
   const [pinUnlocked, setPinUnlocked] = useState(false)
 
   useEffect(() => {
@@ -104,13 +114,13 @@ export default function App() {
     if (!configured) return
     let alive = true
     const load = async () => {
-      const { data } = await supabase.from('app_settings').select('maintenance_enabled, maintenance_message').eq('id', 1).maybeSingle()
-      if (alive && data) setMaintenance({ enabled: Boolean(data.maintenance_enabled), message: data.maintenance_message || 'We’re improving Cznnect. Please check back soon.' })
+      const { data } = await supabase.from('app_settings').select('*').eq('id', 1).maybeSingle()
+      if (alive && data) setMaintenance({ enabled: Boolean(data.maintenance_enabled), message: data.maintenance_message || 'We’re improving Cznnect. Please check back soon.', apk: data.apk_download_enabled !== false })
     }
     void load()
     const channel = supabase.channel('app-maintenance-status').on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, (payload) => {
-      const row = payload.new as { maintenance_enabled?: boolean; maintenance_message?: string }
-      if (alive && typeof row.maintenance_enabled === 'boolean') setMaintenance({ enabled: row.maintenance_enabled, message: row.maintenance_message || 'We’re improving Cznnect. Please check back soon.' })
+      const row = payload.new as { maintenance_enabled?: boolean; maintenance_message?: string; apk_download_enabled?: boolean }
+      if (alive && typeof row.maintenance_enabled === 'boolean') setMaintenance({ enabled: row.maintenance_enabled, message: row.maintenance_message || 'We’re improving Cznnect. Please check back soon.', apk: row.apk_download_enabled !== false })
     }).subscribe()
     const poll = setInterval(load, 20000)
     return () => { alive = false; clearInterval(poll); void supabase.removeChannel(channel) }
@@ -120,7 +130,7 @@ export default function App() {
   if (!ready || held) return <Splash />
   const isOwner = isOwnerEmail(session?.user.email)
   if (maintenance?.enabled && !isOwner && !pinUnlocked) {
-    return <ServiceNotice message={maintenance.message} onUnlock={() => setPinUnlocked(true)} />
+    return <ServiceNotice message={maintenance.message} showApk={maintenance.apk} onUnlock={() => setPinUnlocked(true)} />
   }
   if (!session) return <AuthScreen />
   return <Authed userId={session.user.id} email={session.user.email ?? ''} />

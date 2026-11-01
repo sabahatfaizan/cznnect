@@ -17,6 +17,8 @@ export type AppSettings = {
   iosInstallEnabled: boolean
   /** Website visitors may carry on in the browser from the download page. */
   webContinueEnabled: boolean
+  /** The sign-in screen on the website has a "Download the app" button. */
+  loginDownloadButtonEnabled: boolean
   announcementEnabled: boolean
   announcementText: string
   /** Android app builds older than this are asked to update. 0 means nobody is forced. */
@@ -34,6 +36,7 @@ export function parseSettings(row: Record<string, unknown> | null | undefined): 
     androidDownloadEnabled: r.android_download_enabled !== false,
     iosInstallEnabled: r.ios_install_enabled !== false,
     webContinueEnabled: r.web_continue_enabled !== false,
+    loginDownloadButtonEnabled: r.login_download_button_enabled !== false,
     announcementEnabled: Boolean(r.announcement_enabled),
     announcementText: typeof r.announcement_text === 'string' ? r.announcement_text : '',
     minBuild: Number.isFinite(min) && min > 0 ? Math.floor(min) : 0,

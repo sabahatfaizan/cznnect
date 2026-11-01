@@ -101,7 +101,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       setNotice(done)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Could not save.'
-      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql and 11_download_options.sql in Supabase.`)
+      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql, 11_download_options.sql and 13_login_download_button.sql in Supabase.`)
     } finally { setBusy(false) }
   }
 
@@ -203,6 +203,14 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             label="Let visitors continue on the web"
             disabled={busy || !ready}
             onChange={(next) => void save({ web_continue_enabled: next }, next ? 'Visitors can continue on the web.' : 'Visitors must get the app.')}
+          />
+        </Row>
+        <Row title="Download button on sign-in" hint={settings?.loginDownloadButtonEnabled ? 'The website sign-in screen has a Download the app button' : 'The sign-in screen has no download button'}>
+          <Switch
+            on={Boolean(settings?.loginDownloadButtonEnabled)}
+            label="Show a Download the app button on the sign-in screen"
+            disabled={busy || !ready}
+            onChange={(next) => void save({ login_download_button_enabled: next }, next ? 'The sign-in screen shows the download button.' : 'The sign-in screen has no download button.')}
           />
         </Row>
       </section>

@@ -295,7 +295,10 @@ export default function App() {
     return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." showApk /><NetworkStatus /></>
   }
   // On the website there is always a way to get the app from the sign-in screen, even after "Continue on the web".
-  const canOfferApp = Boolean(maintenance && !isNativeApp() && !isInstalledWebApp() && (maintenance.androidDownloadEnabled || maintenance.iosInstallEnabled))
+  const canOfferApp = Boolean(
+    maintenance && maintenance.loginDownloadButtonEnabled && !isNativeApp() && !isInstalledWebApp() &&
+    (maintenance.androidDownloadEnabled || maintenance.iosInstallEnabled),
+  )
   if (!session && canOfferApp && showDownload && maintenance) {
     return (
       <><ServiceNotice

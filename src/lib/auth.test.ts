@@ -3,7 +3,7 @@ import { isPasswordRecoveryEvent, nextAuthMode } from './auth'
 
 describe('authentication navigation', () => {
   it('returns from password reset to sign-in, not sign-up', () => {
-    expect(nextAuthMode('reset')).toBe('up')
+    expect(nextAuthMode('reset')).toBe('in')
   })
 
   it('switches between sign-in and sign-up', () => {

@@ -43,13 +43,21 @@ jobs:
         run: npm run build
 
       - name: Install Capacitor
-        run: npm install --no-save @capacitor/core @capacitor/android @capacitor/cli @capacitor/local-notifications
+        # Not --no-save: Capacitor only wires up plugins that are listed in package.json. Installed but unlisted, the
+        # notification plugin was silently left out of the APK (capacitor.plugins.json was empty), so reminders
+        # never worked. This only changes the build's own copy of package.json, not the repository.
+        run: npm install @capacitor/core @capacitor/android @capacitor/cli @capacitor/local-notifications
 
       - name: Create Android wrapper
         run: |
           npx cap init Cznnect com.sabahatfaizan.cznnect --web-dir dist
           npx cap add android
           npx cap sync android
+
+      - name: Check the notification plugin is in the app
+        run: |
+          cat android/app/src/main/assets/capacitor.plugins.json
+          grep -q local-notifications android/app/src/main/assets/capacitor.plugins.json
 
       - name: Add the Cznnect icons and native share
         # Capacitor's generated project ships its own default launcher icon and can't open the Android share

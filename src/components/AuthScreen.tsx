@@ -1,3 +1,4 @@
+import { LATEST_APK_URL } from '../lib/appSettings'
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Logo from './Logo'
@@ -20,8 +21,30 @@ function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
   })
 }
 
-// onGetApp is given on the website (not inside the app) when there is an app to offer.
-export default function AuthScreen({ onGetApp }: { onGetApp?: () => void }) {
+// apps is given on the website (not inside the app) when there is an app to offer: the Android icon downloads the
+// app, the iPhone icon opens the "Add to Home Screen" steps.
+export type GetApps = { android: boolean; ios: boolean; onIos: () => void }
+
+const iconBtn = 'grid h-12 w-12 place-items-center rounded-[var(--radius-ctl)] border border-line bg-surface-2 transition active:scale-95'
+
+function AndroidIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+      <path fillRule="evenodd" d="M5 17a7 7 0 0 1 14 0Z M8.7 13.6a.9.9 0 1 0 1.8 0 .9.9 0 1 0-1.8 0Z M13.5 13.6a.9.9 0 1 0 1.8 0 .9.9 0 1 0-1.8 0Z" />
+      <path d="M8.2 8.4 6.8 6M15.8 8.4 17.2 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+    </svg>
+  )
+}
+
+function AppleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+    </svg>
+  )
+}
+
+export default function AuthScreen({ apps }: { apps?: GetApps }) {
   const [mode, setMode] = useState<AuthMode>('up')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -181,10 +204,24 @@ export default function AuthScreen({ onGetApp }: { onGetApp?: () => void }) {
         {mode === 'up' ? 'Already a member? Sign in' : mode === 'reset' ? 'Back to sign in' : 'New to Cznnect? Join Cznnect'}
       </button>
 
-      {onGetApp && (
-        <button type="button" className="btn btn-plain w-full" onClick={onGetApp}>
-          Download the app
-        </button>
+      {apps && (apps.android || apps.ios) && (
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <p className="text-sm text-muted">Get the app</p>
+          <div className="flex items-start gap-6">
+            {apps.android && (
+              <a href={LATEST_APK_URL} download className="flex flex-col items-center gap-1.5 no-underline" aria-label="Download the Android app">
+                <span className={iconBtn}><AndroidIcon /></span>
+                <span className="text-xs font-bold">Android</span>
+              </a>
+            )}
+            {apps.ios && (
+              <button type="button" onClick={apps.onIos} className="flex flex-col items-center gap-1.5" aria-label="iPhone: add Cznnect to your Home Screen">
+                <span className={iconBtn}><AppleIcon /></span>
+                <span className="text-xs font-bold">iPhone</span>
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

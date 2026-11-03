@@ -1,11 +1,14 @@
 package com.sabahatfaizan.cznnect;
 
 import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -40,9 +43,42 @@ public class CznnectNativePlugin extends Plugin {
 
     /**
      * Downloads the app update with Android's own download manager. The in-app browser view could not finish saving
-     * the file, but the download manager always does, shows progress in the notification shade, and opens the
-     * installer when the notification is tapped. Only this app's GitHub releases are allowed.
+     * the file, but the download manager always does and shows progress in the notification shade. With install set,
+     * the installer opens by itself when the download finishes; otherwise it opens when the notification is tapped. Only this app's GitHub releases are allowed.
      */
+    private BroadcastReceiver installReceiver;
+    private long pendingInstallId = -1;
+
+    /** Opens the installer as soon as the given download finishes (the app must still be open). */
+    private void watchForInstall(final DownloadManager dm, final long id) {
+        final Context ctx = getContext();
+        pendingInstallId = id;
+        if (installReceiver != null) {
+            try { ctx.unregisterReceiver(installReceiver); } catch (Exception ignored) { }
+        }
+        installReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                long done = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                if (done != pendingInstallId) return;
+                try { context.unregisterReceiver(this); } catch (Exception ignored) { }
+                installReceiver = null;
+                Uri uri = dm.getUriForDownloadedFile(done);
+                if (uri == null) return;
+                Intent open = new Intent(Intent.ACTION_VIEW);
+                open.setDataAndType(uri, "application/vnd.android.package-archive");
+                open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                try { context.startActivity(open); } catch (Exception ignored) { }
+            }
+        };
+        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if (Build.VERSION.SDK_INT >= 33) {
+            ctx.registerReceiver(installReceiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            ctx.registerReceiver(installReceiver, filter);
+        }
+    }
+
     @PluginMethod
     public void downloadFile(PluginCall call) {
         String url = call.getString("url");
@@ -60,7 +96,8 @@ public class CznnectNativePlugin extends Plugin {
             req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
             DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-            dm.enqueue(req);
+            long id = dm.enqueue(req);
+            if (Boolean.TRUE.equals(call.getBoolean("install"))) watchForInstall(dm, id);
             call.resolve();
         } catch (Exception e) {
             call.reject("Could not start the download");

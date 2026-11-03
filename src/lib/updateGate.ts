@@ -44,3 +44,17 @@ export function isBuildActive(flag: unknown, startedAt: unknown, now: number = D
   if (!Number.isFinite(started)) return false
   return now - started >= -60_000 && now - started < BUILD_FLAG_MAX_AGE_MS
 }
+
+/** Reads the build number out of the release notes the build writes ("Build 151 (8e23b6f). ..."). */
+export function parseBuildFromNotes(notes: unknown): number | null {
+  if (typeof notes !== 'string') return null
+  const m = /Build\s+(\d+)/i.exec(notes)
+  if (!m) return null
+  const n = Number(m[1])
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
+/** True when the published build is newer than the one installed. An app with no build number counts as the oldest. */
+export function isNewerBuild(latest: number | null, current: number | null): boolean {
+  return latest !== null && latest > (current ?? 0)
+}

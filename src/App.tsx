@@ -157,7 +157,7 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, building = false
                   if (!isNativeApp()) return
                   // Inside the app, Android's download manager does the download; the plain link is the fallback.
                   e.preventDefault()
-                  void downloadFile(LATEST_APK_URL, 'cznnect.apk').then((ok) => {
+                  void downloadFile(LATEST_APK_URL, 'cznnect.apk', true).then((ok) => {
                     if (ok) setDownloadStarted(true)
                     else window.location.href = LATEST_APK_URL
                   })
@@ -168,7 +168,7 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, building = false
               </a>
             )}
             {downloadStarted && (
-              <p role="status" className="text-center text-sm text-muted">Download started. When it finishes, tap the notification to install.</p>
+              <p role="status" className="text-center text-sm text-muted">Download started. The installer opens when it finishes. If it does not, tap the notification.</p>
             )}
             {iosCard && (
               <button

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BUILD_FLAG_MAX_AGE_MS, buildHeaderValue, deviceKind, isBuildActive, mustUpdate } from './updateGate'
+import { BUILD_FLAG_MAX_AGE_MS, buildHeaderValue, deviceKind, isBuildActive, isNewerBuild, mustUpdate, parseBuildFromNotes } from './updateGate'
 
 const base = { minBuild: 100, build: 90, native: true }
 
@@ -77,5 +77,30 @@ describe('isBuildActive', () => {
 
   it('ignores an unreadable time', () => {
     expect(isBuildActive(true, 'not a date', now)).toBe(false)
+  })
+})
+
+describe('parseBuildFromNotes', () => {
+  it('reads the build number from the release notes', () => {
+    expect(parseBuildFromNotes('Build 151 (8e23b6f). Updated automatically on every push to main.')).toBe(151)
+  })
+
+  it('returns null when there is none', () => {
+    expect(parseBuildFromNotes('Always the newest build.')).toBeNull()
+    expect(parseBuildFromNotes(undefined)).toBeNull()
+    expect(parseBuildFromNotes('Build 0')).toBeNull()
+  })
+})
+
+describe('isNewerBuild', () => {
+  it('is true only when the published build is newer', () => {
+    expect(isNewerBuild(152, 151)).toBe(true)
+    expect(isNewerBuild(151, 151)).toBe(false)
+    expect(isNewerBuild(150, 151)).toBe(false)
+  })
+
+  it('does nothing without a published build, and counts an app with no build as the oldest', () => {
+    expect(isNewerBuild(null, 151)).toBe(false)
+    expect(isNewerBuild(10, null)).toBe(true)
   })
 })

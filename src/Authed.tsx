@@ -1,17 +1,28 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
+import { OFFLINE_MESSAGE, friendlyError, isNetworkError, isOffline, onBackOnline } from './lib/offline'
+import { readFamily, saveFamily } from './lib/offlineSession'
 import type { Family } from './types'
 import FamilySetup from './components/FamilySetup'
 import Shell from './components/Shell'
 import Splash from './components/Splash'
 
 // Everything after sign-in. Finds your family, or asks you to create or join one.
-export default function Authed({ userId, email }: { userId: string; email: string }) {
+export default function Authed({ userId, email, live }: { userId: string; email: string; live: boolean }) {
   const [family, setFamily] = useState<Family | null | undefined>(undefined)
   const [error, setError] = useState('')
+  const fromSaved = useRef(false) // the family on screen is the saved copy, because the phone was offline
 
   const load = useCallback(async () => {
     setError('')
+    const saved = readFamily(localStorage, userId)
+    // With no internet, open from the saved copy so the app still shows up (every screen then says it is offline).
+    const useSaved = () => {
+      if (!saved) return false
+      fromSaved.current = true
+      setFamily(saved)
+      return true
+    }
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
       const request = supabase
@@ -26,20 +37,34 @@ export default function Authed({ userId, email }: { userId: string; email: strin
       })
       const result = await Promise.race([request, timeout])
       if (result.error) {
+        if ((result.error as { code?: string }).code === 'offline' && useSaved()) return
         setError(result.error.message)
         return
       }
-      setFamily((result.data?.families as unknown as Family | undefined) ?? null)
+      const fam = (result.data?.families as unknown as Family | undefined) ?? null
+      // Without a real login the database answers as if the person had no family. Do not believe that.
+      if (!fam && !live) {
+        if (useSaved()) return
+        setError(OFFLINE_MESSAGE)
+        return
+      }
+      fromSaved.current = false
+      setFamily(fam)
+      if (fam) saveFamily(localStorage, userId, fam)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load your family. Check your connection and try again.')
+      if ((isNetworkError(err) || isOffline()) && useSaved()) return
+      setError(friendlyError(err, 'Could not load your family. Check your connection and try again.'))
     } finally {
       if (timer) clearTimeout(timer)
     }
-  }, [userId])
+  }, [userId, live])
 
   useEffect(() => {
     load()
   }, [load])
+
+  // Back online: swap the saved copy for the real thing.
+  useEffect(() => onBackOnline(() => { if (fromSaved.current) void load() }), [load])
 
   if (error) {
     return (

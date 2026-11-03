@@ -1,7 +1,9 @@
+import { useOffline, isOffline, onBackOnline, whenOffline } from './lib/offline'
+import { clearFamilies, readStoredUser, type StoredUser } from './lib/offlineSession'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { configured } from './config'
+import { SUPABASE_URL, configured } from './config'
 import AuthScreen from './components/AuthScreen'
 import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
@@ -27,21 +29,20 @@ function withTimeout<T>(promise: PromiseLike<T>, ms = 12000): Promise<T> {
   })
 }
 
+// A stand-in login for opening the app with no internet: just who the person is, no access token. Live data
+// stays unavailable until the phone is online and the real login has been refreshed.
+function offlineSession(user: StoredUser): Session {
+  return { access_token: '', refresh_token: '', expires_in: 0, token_type: 'bearer', user: { id: user.id, email: user.email } } as unknown as Session
+}
+
+// A floating notice for the screens outside the app proper (sign-in, splash and so on). Inside the app the
+// offline notice sits in the page itself (OfflineBanner).
 function NetworkStatus() {
-  const [online, setOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine)
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine)
-    window.addEventListener('online', update)
-    window.addEventListener('offline', update)
-    return () => {
-      window.removeEventListener('online', update)
-      window.removeEventListener('offline', update)
-    }
-  }, [])
-  if (online) return null
+  const offline = useOffline()
+  if (!offline) return null
   return (
-    <div role="status" className="fixed inset-x-3 top-[max(.75rem,env(safe-area-inset-top))] z-[100] mx-auto max-w-md rounded-xl border border-amber-500/40 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-xl">
-      You're offline. Some Cznnect features may be unavailable. Your connection will be checked automatically.
+    <div role="status" className="pointer-events-none fixed inset-x-3 top-[max(.75rem,env(safe-area-inset-top))] z-[100] mx-auto max-w-md rounded-xl border border-amber-500/40 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-xl">
+      You're offline. Most features won't work until you're back online.
     </div>
   )
 }
@@ -233,15 +234,39 @@ export default function App() {
     // missed while the app is booting. Supabase processes the PKCE/hash callback
     // and emits PASSWORD_RECOVERY when the recovery session is established.
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'SIGNED_OUT') clearFamilies(localStorage)
+      // Offline, a saved login that needs refreshing comes back empty. That is not a sign-out: keep the person in.
+      const saved = !s && event !== 'SIGNED_OUT' && isOffline() ? readStoredUser(localStorage, SUPABASE_URL) : null
+      if (saved) {
+        setSession(offlineSession(saved))
+        return
+      }
       setSession(s)
       if (isPasswordRecoveryEvent(event)) setRecoveryMode(true)
     })
 
-    withTimeout(supabase.auth.getSession(), 12000).then(({ data }) => setSession(data.session)).catch(() => {}).finally(() => {
+    // Back online: refresh the login right away, so the app swaps from the saved copy to live data.
+    const stopOnline = onBackOnline(() => { void supabase.auth.getSession() })
+
+    // Offline, refreshing an old login would keep retrying for half a minute. So as soon as the app knows it is
+    // offline it opens from the saved login instead of waiting.
+    const useSaved = () => {
+      if (!isOffline()) return
+      const saved = readStoredUser(localStorage, SUPABASE_URL)
+      if (saved) setSession(offlineSession(saved))
+    }
+    Promise.race([
+      withTimeout(supabase.auth.getSession(), 12000),
+      whenOffline().then(() => 'offline' as const),
+    ]).then((r) => {
+      if (r === 'offline') useSaved()
+      else if (r.data.session) setSession(r.data.session)
+      else useSaved()
+    }).catch(useSaved).finally(() => {
       clearTimeout(timer)
       setReady(true)
     })
-    return () => { clearTimeout(timer); data.subscription.unsubscribe() }
+    return () => { clearTimeout(timer); stopOnline(); data.subscription.unsubscribe() }
   }, [])
 
   useEffect(() => {
@@ -307,5 +332,6 @@ export default function App() {
       : undefined
     return <><AuthScreen apps={apps} /><NetworkStatus /></>
   }
-  return <><Authed userId={session.user.id} email={session.user.email ?? ''} /><NetworkStatus /></>
+  // live = a real login. The saved one used for opening offline has no access token.
+  return <Authed userId={session.user.id} email={session.user.email ?? ''} live={Boolean(session.access_token)} />
 }

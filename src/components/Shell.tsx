@@ -1,3 +1,4 @@
+import OfflineBanner from './OfflineBanner'
 import { useEffect, useRef, useState } from 'react'
 import type { Family } from '../types'
 import { supabase } from '../supabase'
@@ -132,6 +133,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </svg>
           </button>
         </header>
+        <OfflineBanner />
         {appSettings?.announcementEnabled && appSettings.announcementText.trim() && (
           <p role="status" className="card mb-4 text-sm font-semibold">{appSettings.announcementText}</p>
         )}

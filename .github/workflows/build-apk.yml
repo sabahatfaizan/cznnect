@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 # Builds run one at a time, and a newer push replaces one still waiting, so an old build can never finish
 # after a newer one and put the old APK back on the download link.
@@ -186,6 +187,14 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"token\": \"${BUILD_TOKEN}\", \"build\": ${GITHUB_RUN_NUMBER}}")
           echo "Result: $BODY"
+
+      - name: Refresh the website so it carries this build's APK
+        # The website keeps its own copy of the APK as a backup download. This redeploys it with the new build.
+        if: success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
 
       - name: Tell the app the build has finished
         # Clears the "please wait" notice, even when the build failed. Uses the same narrow

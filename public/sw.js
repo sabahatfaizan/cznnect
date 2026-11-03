@@ -31,6 +31,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   // Never intercept Supabase, auth callbacks, or other third-party requests.
   if (url.origin !== self.location.origin) return;
+  // The app download is a plain file. Leave it to the browser so it is never mistaken for the app shell.
+  if (url.pathname.endsWith('.apk')) return;
 
   if (request.mode === 'navigate') {
     event.respondWith((async () => {

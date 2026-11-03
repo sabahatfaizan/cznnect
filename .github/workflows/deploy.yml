@@ -30,6 +30,12 @@ jobs:
         run: npm run typecheck
       - name: Build production app
         run: npm run build
+      - name: Add the newest app download to the website
+        # A second place to download the APK, on the website's own address, for networks where GitHub's release
+        # download server is slow. It is skipped quietly if there is no release yet.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download latest-apk --pattern cznnect.apk --dir dist --clobber || echo "No APK release yet, skipping."
       - name: Verify deployment artifact
         run: test -s dist/index.html && test -s dist/sw.js
       - uses: actions/configure-pages@v5

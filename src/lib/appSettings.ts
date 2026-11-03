@@ -4,6 +4,9 @@ import { isBuildActive } from './updateGate'
 
 // Always the newest APK: the build workflow republishes it under this fixed name on every push to main.
 export const LATEST_APK_URL = 'https://github.com/sabahatfaizan/cznnect/releases/download/latest-apk/cznnect.apk'
+// A second copy of the same file on the website's own address, for networks where GitHub's release download server
+// is slow or stuck. The website deploy adds it after every build.
+export const APK_BACKUP_URL = 'https://sabahatfaizan.github.io/cznnect/cznnect.apk'
 export const LATEST_RELEASE_API = 'https://api.github.com/repos/sabahatfaizan/cznnect/releases/tags/latest-apk'
 export const DEFAULT_MAINTENANCE_MESSAGE = 'We’re improving Cznnect. Please check back soon.'
 

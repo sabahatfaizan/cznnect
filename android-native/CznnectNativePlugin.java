@@ -44,7 +44,7 @@ public class CznnectNativePlugin extends Plugin {
     /**
      * Downloads the app update with Android's own download manager. The in-app browser view could not finish saving
      * the file, but the download manager always does and shows progress in the notification shade. With install set,
-     * the installer opens by itself when the download finishes; otherwise it opens when the notification is tapped. Only this app's GitHub releases are allowed.
+     * the installer opens by itself when the download finishes; otherwise it opens when the notification is tapped. Only this app's GitHub releases and its own website are allowed.
      */
     private BroadcastReceiver installReceiver;
     private long pendingInstallId = -1;
@@ -83,7 +83,7 @@ public class CznnectNativePlugin extends Plugin {
     public void downloadFile(PluginCall call) {
         String url = call.getString("url");
         String name = call.getString("name");
-        if (url == null || !url.startsWith("https://github.com/sabahatfaizan/cznnect/")) {
+        if (url == null || !(url.startsWith("https://github.com/sabahatfaizan/cznnect/") || url.startsWith("https://sabahatfaizan.github.io/cznnect/"))) {
             call.reject("Address not allowed");
             return;
         }

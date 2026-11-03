@@ -13,7 +13,7 @@ import { Icon } from './components/Icons'
 import Authed from './Authed'
 import { isOwnerEmail } from './owner'
 import { isPasswordRecoveryEvent } from './lib/auth'
-import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
+import { APK_BACKUP_URL, LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 import { deviceKind, mustUpdate } from './lib/updateGate'
 import { downloadFile } from './lib/native'
 
@@ -165,6 +165,23 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, building = false
               >
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon name="download" size={24} /></span>
                 <span className="font-bold">{androidLabel}</span>
+              </a>
+            )}
+            {androidCard && !building && (
+              <a
+                className="mx-auto text-sm text-muted underline underline-offset-4"
+                href={APK_BACKUP_URL}
+                {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
+                onClick={(e) => {
+                  if (!isNativeApp()) return
+                  e.preventDefault()
+                  void downloadFile(APK_BACKUP_URL, 'cznnect.apk', true).then((ok) => {
+                    if (ok) setDownloadStarted(true)
+                    else window.location.href = APK_BACKUP_URL
+                  })
+                }}
+              >
+                Download stuck? Use the backup link
               </a>
             )}
             {downloadStarted && (

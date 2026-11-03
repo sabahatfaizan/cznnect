@@ -134,9 +134,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </button>
         </header>
         <OfflineBanner />
-        {appSettings?.buildInProgress && (
-          <p role="status" className="card mb-4 text-sm font-semibold">A new version of Cznnect is being published. Please wait a few minutes. You may be asked to update.</p>
-        )}
         {appSettings?.announcementEnabled && appSettings.announcementText.trim() && (
           <p role="status" className="card mb-4 text-sm font-semibold">{appSettings.announcementText}</p>
         )}

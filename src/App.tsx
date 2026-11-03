@@ -143,9 +143,9 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, building = false
         {(androidCard || iosCard) && (
           <div className="mt-5 flex flex-col gap-3">
             {androidCard && building && (
-              <div role="status" className="flex items-center gap-4 rounded-2xl border border-line p-4">
+              <div role="status" aria-live="polite" className="flex items-center gap-4 rounded-2xl border border-line p-4 opacity-80">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text"><Icon name="info" size={24} /></span>
-                <span><span className="block font-bold">New version on the way</span><span className="mt-0.5 block text-sm text-muted">It is being prepared. Please wait a few minutes, then come back for the download.</span></span>
+                <span className="font-bold">New app is being prepared. Please wait a few minutes.</span>
               </div>
             )}
             {androidCard && !building && (

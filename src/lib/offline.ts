@@ -1,10 +1,12 @@
 import { useSyncExternalStore } from 'react'
+import { saveResponse, savedResponse } from './savedData'
 
 // One place that knows whether the phone can reach the internet, and that turns network failures into a plain
 // sentence. Without it, every screen showed the browser's raw "TypeError: Failed to fetch" while offline.
 export const OFFLINE_MESSAGE = "You're offline. This needs an internet connection."
 
 let failing = false // the last request failed because of the network (navigator.onLine can still say true)
+let showingSaved = false // an answer came from the saved copy instead of the internet
 const listeners = new Set<() => void>()
 const tell = () => listeners.forEach((l) => l())
 
@@ -14,16 +16,25 @@ export function isOffline(): boolean {
 
 /** Called after every request: a failure marks us offline, any answer from the server marks us back online. */
 export function reportNetwork(reachable: boolean) {
+  if (reachable && showingSaved) { showingSaved = false; tell() }
   if (failing === !reachable) return
   failing = !reachable
   tell()
 }
 
+function markShowingSaved() {
+  if (showingSaved) return
+  showingSaved = true
+  tell()
+}
+
+export const isShowingSaved = () => showingSaved
+
 let wired = false
 function wire() {
   if (wired || typeof window === 'undefined') return
   wired = true
-  window.addEventListener('online', () => { failing = false; tell() })
+  window.addEventListener('online', () => { failing = false; showingSaved = false; tell() })
   window.addEventListener('offline', tell)
 }
 
@@ -35,6 +46,11 @@ function subscribe(cb: () => void) {
 
 export function useOffline(): boolean {
   return useSyncExternalStore(subscribe, isOffline, () => false)
+}
+
+/** True while what is on screen came from the saved copy. */
+export function useShowingSaved(): boolean {
+  return useSyncExternalStore(subscribe, isShowingSaved, () => false)
 }
 
 /** Resolves as soon as the app knows it is offline (immediately if it already does). */
@@ -87,19 +103,24 @@ export function offlineResponse(): Response {
 
 /** Used instead of fetch for every Supabase request. */
 export async function offlineAwareFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+  // With no internet: the saved copy of what the person last looked at, or a readable "you're offline" error.
+  const unreachable = async () => {
     reportNetwork(false)
+    const saved = await savedResponse(input, init)
+    if (saved) {
+      markShowingSaved()
+      return saved
+    }
     return offlineResponse()
   }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return unreachable()
   try {
     const res = await fetch(input, init)
     reportNetwork(true)
+    void saveResponse(input, init, res)
     return res
   } catch (e) {
-    if (isNetworkError(e)) {
-      reportNetwork(false)
-      return offlineResponse()
-    }
+    if (isNetworkError(e)) return unreachable()
     throw e
   }
 }

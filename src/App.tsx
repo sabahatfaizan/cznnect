@@ -1,5 +1,6 @@
 import { useOffline, isOffline, onBackOnline, whenOffline } from './lib/offline'
 import { clearFamilies, readStoredUser, type StoredUser } from './lib/offlineSession'
+import { clearSavedData, setSavedDataOwner } from './lib/savedData'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
@@ -230,18 +231,24 @@ export default function App() {
     if (!configured) { setReady(true); return }
     const timer = setTimeout(() => setReady(true), 8000)
 
+    // The saved copy of the last-viewed data belongs to whoever is signed in, so say who before any screen asks.
+    const applySession = (next: Session | null) => {
+      setSavedDataOwner(next?.user.id ?? null)
+      setSession(next)
+    }
+
     // Subscribe before reading the initial session so a recovery callback cannot be
     // missed while the app is booting. Supabase processes the PKCE/hash callback
     // and emits PASSWORD_RECOVERY when the recovery session is established.
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
-      if (event === 'SIGNED_OUT') clearFamilies(localStorage)
+      if (event === 'SIGNED_OUT') { clearFamilies(localStorage); clearSavedData() }
       // Offline, a saved login that needs refreshing comes back empty. That is not a sign-out: keep the person in.
       const saved = !s && event !== 'SIGNED_OUT' && isOffline() ? readStoredUser(localStorage, SUPABASE_URL) : null
       if (saved) {
-        setSession(offlineSession(saved))
+        applySession(offlineSession(saved))
         return
       }
-      setSession(s)
+      applySession(s)
       if (isPasswordRecoveryEvent(event)) setRecoveryMode(true)
     })
 
@@ -253,14 +260,14 @@ export default function App() {
     const useSaved = () => {
       if (!isOffline()) return
       const saved = readStoredUser(localStorage, SUPABASE_URL)
-      if (saved) setSession(offlineSession(saved))
+      if (saved) applySession(offlineSession(saved))
     }
     Promise.race([
       withTimeout(supabase.auth.getSession(), 12000),
       whenOffline().then(() => 'offline' as const),
     ]).then((r) => {
       if (r === 'offline') useSaved()
-      else if (r.data.session) setSession(r.data.session)
+      else if (r.data.session) applySession(r.data.session)
       else useSaved()
     }).catch(useSaved).finally(() => {
       clearTimeout(timer)

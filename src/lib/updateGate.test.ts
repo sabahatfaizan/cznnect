@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildHeaderValue, deviceKind, mustUpdate } from './updateGate'
+import { BUILD_FLAG_MAX_AGE_MS, buildHeaderValue, deviceKind, isBuildActive, mustUpdate } from './updateGate'
 
 const base = { minBuild: 100, build: 90, native: true }
 
@@ -54,5 +54,28 @@ describe('deviceKind', () => {
   it('treats anything else as a computer', () => {
     expect(deviceKind('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120')).toBe('other')
     expect(deviceKind('')).toBe('other')
+  })
+})
+
+describe('isBuildActive', () => {
+  const now = Date.parse('2026-11-03T10:00:00Z')
+  const ago = (ms: number) => new Date(now - ms).toISOString()
+
+  it('is on while the flag is set and recent', () => {
+    expect(isBuildActive(true, ago(60_000), now)).toBe(true)
+  })
+
+  it('is off when the flag is off or missing', () => {
+    expect(isBuildActive(false, ago(60_000), now)).toBe(false)
+    expect(isBuildActive(undefined, undefined, now)).toBe(false)
+    expect(isBuildActive(true, null, now)).toBe(false)
+  })
+
+  it('ignores a flag a killed build left behind', () => {
+    expect(isBuildActive(true, ago(BUILD_FLAG_MAX_AGE_MS + 1000), now)).toBe(false)
+  })
+
+  it('ignores an unreadable time', () => {
+    expect(isBuildActive(true, 'not a date', now)).toBe(false)
   })
 })

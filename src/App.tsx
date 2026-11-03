@@ -97,7 +97,7 @@ function InstallHelp({ onClose, focus = 'android' }: { onClose: () => void; focu
   )
 }
 
-function ServiceNotice({ message, detail, onUnlock, onContinue, showApk = false, showIos = false, androidLabel = 'Download the new app', title = 'Cznnect is getting an update' }: { message: string; detail?: string; onUnlock?: () => void; onContinue?: () => void; showApk?: boolean; showIos?: boolean; androidLabel?: string; title?: string }) {
+function ServiceNotice({ message, detail, onUnlock, onContinue, building = false, showApk = false, showIos = false, androidLabel = 'Download the new app', title = 'Cznnect is getting an update' }: { message: string; detail?: string; onUnlock?: () => void; onContinue?: () => void; building?: boolean; showApk?: boolean; showIos?: boolean; androidLabel?: string; title?: string }) {
   const [help, setHelp] = useState<null | 'android' | 'ios'>(null)
   const [downloadStarted, setDownloadStarted] = useState(false)
   // An iPhone cannot install the Android file and an Android phone has no use for the iPhone steps, so each phone
@@ -142,7 +142,13 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, showApk = false,
         {detail && <p className="mt-2 text-sm font-bold tabular-nums">{detail}</p>}
         {(androidCard || iosCard) && (
           <div className="mt-5 flex flex-col gap-3">
-            {androidCard && (
+            {androidCard && building && (
+              <div role="status" className="flex items-center gap-4 rounded-2xl border border-line p-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text"><Icon name="info" size={24} /></span>
+                <span><span className="block font-bold">New version on the way</span><span className="mt-0.5 block text-sm text-muted">It is being prepared. Please wait a few minutes, then come back for the download.</span></span>
+              </div>
+            )}
+            {androidCard && !building && (
               <a
                 className="flex items-center gap-4 rounded-2xl border border-line p-4 no-underline transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                 href={LATEST_APK_URL}
@@ -315,7 +321,7 @@ export default function App() {
   const isOwner = isOwnerEmail(session?.user.email)
   if (recoveryMode) return <><PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} /><NetworkStatus /></>
   if (maintenance?.maintenanceEnabled && !isOwner && !pinUnlocked) {
-    return <><ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.androidDownloadEnabled} onUnlock={() => setPinUnlocked(true)} /><NetworkStatus /></>
+    return <><ServiceNotice message={maintenance.maintenanceMessage} showApk={maintenance.androidDownloadEnabled} building={maintenance.buildInProgress} onUnlock={() => setPinUnlocked(true)} /><NetworkStatus /></>
   }
   // With the download option on, people on the plain website (not the Android app, not the home-screen web app)
   // see the download page instead of signing in. The owner account and anyone with the access PIN still get through.
@@ -328,6 +334,7 @@ export default function App() {
         title="Get the Cznnect app"
         message="Cznnect works best as an app. Get it for your phone below, or carry on in your browser."
         showApk={maintenance.androidDownloadEnabled}
+        building={maintenance.buildInProgress}
         showIos={maintenance.iosInstallEnabled}
         androidLabel="Download for Android"
         onContinue={maintenance.webContinueEnabled ? continueOnWeb : undefined}
@@ -339,7 +346,7 @@ export default function App() {
   // so the owner can always sign in there to change the required build. The database refuses old apps too
   // (supabase/10_enforce_min_build.sql).
   if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp() })) {
-    return <><ServiceNotice title="Update required" message="This version of Cznnect is out of date. Download the new app to keep using it." detail={`Your version: build ${thisBuild() ?? 'unknown'} · Required: build ${maintenance.minBuild}`} showApk /><NetworkStatus /></>
+    return <><ServiceNotice title="Update required" message={maintenance.buildInProgress ? "This version of Cznnect is out of date. The new version is being prepared, so please wait a few minutes and try again." : "This version of Cznnect is out of date. Download the new app to keep using it."} building={maintenance.buildInProgress} detail={`Your version: build ${thisBuild() ?? 'unknown'} · Required: build ${maintenance.minBuild}`} showApk /><NetworkStatus /></>
   }
   // On the website there is always a way to get the app from the sign-in screen, even after "Continue on the web".
   const canOfferApp = Boolean(

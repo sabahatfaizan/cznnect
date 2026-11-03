@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { isBuildActive } from './updateGate'
 
 // Always the newest APK: the build workflow republishes it under this fixed name on every push to main.
 export const LATEST_APK_URL = 'https://github.com/sabahatfaizan/cznnect/releases/download/latest-apk/cznnect.apk'
@@ -23,6 +24,8 @@ export type AppSettings = {
   announcementText: string
   /** Android app builds older than this are asked to update. 0 means nobody is forced. */
   minBuild: number
+  /** A new app build is being published right now. */
+  buildInProgress: boolean
 }
 
 // Columns added by the SQL files may not exist yet, so every field has a safe default.
@@ -40,6 +43,7 @@ export function parseSettings(row: Record<string, unknown> | null | undefined): 
     announcementEnabled: Boolean(r.announcement_enabled),
     announcementText: typeof r.announcement_text === 'string' ? r.announcement_text : '',
     minBuild: Number.isFinite(min) && min > 0 ? Math.floor(min) : 0,
+    buildInProgress: isBuildActive(r.build_in_progress, r.build_started_at),
   }
 }
 

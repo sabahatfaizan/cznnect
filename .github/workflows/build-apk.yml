@@ -21,6 +21,20 @@ jobs:
       - name: Check out Cznnect
         uses: actions/checkout@v5
 
+      - name: Tell the app a build has started
+        # Shows a "please wait" notice in the app while the new version is being published. Uses the same narrow
+        # BUILD_TOKEN as the step that raises the required build. Skipped without the secret.
+        continue-on-error: true
+        env:
+          BUILD_TOKEN: ${{ secrets.BUILD_TOKEN }}
+        run: |
+          [ -n "$BUILD_TOKEN" ] || { echo "BUILD_TOKEN is not set."; exit 0; }
+          URL=$(grep -oE "https://[a-z0-9]+\.supabase\.co" src/config.ts | head -1)
+          ANON=$(grep "SUPABASE_ANON_KEY =" src/config.ts | sed -E "s/.*'([^']+)'.*/\1/")
+          curl -sS --fail-with-body -X POST "$URL/rest/v1/rpc/set_build_status" \
+            -H "apikey: $ANON" -H "Authorization: Bearer $ANON" -H "Content-Type: application/json" \
+            -d "{\"token\": \"${BUILD_TOKEN}\", \"building\": true}"; echo
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -171,3 +185,18 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"token\": \"${BUILD_TOKEN}\", \"build\": ${GITHUB_RUN_NUMBER}}")
           echo "Result: $BODY"
+
+      - name: Tell the app the build has finished
+        # Clears the "please wait" notice, even when the build failed. Uses the same narrow
+        # BUILD_TOKEN as the step that raises the required build. Skipped without the secret.
+        if: always()
+        continue-on-error: true
+        env:
+          BUILD_TOKEN: ${{ secrets.BUILD_TOKEN }}
+        run: |
+          [ -n "$BUILD_TOKEN" ] || { echo "BUILD_TOKEN is not set."; exit 0; }
+          URL=$(grep -oE "https://[a-z0-9]+\.supabase\.co" src/config.ts | head -1)
+          ANON=$(grep "SUPABASE_ANON_KEY =" src/config.ts | sed -E "s/.*'([^']+)'.*/\1/")
+          curl -sS --fail-with-body -X POST "$URL/rest/v1/rpc/set_build_status" \
+            -H "apikey: $ANON" -H "Authorization: Bearer $ANON" -H "Content-Type: application/json" \
+            -d "{\"token\": \"${BUILD_TOKEN}\", \"building\": false}"; echo

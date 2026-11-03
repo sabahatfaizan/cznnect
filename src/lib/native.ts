@@ -57,3 +57,15 @@ export function setLauncherIcon(id: string) {
   if (!isNative()) return
   callNative('setIcon', { id }).catch(() => {})
 }
+
+// Starts a file download with Android's download manager. Returns false when that is not possible (not the app, or an
+// older app without this), so the caller can fall back to a normal link.
+export async function downloadFile(url: string, name: string): Promise<boolean> {
+  if (!isNative()) return false
+  try {
+    await callNative('downloadFile', { url, name })
+    return true
+  } catch {
+    return false
+  }
+}

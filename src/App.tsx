@@ -15,6 +15,7 @@ import { isOwnerEmail } from './owner'
 import { isPasswordRecoveryEvent } from './lib/auth'
 import { LATEST_APK_URL, isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 import { deviceKind, mustUpdate } from './lib/updateGate'
+import { downloadFile } from './lib/native'
 
 const SPLASH_MS = 4500
 const MAINTENANCE_PIN = '4124'
@@ -98,6 +99,7 @@ function InstallHelp({ onClose, focus = 'android' }: { onClose: () => void; focu
 
 function ServiceNotice({ message, detail, onUnlock, onContinue, showApk = false, showIos = false, androidLabel = 'Download the new app', title = 'Cznnect is getting an update' }: { message: string; detail?: string; onUnlock?: () => void; onContinue?: () => void; showApk?: boolean; showIos?: boolean; androidLabel?: string; title?: string }) {
   const [help, setHelp] = useState<null | 'android' | 'ios'>(null)
+  const [downloadStarted, setDownloadStarted] = useState(false)
   // An iPhone cannot install the Android file and an Android phone has no use for the iPhone steps, so each phone
   // only sees the card that can work for it. Computers see both.
   const device = deviceKind(typeof navigator === 'undefined' ? '' : navigator.userAgent)
@@ -145,10 +147,22 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, showApk = false,
                 className="flex items-center gap-4 rounded-2xl border border-line p-4 no-underline transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                 href={LATEST_APK_URL}
                 {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
+                onClick={(e) => {
+                  if (!isNativeApp()) return
+                  // Inside the app, Android's download manager does the download; the plain link is the fallback.
+                  e.preventDefault()
+                  void downloadFile(LATEST_APK_URL, 'cznnect.apk').then((ok) => {
+                    if (ok) setDownloadStarted(true)
+                    else window.location.href = LATEST_APK_URL
+                  })
+                }}
               >
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon name="download" size={24} /></span>
                 <span className="font-bold">{androidLabel}</span>
               </a>
+            )}
+            {downloadStarted && (
+              <p role="status" className="text-center text-sm text-muted">Download started. When it finishes, tap the notification to install.</p>
             )}
             {iosCard && (
               <button

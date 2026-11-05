@@ -49,6 +49,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [notice, setNotice] = useState('')
   const [maintMessage, setMaintMessage] = useState('')
   const [announceText, setAnnounceText] = useState('')
+  const [pushTitle, setPushTitle] = useState('')
+  const [pushBody, setPushBody] = useState('')
   const [minBuildInput, setMinBuildInput] = useState('')
   const [latestBuild, setLatestBuild] = useState<number | null>(null)
   const [members, setMembers] = useState<AdminMember[]>([])
@@ -115,6 +117,22 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       after()
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Something went wrong.')
+    } finally { setBusy(false) }
+  }
+
+  async function sendPush() {
+    if (!pushBody.trim()) return
+    if (!window.confirm('Send this notification to every phone with the app?')) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const { data, error } = await supabase.functions.invoke('send-push', { body: { title: pushTitle, body: pushBody } })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      setNotice(`Sent to ${data.sent} of ${data.total} phones.`)
+      setPushBody('')
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not send the notification.')
     } finally { setBusy(false) }
   }
 
@@ -228,6 +246,15 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
         <label className="label" htmlFor="admin-announce">Message</label>
         <textarea id="admin-announce" className="input min-h-20" maxLength={200} value={announceText} onChange={(e) => setAnnounceText(e.target.value)} placeholder="Reunion on Friday at 7pm" />
         <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ announcement_text: announceText.trim() }, 'Banner text saved.')}>Save text</button>
+      </section>
+
+      <section className="card flex flex-col gap-3">
+        <p className="eyebrow">Send a notification</p>
+        <label className="label" htmlFor="admin-push-title">Title (optional)</label>
+        <input id="admin-push-title" className="input" maxLength={60} value={pushTitle} onChange={(e) => setPushTitle(e.target.value)} placeholder="Cznnect" />
+        <label className="label" htmlFor="admin-push-body">Message</label>
+        <textarea id="admin-push-body" className="input min-h-20" maxLength={200} value={pushBody} onChange={(e) => setPushBody(e.target.value)} placeholder="Type your message" />
+        <button type="button" className="btn btn-plain" disabled={busy || !pushBody.trim()} onClick={() => void sendPush()}>Send to everyone</button>
       </section>
 
       <section className="card flex flex-col gap-3">

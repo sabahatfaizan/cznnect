@@ -6,12 +6,16 @@ import type { Family } from './types'
 import FamilySetup from './components/FamilySetup'
 import Shell from './components/Shell'
 import Splash from './components/Splash'
+import { registerPush } from './lib/push'
 
 // Everything after sign-in. Finds your family, or asks you to create or join one.
 export default function Authed({ userId, email, live }: { userId: string; email: string; live: boolean }) {
   const [family, setFamily] = useState<Family | null | undefined>(undefined)
   const [error, setError] = useState('')
   const fromSaved = useRef(false) // the family on screen is the saved copy, because the phone was offline
+
+  // Once signed in for real (not the offline copy), tell the database this phone's push token.
+  useEffect(() => { if (live) void registerPush() }, [live, userId])
 
   const load = useCallback(async () => {
     setError('')

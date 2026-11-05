@@ -13,11 +13,14 @@ import android.os.Environment;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.JSObject;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.Arrays;
 import java.util.List;
 
-/** Native bits the web view can't do: the Android share sheet, switching the launcher icon, and downloading the app update. */
+/** Native bits the web view can't do: the Android share sheet, switching the launcher icon, downloading the app update, and the phone's push (Firebase) token. */
 @CapacitorPlugin(name = "CznnectNative")
 public class CznnectNativePlugin extends Plugin {
     // Keep in step with android-native/icons.json (and the aliases apply.py adds to the manifest).
@@ -101,6 +104,32 @@ public class CznnectNativePlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("Could not start the download");
+        }
+    }
+
+    /**
+     * Returns this phone's Firebase Cloud Messaging token, which the server needs to send it a push notification.
+     * Rejects (rather than crashing) when the build has no google-services.json, so older or unconfigured builds
+     * simply have no push.
+     */
+    @PluginMethod
+    public void getPushToken(final PluginCall call) {
+        try {
+            if (FirebaseApp.getApps(getContext()).isEmpty()) {
+                call.reject("Push is not set up in this build");
+                return;
+            }
+            FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                if (!task.isSuccessful() || task.getResult() == null) {
+                    call.reject("Could not get the push token");
+                    return;
+                }
+                JSObject out = new JSObject();
+                out.put("token", task.getResult());
+                call.resolve(out);
+            });
+        } catch (Exception e) {
+            call.reject("Could not get the push token");
         }
     }
 

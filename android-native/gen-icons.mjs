@@ -46,11 +46,11 @@ const png = (c) => c.toBuffer('image/png')
 const legacy = (v, size, round) => {
   const [c, g] = canvas(size)
   if (round) { g.beginPath(); g.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); g.clip() }
-  drawBackground(g, size, v); drawMark(g, size, v, 0.58); return png(c)
+  drawBackground(g, size, v); drawMark(g, size, v, 0.50); return png(c)
 }
 const layerBg = (v, size) => { const [c, g] = canvas(size); drawBackground(g, size, v); return png(c) }
 // The adaptive icon only shows the middle 66% (a circle at worst), so the mark is smaller than the legacy one.
-const layerFg = (v, size) => { const [c, g] = canvas(size); drawMark(g, size, v, 0.42); return png(c) }
+const layerFg = (v, size) => { const [c, g] = canvas(size); drawMark(g, size, v, 0.36); return png(c) }
 
 const DENS = { mdpi: [48, 108], hdpi: [72, 162], xhdpi: [96, 216], xxhdpi: [144, 324], xxxhdpi: [192, 432] }
 const root = 'android-icons/res'

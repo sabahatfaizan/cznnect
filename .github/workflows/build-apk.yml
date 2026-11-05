@@ -103,6 +103,32 @@ jobs:
           grep -n "uses-permission\|uses-feature" android/app/src/main/AndroidManifest.xml
           grep -q "android.permission.CAMERA" android/app/src/main/AndroidManifest.xml
 
+      - name: Add Firebase push to the APK
+        # The native plugin's getPushToken uses the Firebase Messaging library, so the library is always added (the
+        # code would not compile without it). The Firebase project's google-services.json (repository secret
+        # GOOGLE_SERVICES_JSON) is what actually switches push on: Capacitor's generated Gradle files apply the
+        # Google services plugin only when that file exists. Without the secret the build still passes and the app
+        # simply has no push (getPushToken rejects and the web code gets null).
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          python3 - <<'PY'
+          import re
+          p = 'android/app/build.gradle'
+          s = open(p, encoding='utf-8').read()
+          if 'firebase-messaging' not in s:
+              s, n = re.subn(r'^dependencies \{', "dependencies {\n    implementation platform('com.google.firebase:firebase-bom:33.7.0')\n    implementation 'com.google.firebase:firebase-messaging'", s, count=1, flags=re.M)
+              assert n == 1, 'dependencies block not found in app/build.gradle'
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            grep -q google-services android/build.gradle android/app/build.gradle || { echo "Google services plugin is not wired by this Capacitor template"; exit 1; }
+          else
+            echo "GOOGLE_SERVICES_JSON is not set, so this build has no push."
+          fi
+          grep -n "firebase" android/app/build.gradle
+
       - name: Sign with the fixed Cznnect key and raise the version
         # GitHub makes a new throwaway debug key on every build, and Android refuses to update an app whose
         # signing key changed. A fixed key plus a version number that rises each build lets a new APK

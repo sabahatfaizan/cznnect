@@ -69,3 +69,15 @@ export async function downloadFile(url: string, name: string, install = false): 
     return false
   }
 }
+
+// The phone's Firebase push token, or null when this is not the app, the build has no push set up, or the phone
+// refuses. Safe to call on every start: Firebase hands back the same token until it rotates it.
+export async function getPushToken(): Promise<string | null> {
+  if (!isNative()) return null
+  try {
+    const res = (await callNative('getPushToken', {})) as { token?: string } | undefined
+    return res?.token || null
+  } catch {
+    return null
+  }
+}

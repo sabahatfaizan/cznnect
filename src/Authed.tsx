@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { OFFLINE_MESSAGE, friendlyError, isNetworkError, isOffline, onBackOnline } from './lib/offline'
 import { readFamily, saveFamily } from './lib/offlineSession'
+import { registerPush } from './lib/push'
 import type { Family } from './types'
 import FamilySetup from './components/FamilySetup'
 import Shell from './components/Shell'
@@ -12,6 +13,11 @@ export default function Authed({ userId, email, live }: { userId: string; email:
   const [family, setFamily] = useState<Family | null | undefined>(undefined)
   const [error, setError] = useState('')
   const fromSaved = useRef(false) // the family on screen is the saved copy, because the phone was offline
+
+  // Once there is a real login, tell the server this phone's push token.
+  useEffect(() => {
+    if (live) void registerPush()
+  }, [live, userId])
 
   const load = useCallback(async () => {
     setError('')

@@ -6,6 +6,7 @@ import { Icon, type IconName } from '../components/Icons'
 import ColorWheel from '../components/ColorWheel'
 import { AVATAR_ICONS, DEFAULT_AVATAR_COLOR, EMOJI_GROUPS, TYPO_AVATARS, TYPO_PACKS, encodeAvatar, encodeTypoAvatar, parseAvatar, parseTypoAvatar } from '../lib/avatars'
 import { getUnlockedThemes, onUnlocksChanged } from '../theme'
+import { signOut } from '../lib/push'
 
 const BIO_MAX = 140
 
@@ -162,7 +163,7 @@ export default function Profile({ userId }: { userId: string }) {
         </button>
       </form>
 
-      <button className="btn btn-plain w-full" onClick={() => supabase.auth.signOut()}>
+      <button className="btn btn-plain w-full" onClick={() => void signOut()}>
         Sign out
       </button>
 

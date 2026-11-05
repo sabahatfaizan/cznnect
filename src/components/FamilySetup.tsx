@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Logo from './Logo'
+import { signOut } from '../lib/push'
 
 // Shown once, right after sign-up: start a family space or join one with an invite code.
 export default function FamilySetup({ onDone }: { onDone: () => void }) {
@@ -85,7 +86,7 @@ export default function FamilySetup({ onDone }: { onDone: () => void }) {
         </button>
       </form>
 
-      <button type="button" className="link" onClick={() => supabase.auth.signOut()}>
+      <button type="button" className="link" onClick={() => void signOut()}>
         Sign out
       </button>
     </div>

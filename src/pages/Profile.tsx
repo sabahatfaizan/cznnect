@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { unregisterPush } from '../lib/push'
 import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
 import Sheet from '../components/Sheet'
@@ -162,7 +163,7 @@ export default function Profile({ userId }: { userId: string }) {
         </button>
       </form>
 
-      <button className="btn btn-plain w-full" onClick={() => supabase.auth.signOut()}>
+      <button className="btn btn-plain w-full" onClick={async () => { await unregisterPush(); await supabase.auth.signOut() }}>
         Sign out
       </button>
 

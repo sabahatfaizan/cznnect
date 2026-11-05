@@ -22,6 +22,7 @@ import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
 import { isOwnerEmail } from '../owner'
 import SecretCoin from './SecretCoin'
+import MessageSheet from './MessageSheet'
 import UnlockToast from './UnlockToast'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings' | 'music' | 'admin'
@@ -52,6 +53,7 @@ const SECRET_HOLD_MS = 4000
 export default function Shell({ family, userId, email, onFamilyChanged }: { family: Family; userId: string; email: string; onFamilyChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [messageOpen, setMessageOpen] = useState(false)
   const isOwner = isOwnerEmail(email)
   // The family role (owner / moderator / member) decides who gets the Admin page's member tools.
   const [familyRole, setFamilyRole] = useState<string | null>(null)
@@ -110,6 +112,17 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       <UnlockToast />
       <main data-tab={tab} className="p-4 pb-36 pt-[max(2.25rem,env(safe-area-inset-top),36px)]">
         <header className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              aria-label="Message everyone"
+              onClick={() => setMessageOpen(true)}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+              </svg>
+            </button>
           <div>
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
@@ -118,6 +131,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <SecretCoin />
             {/* Compact Red Dead wordmark; CSS applies the Chinese Rocks typeface only in this theme. */}
             <span className="brand-rdr2-text">Cznnect</span>
+          </div>
           </div>
           <button
             type="button"
@@ -134,6 +148,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </svg>
           </button>
         </header>
+        {messageOpen && <MessageSheet familyId={family.id} onClose={() => setMessageOpen(false)} />}
         <OfflineBanner />
         <UpdatePrompt building={Boolean(appSettings?.buildInProgress)} />
         {appSettings?.announcementEnabled && appSettings.announcementText.trim() && (

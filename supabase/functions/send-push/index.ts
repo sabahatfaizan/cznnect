@@ -1,9 +1,9 @@
-// Sends a push notification to every phone that has registered a token. Owner only.
+// A family member types one message and it is sent as a push notification to everyone else in their family.
+// No personal messages: the recipients are always the whole family, chosen here on the server.
 // Secret needed: FCM_SERVICE_ACCOUNT (the Firebase service account key JSON, pasted whole).
 // Deploy: supabase functions deploy send-push
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const OWNER_EMAIL = 'faizanplayz11@gmail.com'
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-build',
@@ -48,22 +48,40 @@ Deno.serve(async (req) => {
     const url = Deno.env.get('SUPABASE_URL')!
     const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-    // Only the owner may send.
+    // Any signed-in family member may send, but only ever to their own whole family: there are no personal messages.
     const jwt = (req.headers.get('Authorization') ?? '').replace('Bearer ', '')
     const { data: u } = await admin.auth.getUser(jwt)
-    if ((u.user?.email ?? '').toLowerCase() !== OWNER_EMAIL) return json({ error: 'Only the owner can send notifications.' }, 403)
+    const me = u.user
+    if (!me) return json({ error: 'Sign in first.' }, 401)
 
-    const { title, body } = await req.json()
-    const t = String(title ?? '').trim().slice(0, 60) || 'Cznnect'
+    const { body, family_id } = await req.json()
     const b = String(body ?? '').trim().slice(0, 200)
     if (!b) return json({ error: 'Type a message first.' }, 400)
+
+    const { data: mine } = await admin.from('family_members').select('family_id').eq('user_id', me.id).eq('family_id', String(family_id ?? '')).maybeSingle()
+    if (!mine) return json({ error: 'You are not in this family.' }, 403)
+
+    // One message per 30 seconds per person.
+    const since = new Date(Date.now() - 30_000).toISOString()
+    const { count } = await admin.from('push_broadcasts').select('id', { count: 'exact', head: true }).eq('user_id', me.id).gte('created_at', since)
+    if ((count ?? 0) > 0) return json({ error: 'Wait a few seconds before sending another message.' }, 429)
+
+    const { data: prof } = await admin.from('profiles').select('display_name, nickname').eq('id', me.id).maybeSingle()
+    const t = (prof?.nickname?.trim() || prof?.display_name || 'Someone').slice(0, 40)
 
     const saRaw = Deno.env.get('FCM_SERVICE_ACCOUNT')
     if (!saRaw) return json({ error: 'FCM_SERVICE_ACCOUNT secret is not set.' }, 500)
     const sa = JSON.parse(saRaw)
     const access = await accessToken(sa)
 
-    const { data: rows, error } = await admin.from('push_tokens').select('token')
+    await admin.from('push_broadcasts').insert({ user_id: me.id, family_id, body: b })
+
+    // Everyone in the family except the sender.
+    const { data: members } = await admin.from('family_members').select('user_id').eq('family_id', family_id).neq('user_id', me.id)
+    const ids = (members ?? []).map((m) => m.user_id)
+    const { data: rows, error } = ids.length
+      ? await admin.from('push_tokens').select('token').in('user_id', ids)
+      : { data: [], error: null }
     if (error) return json({ error: error.message }, 500)
 
     let sent = 0

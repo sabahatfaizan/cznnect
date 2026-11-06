@@ -38,9 +38,9 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   irl: (
     <>
-      <circle cx="8" cy="8" r="3" />
-      <circle cx="17" cy="9" r="2.5" />
-      <path d="M2.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M14 14.5c3.5-.5 6.5 1.4 7 4.5" />
+      <path d="M5 16V12l1.7-4.2A2 2 0 0 1 8.6 6.5h6.8a2 2 0 0 1 1.9 1.3L19 12v4a1 1 0 0 1-1 1h-1M7 17H6a1 1 0 0 1-1-1M7 12h10" />
+      <circle cx="8.5" cy="16.5" r="1.8" />
+      <circle cx="15.5" cy="16.5" r="1.8" />
     </>
   ),
   explore: (

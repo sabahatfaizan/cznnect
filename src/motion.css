@@ -78,3 +78,9 @@
   .tnode-sel { transform-box: fill-box; transform-origin: center; animation: node-pop 380ms var(--ease-spring); }
   @keyframes node-pop { 0% { transform: scale(0.94); } 60% { transform: scale(1.04); } 100% { transform: none; } }
 }
+
+/* New chat bubbles slide up and fade in; the bubbles already on screen never move. */
+@media (prefers-reduced-motion: no-preference) {
+  .chat-in { animation: chat-in 260ms var(--ease-out) backwards; }
+  @keyframes chat-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+}

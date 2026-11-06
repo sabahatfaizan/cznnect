@@ -61,25 +61,31 @@ Deno.serve(async (req) => {
     const { data: mine } = await admin.from('family_members').select('family_id').eq('user_id', me.id).eq('family_id', String(family_id ?? '')).maybeSingle()
     if (!mine) return json({ error: 'You are not in this family.' }, 403)
 
-    // One message per 30 seconds per person.
-    const since = new Date(Date.now() - 30_000).toISOString()
+    // A short gap between messages, so a stuck button cannot send the same thing twice.
+    const since = new Date(Date.now() - 2_000).toISOString()
     const { count } = await admin.from('push_broadcasts').select('id', { count: 'exact', head: true }).eq('user_id', me.id).gte('created_at', since)
-    if ((count ?? 0) > 0) return json({ error: 'Wait a few seconds before sending another message.' }, 429)
+    if ((count ?? 0) > 0) return json({ error: 'Slow down a little before sending another message.' }, 429)
 
-    // And at most 5 an hour, so nobody can flood the family.
+    // And a generous hourly cap, so nobody can flood the family.
     const hourAgo = new Date(Date.now() - 3_600_000).toISOString()
     const { count: lastHour } = await admin.from('push_broadcasts').select('id', { count: 'exact', head: true }).eq('user_id', me.id).gte('created_at', hourAgo)
-    if ((lastHour ?? 0) >= 5) return json({ error: 'You have sent 5 messages in the last hour. Try again a little later.' }, 429)
+    if ((lastHour ?? 0) >= 60) return json({ error: 'You have sent a lot of messages this hour. Try again a little later.' }, 429)
 
     const { data: prof } = await admin.from('profiles').select('display_name, nickname').eq('id', me.id).maybeSingle()
     const t = (prof?.nickname?.trim() || prof?.display_name || 'Someone').slice(0, 40)
 
-    const saRaw = Deno.env.get('FCM_SERVICE_ACCOUNT')
-    if (!saRaw) return json({ error: 'FCM_SERVICE_ACCOUNT secret is not set.' }, 500)
-    const sa = JSON.parse(saRaw)
-    const access = await accessToken(sa)
-
+    // The message is saved first, so it shows up in the family chat even when notifications are not set up yet.
     await admin.from('push_broadcasts').insert({ user_id: me.id, family_id, body: b })
+
+    const saRaw = Deno.env.get('FCM_SERVICE_ACCOUNT')
+    if (!saRaw) return json({ sent: 0, total: 0, note: 'Saved. Notifications are not set up on the server yet.' })
+    const sa = JSON.parse(saRaw)
+    let access: string
+    try {
+      access = await accessToken(sa)
+    } catch {
+      return json({ sent: 0, total: 0, note: 'Saved. Could not reach Firebase to notify phones.' })
+    }
 
     // Everyone in the family except the sender.
     const { data: members } = await admin.from('family_members').select('user_id').eq('family_id', family_id).neq('user_id', me.id)
@@ -98,7 +104,8 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ message: { token, notification: { title: t, body: b }, android: { priority: 'HIGH' } } }),
       })
       if (r.ok) sent++
-      else if (r.status === 404 || r.status === 400) dead.push(token) // token no longer valid
+      else if (r.status === 404) dead.push(token) // the phone uninstalled the app or its token expired
+      else if (r.status === 400 && /registration token|UNREGISTERED/i.test(await r.text())) dead.push(token)
     }))
     if (dead.length) await admin.from('push_tokens').delete().in('token', dead)
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -19,6 +19,8 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M9 12l2 2 4-4" />
     </>
   ),
+  chat: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4zM8 9h8M8 12h5" />,
+  send: <path d="M21 3L10 14M21 3l-7 18-4-8-8-4z" />,
   megaphone: <path d="M3 10v4a1 1 0 0 0 1 1h3l9 4.5V4.5L7 9H4a1 1 0 0 0-1 1zM7 15l1.2 4.5h2.6M19.5 9.5a3.5 3.5 0 0 1 0 5" />,
   bell: <path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4" />,
   info: (

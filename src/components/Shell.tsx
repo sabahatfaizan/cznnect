@@ -15,6 +15,7 @@ import Music from '../pages/Music'
 import { rank, useFamilyBirthdays } from '../lib/birthdays'
 import { loadPrefs, runReminders } from '../lib/birthdayReminders'
 import Settings from '../pages/Settings'
+import Chat from '../pages/Chat'
 import Admin from '../pages/Admin'
 import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
@@ -22,10 +23,9 @@ import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
 import { isOwnerEmail } from '../owner'
 import SecretCoin from './SecretCoin'
-import MessageSheet from './MessageSheet'
 import UnlockToast from './UnlockToast'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'birthdays' | 'settings' | 'music' | 'admin'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'chat' | 'birthdays' | 'settings' | 'music' | 'admin'
 // Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
 const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   home: { rdr2: 'Camp', unc: 'Expedition Base' },
@@ -35,6 +35,7 @@ const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
   birthdays: { rdr2: 'Marked Days', unc: 'Dates in the Journal' },
   me: { rdr2: 'Wanted', unc: "Explorer's Dossier" },
   irl: { rdr2: 'Riding', unc: 'The Field Team' },
+  chat: { rdr2: 'Camp Talk', unc: 'Radio Channel' },
   scoreboard: { rdr2: 'Bounties', unc: 'Treasure Tally' },
   settings: { rdr2: 'Supplies', unc: 'Gear & Supplies' },
   music: { rdr2: 'Campfire Songs', unc: 'The Soundtrack' },
@@ -44,8 +45,9 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'irl', label: 'Convoy', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
+  { id: 'chat', label: 'Chat', icon: 'chat' },
   { id: 'plans', label: 'Plans', icon: 'plans' },
-  { id: 'me', label: 'My Profile', icon: 'me' },
+  { id: 'me', label: 'Profile', icon: 'me' },
 ]
 
 const SECRET_HOLD_MS = 4000
@@ -53,7 +55,6 @@ const SECRET_HOLD_MS = 4000
 export default function Shell({ family, userId, email, onFamilyChanged }: { family: Family; userId: string; email: string; onFamilyChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [messageOpen, setMessageOpen] = useState(false)
   const isOwner = isOwnerEmail(email)
   // The family role (owner / moderator / member) decides who gets the Admin page's member tools.
   const [familyRole, setFamilyRole] = useState<string | null>(null)
@@ -113,14 +114,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
       <main data-tab={tab} className="p-4 pb-36 pt-[max(2.25rem,env(safe-area-inset-top),36px)]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-              aria-label="Message everyone"
-              onClick={() => setMessageOpen(true)}
-            >
-              <Icon name="megaphone" size={20} />
-            </button>
           <div>
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
@@ -146,7 +139,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </svg>
           </button>
         </header>
-        {messageOpen && <MessageSheet familyId={family.id} onClose={() => setMessageOpen(false)} />}
         <OfflineBanner />
         <UpdatePrompt building={Boolean(appSettings?.buildInProgress)} />
         {appSettings?.announcementEnabled && appSettings.announcementText.trim() && (
@@ -183,6 +175,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 { id: 'home', label: 'Home', icon: 'home' },
                 { id: 'tree', label: 'Family Tree', icon: 'tree' },
                 { id: 'explore', label: 'Explore', icon: 'explore' },
+                { id: 'chat', label: 'Chat', icon: 'chat' },
                 { id: 'plans', label: 'Plans', icon: 'plans' },
                 { id: 'birthdays', label: 'Birthdays', icon: 'cake' },
                 { id: 'me', label: 'My Profile', icon: 'me' },
@@ -246,6 +239,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         <div key={tab} className="screen-in">
           <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
           {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+          {tab === 'chat' && <Chat family={family} userId={userId} />}
           {tab === 'irl' && <Irl family={family} userId={userId} />}
           {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
           {tab === 'birthdays' && (
@@ -261,7 +255,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
+        <div className="mx-auto grid max-w-xl grid-cols-6 gap-0.5 px-1 py-1.5">
           {TABS.map((t) => (
             <button
               key={t.id}

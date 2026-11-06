@@ -119,9 +119,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               aria-label="Message everyone"
               onClick={() => setMessageOpen(true)}
             >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
-              </svg>
+              <Icon name="megaphone" size={20} />
             </button>
           <div>
             <div className="brand-default">

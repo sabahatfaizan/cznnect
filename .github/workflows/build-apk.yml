@@ -191,9 +191,10 @@ jobs:
           gh release edit latest-apk --notes "Build ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7}). Updated automatically on every push to main."
 
       - name: Raise the required app build to this build (only while forced updates are on)
-        # When the owner has forced updates on (min_build above 0), every new APK becomes the required build, so old
-        # apps are asked to update without anyone pressing a button. It runs after the APK is published, so people
-        # sent to the download always get the new file. Turn forced updates off in Admin and this leaves it alone.
+        # Only when the owner has forced updates on (min_build above 0) AND switched on "Always require the newest
+        # build" in Admin (supabase/21_min_build_auto_raise.sql), every new APK becomes the required build. A build
+        # number set by hand stays as set. It runs after the APK is published, so people sent to the download always
+        # get the new file.
         # Uses the repository secret BUILD_TOKEN, which can only call raise_min_build (supabase/12_build_token.sql)
         # and cannot read or change anything else. Without the secret this step is skipped and the build still passes.
         continue-on-error: true

@@ -109,7 +109,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       setNotice(done)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Could not save.'
-      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql, 11_download_options.sql and 13_login_download_button.sql in Supabase.`)
+      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql, 11_download_options.sql, 13_login_download_button.sql and 21_min_build_auto_raise.sql in Supabase.`)
     } finally { setBusy(false) }
   }
 
@@ -338,6 +338,14 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   <button type="button" className="btn btn-plain" disabled={busy || !ready || !minBuildInput} onClick={() => saveMinBuild(Number(minBuildInput))}>Set</button>
                 </div>
                 <button type="button" className="btn btn-plain" disabled={busy || !ready || !settings || settings.minBuild === 0} onClick={() => { setMinBuildInput(''); saveMinBuild(0) }}>Turn off forced updates</button>
+        <Row title="Always require the newest build" hint={settings?.autoRaiseMinBuild ? 'Each new app version becomes the required one automatically, while forced updates are on' : 'The build number you set stays as it is until you change it'}>
+          <Switch
+            on={Boolean(settings?.autoRaiseMinBuild)}
+            label="Always require the newest build"
+            disabled={busy || !ready}
+            onChange={(next) => void save({ auto_raise_min_build: next }, next ? 'New versions will be required automatically.' : 'The required build now stays where you set it.')}
+          />
+        </Row>
               </section>
       )}
 

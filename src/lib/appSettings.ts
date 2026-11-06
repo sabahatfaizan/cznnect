@@ -27,6 +27,8 @@ export type AppSettings = {
   announcementText: string
   /** Android app builds older than this are asked to update. 0 means nobody is forced. */
   minBuild: number
+  /** Every new app build automatically becomes the required build while forced updates are on. */
+  autoRaiseMinBuild: boolean
   /** A new app build is being published right now. */
   buildInProgress: boolean
 }
@@ -46,6 +48,7 @@ export function parseSettings(row: Record<string, unknown> | null | undefined): 
     announcementEnabled: Boolean(r.announcement_enabled),
     announcementText: typeof r.announcement_text === 'string' ? r.announcement_text : '',
     minBuild: Number.isFinite(min) && min > 0 ? Math.floor(min) : 0,
+    autoRaiseMinBuild: Boolean(r.auto_raise_min_build),
     buildInProgress: isBuildActive(r.build_in_progress, r.build_started_at),
   }
 }

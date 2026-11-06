@@ -160,7 +160,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
     <div className="flex flex-col gap-3">
       <header>
         <h1 className="font-display text-2xl font-extrabold">Chat</h1>
-        <p className="text-sm text-muted">Everyone in {family.name} sees this. New messages also notify your cousins' phones.{canDelete ? ' As the owner, tap a message to delete it.' : ''}</p>
+        <p className="text-sm text-muted">Visible to the whole family.{canDelete ? ' Tap a message to delete it.' : ''}</p>
       </header>
 
       {error && <p role="alert" className="card text-sm font-bold text-danger">{error}</p>}

@@ -4,11 +4,14 @@ import type { Family } from '../types'
 import Avatar from '../components/Avatar'
 import { Icon } from '../components/Icons'
 import { friendlyError } from '../lib/offline'
+import Sheet from '../components/Sheet'
 import { markChatRead } from '../lib/pulse'
 
-type Msg = { id: number; user_id: string; sender: string; avatar: string | null; body: string; created_at: string }
+type Msg = { id: number; user_id: string; sender: string; avatar: string | null; body: string; created_at: string; edited_at?: string | null }
 
 const MAX = 200
+const EDIT_WINDOW_MS = 15 * 60_000
+const HOLD_MS = 450
 const POLL_MS = 4000
 
 const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString()
@@ -27,9 +30,12 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   const [messages, setMessages] = useState<Msg[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
-  // The owner taps a message to pick it, then confirms. Nobody else sees any of this.
-  const [picked, setPicked] = useState<number | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  // Press and hold a message for its options: edit, delete for me, delete for everyone.
+  const [menu, setMenu] = useState<Msg | null>(null)
+  const [confirmAll, setConfirmAll] = useState(false)
+  const [editing, setEditing] = useState<Msg | null>(null)
+  const [busy, setBusy] = useState(false)
+  const press = useRef<{ timer: number; x: number; y: number } | null>(null)
   const [text, setText] = useState('')
   const [pending, setPending] = useState<string[]>([])
   const [navH, setNavH] = useState(72)
@@ -44,13 +50,14 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
       const { data, error: err } = await supabase.rpc('family_messages', { fid: family.id, lim: 100 })
       if (err) {
         const code = (err as { code?: string }).code
-        setError(code === 'PGRST202' || code === '42883' ? 'Chat is not set up yet. In Supabase, run supabase/17_family_chat.sql.' : friendlyError(err, 'Could not load the chat.'))
+        setError(code === 'PGRST202' || code === '42883' ? 'Chat is not set up yet. In Supabase, run supabase/17_family_chat.sql, then 22_chat_message_options.sql.' : friendlyError(err, 'Could not load the chat.'))
         return
       }
       setError('')
       const rows = (Array.isArray(data) ? data : []) as Msg[]
       // Only change state when something is new, so the screen never flickers while polling.
-      setMessages((old) => (old.length === rows.length && old[old.length - 1]?.id === rows[rows.length - 1]?.id ? old : rows))
+      const sig = (l: Msg[]) => l.map((m) => `${m.id}:${m.edited_at ?? ''}`).join('|')
+      setMessages((old) => (sig(old) === sig(rows) ? old : rows))
     } catch (e) {
       setError(friendlyError(e, 'Could not load the chat.'))
     } finally {
@@ -100,22 +107,87 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
     }
   }, [messages, pending, loaded])
 
-  async function removeMessage(id: number) {
-    setDeleting(true)
+  const clearPress = () => { if (press.current) { window.clearTimeout(press.current.timer); press.current = null } }
+  useEffect(() => clearPress, [])
+
+  function pressStart(e: React.PointerEvent, m: Msg) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    clearPress()
+    press.current = {
+      x: e.clientX,
+      y: e.clientY,
+      timer: window.setTimeout(() => {
+        press.current = null
+        try { navigator.vibrate?.(15) } catch { /* not supported */ }
+        setConfirmAll(false)
+        setMenu(m)
+      }, HOLD_MS),
+    }
+  }
+  function pressMove(e: React.PointerEvent) {
+    const p = press.current
+    if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) clearPress()
+  }
+
+  const canEdit = (m: Msg) => m.user_id === userId && Date.now() - new Date(m.created_at).getTime() < EDIT_WINDOW_MS
+  const closeMenu = () => { setMenu(null); setConfirmAll(false) }
+
+  // Runs one chat action, shows a clear message when the database part has not been set up yet.
+  async function act(name: string, args: Record<string, unknown>, fallback: string): Promise<boolean> {
+    setBusy(true)
     setError('')
     try {
-      const { error: err } = await supabase.rpc('delete_family_message', { mid: id })
+      const { error: err } = await supabase.rpc(name, args)
       if (err) {
         const code = (err as { code?: string }).code
-        setError(code === 'PGRST202' || code === '42883' ? 'Deleting is not set up yet. In Supabase, run supabase/19_delete_messages.sql.' : friendlyError(err, 'Could not delete the message.'))
-      } else {
-        setMessages((old) => old.filter((m) => m.id !== id))
-        setPicked(null)
+        setError(code === 'PGRST202' || code === '42883' ? 'This is not set up yet. In Supabase, run supabase/22_chat_message_options.sql.' : friendlyError(err, fallback))
+        return false
       }
+      return true
     } catch (e) {
-      setError(friendlyError(e, 'Could not delete the message. Check your connection and try again.'))
+      setError(friendlyError(e, `${fallback} Check your connection and try again.`))
+      return false
     } finally {
-      setDeleting(false)
+      setBusy(false)
+    }
+  }
+
+  async function deleteForEveryone(id: number) {
+    if (await act('delete_family_message', { mid: id }, 'Could not delete the message.')) {
+      setMessages((old) => old.filter((m) => m.id !== id))
+      closeMenu()
+    }
+  }
+
+  async function deleteForMe(id: number) {
+    if (await act('hide_family_message', { mid: id }, 'Could not delete the message.')) {
+      setMessages((old) => old.filter((m) => m.id !== id))
+      closeMenu()
+    }
+  }
+
+  function startEdit(m: Msg) {
+    closeMenu()
+    setEditing(m)
+    setText(m.body)
+    requestAnimationFrame(() => { resize(); box.current?.focus() })
+  }
+
+  function cancelEdit() {
+    setEditing(null)
+    setText('')
+    requestAnimationFrame(resize)
+  }
+
+  async function saveEdit() {
+    if (!editing) return
+    const body = text.trim().slice(0, MAX)
+    if (!body) return
+    if (body === editing.body) { cancelEdit(); return }
+    if (await act('edit_family_message', { mid: editing.id, new_body: body }, 'Could not edit the message.')) {
+      const id = editing.id
+      setMessages((old) => old.map((m) => (m.id === id ? { ...m, body, edited_at: new Date().toISOString() } : m)))
+      cancelEdit()
     }
   }
 
@@ -127,6 +199,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   }
 
   async function send() {
+    if (editing) { void saveEdit(); return }
     const body = text.trim().slice(0, MAX)
     if (!body) return
     setText('')
@@ -160,7 +233,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
     <div className="flex flex-col gap-3">
       <header>
         <h1 className="font-display text-2xl font-extrabold">Chat</h1>
-        <p className="text-sm text-muted">Visible to the whole family.{canDelete ? ' Tap a message to delete it.' : ''}</p>
+        <p className="text-sm text-muted">Visible to the whole family. Hold a message for options.</p>
       </header>
 
       {error && <p role="alert" className="card text-sm font-bold text-danger">{error}</p>}
@@ -188,17 +261,19 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
                 <div className={`flex max-w-[78%] flex-col ${mine ? 'items-end' : 'items-start'}`}>
                   {!mine && startsGroup && <p className="mb-0.5 px-1 text-xs font-bold text-muted">{m.sender}</p>}
                   <p
-                    className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[0.95rem] leading-snug ${mine ? 'rounded-br-md bg-accent text-accent-ink' : 'rounded-bl-md border border-line bg-surface-2'} ${canDelete ? 'cursor-pointer' : ''} ${picked === m.id ? 'outline outline-2 outline-offset-2 outline-danger' : ''}`}
-                    {...(canDelete ? { role: 'button', tabIndex: 0, 'aria-pressed': picked === m.id, onClick: () => setPicked(picked === m.id ? null : m.id), onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPicked(picked === m.id ? null : m.id) } } } : {})}
+                    className={`select-none whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[0.95rem] leading-snug [-webkit-touch-callout:none] ${mine ? 'rounded-br-md bg-accent text-accent-ink' : 'rounded-bl-md border border-line bg-surface-2'} ${menu?.id === m.id ? 'outline outline-2 outline-offset-2 outline-accent' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${m.sender}: ${m.body}. Hold for options`}
+                    onPointerDown={(e) => pressStart(e, m)}
+                    onPointerMove={pressMove}
+                    onPointerUp={clearPress}
+                    onPointerCancel={clearPress}
+                    onPointerLeave={clearPress}
+                    onContextMenu={(e) => { e.preventDefault(); clearPress(); setConfirmAll(false); setMenu(m) }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setConfirmAll(false); setMenu(m) } }}
                   >{m.body}</p>
-                  {canDelete && picked === m.id && (
-                    <div className="mt-1 flex items-center gap-2 px-1 text-sm">
-                      <span className="text-muted">Delete for everyone?</span>
-                      <button type="button" className="min-h-9 font-bold text-danger underline underline-offset-2" disabled={deleting} onClick={() => void removeMessage(m.id)}>{deleting ? 'Deleting…' : 'Delete'}</button>
-                      <button type="button" className="min-h-9 font-semibold underline underline-offset-2" disabled={deleting} onClick={() => setPicked(null)}>Cancel</button>
-                    </div>
-                  )}
-                  {endsGroup && <p className="mt-0.5 px-1 text-[0.7rem] text-muted">{clock(d)}</p>}
+                  {endsGroup && <p className="mt-0.5 px-1 text-[0.7rem] text-muted">{clock(d)}{m.edited_at ? ' · edited' : ''}</p>}
                 </div>
               </div>
             </li>
@@ -222,6 +297,12 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
         style={{ bottom: navH }}
         onSubmit={(e) => { e.preventDefault(); void send() }}
       >
+        {editing && (
+          <div className="mx-auto flex max-w-xl items-center justify-between gap-2 px-4 pt-2 text-sm">
+            <span className="min-w-0 truncate text-muted">Editing message</span>
+            <button type="button" className="min-h-9 shrink-0 font-semibold underline underline-offset-2" onClick={cancelEdit}>Cancel</button>
+          </div>
+        )}
         <div className="mx-auto flex max-w-xl items-end gap-2 px-3 py-2">
           <textarea
             ref={box}
@@ -229,7 +310,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
             rows={1}
             maxLength={MAX}
             value={text}
-            placeholder="Message your family"
+            placeholder={editing ? 'Edit your message' : 'Message your family'}
             aria-label="Message"
             enterKeyHint="send"
             onChange={(e) => { setText(e.target.value); resize() }}
@@ -237,11 +318,33 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
               if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send() }
             }}
           />
-          <button type="submit" className="btn btn-primary !h-11 !w-11 shrink-0 !rounded-full !p-0" aria-label="Send" disabled={!text.trim()}>
+          <button type="submit" className="btn btn-primary !h-11 !w-11 shrink-0 !rounded-full !p-0" aria-label={editing ? 'Save edit' : 'Send'} disabled={!text.trim() || busy}>
             <Icon name="send" size={20} />
           </button>
         </div>
       </form>
+
+      {menu && (
+        <Sheet title="Message options" onClose={closeMenu}>
+          <p className="mb-3 line-clamp-2 break-words text-sm text-muted">{menu.body}</p>
+          {!confirmAll ? (
+            <div className="flex flex-col gap-2">
+              {canEdit(menu) && <button type="button" className="btn btn-plain" onClick={() => startEdit(menu)}>Edit</button>}
+              <button type="button" className="btn btn-plain" disabled={busy} onClick={() => void deleteForMe(menu.id)}>Delete for me</button>
+              {(menu.user_id === userId || canDelete) && (
+                <button type="button" className="btn btn-plain !text-danger" disabled={busy} onClick={() => setConfirmAll(true)}>Delete for everyone</button>
+              )}
+              <button type="button" className="btn btn-plain" onClick={closeMenu}>Cancel</button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm">Delete this message for the whole family?</p>
+              <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void deleteForEveryone(menu.id)}>{busy ? 'Deleting…' : 'Delete for everyone'}</button>
+              <button type="button" className="btn btn-plain" disabled={busy} onClick={() => setConfirmAll(false)}>Back</button>
+            </div>
+          )}
+        </Sheet>
+      )}
     </div>
   )
 }

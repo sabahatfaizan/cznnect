@@ -4,7 +4,7 @@ import { appUrl, canShare, shareText } from '../lib/native'
 import Avatar from '../components/Avatar'
 import { shownName } from '../lib/avatars'
 import type { Family, Member } from '../types'
-import FamilyPulse from '../components/FamilyPulse'
+import FamilyBox from '../components/FamilyBox'
 import type { ChatPulse } from '../lib/pulse'
 import type { Upcoming } from '../lib/birthdays'
 
@@ -87,7 +87,7 @@ export default function Home({ family, userId, onFamilyChanged, chat, nextBirthd
         <h1 className="font-display text-2xl font-extrabold leading-tight">{family.name}</h1>
       </header>
 
-      <FamilyPulse familyId={family.id} userId={userId} members={members} chat={chat} nextBirthday={nextBirthday} onOpen={onOpen} />
+      <FamilyBox familyId={family.id} userId={userId} members={members} chat={chat} nextBirthday={nextBirthday} onOpen={onOpen} />
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-display text-lg font-bold">Invite people</h2>

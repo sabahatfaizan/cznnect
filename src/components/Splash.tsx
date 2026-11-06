@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react'
 import { Mark } from './Logo'
 
 export function prefersReducedMotion(): boolean {
@@ -13,6 +14,12 @@ export function prefersReducedMotion(): boolean {
 // With reduced motion it is a still, connected logo.
 export default function Splash() {
   const calm = prefersReducedMotion()
+  // Tells the Moon Knight theme this is the loading screen, which keeps its moon standing on the edge. Everywhere else
+  // the moon is turned into a smile.
+  useLayoutEffect(() => {
+    document.documentElement.classList.add('on-splash')
+    return () => document.documentElement.classList.remove('on-splash')
+  }, [])
 
   return (
     <div role="status" aria-label="Loading Cznnect" className="splash flex items-center justify-center px-6">

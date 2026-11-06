@@ -54,6 +54,10 @@
   transform: translateZ(0);
   backface-visibility: hidden;
   --R: min(76vw, 42vh);
+  /* inside the app: the crescent turned 90 degrees, a smile resting on the bottom edge. Dimmer, so text stays readable. */
+  --Rs: min(50vw, 26vh);
+  --mk-bite: radial-gradient(circle calc(var(--Rs) * 0.9) at calc(50% + var(--Rs) * 0.1) calc(100% - 5.25rem - var(--Rs) - var(--Rs) * 0.4), #000 99%, transparent 100%);
+  --mk-disc: radial-gradient(circle var(--Rs) at 50% calc(100% - 5.25rem - var(--Rs)), rgb(226 226 226 / 0.4) 99%, transparent 100%);
   background:
     /* stars */
     radial-gradient(1.4px 1.4px at 11% 14%, #fff 55%, transparent 60%),
@@ -72,10 +76,18 @@
     radial-gradient(circle 150px at 16% 96%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.06) 70%, transparent 72%),
     /* ink burst of light rising from the bottom edge */
     repeating-conic-gradient(from 0deg at 50% 112%, rgb(255 255 255 / 0.035) 0deg 0.7deg, transparent 0.7deg 3.6deg),
-    /* the big moon: a large pale crescent on the right (a black disc bitten out of a pale one). Pale, not white, so
-       text on the page stays readable. */
-    radial-gradient(circle calc(var(--R) * 0.9) at calc(100% - var(--R) * 0.55 - var(--R) * 0.4) calc(50% - var(--R) * 0.1), #000 99%, transparent 100%),
-    radial-gradient(circle var(--R) at calc(100% - var(--R) * 0.55) 50%, rgb(226 226 226 / 0.4) 99%, transparent 100%);
+    /* the big moon: a large pale crescent (a black disc bitten out of a pale one). Its two discs are variables, so a
+       screen can turn it: the loading screen keeps it standing on the right edge, and everywhere else it is turned
+       90 degrees into a smile (see the rules after this one). */
+    var(--mk-bite),
+    var(--mk-disc);
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+/* The loading screen keeps the original moon: standing on the right edge, as it always was. */
+:root.on-splash[data-theme="moonknight"] body::before {
+  --mk-bite: radial-gradient(circle calc(var(--R) * 0.9) at calc(100% - var(--R) * 0.55 - var(--R) * 0.4) calc(50% - var(--R) * 0.1), #000 99%, transparent 100%);
+  --mk-disc: radial-gradient(circle var(--R) at calc(100% - var(--R) * 0.55) 50%, rgb(226 226 226 / 0.7) 99%, transparent 100%);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
 }
@@ -244,13 +256,3 @@
   transform: translate(6.9px, -6.8px) rotate(-18deg);
   pointer-events: none;
 }
-
-/* ---- readability over the moon: comic-caption ink ---- */
-:root[data-theme="moonknight"] {
-  /* comic caption ink: a tight black outline plus a soft black glow, so words stay crisp wherever the moon is */
-  --mk-halo: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 0 0 3px #000, 0 0 7px rgb(0 0 0 / 0.95), 0 0 14px rgb(0 0 0 / 0.8);
-}
-:root[data-theme="moonknight"] main { text-shadow: var(--mk-halo); }
-:root[data-theme="moonknight"] main h1.font-display { text-shadow: 3px 3px 0 var(--mc-soft), var(--mk-halo); }
-:root[data-theme="moonknight"] main :is(.btn, .tab, .input, .menu-btn, button, input, textarea, select, svg) { text-shadow: none; }
-:root[data-theme="moonknight"] .text-muted, :root[data-theme="moonknight"] .label { color: #cfcfcf; }

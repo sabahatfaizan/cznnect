@@ -66,6 +66,11 @@ Deno.serve(async (req) => {
     const { count } = await admin.from('push_broadcasts').select('id', { count: 'exact', head: true }).eq('user_id', me.id).gte('created_at', since)
     if ((count ?? 0) > 0) return json({ error: 'Wait a few seconds before sending another message.' }, 429)
 
+    // And at most 5 an hour, so nobody can flood the family.
+    const hourAgo = new Date(Date.now() - 3_600_000).toISOString()
+    const { count: lastHour } = await admin.from('push_broadcasts').select('id', { count: 'exact', head: true }).eq('user_id', me.id).gte('created_at', hourAgo)
+    if ((lastHour ?? 0) >= 5) return json({ error: 'You have sent 5 messages in the last hour. Try again a little later.' }, 429)
+
     const { data: prof } = await admin.from('profiles').select('display_name, nickname').eq('id', me.id).maybeSingle()
     const t = (prof?.nickname?.trim() || prof?.display_name || 'Someone').slice(0, 40)
 

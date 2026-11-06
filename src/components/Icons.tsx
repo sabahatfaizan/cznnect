@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -19,6 +19,7 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M9 12l2 2 4-4" />
     </>
   ),
+  bell: <path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4" />,
   info: (
     <>
       <circle cx="12" cy="12" r="9" />

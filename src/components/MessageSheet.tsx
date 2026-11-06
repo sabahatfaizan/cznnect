@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import Sheet from './Sheet'
 import { friendlyError } from '../lib/offline'
@@ -9,6 +9,18 @@ export default function MessageSheet({ familyId, onClose }: { familyId: string; 
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [sent, setSent] = useState(false)
+  const [recent, setRecent] = useState<{ sender: string; body: string; created_at: string }[]>([])
+
+  // The latest few messages sent to the family. Quietly stays empty until supabase/16_push_history.sql has been run.
+  const loadRecent = useCallback(async () => {
+    try {
+      const { data } = await supabase.rpc('recent_broadcasts', { fid: familyId })
+      if (Array.isArray(data)) setRecent(data as { sender: string; body: string; created_at: string }[])
+    } catch {
+      // Not important enough to show an error.
+    }
+  }, [familyId])
+  useEffect(() => { void loadRecent() }, [loadRecent])
 
   async function send() {
     if (!text.trim() || busy) return
@@ -21,6 +33,7 @@ export default function MessageSheet({ familyId, onClose }: { familyId: string; 
       setSent(true)
       setNotice(data?.sent ? `Sent to ${data.sent} ${data.sent === 1 ? 'phone' : 'phones'}.` : 'Sent. Nobody else has notifications turned on yet.')
       setText('')
+      void loadRecent()
     } catch (e) {
       setNotice(friendlyError(e, 'Could not send the message. Check your connection and try again.'))
     } finally {
@@ -41,6 +54,19 @@ export default function MessageSheet({ familyId, onClose }: { familyId: string; 
         <button type="button" className="btn btn-primary" disabled={busy || !text.trim()} onClick={() => void send()}>
           {busy ? 'Sending…' : sent ? 'Send another' : 'Send to everyone'}
         </button>
+        {recent.length > 0 && (
+          <section className="mt-2 flex flex-col gap-2" aria-label="Recent messages">
+            <h3 className="eyebrow">Recent</h3>
+            <ul className="flex flex-col gap-2">
+              {recent.map((m, i) => (
+                <li key={i} className="text-sm">
+                  <span className="font-semibold">{m.sender}</span> <span className="text-xs text-muted">{new Date(m.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                  <p>{m.body}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </Sheet>
   )

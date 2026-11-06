@@ -10,6 +10,8 @@ import RedeemCard from '../components/RedeemCard'
 import ChangePassword from '../components/ChangePassword'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
+import { isNative } from '../lib/native'
+import { pushEnabled, setPushEnabled } from '../lib/push'
 
 type Panel = 'family' | 'theme' | 'icon' | 'redeem' | 'password'
 
@@ -46,6 +48,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
+  const [notify, setNotify] = useState(pushEnabled)
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'Local build'
   const buildCommit = import.meta.env.VITE_BUILD_COMMIT?.slice(0, 7) || ''
 
@@ -110,7 +113,21 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         {tile('icon', 'App icon', 'phone', currentIcon?.label ?? '')}
       </div>
 
-      <button type="button" className="set-redeem" onClick={() => setPanel('redeem')} aria-haspopup="dialog">
+      {isNative() && (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={notify}
+          className="set-redeem"
+          onClick={() => { const next = !notify; setNotify(next); void setPushEnabled(next) }}
+        >
+          <span className="set-tile-icon" aria-hidden="true"><Icon name="bell" size={22} /></span>
+          <span className="set-tile-label flex-1 text-left">Family notifications</span>
+          <span className="text-sm font-semibold text-muted">{notify ? 'On' : 'Off'}</span>
+        </button>
+      )}
+
+      <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('redeem')} aria-haspopup="dialog">
         <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>
         <span className="set-tile-label flex-1 text-left">Redeem code</span>
         <span aria-hidden="true" className="expander-chevron">›</span>

@@ -3,9 +3,13 @@ import type { Family, FamilyRole } from '../types'
 import MemberSheet from '../components/MemberSheet'
 import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
-import { Icon } from '../components/Icons'
+import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
 import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_RELEASE_API, thisBuild, useAppSettings } from '../lib/appSettings'
+
+type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages'
+type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
+type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
 
 type AdminMember = {
   user_id: string
@@ -55,6 +59,10 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [viewing, setViewing] = useState<AdminMember | null>(null)
   const [copied, setCopied] = useState(false)
   const [loadedFields, setLoadedFields] = useState(false)
+  const [section, setSection] = useState<Section | null>(null)
+  const [overview, setOverview] = useState<Overview | null>(null)
+  const [messages, setMessages] = useState<Msg[]>([])
+  const [messagesLoaded, setMessagesLoaded] = useState(false)
   const myBuild = thisBuild()
 
   // Fill the editable fields once, from the first load, so polling never overwrites what is being typed.
@@ -105,7 +113,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     } finally { setBusy(false) }
   }
 
-  async function rpc(name: 'regenerate_invite', args: Record<string, unknown>, done: string, after: () => void) {
+  async function rpc(name: 'regenerate_invite' | 'delete_family_message' | 'clear_family_messages', args: Record<string, unknown>, done: string, after: () => void) {
     setBusy(true)
     setNotice('')
     try {
@@ -136,166 +144,277 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     void save({ min_build: value }, value > 0 ? `Apps older than build ${value} must update.` : 'Forced updates are off.')
   }
 
+  // Live counts for the overview tiles. Owner only; quietly absent until supabase/20_admin_overview.sql has been run.
+  const loadOverview = useCallback(async () => {
+    if (!isOwner) return
+    const { data, error } = await supabase.rpc('admin_overview', { fid: family.id })
+    const row = Array.isArray(data) ? data[0] : data
+    if (!error && row) setOverview(row as Overview)
+  }, [family.id, isOwner])
+
+  useEffect(() => { void loadOverview() }, [loadOverview])
+
+  const loadMessages = useCallback(async () => {
+    const { data, error } = await supabase.rpc('family_messages', { fid: family.id, lim: 100 })
+    if (error) setNotice(error.message)
+    else setMessages(((data ?? []) as Msg[]).slice().reverse())
+    setMessagesLoaded(true)
+  }, [family.id])
+
+  useEffect(() => { if (section === 'messages' && !messagesLoaded) void loadMessages() }, [section, messagesLoaded, loadMessages])
+
+  function open(next: Section | null) {
+    setNotice('')
+    setSection(next)
+  }
+
+  function removeMessage(id: number) {
+    if (!window.confirm('Delete this message for everyone?')) return
+    void rpc('delete_family_message', { mid: id }, 'Message deleted.', () => { void loadMessages(); void loadOverview() })
+  }
+
+  function clearMessages() {
+    if (!window.confirm('Delete every family message? This cannot be undone.')) return
+    void rpc('clear_family_messages', { fid: family.id }, 'All messages deleted.', () => { void loadMessages(); void loadOverview() })
+  }
+
+
+  const tiles: { id: Section; icon: IconName; title: string; hint: string }[] = [
+    { id: 'app', icon: 'megaphone', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
+    { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
+    { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
+    { id: 'family', icon: 'family', title: 'Family', hint: `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
+    { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
+  ]
+  const current: Section | null = isOwner ? section : 'family'
+  const currentTile = tiles.find((t) => t.id === current)
+
+  const stat = (label: string, value: string | number | undefined) => (
+    <div className="card flex flex-col gap-1 py-3">
+      <p className="text-xs text-muted">{label}</p>
+      <p className="text-xl font-bold">{value ?? '–'}</p>
+    </div>
+  )
+
   const ready = Boolean(settings)
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Admin</h1>
-        <p className="mt-1 text-sm text-muted">
-          {isOwner ? 'Owner controls. Only your account can use this page.' : 'Moderator tools. Tap a member to see their role or remove them.'}
-        </p>
+      <div className="flex items-center gap-3">
+        {current && isOwner && (
+          <button type="button" className="btn btn-plain shrink-0" onClick={() => open(null)} aria-label="Back to admin overview"><Icon name="back" size={18} /></button>
+        )}
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold">{currentTile && isOwner ? currentTile.title : 'Admin'}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {isOwner ? 'Owner controls. Only your account can use this page.' : 'Moderator tools. Tap a member to see their role or remove them.'}
+          </p>
+        </div>
       </div>
 
       {(settingsError || notice) && (
         <p role="status" className="card text-sm">{notice || settingsError}</p>
       )}
 
-      {isOwner && (
+      {isOwner && !current && (
         <>
-      <section className="card flex flex-col gap-4">
-        <p className="eyebrow">Maintenance</p>
-        <Row title="Maintenance mode" hint={settings?.maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}>
-          <Switch
-            on={Boolean(settings?.maintenanceEnabled)}
-            onColor="red"
-            label="Maintenance mode"
-            disabled={busy || !ready}
-            onChange={(next) => void save({ maintenance_enabled: next, maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, next ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.')}
-          />
-        </Row>
-        <div className="flex flex-col gap-2">
-          <label className="label" htmlFor="admin-maint-msg">Message people see</label>
-          <textarea id="admin-maint-msg" className="input min-h-20" maxLength={240} value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} placeholder={DEFAULT_MAINTENANCE_MESSAGE} />
-          <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, 'Message saved.')}>Save message</button>
-        </div>
-      </section>
-
-      <section className="card flex flex-col gap-4">
-        <p className="eyebrow">App downloads</p>
-        <Row title="Send website visitors to the app" hint={settings?.apkDownloadEnabled ? 'The website shows the download page before sign-in. Installed apps, the home-screen web app and you still go straight in.' : 'Anyone can sign in on the website'}>
-          <Switch
-            on={Boolean(settings?.apkDownloadEnabled)}
-            label="Send website visitors to the app"
-            disabled={busy || !ready}
-            onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Website visitors now see the download page.' : 'The website lets people sign in again.')}
-          />
-        </Row>
-        <Row title="Android download" hint={settings?.androidDownloadEnabled ? 'Android phones are offered the APK' : 'The Android download is hidden'}>
-          <Switch
-            on={Boolean(settings?.androidDownloadEnabled)}
-            label="Show the Android download"
-            disabled={busy || !ready}
-            onChange={(next) => void save({ android_download_enabled: next }, next ? 'Android download is shown.' : 'Android download is hidden.')}
-          />
-        </Row>
-        <Row title="iPhone install" hint={settings?.iosInstallEnabled ? 'iPhones are shown how to add it to the Home Screen' : 'The iPhone option is hidden'}>
-          <Switch
-            on={Boolean(settings?.iosInstallEnabled)}
-            label="Show the iPhone install option"
-            disabled={busy || !ready}
-            onChange={(next) => void save({ ios_install_enabled: next }, next ? 'iPhone option is shown.' : 'iPhone option is hidden.')}
-          />
-        </Row>
-        <Row title="Continue on the web" hint={settings?.webContinueEnabled ? 'Visitors can skip the download page and use the website' : 'Visitors must get the app'}>
-          <Switch
-            on={Boolean(settings?.webContinueEnabled)}
-            label="Let visitors continue on the web"
-            disabled={busy || !ready}
-            onChange={(next) => void save({ web_continue_enabled: next }, next ? 'Visitors can continue on the web.' : 'Visitors must get the app.')}
-          />
-        </Row>
-        <Row title="Download button on sign-in" hint={settings?.loginDownloadButtonEnabled ? 'The website sign-in screen has a Download the app button' : 'The sign-in screen has no download button'}>
-          <Switch
-            on={Boolean(settings?.loginDownloadButtonEnabled)}
-            label="Show a Download the app button on the sign-in screen"
-            disabled={busy || !ready}
-            onChange={(next) => void save({ login_download_button_enabled: next }, next ? 'The sign-in screen shows the download button.' : 'The sign-in screen has no download button.')}
-          />
-        </Row>
-      </section>
-
-      <section className="card flex flex-col gap-3">
-        <p className="eyebrow">Announcement banner</p>
-        <Row title="Show banner" hint={settings?.announcementEnabled ? 'Everyone sees it at the top' : 'Hidden'}>
-          <Switch
-            on={Boolean(settings?.announcementEnabled)}
-            label="Show announcement banner"
-            disabled={busy || !ready || (!settings?.announcementEnabled && !announceText.trim())}
-            onChange={(next) => void save({ announcement_enabled: next, announcement_text: announceText.trim() }, next ? 'Banner is live.' : 'Banner is hidden.')}
-          />
-        </Row>
-        <label className="label" htmlFor="admin-announce">Message</label>
-        <textarea id="admin-announce" className="input min-h-20" maxLength={200} value={announceText} onChange={(e) => setAnnounceText(e.target.value)} placeholder="Reunion on Friday at 7pm" />
-        <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ announcement_text: announceText.trim() }, 'Banner text saved.')}>Save text</button>
-      </section>
-
-      <section className="card flex flex-col gap-3">
-        <p className="eyebrow">Force old Android apps to update</p>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <p><span className="text-muted">Latest app build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
-          <p><span className="text-muted">Required now</span><br /><b>{settings && settings.minBuild > 0 ? `build ${settings.minBuild}` : 'nobody forced'}</b></p>
-          <p><span className="text-muted">This app</span><br /><b>{myBuild ? `build ${myBuild}` : 'website / local'}</b></p>
-        </div>
-        <button type="button" className="btn btn-primary" disabled={busy || !ready || !latestBuild} onClick={() => latestBuild && saveMinBuild(latestBuild)}>
-          {latestBuild ? `Require latest (build ${latestBuild})` : 'Latest build unknown'}
-        </button>
-        <div className="flex gap-2">
-          <input className="input min-w-0 flex-1" inputMode="numeric" aria-label="Minimum build number" value={minBuildInput} onChange={(e) => setMinBuildInput(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Build number" />
-          <button type="button" className="btn btn-plain" disabled={busy || !ready || !minBuildInput} onClick={() => saveMinBuild(Number(minBuildInput))}>Set</button>
-        </div>
-        <button type="button" className="btn btn-plain" disabled={busy || !ready || !settings || settings.minBuild === 0} onClick={() => { setMinBuildInput(''); saveMinBuild(0) }}>Turn off forced updates</button>
-      </section>
-
-      <section className="card flex flex-col gap-3">
-        <p className="eyebrow">Invite code</p>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 rounded-xl border border-line px-3 py-2 text-center text-lg font-bold tracking-widest">{family.invite_code}</code>
-          <button type="button" className="btn btn-plain" onClick={() => void copyCode()}>{copied ? 'Copied' : 'Copy'}</button>
-        </div>
-        <button type="button" className="btn btn-plain" disabled={busy} onClick={newInviteCode}>Make a new code</button>
-      </section>
-
+          <div className="grid grid-cols-2 gap-3">
+            {stat('Members', overview?.members_count ?? members.length)}
+            {stat('Phones with notifications', overview?.devices_count)}
+            {stat('Messages today', overview?.messages_today)}
+            {stat('App status', settings?.maintenanceEnabled ? 'Maintenance' : 'Live')}
+          </div>
+          {!overview && <p className="text-xs text-muted">Live counts need supabase/20_admin_overview.sql run once in Supabase.</p>}
+          <div className="flex flex-col gap-3">
+            {tiles.map((t) => (
+              <button key={t.id} type="button" className="card flex w-full items-center gap-3 text-left" onClick={() => open(t.id)}>
+                <Icon name={t.icon} size={22} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold">{t.title}</p>
+                  <p className="truncate text-sm text-muted">{t.hint}</p>
+                </div>
+                <span aria-hidden="true" className="menu-chevron">›</span>
+              </button>
+            ))}
+          </div>
         </>
       )}
 
-      <section className="card flex flex-col gap-3">
-        <p className="eyebrow">Members ({members.length})</p>
-        {members.map((m) => {
-          const name = shownName(m.profiles)
-          const isMe = m.user_id === userId
-          return (
-            <button
-              type="button"
-              key={m.user_id}
-              className="flex w-full items-center gap-3 text-left"
-              onClick={() => setViewing(m)}
-              aria-label={`${name}, ${m.role}. Open details`}
-            >
-              <Avatar value={m.profiles?.avatar} name={name} size={40} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-bold">{name}{isMe ? ' (you)' : ''}</p>
-                <p className="text-sm text-muted">
-                  {m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Moderator' : 'Member'}
-                  {m.joined_at ? ` · joined ${new Date(m.joined_at).toLocaleDateString()}` : ''}
-                </p>
+      {isOwner && current === 'app' && (
+        <>
+          <section className="card flex flex-col gap-4">
+                  <p className="eyebrow">Maintenance</p>
+                  <Row title="Maintenance mode" hint={settings?.maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}>
+                    <Switch
+                      on={Boolean(settings?.maintenanceEnabled)}
+                      onColor="red"
+                      label="Maintenance mode"
+                      disabled={busy || !ready}
+                      onChange={(next) => void save({ maintenance_enabled: next, maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, next ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.')}
+                    />
+                  </Row>
+                  <div className="flex flex-col gap-2">
+                    <label className="label" htmlFor="admin-maint-msg">Message people see</label>
+                    <textarea id="admin-maint-msg" className="input min-h-20" maxLength={240} value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} placeholder={DEFAULT_MAINTENANCE_MESSAGE} />
+                    <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, 'Message saved.')}>Save message</button>
+                  </div>
+                </section>
+          <section className="card flex flex-col gap-3">
+                  <p className="eyebrow">Announcement banner</p>
+                  <Row title="Show banner" hint={settings?.announcementEnabled ? 'Everyone sees it at the top' : 'Hidden'}>
+                    <Switch
+                      on={Boolean(settings?.announcementEnabled)}
+                      label="Show announcement banner"
+                      disabled={busy || !ready || (!settings?.announcementEnabled && !announceText.trim())}
+                      onChange={(next) => void save({ announcement_enabled: next, announcement_text: announceText.trim() }, next ? 'Banner is live.' : 'Banner is hidden.')}
+                    />
+                  </Row>
+                  <label className="label" htmlFor="admin-announce">Message</label>
+                  <textarea id="admin-announce" className="input min-h-20" maxLength={200} value={announceText} onChange={(e) => setAnnounceText(e.target.value)} placeholder="Reunion on Friday at 7pm" />
+                  <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ announcement_text: announceText.trim() }, 'Banner text saved.')}>Save text</button>
+                </section>
+        </>
+      )}
+
+      {isOwner && current === 'downloads' && (
+        <section className="card flex flex-col gap-4">
+                <p className="eyebrow">App downloads</p>
+                <Row title="Send website visitors to the app" hint={settings?.apkDownloadEnabled ? 'The website shows the download page before sign-in. Installed apps, the home-screen web app and you still go straight in.' : 'Anyone can sign in on the website'}>
+                  <Switch
+                    on={Boolean(settings?.apkDownloadEnabled)}
+                    label="Send website visitors to the app"
+                    disabled={busy || !ready}
+                    onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Website visitors now see the download page.' : 'The website lets people sign in again.')}
+                  />
+                </Row>
+                <Row title="Android download" hint={settings?.androidDownloadEnabled ? 'Android phones are offered the APK' : 'The Android download is hidden'}>
+                  <Switch
+                    on={Boolean(settings?.androidDownloadEnabled)}
+                    label="Show the Android download"
+                    disabled={busy || !ready}
+                    onChange={(next) => void save({ android_download_enabled: next }, next ? 'Android download is shown.' : 'Android download is hidden.')}
+                  />
+                </Row>
+                <Row title="iPhone install" hint={settings?.iosInstallEnabled ? 'iPhones are shown how to add it to the Home Screen' : 'The iPhone option is hidden'}>
+                  <Switch
+                    on={Boolean(settings?.iosInstallEnabled)}
+                    label="Show the iPhone install option"
+                    disabled={busy || !ready}
+                    onChange={(next) => void save({ ios_install_enabled: next }, next ? 'iPhone option is shown.' : 'iPhone option is hidden.')}
+                  />
+                </Row>
+                <Row title="Continue on the web" hint={settings?.webContinueEnabled ? 'Visitors can skip the download page and use the website' : 'Visitors must get the app'}>
+                  <Switch
+                    on={Boolean(settings?.webContinueEnabled)}
+                    label="Let visitors continue on the web"
+                    disabled={busy || !ready}
+                    onChange={(next) => void save({ web_continue_enabled: next }, next ? 'Visitors can continue on the web.' : 'Visitors must get the app.')}
+                  />
+                </Row>
+                <Row title="Download button on sign-in" hint={settings?.loginDownloadButtonEnabled ? 'The website sign-in screen has a Download the app button' : 'The sign-in screen has no download button'}>
+                  <Switch
+                    on={Boolean(settings?.loginDownloadButtonEnabled)}
+                    label="Show a Download the app button on the sign-in screen"
+                    disabled={busy || !ready}
+                    onChange={(next) => void save({ login_download_button_enabled: next }, next ? 'The sign-in screen shows the download button.' : 'The sign-in screen has no download button.')}
+                  />
+                </Row>
+              </section>
+      )}
+
+      {isOwner && current === 'updates' && (
+        <section className="card flex flex-col gap-3">
+                <p className="eyebrow">Force old Android apps to update</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <p><span className="text-muted">Latest app build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
+                  <p><span className="text-muted">Required now</span><br /><b>{settings && settings.minBuild > 0 ? `build ${settings.minBuild}` : 'nobody forced'}</b></p>
+                  <p><span className="text-muted">This app</span><br /><b>{myBuild ? `build ${myBuild}` : 'website / local'}</b></p>
+                </div>
+                <button type="button" className="btn btn-primary" disabled={busy || !ready || !latestBuild} onClick={() => latestBuild && saveMinBuild(latestBuild)}>
+                  {latestBuild ? `Require latest (build ${latestBuild})` : 'Latest build unknown'}
+                </button>
+                <div className="flex gap-2">
+                  <input className="input min-w-0 flex-1" inputMode="numeric" aria-label="Minimum build number" value={minBuildInput} onChange={(e) => setMinBuildInput(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Build number" />
+                  <button type="button" className="btn btn-plain" disabled={busy || !ready || !minBuildInput} onClick={() => saveMinBuild(Number(minBuildInput))}>Set</button>
+                </div>
+                <button type="button" className="btn btn-plain" disabled={busy || !ready || !settings || settings.minBuild === 0} onClick={() => { setMinBuildInput(''); saveMinBuild(0) }}>Turn off forced updates</button>
+              </section>
+      )}
+
+      {current === 'family' && (
+        <>
+          {isOwner && (
+            <section className="card flex flex-col gap-3">
+                    <p className="eyebrow">Invite code</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 rounded-xl border border-line px-3 py-2 text-center text-lg font-bold tracking-widest">{family.invite_code}</code>
+                      <button type="button" className="btn btn-plain" onClick={() => void copyCode()}>{copied ? 'Copied' : 'Copy'}</button>
+                    </div>
+                    <button type="button" className="btn btn-plain" disabled={busy} onClick={newInviteCode}>Make a new code</button>
+                  </section>
+          )}
+          <section className="card flex flex-col gap-3">
+                  <p className="eyebrow">Members ({members.length})</p>
+                  {members.map((m) => {
+                    const name = shownName(m.profiles)
+                    const isMe = m.user_id === userId
+                    return (
+                      <button
+                        type="button"
+                        key={m.user_id}
+                        className="flex w-full items-center gap-3 text-left"
+                        onClick={() => setViewing(m)}
+                        aria-label={`${name}, ${m.role}. Open details`}
+                      >
+                        <Avatar value={m.profiles?.avatar} name={name} size={40} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-bold">{name}{isMe ? ' (you)' : ''}</p>
+                          <p className="text-sm text-muted">
+                            {m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Moderator' : 'Member'}
+                            {m.joined_at ? ` · joined ${new Date(m.joined_at).toLocaleDateString()}` : ''}
+                          </p>
+                        </div>
+                        <span aria-hidden="true" className="menu-chevron">›</span>
+                      </button>
+                    )
+                  })}
+                  {members.length === 0 && <p className="text-sm text-muted">No members loaded.</p>}
+                  {viewing && (
+                    <MemberSheet
+                      member={viewing}
+                      viewerId={userId}
+                      viewerRole={members.find((x) => x.user_id === userId)?.role ?? null}
+                      familyId={family.id}
+                      onClose={() => setViewing(null)}
+                      onChanged={() => void loadMembers()}
+                    />
+                  )}
+                </section>
+        </>
+      )}
+
+      {isOwner && current === 'messages' && (
+        <>
+          <section className="card flex flex-col gap-3">
+            <p className="eyebrow">Family chat ({messages.length})</p>
+            {messages.map((m) => (
+              <div key={m.id} className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm"><b>{m.sender}</b> <span className="text-muted">· {new Date(m.created_at).toLocaleString()}</span></p>
+                  <p className="mt-0.5 break-words text-sm">{m.body}</p>
+                </div>
+                <button type="button" className="btn btn-plain shrink-0" disabled={busy} onClick={() => removeMessage(m.id)} aria-label={`Delete message from ${m.sender}`}>Delete</button>
               </div>
-              <span aria-hidden="true" className="menu-chevron">›</span>
-            </button>
-          )
-        })}
-        {members.length === 0 && <p className="text-sm text-muted">No members loaded.</p>}
-        {viewing && (
-          <MemberSheet
-            member={viewing}
-            viewerId={userId}
-            viewerRole={members.find((x) => x.user_id === userId)?.role ?? null}
-            familyId={family.id}
-            onClose={() => setViewing(null)}
-            onChanged={() => void loadMembers()}
-          />
-        )}
-      </section>
+            ))}
+            {messagesLoaded && messages.length === 0 && <p className="text-sm text-muted">No messages.</p>}
+            {!messagesLoaded && <p className="text-sm text-muted">Loading…</p>}
+          </section>
+          <section className="card flex flex-col gap-3">
+            <p className="eyebrow">Danger zone</p>
+            <button type="button" className="btn btn-plain" disabled={busy || messages.length === 0} onClick={clearMessages}>Delete all messages</button>
+          </section>
+        </>
+      )}
 
       <p className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted"><Icon name="admin" size={14} />{isOwner ? 'Owner only' : 'Owner and moderators only'}</p>
     </div>

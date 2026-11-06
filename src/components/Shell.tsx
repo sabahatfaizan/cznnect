@@ -46,7 +46,6 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'irl', label: 'Convoy', icon: 'irl' },
   { id: 'explore', label: 'Explore', icon: 'explore' },
   { id: 'chat', label: 'Chat', icon: 'chat' },
-  { id: 'plans', label: 'Plans', icon: 'plans' },
   { id: 'me', label: 'Profile', icon: 'me' },
 ]
 
@@ -172,13 +171,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             </div>
             <div className="grid gap-1">
               {([
-                { id: 'home', label: 'Home', icon: 'home' },
                 { id: 'tree', label: 'Family Tree', icon: 'tree' },
-                { id: 'explore', label: 'Explore', icon: 'explore' },
-                { id: 'chat', label: 'Chat', icon: 'chat' },
                 { id: 'plans', label: 'Plans', icon: 'plans' },
                 { id: 'birthdays', label: 'Birthdays', icon: 'cake' },
-                { id: 'me', label: 'My Profile', icon: 'me' },
               ] as { id: Tab; label: string; icon: IconName }[]).map((item) => (
                 <button
                   key={item.id}
@@ -255,7 +250,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-xl grid-cols-6 gap-0.5 px-1 py-1.5">
+        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
           {TABS.map((t) => (
             <button
               key={t.id}

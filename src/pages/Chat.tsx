@@ -23,10 +23,13 @@ const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '
 
 // The family chat: everyone in the family sees the same thread, and every message also goes to the other cousins as a
 // phone notification. It is one shared thread, not private messages.
-export default function Chat({ family, userId }: { family: Family; userId: string }) {
+export default function Chat({ family, userId, canDelete = false }: { family: Family; userId: string; canDelete?: boolean }) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
+  // The owner taps a message to pick it, then confirms. Nobody else sees any of this.
+  const [picked, setPicked] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [text, setText] = useState('')
   const [pending, setPending] = useState<string[]>([])
   const [navH, setNavH] = useState(72)
@@ -97,6 +100,25 @@ export default function Chat({ family, userId }: { family: Family; userId: strin
     }
   }, [messages, pending, loaded])
 
+  async function removeMessage(id: number) {
+    setDeleting(true)
+    setError('')
+    try {
+      const { error: err } = await supabase.rpc('delete_family_message', { mid: id })
+      if (err) {
+        const code = (err as { code?: string }).code
+        setError(code === 'PGRST202' || code === '42883' ? 'Deleting is not set up yet. In Supabase, run supabase/19_delete_messages.sql.' : friendlyError(err, 'Could not delete the message.'))
+      } else {
+        setMessages((old) => old.filter((m) => m.id !== id))
+        setPicked(null)
+      }
+    } catch (e) {
+      setError(friendlyError(e, 'Could not delete the message. Check your connection and try again.'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   function resize() {
     const el = box.current
     if (!el) return
@@ -138,7 +160,7 @@ export default function Chat({ family, userId }: { family: Family; userId: strin
     <div className="flex flex-col gap-3">
       <header>
         <h1 className="font-display text-2xl font-extrabold">Chat</h1>
-        <p className="text-sm text-muted">Everyone in {family.name} sees this. New messages also notify your cousins' phones.</p>
+        <p className="text-sm text-muted">Everyone in {family.name} sees this. New messages also notify your cousins' phones.{canDelete ? ' As the owner, tap a message to delete it.' : ''}</p>
       </header>
 
       {error && <p role="alert" className="card text-sm font-bold text-danger">{error}</p>}
@@ -165,7 +187,17 @@ export default function Chat({ family, userId }: { family: Family; userId: strin
                 )}
                 <div className={`flex max-w-[78%] flex-col ${mine ? 'items-end' : 'items-start'}`}>
                   {!mine && startsGroup && <p className="mb-0.5 px-1 text-xs font-bold text-muted">{m.sender}</p>}
-                  <p className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[0.95rem] leading-snug ${mine ? 'rounded-br-md bg-accent text-accent-ink' : 'rounded-bl-md border border-line bg-surface-2'}`}>{m.body}</p>
+                  <p
+                    className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[0.95rem] leading-snug ${mine ? 'rounded-br-md bg-accent text-accent-ink' : 'rounded-bl-md border border-line bg-surface-2'} ${canDelete ? 'cursor-pointer' : ''} ${picked === m.id ? 'outline outline-2 outline-offset-2 outline-danger' : ''}`}
+                    {...(canDelete ? { role: 'button', tabIndex: 0, 'aria-pressed': picked === m.id, onClick: () => setPicked(picked === m.id ? null : m.id), onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPicked(picked === m.id ? null : m.id) } } } : {})}
+                  >{m.body}</p>
+                  {canDelete && picked === m.id && (
+                    <div className="mt-1 flex items-center gap-2 px-1 text-sm">
+                      <span className="text-muted">Delete for everyone?</span>
+                      <button type="button" className="min-h-9 font-bold text-danger underline underline-offset-2" disabled={deleting} onClick={() => void removeMessage(m.id)}>{deleting ? 'Deleting…' : 'Delete'}</button>
+                      <button type="button" className="min-h-9 font-semibold underline underline-offset-2" disabled={deleting} onClick={() => setPicked(null)}>Cancel</button>
+                    </div>
+                  )}
                   {endsGroup && <p className="mt-0.5 px-1 text-[0.7rem] text-muted">{clock(d)}</p>}
                 </div>
               </div>

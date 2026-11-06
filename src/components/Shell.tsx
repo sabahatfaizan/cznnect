@@ -237,7 +237,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         <div key={tab} className="screen-in">
           <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
           {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} chat={chatPulse} nextBirthday={upcoming[0] ?? null} onOpen={setTab} />}
-          {tab === 'chat' && <Chat family={family} userId={userId} />}
+          {tab === 'chat' && <Chat family={family} userId={userId} canDelete={familyRole === 'owner'} />}
           {tab === 'irl' && <Irl family={family} userId={userId} />}
           {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
           {tab === 'birthdays' && (

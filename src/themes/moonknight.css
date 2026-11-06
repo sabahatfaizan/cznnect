@@ -75,7 +75,7 @@
     /* the big moon: a large pale crescent on the right (a black disc bitten out of a pale one). Pale, not white, so
        text on the page stays readable. */
     radial-gradient(circle calc(var(--R) * 0.9) at calc(100% - var(--R) * 0.55 - var(--R) * 0.4) calc(50% - var(--R) * 0.1), #000 99%, transparent 100%),
-    radial-gradient(circle var(--R) at calc(100% - var(--R) * 0.55) 50%, rgb(226 226 226 / 0.7) 99%, transparent 100%);
+    radial-gradient(circle var(--R) at calc(100% - var(--R) * 0.55) 50%, rgb(226 226 226 / 0.4) 99%, transparent 100%);
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 55%, rgb(0 0 0 / 0.6) 100%);
 }
@@ -244,3 +244,13 @@
   transform: translate(6.9px, -6.8px) rotate(-18deg);
   pointer-events: none;
 }
+
+/* ---- readability over the moon: comic-caption ink ---- */
+:root[data-theme="moonknight"] {
+  /* comic caption ink: a tight black outline plus a soft black glow, so words stay crisp wherever the moon is */
+  --mk-halo: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 0 0 3px #000, 0 0 7px rgb(0 0 0 / 0.95), 0 0 14px rgb(0 0 0 / 0.8);
+}
+:root[data-theme="moonknight"] main { text-shadow: var(--mk-halo); }
+:root[data-theme="moonknight"] main h1.font-display { text-shadow: 3px 3px 0 var(--mc-soft), var(--mk-halo); }
+:root[data-theme="moonknight"] main :is(.btn, .tab, .input, .menu-btn, button, input, textarea, select, svg) { text-shadow: none; }
+:root[data-theme="moonknight"] .text-muted, :root[data-theme="moonknight"] .label { color: #cfcfcf; }

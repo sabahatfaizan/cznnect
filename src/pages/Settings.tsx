@@ -12,6 +12,7 @@ import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
 import { appUrl, canShare, isNative, shareText } from '../lib/native'
 import { pushEnabled, setPushEnabled } from '../lib/push'
+import { getPresenceVisible, setPresenceVisible } from '../lib/pulse'
 
 type Panel = 'family' | 'theme' | 'icon' | 'redeem' | 'password'
 
@@ -53,6 +54,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [saved, setSaved] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
   const [notify, setNotify] = useState(pushEnabled)
+  const [showOnline, setShowOnline] = useState(true)
+  useEffect(() => { void getPresenceVisible().then(setShowOnline) }, [])
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'Local build'
   const buildCommit = import.meta.env.VITE_BUILD_COMMIT?.slice(0, 7) || ''
 
@@ -151,6 +154,18 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
           <span className="text-sm font-semibold text-muted">{notify ? 'On' : 'Off'}</span>
         </button>
       )}
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={showOnline}
+        className="set-redeem !mt-0"
+        onClick={() => { const next = !showOnline; setShowOnline(next); void setPresenceVisible(next) }}
+      >
+        <span className="set-tile-icon" aria-hidden="true"><Icon name="family" size={22} /></span>
+        <span className="set-tile-label flex-1 text-left">Show when I'm online</span>
+        <span className="text-sm font-semibold text-muted">{showOnline ? 'On' : 'Off'}</span>
+      </button>
 
       <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('redeem')} aria-haspopup="dialog">
         <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>

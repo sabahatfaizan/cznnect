@@ -4,6 +4,7 @@ import type { Family } from '../types'
 import Avatar from '../components/Avatar'
 import { Icon } from '../components/Icons'
 import { friendlyError } from '../lib/offline'
+import { markChatRead } from '../lib/pulse'
 
 type Msg = { id: number; user_id: string; sender: string; avatar: string | null; body: string; created_at: string }
 
@@ -79,6 +80,12 @@ export default function Chat({ family, userId }: { family: Family; userId: strin
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // Anything on screen counts as read, which clears the badge on the Chat tab and on Home.
+  useEffect(() => {
+    const last = messages[messages.length - 1]
+    if (last) markChatRead(family.id, last.id)
+  }, [messages, family.id])
 
   useLayoutEffect(() => {
     if (!loaded) return

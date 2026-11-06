@@ -4,6 +4,9 @@ import { appUrl, canShare, shareText } from '../lib/native'
 import Avatar from '../components/Avatar'
 import { shownName } from '../lib/avatars'
 import type { Family, Member } from '../types'
+import FamilyPulse from '../components/FamilyPulse'
+import type { ChatPulse } from '../lib/pulse'
+import type { Upcoming } from '../lib/birthdays'
 
 type Contact = { user_id: string; phone: string | null; contact_email: string | null }
 
@@ -11,9 +14,12 @@ type Props = {
   family: Family
   userId: string
   onFamilyChanged: () => void
+  chat: ChatPulse
+  nextBirthday: Upcoming | null
+  onOpen: (t: 'chat' | 'plans' | 'birthdays') => void
 }
 
-export default function Home({ family, userId, onFamilyChanged }: Props) {
+export default function Home({ family, userId, onFamilyChanged, chat, nextBirthday, onOpen }: Props) {
   const [members, setMembers] = useState<Member[]>([])
   // Only rows people chose to share come back; row-level security hides the rest.
   const [contacts, setContacts] = useState<Map<string, Contact>>(new Map())
@@ -80,6 +86,8 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
       <header className="flex flex-col gap-1">
         <h1 className="font-display text-2xl font-extrabold leading-tight">{family.name}</h1>
       </header>
+
+      <FamilyPulse familyId={family.id} userId={userId} members={members} chat={chat} nextBirthday={nextBirthday} onOpen={onOpen} />
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-display text-lg font-bold">Invite people</h2>

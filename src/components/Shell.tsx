@@ -14,6 +14,7 @@ import Birthdays from '../pages/Birthdays'
 import Music from '../pages/Music'
 import { rank, useFamilyBirthdays } from '../lib/birthdays'
 import { loadPrefs, runReminders } from '../lib/birthdayReminders'
+import { useChatPulse, useHeartbeat } from '../lib/pulse'
 import Settings from '../pages/Settings'
 import Chat from '../pages/Chat'
 import Admin from '../pages/Admin'
@@ -70,6 +71,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
   // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
   const bday = useFamilyBirthdays(family.id, userId)
   const upcoming = rank(bday.people).upcoming
+  const chatPulse = useChatPulse(family.id, userId)
+  useHeartbeat()
   const soon = upcoming.filter((u) => u.days <= 7)
   const dueNow = upcoming.some((u) => u.days <= 1)
   useEffect(() => {
@@ -233,7 +236,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         </div>
         <div key={tab} className="screen-in">
           <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
-          {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+          {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} chat={chatPulse} nextBirthday={upcoming[0] ?? null} onOpen={setTab} />}
           {tab === 'chat' && <Chat family={family} userId={userId} />}
           {tab === 'irl' && <Irl family={family} userId={userId} />}
           {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
@@ -258,7 +261,17 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               {...(t.id === 'explore' ? { onPointerDown: startHold, onPointerUp: cancelHold, onPointerLeave: cancelHold, onPointerCancel: cancelHold, onContextMenu: (e: React.MouseEvent) => e.preventDefault() } : {})}
               aria-current={current === t.id ? 'page' : undefined}
               className={`tab ${current === t.id ? 'tab-active' : ''}`}
-            ><Icon name={t.icon} />{t.label}</button>
+            >
+              <span className="relative inline-flex">
+                <Icon name={t.icon} />
+                {t.id === 'chat' && chatPulse.unread > 0 && current !== 'chat' && (
+                  <span aria-label={`${chatPulse.unread} new messages`} className="absolute -right-2.5 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[0.625rem] font-bold leading-4 text-accent-ink">
+                    {chatPulse.unread > 9 ? '9+' : chatPulse.unread}
+                  </span>
+                )}
+              </span>
+              {t.label}
+            </button>
           ))}
         </div>
       </nav>

@@ -38,8 +38,8 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   irl: (
     <>
-      <path d="M2.5 14.5l5-3.2c1-.6 2-.8 3.2-.8H15L17.3 5H20l-1 5.6h2.2c.5 0 .8.4.8.9v1.2c0 .5-.4.8-.9.8H3.2c-.5 0-.8-.3-.7-.7z" />
-      <path d="M9.5 15.4l3.4 3.6h2.7l-1.6-3.6" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+      <path d="M8.6 9.1a4 4 0 0 0 0 5.8M15.4 9.1a4 4 0 0 1 0 5.8M5.7 6a9 9 0 0 0 0 12M18.3 6a9 9 0 0 1 0 12" />
     </>
   ),
   explore: (

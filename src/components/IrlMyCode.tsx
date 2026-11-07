@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import QrCode from './QrCode'
 import { personPayload, readableCode } from '../lib/irl'
-import { myCode, type MyCode } from '../lib/irlApi'
+import { myCode, refreshCode, type MyCode } from '../lib/irlApi'
+import { Icon } from './Icons'
 import { useBackClose } from '../lib/backStack'
 
 // Your personal QR code. It holds a random handle and a code that changes every 5 minutes,
@@ -13,12 +14,15 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   const [left, setLeft] = useState(0)
   const [error, setError] = useState('')
   const [big, setBig] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const timer = useRef<number | undefined>(undefined)
   useBackClose(() => setBig(false), big)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (fresh = false) => {
     window.clearTimeout(timer.current)
-    const r = await myCode(familyId)
+    // Refresh asks for a brand new code. If the server has not been updated for that yet, the normal code is shown.
+    let r = fresh ? await refreshCode(familyId) : await myCode(familyId)
+    if (fresh && !r.ok) r = await myCode(familyId)
     if (!r.ok) {
       setError(r.message)
       timer.current = window.setTimeout(load, 15000)
@@ -30,6 +34,13 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
     // Fetch the next code just after this one runs out.
     timer.current = window.setTimeout(load, Math.max(5000, r.data.seconds_left * 1000 + 1500))
   }, [familyId])
+
+  async function refresh() {
+    if (refreshing) return
+    setRefreshing(true)
+    await load(true)
+    setRefreshing(false)
+  }
 
   useEffect(() => {
     load()
@@ -71,7 +82,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
         <p role="alert" className="font-semibold text-danger">
           {error}
         </p>
-        <button className="btn btn-plain" onClick={load}>
+        <button className="btn btn-plain" onClick={() => void load()}>
           Try again
         </button>
       </div>
@@ -91,9 +102,19 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
         <span className="text-xs font-bold uppercase tracking-widest text-muted">Tap to enlarge</span>
       </button>
       <p className="select-all text-center font-mono text-sm font-semibold tracking-wider text-accent-text">{readableCode(payload)}</p>
-      <p className="text-center text-sm text-muted">
-        New code in {mm}:{ss}
-      </p>
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <span>New code in {mm}:{ss}</span>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          disabled={refreshing}
+          aria-label="Get a new code now"
+          title="Get a new code now"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface-2 text-current transition hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
+        >
+          <span className={refreshing ? 'animate-spin' : ''}><Icon name="refresh" size={18} /></span>
+        </button>
+      </div>
       {error && (
         <p role="status" className="text-center text-sm font-bold text-danger">
           {error}
@@ -132,7 +153,18 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
                 <QrCode text={payload} size={320} label="Your personal QR code, enlarged. Another cousin can scan it." />
               </div>
               <p className="mt-5 select-all font-mono text-base font-bold tracking-wider" onClick={(e) => e.stopPropagation()}>{readableCode(payload)}</p>
-              <p className="mt-1 text-sm text-muted">New code in {mm}:{ss}</p>
+              <div className="mt-2 flex items-center gap-2 text-sm text-muted" onClick={(e) => e.stopPropagation()}>
+                <span>New code in {mm}:{ss}</span>
+                <button
+                  type="button"
+                  onClick={() => void refresh()}
+                  disabled={refreshing}
+                  aria-label="Get a new code now"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-current disabled:opacity-60"
+                >
+                  <span className={refreshing ? 'animate-spin' : ''}><Icon name="refresh" size={18} /></span>
+                </button>
+              </div>
             </div>
           </div>,
           document.body,

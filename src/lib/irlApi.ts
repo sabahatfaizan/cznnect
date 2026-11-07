@@ -38,6 +38,7 @@ export type Looked = { user_id: string; name: string; cooldown_seconds: number; 
 export type GroupPreview = { meetup_id: string; title: string | null; host: string; people: number; already_in: boolean }
 
 export const myCode = (fid: string) => call<MyCode>('irl_my_code', { fid })
+export const refreshCode = (fid: string) => call<MyCode>('irl_refresh_code', { fid })
 export const lookup = (fid: string, payload: string) => call<Looked>('irl_lookup', { fid, payload })
 export const startPair = (fid: string, payload: string) => call<{ meetup_id: string; existing?: boolean }>('irl_start_pair', { fid, payload })
 export const confirmMeetup = (mid: string) => call<{ status: string }>('irl_confirm', { mid })

@@ -149,12 +149,12 @@ export default function Irl({ family, userId }: { family: Family; userId: string
           <section className="card flex flex-col gap-4" aria-label="Your link code">
             <h2 className="eyebrow">Your link code</h2>
             <IrlMyCode familyId={family.id} />
-            <div className="grid grid-cols-2 gap-3">
-              <button className="btn btn-primary !min-h-11 !text-sm" onClick={() => setScanning(true)}>
-                Scan to link
+            <div className="flex items-center justify-center gap-3">
+              <button className="btn btn-primary !h-12 !w-16 !p-0" onClick={() => setScanning(true)} aria-label="Scan a cousin's code to link" title="Scan to link">
+                <Icon name="camera" size={24} />
               </button>
-              <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => setGroupSheet(true)}>
-                Group meetup
+              <button className="btn btn-plain !h-12 !w-16 !p-0" onClick={() => setGroupSheet(true)} aria-label="Start a group meetup" title="Group meetup">
+                <Icon name="group" size={24} />
               </button>
             </div>
           </section>

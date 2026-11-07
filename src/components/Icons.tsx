@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -20,6 +20,21 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   chat: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4zM8 9h8M8 12h5" />,
+  camera: (
+    <>
+      <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  refresh: <path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4" />,
+  group: (
+    <>
+      <circle cx="9" cy="9" r="3" />
+      <path d="M3 19c0-3 2.7-5 6-5s6 2 6 5" />
+      <circle cx="17" cy="9.5" r="2.3" />
+      <path d="M17 14c2.4 0 4 1.5 4 4" />
+    </>
+  ),
   send: <path d="M21 3L10 14M21 3l-7 18-4-8-8-4z" />,
   megaphone: <path d="M3 10v4a1 1 0 0 0 1 1h3l9 4.5V4.5L7 9H4a1 1 0 0 0-1 1zM7 15l1.2 4.5h2.6M19.5 9.5a3.5 3.5 0 0 1 0 5" />,
   bell: <path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4" />,

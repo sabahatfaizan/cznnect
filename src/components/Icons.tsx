@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group' | 'share' | 'copy' | 'check'
 
 const PATHS: Record<IconName, ReactNode> = {
   search: (
@@ -20,6 +20,21 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   chat: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4zM8 9h8M8 12h5" />,
+  share: (
+    <>
+      <circle cx="18" cy="5.5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="18.5" r="2.5" />
+      <path d="M8.2 10.8l7.6-4M8.2 13.2l7.6 4" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+    </>
+  ),
+  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   camera: (
     <>
       <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />

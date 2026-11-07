@@ -99,13 +99,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
 
       <section className="card relative flex flex-col gap-4 overflow-hidden" aria-label="Invite people">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24" style={{ background: 'linear-gradient(180deg, var(--accent-soft), transparent)' }} />
-        <div className="relative flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-accent-ink"><Icon name="plus" size={20} /></span>
-          <div className="min-w-0">
-            <h2 className="font-display text-base font-bold leading-tight">Invite cousins</h2>
-            <p className="text-sm text-muted">They enter this code after making an account.</p>
-          </div>
-        </div>
+        <h2 className="font-display relative text-base font-bold leading-tight">Invite cousins</h2>
 
         <button
           type="button"
@@ -123,25 +117,29 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
             </span>
           ))}
         </button>
-        <p role="status" className="-mt-2 text-center text-xs font-semibold text-muted">
-          {copied === 'code' ? 'Code copied' : 'Tap the code to copy it'}
+        <p role="status" className="-mt-2 h-4 text-center text-xs font-semibold text-muted">
+          {copied === 'code' ? 'Code copied' : copied === 'invite' ? 'Invite copied' : ''}
         </p>
 
-        <div className="grid grid-cols-2 gap-3">
-          {canShare() ? (
-            <>
-              <button className="btn btn-primary !min-h-11 !text-sm" onClick={() => shareText(inviteText, `Join ${family.name} on Cznnect`).catch(() => {})}>
-                Share invite
-              </button>
-              <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => void copy('invite')}>
-                {copied === 'invite' ? 'Copied' : 'Copy message'}
-              </button>
-            </>
-          ) : (
-            <button className="btn btn-primary col-span-2 !min-h-11 !text-sm" onClick={() => void copy('invite')}>
-              {copied === 'invite' ? 'Copied' : 'Copy invite message'}
+        <div className={`grid gap-3 ${canShare() ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {canShare() && (
+            <button
+              className="btn btn-primary !min-h-11 !p-0"
+              aria-label="Share invite"
+              title="Share invite"
+              onClick={() => shareText(inviteText, `Join ${family.name} on Cznnect`).catch(() => {})}
+            >
+              <Icon name="share" size={22} />
             </button>
           )}
+          <button
+            className={`btn !min-h-11 !p-0 ${canShare() ? 'btn-plain' : 'btn-primary'}`}
+            aria-label="Copy invite message"
+            title="Copy invite message"
+            onClick={() => void copy('invite')}
+          >
+            <Icon name={copied === 'invite' ? 'check' : 'copy'} size={22} />
+          </button>
         </div>
 
         {isOwner &&
@@ -161,7 +159,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
               </div>
             </div>
           ) : (
-            <button className="link self-start" onClick={() => setConfirm('newcode')}>
+            <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => setConfirm('newcode')}>
               Get a new invite code
             </button>
           ))}

@@ -151,12 +151,71 @@ public class CznnectNativePlugin extends Plugin {
             req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
             DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+            // The previous update file goes first, so old copies do not pile up in Downloads.
+            long last = savedDownloadId();
+            if (last >= 0) {
+                try { dm.remove(last); } catch (Exception ignored) { }
+            }
             long id = dm.enqueue(req);
             saveDownloadId(id);
             if (Boolean.TRUE.equals(call.getBoolean("install"))) watchForInstall(dm, id);
-            call.resolve();
+            // The id lets the web code watch the download (downloadStatus) instead of just hoping it works.
+            JSObject out = new JSObject();
+            out.put("id", id);
+            call.resolve(out);
         } catch (Exception e) {
             call.reject("Could not start the download");
+        }
+    }
+
+    /** How a download is doing: pending, running, paused, success or failed, with bytes and the download manager's reason code. */
+    @PluginMethod
+    public void downloadStatus(PluginCall call) {
+        Long id = call.getLong("id");
+        if (id == null) {
+            call.reject("No download id");
+            return;
+        }
+        Cursor c = null;
+        try {
+            DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+            c = dm.query(new DownloadManager.Query().setFilterById(id));
+            JSObject out = new JSObject();
+            if (c == null || !c.moveToFirst()) {
+                out.put("status", "unknown");
+            } else {
+                int s = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                out.put("status", s == DownloadManager.STATUS_SUCCESSFUL ? "success"
+                    : s == DownloadManager.STATUS_FAILED ? "failed"
+                    : s == DownloadManager.STATUS_PAUSED ? "paused"
+                    : s == DownloadManager.STATUS_PENDING ? "pending" : "running");
+                out.put("downloaded", c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)));
+                out.put("total", c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)));
+                out.put("reason", c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)));
+            }
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Could not read the download");
+        } finally {
+            if (c != null) c.close();
+        }
+    }
+
+    /** Opens one of this app's own download addresses in the phone's browser, the fallback when the download manager fails. */
+    @PluginMethod
+    public void openUrl(PluginCall call) {
+        String url = call.getString("url");
+        if (url == null || !(url.startsWith("https://github.com/sabahatfaizan/cznnect/") || url.startsWith("https://sabahatfaizan.github.io/cznnect/"))) {
+            call.reject("Address not allowed");
+            return;
+        }
+        try {
+            Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(view);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Could not open the browser");
         }
     }
 

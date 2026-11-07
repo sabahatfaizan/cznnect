@@ -14,9 +14,16 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   const [left, setLeft] = useState(0)
   const [error, setError] = useState('')
   const [big, setBig] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const timer = useRef<number | undefined>(undefined)
-  useBackClose(() => setBig(false), big)
+  // Closes the enlarged code with a short fade, unless the person asked their phone to reduce motion.
+  const closeBig = useCallback(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setBig(false); return }
+    setClosing(true)
+    window.setTimeout(() => { setBig(false); setClosing(false) }, 200)
+  }, [])
+  useBackClose(closeBig, big)
 
   const load = useCallback(async (fresh = false) => {
     window.clearTimeout(timer.current)
@@ -65,7 +72,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   useEffect(() => {
     if (!big) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setBig(false)
+      if (e.key === 'Escape') closeBig()
     }
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -98,7 +105,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <button type="button" onClick={() => setBig(true)} aria-label="Enlarge your link code" className="flex flex-col items-center gap-1">
-        <QrCode text={payload} size={200} label="Your personal QR code. Another cousin can scan it." />
+        <span key={payload} className="qr-swap"><QrCode text={payload} size={200} label="Your personal QR code. Another cousin can scan it." /></span>
         <span className="text-xs font-bold uppercase tracking-widest text-muted">Tap to enlarge</span>
       </button>
       <p className="select-all text-center font-mono text-sm font-semibold tracking-wider text-accent-text">{readableCode(payload)}</p>
@@ -126,8 +133,8 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
             role="dialog"
             aria-modal="true"
             aria-label="Your link code"
-            onClick={() => setBig(false)}
-            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto px-6 py-16"
+            onClick={closeBig}
+            className={`qr-zoom-scrim fixed inset-0 z-[100] ${closing ? 'is-closing' : ''} flex items-center justify-center overflow-y-auto px-6 py-16`}
             style={{
               background: 'color-mix(in srgb, var(--page) 88%, transparent)',
               backdropFilter: 'blur(18px)',
@@ -137,7 +144,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
           >
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setBig(false) }}
+              onClick={(e) => { e.stopPropagation(); closeBig() }}
               aria-label="Back"
               className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full"
               style={{ background: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}
@@ -146,10 +153,10 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="flex w-full max-w-[320px] flex-col items-center text-center">
+            <div className="qr-zoom-body flex w-full max-w-[320px] flex-col items-center text-center">
               <h2 className="font-display text-lg font-bold">Link code</h2>
               <p className="mt-1 text-sm text-muted">Scan with another device to link</p>
-              <div className="mt-5 w-full" onClick={(e) => e.stopPropagation()}>
+              <div key={payload} className="qr-swap mt-5 w-full" onClick={(e) => e.stopPropagation()}>
                 <QrCode text={payload} size={320} label="Your personal QR code, enlarged. Another cousin can scan it." />
               </div>
               <p className="mt-5 select-all font-mono text-base font-bold tracking-wider" onClick={(e) => e.stopPropagation()}>{readableCode(payload)}</p>

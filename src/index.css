@@ -1741,3 +1741,42 @@ input, textarea, select, [contenteditable='true'], a[href], .selectable {
 .avatar-pick { transition: transform 0.2s cubic-bezier(.34, 1.5, .64, 1); }
 .avatar-pick:active { transform: scale(0.92); }
 @media (prefers-reduced-motion: reduce) { .avatar-pick { transition: none; } }
+
+/* Motion for panels, the enlarged QR code and the scanner. Everything here is off for people who ask their phone to reduce motion. */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-theme="glass"]) .sheet-scrim { animation: scrim-in 0.22s ease-out both; }
+  :root:not([data-theme="glass"]) .sheet-panel { animation: sheet-up 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .sheet-scrim.is-closing { animation: scrim-out 0.2s ease-in both !important; }
+  .sheet-scrim.is-closing .sheet-panel { animation: sheet-down 0.2s ease-in both !important; }
+
+  .qr-zoom-scrim { animation: scrim-in 0.25s ease-out both; }
+  .qr-zoom-body { animation: qr-zoom-in 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+  .qr-zoom-scrim.is-closing { animation: scrim-out 0.2s ease-in both; }
+  .qr-zoom-scrim.is-closing .qr-zoom-body { animation: qr-zoom-out 0.2s ease-in both; }
+  .qr-swap { animation: qr-swap 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  .scan-reticle { animation: scan-breathe 1.8s ease-in-out infinite; }
+  .scan-reticle::after {
+    content: '';
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 0;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 14px 2px var(--accent);
+    animation: scan-sweep 2.2s ease-in-out infinite alternate;
+  }
+  .step-in { animation: step-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+}
+@keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrim-out { to { opacity: 0; } }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sheet-down { to { transform: translateY(40px); opacity: 0; } }
+@keyframes qr-zoom-in { from { opacity: 0; transform: scale(0.72) translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes qr-zoom-out { to { opacity: 0; transform: scale(0.85) translateY(8px); } }
+@keyframes qr-swap { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes scan-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes scan-sweep { from { top: 4%; } to { top: calc(96% - 3px); } }
+@keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

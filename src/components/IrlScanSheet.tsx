@@ -109,7 +109,7 @@ export default function IrlScanSheet({
 
   return (
     <Sheet title="Scan a code" onClose={onClose}>
-      <div className="flex flex-col gap-4">
+      <div key={step.name} className="step-in flex flex-col gap-4">
         {step.name === 'scan' && (
           <>
             <QrScanner onText={handle} />

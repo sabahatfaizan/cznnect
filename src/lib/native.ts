@@ -70,6 +70,18 @@ export async function downloadFile(url: string, name: string, install = false): 
   }
 }
 
+// Opens Android's installer for the update that was downloaded last. Returns a message when it cannot.
+export async function installUpdate(): Promise<{ ok: boolean; message: string }> {
+  if (!isNative()) return { ok: false, message: 'Open the installed app to update.' }
+  try {
+    await callNative('installUpdate', {})
+    return { ok: true, message: '' }
+  } catch (e) {
+    const message = e instanceof Error && e.message ? e.message : 'Could not open the installer. Open the file from your Downloads.'
+    return { ok: false, message }
+  }
+}
+
 // The phone's Firebase push token, or null when this is not the app, the build has no push set up, or the phone
 // refuses. Safe to call on every start: Firebase hands back the same token until it rotates it.
 export async function getPushToken(): Promise<string | null> {

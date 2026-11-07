@@ -7,9 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.Settings;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -52,6 +54,58 @@ public class CznnectNativePlugin extends Plugin {
     private BroadcastReceiver installReceiver;
     private long pendingInstallId = -1;
 
+    private static final String PREFS = "cznnect_update";
+
+    private long savedDownloadId() {
+        return getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong("id", -1);
+    }
+
+    private void saveDownloadId(long id) {
+        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putLong("id", id).apply();
+    }
+
+    /** True when the download manager has finished saving the given download. */
+    private boolean downloadFinished(DownloadManager dm, long id) {
+        Cursor c = null;
+        try {
+            c = dm.query(new DownloadManager.Query().setFilterById(id));
+            if (c != null && c.moveToFirst()) {
+                return c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL;
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (c != null) c.close();
+        }
+        return false;
+    }
+
+    /**
+     * Opens Android's installer for a finished download, from the app's own screen when there is one (Android
+     * blocks installers that start from the background). If this app is not yet allowed to install apps, the
+     * settings page for that opens instead and false is returned; the person then taps Install again.
+     */
+    private boolean launchInstaller(DownloadManager dm, long id) {
+        try {
+            Context ctx = getContext();
+            Context starter = getActivity() != null ? getActivity() : ctx;
+            Uri uri = dm.getUriForDownloadedFile(id);
+            if (uri == null) return false;
+            if (Build.VERSION.SDK_INT >= 26 && !ctx.getPackageManager().canRequestPackageInstalls()) {
+                Intent allow = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + ctx.getPackageName()));
+                allow.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                starter.startActivity(allow);
+                return false;
+            }
+            Intent open = new Intent(Intent.ACTION_VIEW);
+            open.setDataAndType(uri, "application/vnd.android.package-archive");
+            open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            starter.startActivity(open);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /** Opens the installer as soon as the given download finishes (the app must still be open). */
     private void watchForInstall(final DownloadManager dm, final long id) {
         final Context ctx = getContext();
@@ -66,12 +120,7 @@ public class CznnectNativePlugin extends Plugin {
                 if (done != pendingInstallId) return;
                 try { context.unregisterReceiver(this); } catch (Exception ignored) { }
                 installReceiver = null;
-                Uri uri = dm.getUriForDownloadedFile(done);
-                if (uri == null) return;
-                Intent open = new Intent(Intent.ACTION_VIEW);
-                open.setDataAndType(uri, "application/vnd.android.package-archive");
-                open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                try { context.startActivity(open); } catch (Exception ignored) { }
+                if (downloadFinished(dm, done)) launchInstaller(dm, done);
             }
         };
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
@@ -91,6 +140,9 @@ public class CznnectNativePlugin extends Plugin {
             return;
         }
         if (name == null || name.isEmpty()) name = "cznnect.apk";
+        // A new name each time, so an earlier download of the same file can never get in the way.
+        String stem = name.endsWith(".apk") ? name.substring(0, name.length() - 4) : name;
+        name = stem + "-" + (System.currentTimeMillis() / 1000) + ".apk";
         try {
             DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
             req.setTitle(name);
@@ -100,11 +152,25 @@ public class CznnectNativePlugin extends Plugin {
             req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
             DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
             long id = dm.enqueue(req);
+            saveDownloadId(id);
             if (Boolean.TRUE.equals(call.getBoolean("install"))) watchForInstall(dm, id);
             call.resolve();
         } catch (Exception e) {
             call.reject("Could not start the download");
         }
+    }
+
+    /** Opens the installer for the update that was downloaded last. The Install button in the app calls this. */
+    @PluginMethod
+    public void installUpdate(PluginCall call) {
+        DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        long id = savedDownloadId();
+        if (id < 0 || !downloadFinished(dm, id)) {
+            call.reject("The update is still downloading. Try again in a moment.");
+            return;
+        }
+        if (launchInstaller(dm, id)) call.resolve();
+        else call.reject("Allow Cznnect to install apps in the page that opened, then tap Install again.");
     }
 
     /**

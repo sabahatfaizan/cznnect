@@ -117,12 +117,10 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   }
 
   return (
-    <div className="convoy-pixel flex flex-col gap-4">
-      <header className="convoy-hero">
-        <span className="convoy-hero-icon" aria-hidden="true"><Icon name="irl" size={28} /></span>
-        <div className="min-w-0">
-          <h1 className="convoy-title font-display text-xl font-bold">Convoy</h1>
-        </div>
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-col gap-1">
+        <h1 className="font-display text-2xl font-extrabold">Convoy</h1>
+        <p className="text-sm text-muted">Link up with cousins in person and earn points.</p>
       </header>
 
       {notice && (
@@ -149,13 +147,13 @@ export default function Irl({ family, userId }: { family: Family; userId: string
           ))}
 
           <section className="card flex flex-col gap-4" aria-label="Your link code">
-            <p className="eyebrow">Your link code</p>
+            <h2 className="eyebrow">Your link code</h2>
             <IrlMyCode familyId={family.id} />
             <div className="grid grid-cols-2 gap-3">
-              <button className="btn btn-primary" onClick={() => setScanning(true)}>
+              <button className="btn btn-primary !min-h-11 !text-sm" onClick={() => setScanning(true)}>
                 Scan to link
               </button>
-              <button className="btn btn-plain" onClick={() => setGroupSheet(true)}>
+              <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => setGroupSheet(true)}>
                 Group meetup
               </button>
             </div>

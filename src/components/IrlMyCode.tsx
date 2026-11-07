@@ -106,36 +106,34 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
             aria-modal="true"
             aria-label="Your link code"
             onClick={() => setBig(false)}
-            className="fixed inset-0 z-[100] flex flex-col items-center overflow-y-auto px-6 pb-8 pt-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto px-6 py-16"
             style={{
-              background: 'color-mix(in srgb, var(--page) 84%, transparent)',
+              background: 'color-mix(in srgb, var(--page) 88%, transparent)',
               backdropFilter: 'blur(18px)',
               WebkitBackdropFilter: 'blur(18px)',
               color: 'var(--ink)',
             }}
           >
-            <div className="w-full">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setBig(false) }}
-                aria-label="Back"
-                className="flex h-12 w-12 items-center justify-center rounded-full"
-                style={{ background: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h2 className="font-display mt-4 text-xl font-bold">Link code</h2>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setBig(false) }}
+              aria-label="Back"
+              className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full"
+              style={{ background: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="flex w-full max-w-[320px] flex-col items-center text-center">
+              <h2 className="font-display text-lg font-bold">Link code</h2>
               <p className="mt-1 text-sm text-muted">Scan with another device to link</p>
+              <div className="mt-5 w-full" onClick={(e) => e.stopPropagation()}>
+                <QrCode text={payload} size={320} label="Your personal QR code, enlarged. Another cousin can scan it." />
+              </div>
+              <p className="mt-5 select-all font-mono text-base font-bold tracking-wider" onClick={(e) => e.stopPropagation()}>{readableCode(payload)}</p>
+              <p className="mt-1 text-sm text-muted">New code in {mm}:{ss}</p>
             </div>
-            <div className="mt-6 w-full max-w-[320px]" onClick={(e) => e.stopPropagation()}>
-              <QrCode text={payload} size={320} label="Your personal QR code, enlarged. Another cousin can scan it." />
-            </div>
-            <p className="mt-5 select-all text-center font-mono text-base font-bold tracking-wider" onClick={(e) => e.stopPropagation()}>{readableCode(payload)}</p>
-            <p className="mt-2 text-center text-sm text-muted">
-              New code in {mm}:{ss}
-            </p>
           </div>,
           document.body,
         )}

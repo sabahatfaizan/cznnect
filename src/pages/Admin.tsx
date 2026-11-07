@@ -7,7 +7,7 @@ import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
 import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_RELEASE_API, thisBuild, useAppSettings } from '../lib/appSettings'
 
-type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages'
+type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
 
@@ -63,6 +63,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [overview, setOverview] = useState<Overview | null>(null)
   const [messages, setMessages] = useState<Msg[]>([])
   const [messagesLoaded, setMessagesLoaded] = useState(false)
+  const [notifyText, setNotifyText] = useState('')
   const myBuild = thisBuild()
 
   // Fill the editable fields once, from the first load, so polling never overwrites what is being typed.
@@ -168,6 +169,23 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     setSection(next)
   }
 
+  async function sendNotify() {
+    const text = notifyText.trim()
+    if (!text || busy) return
+    if (!window.confirm('Send this notification to every phone in the family?')) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const { data, error } = await supabase.functions.invoke('send-push', { body: { body: text, family_id: family.id } })
+      if (data?.error) throw new Error(data.error)
+      if (error) throw error
+      setNotice(`Sent to ${data?.sent ?? 0} of ${data?.total ?? 0} phones.`)
+      setNotifyText('')
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not send the notification.')
+    } finally { setBusy(false) }
+  }
+
   function removeMessage(id: number) {
     if (!window.confirm('Delete this message for everyone?')) return
     void rpc('delete_family_message', { mid: id }, 'Message deleted.', () => { void loadMessages(); void loadOverview() })
@@ -184,15 +202,16 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
     { id: 'family', icon: 'family', title: 'Family', hint: `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
+    { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
   ]
   const current: Section | null = isOwner ? section : 'family'
   const currentTile = tiles.find((t) => t.id === current)
 
   const stat = (label: string, value: string | number | undefined) => (
-    <div className="card flex flex-col gap-1 py-3">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="text-xl font-bold">{value ?? '–'}</p>
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2.5">
+      <p className="text-lg font-bold leading-none">{value ?? '–'}</p>
+      <p className="truncate text-[11px] text-muted">{label}</p>
     </div>
   )
 
@@ -205,10 +224,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           <button type="button" className="btn btn-plain shrink-0" onClick={() => open(null)} aria-label="Back to admin overview"><Icon name="back" size={18} /></button>
         )}
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-bold">{currentTile && isOwner ? currentTile.title : 'Admin'}</h1>
-          <p className="mt-1 text-sm text-muted">
-            {isOwner ? 'Owner controls. Only your account can use this page.' : 'Moderator tools. Tap a member to see their role or remove them.'}
-          </p>
+          <h1 className="font-display text-xl font-bold leading-tight">{currentTile && isOwner ? currentTile.title : 'Admin'}</h1>
+          {!current && <p className="text-xs text-muted">{isOwner ? 'Owner controls' : 'Moderator tools: tap a member to see their role or remove them.'}</p>}
         </div>
       </div>
 
@@ -218,26 +235,57 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
       {isOwner && !current && (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="card flex divide-x divide-[var(--line)] !p-0">
             {stat('Members', overview?.members_count ?? members.length)}
-            {stat('Phones with notifications', overview?.devices_count)}
-            {stat('Messages today', overview?.messages_today)}
-            {stat('App status', settings?.maintenanceEnabled ? 'Maintenance' : 'Live')}
+            {stat('Phones', overview?.devices_count)}
+            {stat('Msgs today', overview?.messages_today)}
+            {stat('Status', settings?.maintenanceEnabled ? 'Down' : 'Live')}
           </div>
-          {!overview && <p className="text-xs text-muted">Live counts need supabase/20_admin_overview.sql run once in Supabase.</p>}
-          <div className="flex flex-col gap-3">
+          {!overview && <p className="-mt-2 text-xs text-muted">Live counts need supabase/20_admin_overview.sql run once in Supabase.</p>}
+
+          <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Quick controls">
+            <p className="eyebrow px-4 pb-2 pt-3">Quick controls</p>
+            {[
+              { label: 'Maintenance mode', on: Boolean(settings?.maintenanceEnabled), red: true, patch: (n: boolean) => ({ maintenance_enabled: n, maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }), done: (n: boolean) => (n ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.') },
+              { label: 'Announcement banner', on: Boolean(settings?.announcementEnabled), red: false, patch: (n: boolean) => ({ announcement_enabled: n, announcement_text: announceText.trim() }), done: (n: boolean) => (n ? 'Banner is live.' : 'Banner is hidden.') },
+              { label: 'Website sends visitors to the app', on: Boolean(settings?.apkDownloadEnabled), red: false, patch: (n: boolean) => ({ apk_download_enabled: n }), done: (n: boolean) => (n ? 'Website visitors now see the download page.' : 'The website lets people sign in again.') },
+            ].map((r) => (
+              <div key={r.label} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <p className="min-w-0 text-sm font-semibold">{r.label}</p>
+                <Switch on={r.on} onColor={r.red ? 'red' : 'green'} label={r.label} disabled={busy || !ready} onChange={(next) => {
+                  if (r.label === 'Announcement banner' && next && !announceText.trim()) { setNotice('Write the banner text first, under Manage, App status.'); return }
+                  void save(r.patch(next), r.done(next))
+                }} />
+              </div>
+            ))}
+          </section>
+
+          <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Manage">
+            <p className="eyebrow px-4 pb-2 pt-3">Manage</p>
             {tiles.map((t) => (
-              <button key={t.id} type="button" className="card flex w-full items-center gap-3 text-left" onClick={() => open(t.id)}>
-                <Icon name={t.icon} size={22} />
+              <button key={t.id} type="button" className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => open(t.id)}>
+                <Icon name={t.icon} size={20} />
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold">{t.title}</p>
-                  <p className="truncate text-sm text-muted">{t.hint}</p>
+                  <p className="text-sm font-bold leading-tight">{t.title}</p>
+                  <p className="truncate text-xs text-muted">{t.hint}</p>
                 </div>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
             ))}
-          </div>
+          </section>
         </>
+      )}
+
+      {isOwner && current === 'notify' && (
+        <section className="card flex flex-col gap-3">
+          <label className="label" htmlFor="admin-notify">Message to every phone</label>
+          <textarea id="admin-notify" className="input !min-h-20" maxLength={200} value={notifyText} onChange={(e) => setNotifyText(e.target.value)} placeholder="Type the notification" />
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Shows your name as the sender.</span>
+            <span>{notifyText.length}/200</span>
+          </div>
+          <button type="button" className="btn btn-primary !min-h-11 !text-sm" disabled={busy || !notifyText.trim()} onClick={() => void sendNotify()}>Send to everyone</button>
+        </section>
       )}
 
       {isOwner && current === 'app' && (

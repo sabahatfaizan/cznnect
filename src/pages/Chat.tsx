@@ -197,6 +197,8 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }
+  // Shrink back to one line after sending or cancelling an edit.
+  useEffect(() => { resize() }, [text])
 
   async function send() {
     if (editing) { void saveEdit(); return }
@@ -306,7 +308,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
         <div className="mx-auto flex max-w-xl items-end gap-2 px-3 py-2">
           <textarea
             ref={box}
-            className="input min-h-11 flex-1 resize-none !rounded-3xl py-2.5"
+            className="input !min-h-11 flex-1 !resize-none !rounded-3xl !py-2.5 leading-snug"
             rows={1}
             maxLength={MAX}
             value={text}

@@ -1,3 +1,4 @@
+import FamilyBell from './FamilyBell'
 import { useBackClose } from '../lib/backStack'
 import OfflineBanner from './OfflineBanner'
 import UpdatePrompt from './UpdatePrompt'
@@ -130,6 +131,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <span className="brand-rdr2-text">Cznnect</span>
           </div>
           </div>
+          <div className="flex items-center gap-2">
+          <FamilyBell familyId={family.id} userId={userId} chat={chatPulse} nextBirthday={upcoming[0] ?? null} onOpen={setTab} />
           <button
             type="button"
             className="menu-btn flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
@@ -144,6 +147,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          </div>
         </header>
         <OfflineBanner />
         <UpdatePrompt building={Boolean(appSettings?.buildInProgress)} />
@@ -240,7 +244,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
         </div>
         <div key={tab} className="screen-in">
           <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
-          {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} chat={chatPulse} nextBirthday={upcoming[0] ?? null} onOpen={setTab} />}
+          {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
           {tab === 'chat' && <Chat family={family} userId={userId} canDelete={familyRole === 'owner'} />}
           {tab === 'irl' && <Irl family={family} userId={userId} />}
           {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}

@@ -97,34 +97,36 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
         )}
       </header>
 
-      <section className="card relative flex flex-col gap-4 overflow-hidden" aria-label="Invite people">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24" style={{ background: 'linear-gradient(180deg, var(--accent-soft), transparent)' }} />
-        <h2 className="font-display relative text-base font-bold leading-tight">Invite cousins</h2>
+      <section className="card relative flex flex-col gap-3 overflow-hidden !p-4" aria-label="Invite people">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-16" style={{ background: 'linear-gradient(180deg, var(--accent-soft), transparent)' }} />
+        <div className="relative flex items-center justify-between gap-3">
+          <h2 className="font-display text-base font-bold leading-tight">Invite cousins</h2>
+          <p role="status" className="text-xs font-semibold text-muted">
+            {copied === 'code' ? 'Code copied' : copied === 'invite' ? 'Invite copied' : ''}
+          </p>
+        </div>
 
         <button
           type="button"
           onClick={() => void copy('code')}
           aria-label={`Invite code ${code.split('').join(' ')}. Tap to copy.`}
-          className="relative flex w-full items-center gap-3 rounded-[var(--radius-ctl)] py-1"
+          className="relative flex w-full items-center gap-3 rounded-[var(--radius-ctl)]"
         >
           {[code.slice(0, Math.ceil(code.length / 2)), code.slice(Math.ceil(code.length / 2))].map((group, gi) => (
             <span key={gi} className="flex min-w-0 flex-1 gap-1.5">
               {group.split('').map((ch, i) => (
-                <span key={i} aria-hidden="true" className="grid h-12 min-w-0 flex-1 place-items-center rounded-lg border border-line bg-surface-2 font-mono text-xl font-bold text-accent-text">
+                <span key={i} aria-hidden="true" className="grid h-11 min-w-0 flex-1 place-items-center rounded-lg border border-line bg-surface-2 font-mono text-xl font-bold text-accent-text">
                   {ch}
                 </span>
               ))}
             </span>
           ))}
         </button>
-        <p role="status" className="-mt-2 h-4 text-center text-xs font-semibold text-muted">
-          {copied === 'code' ? 'Code copied' : copied === 'invite' ? 'Invite copied' : ''}
-        </p>
 
-        <div className={`grid gap-3 ${canShare() ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <div className="flex gap-2">
           {canShare() && (
             <button
-              className="btn btn-primary !min-h-11 !p-0"
+              className="btn btn-primary !min-h-11 !w-14 shrink-0 !p-0"
               aria-label="Share invite"
               title="Share invite"
               onClick={() => shareText(inviteText, `Join ${family.name} on Cznnect`).catch(() => {})}
@@ -133,36 +135,35 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
             </button>
           )}
           <button
-            className={`btn !min-h-11 !p-0 ${canShare() ? 'btn-plain' : 'btn-primary'}`}
+            className={`btn !min-h-11 !w-14 shrink-0 !p-0 ${canShare() ? 'btn-plain' : 'btn-primary'}`}
             aria-label="Copy invite message"
             title="Copy invite message"
             onClick={() => void copy('invite')}
           >
             <Icon name={copied === 'invite' ? 'check' : 'copy'} size={22} />
           </button>
+          {isOwner && confirm !== 'newcode' && (
+            <button className="btn btn-plain !min-h-11 min-w-0 flex-1 !px-3 !text-sm" onClick={() => setConfirm('newcode')}>
+              Get a new code
+            </button>
+          )}
         </div>
 
-        {isOwner &&
-          (confirm === 'newcode' ? (
-            <div className="flex flex-col gap-3 rounded-[var(--radius-ctl)] border border-line bg-surface-2 p-3">
-              <p className="text-sm">
-                Make a new code? The old code stops working, so people you removed cannot rejoin with it.
-                Current members stay.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button className="btn btn-plain" onClick={() => setConfirm(null)}>
-                  Cancel
-                </button>
-                <button className="btn btn-primary" disabled={busy} onClick={newCode}>
-                  New code
-                </button>
-              </div>
+        {isOwner && confirm === 'newcode' && (
+          <div className="flex flex-col gap-2 rounded-[var(--radius-ctl)] border border-line bg-surface-2 p-3">
+            <p className="text-sm">
+              Make a new code? The old code stops working, so people you removed cannot rejoin with it. Current members stay.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary !min-h-11 !text-sm" disabled={busy} onClick={newCode}>
+                New code
+              </button>
             </div>
-          ) : (
-            <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => setConfirm('newcode')}>
-              Get a new invite code
-            </button>
-          ))}
+          </div>
+        )}
       </section>
 
       <section className="card flex flex-col gap-2">

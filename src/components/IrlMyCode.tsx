@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import QrCode from './QrCode'
 import { personPayload, readableCode } from '../lib/irl'
 import { myCode, type MyCode } from '../lib/irlApi'
+import { useBackClose } from '../lib/backStack'
 
 // Your personal QR code. It holds a random handle and a code that changes every 5 minutes,
 // so it never shows your name, email or account id, and an old screenshot stops working.
@@ -13,6 +14,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   const [error, setError] = useState('')
   const [big, setBig] = useState(false)
   const timer = useRef<number | undefined>(undefined)
+  useBackClose(() => setBig(false), big)
 
   const load = useCallback(async () => {
     window.clearTimeout(timer.current)
@@ -103,6 +105,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
             role="dialog"
             aria-modal="true"
             aria-label="Your link code"
+            onClick={() => setBig(false)}
             className="fixed inset-0 z-[100] flex flex-col items-center overflow-y-auto px-6 pb-8 pt-4"
             style={{
               background: 'color-mix(in srgb, var(--page) 84%, transparent)',
@@ -114,7 +117,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
             <div className="w-full">
               <button
                 type="button"
-                onClick={() => setBig(false)}
+                onClick={(e) => { e.stopPropagation(); setBig(false) }}
                 aria-label="Back"
                 className="flex h-12 w-12 items-center justify-center rounded-full"
                 style={{ background: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}
@@ -123,13 +126,13 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h2 className="font-display mt-6 text-4xl font-extrabold">Link code</h2>
-              <p className="mt-3 text-center text-muted">Scan with another device to link</p>
+              <h2 className="font-display mt-4 text-xl font-bold">Link code</h2>
+              <p className="mt-1 text-sm text-muted">Scan with another device to link</p>
             </div>
-            <div className="mt-8 w-full max-w-[360px]">
-              <QrCode text={payload} size={360} label="Your personal QR code, enlarged. Another cousin can scan it." />
+            <div className="mt-6 w-full max-w-[320px]" onClick={(e) => e.stopPropagation()}>
+              <QrCode text={payload} size={320} label="Your personal QR code, enlarged. Another cousin can scan it." />
             </div>
-            <p className="mt-6 select-all text-center font-mono text-lg font-bold tracking-wider">{readableCode(payload)}</p>
+            <p className="mt-5 select-all text-center font-mono text-base font-bold tracking-wider" onClick={(e) => e.stopPropagation()}>{readableCode(payload)}</p>
             <p className="mt-2 text-center text-sm text-muted">
               New code in {mm}:{ss}
             </p>

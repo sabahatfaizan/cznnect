@@ -121,7 +121,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
       <header className="convoy-hero">
         <span className="convoy-hero-icon" aria-hidden="true"><Icon name="irl" size={28} /></span>
         <div className="min-w-0">
-          <h1 className="convoy-title font-display text-2xl font-extrabold">Convoy</h1>
+          <h1 className="convoy-title font-display text-xl font-bold">Convoy</h1>
         </div>
       </header>
 
@@ -181,7 +181,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           <details className="card expander" aria-label="How points work">
             <summary>
-              <span className="font-display text-lg font-bold">How points work</span>
+              <span className="font-display text-base font-bold">How points work</span>
               <span aria-hidden="true" className="expander-chevron">›</span>
             </summary>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">

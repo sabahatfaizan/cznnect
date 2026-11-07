@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useBackClose } from '../lib/backStack'
 
 // A panel that slides up from the bottom, over the page. Closes on Escape or a tap outside.
 export default function Sheet({
@@ -14,6 +15,7 @@ export default function Sheet({
   // Keep the newest onClose without re-running the effect below, which would steal focus.
   const close = useRef(onClose)
   close.current = onClose
+  useBackClose(onClose)
 
   useEffect(() => {
     const before = document.body.style.overflow

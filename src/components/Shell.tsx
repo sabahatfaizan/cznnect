@@ -1,3 +1,4 @@
+import { useBackClose } from '../lib/backStack'
 import OfflineBanner from './OfflineBanner'
 import UpdatePrompt from './UpdatePrompt'
 import { useEffect, useRef, useState } from 'react'
@@ -79,6 +80,9 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
   }, [bday.loaded, bday.people])
   const current: Tab = tab
+  // Android Back: close the menu first, then return to Home from any other screen. Only Home lets Back leave the app.
+  useBackClose(() => setMenuOpen(false), menuOpen)
+  useBackClose(() => setTab('home'), tab !== 'home')
   const [musicUnlocked, setMusicUnlocked] = useState(false)
   const holdTimer = useRef<number | undefined>(undefined)
   const heldOpen = useRef(false)

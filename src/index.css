@@ -1741,3 +1741,55 @@ input, textarea, select, [contenteditable='true'], a[href], .selectable {
 .avatar-pick { transition: transform 0.2s cubic-bezier(.34, 1.5, .64, 1); }
 .avatar-pick:active { transform: scale(0.92); }
 @media (prefers-reduced-motion: reduce) { .avatar-pick { transition: none; } }
+
+/* Convoy, Pixel style (Material 3 tonal look). Only the Light and Dark themes; the special themes keep their own design. */
+:root[data-theme="light"] .convoy-pixel,
+:root[data-theme="dark"] .convoy-pixel {
+  gap: 1rem;
+}
+:root[data-theme="light"] .convoy-pixel .convoy-hero,
+:root[data-theme="dark"] .convoy-pixel .convoy-hero {
+  border: 0;
+  background: none;
+  padding: 0.5rem 0.25rem 0;
+}
+:root[data-theme="light"] .convoy-pixel .convoy-hero-icon,
+:root[data-theme="dark"] .convoy-pixel .convoy-hero-icon {
+  display: none;
+}
+:root[data-theme="light"] .convoy-pixel .convoy-title,
+:root[data-theme="dark"] .convoy-pixel .convoy-title {
+  font-size: 2.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+:root[data-theme="light"] .convoy-pixel .card,
+:root[data-theme="dark"] .convoy-pixel .card {
+  border: 0;
+  box-shadow: none;
+  border-radius: 32px;
+  background: var(--surface-2);
+  padding: 1.5rem;
+}
+:root[data-theme="light"] .convoy-pixel .eyebrow,
+:root[data-theme="dark"] .convoy-pixel .eyebrow {
+  display: none;
+}
+:root[data-theme="light"] .convoy-pixel .btn,
+:root[data-theme="dark"] .convoy-pixel .btn {
+  min-height: 3.5rem;
+  border-radius: 28px;
+  border: 0;
+  font-weight: 600;
+}
+:root[data-theme="light"] .convoy-pixel .btn-plain,
+:root[data-theme="dark"] .convoy-pixel .btn-plain {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+:root[data-theme="light"] .convoy-pixel .expander,
+:root[data-theme="dark"] .convoy-pixel .expander {
+  border-radius: 24px;
+  padding-inline: 1.5rem;
+}

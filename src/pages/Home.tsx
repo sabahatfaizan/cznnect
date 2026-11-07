@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import { appUrl, canShare, shareText } from '../lib/native'
 import Avatar from '../components/Avatar'
 import { shownName } from '../lib/avatars'
+import { Icon } from '../components/Icons'
 import type { Family, Member } from '../types'
 
 type Contact = { user_id: string; phone: string | null; contact_email: string | null }
@@ -18,7 +19,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   // Only rows people chose to share come back; row-level security hides the rest.
   const [contacts, setContacts] = useState<Map<string, Contact>>(new Map())
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<'code' | 'invite' | null>(null)
   // Which in-page confirmation is open: 'newcode' or 'leave'.
   const [confirm, setConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -47,11 +48,11 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   const code = family.invite_code.toUpperCase()
   const inviteText = `Join ${family.name} on Cznnect. Open ${appUrl()}, create an account, then enter this invite code: ${code}`
 
-  async function copy() {
+  async function copy(what: 'code' | 'invite') {
     try {
-      await navigator.clipboard.writeText(inviteText)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(what === 'code' ? code : inviteText)
+      setCopied(what)
+      setTimeout(() => setCopied(null), 2000)
     } catch {
       // The code is selectable on screen, so copying by hand still works.
     }
@@ -77,22 +78,68 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-2xl font-extrabold leading-tight">{family.name}</h1>
+      <header className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="eyebrow">Your family</p>
+          <h1 className="font-display mt-0.5 text-xl font-extrabold leading-tight">{family.name}</h1>
+        </div>
+        {members.length > 0 && (
+          <div className="flex shrink-0 items-center gap-2" aria-label={`${members.length} members`}>
+            <ul className="flex -space-x-2">
+              {members.slice(0, 4).map((m) => (
+                <li key={m.user_id} className="rounded-full ring-2 ring-[var(--page)]">
+                  <Avatar value={m.profiles?.avatar} name={shownName(m.profiles)} size={28} />
+                </li>
+              ))}
+            </ul>
+            {members.length > 4 && <span className="text-xs font-bold text-muted">+{members.length - 4}</span>}
+          </div>
+        )}
       </header>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-display text-lg font-bold">Invite people</h2>
-        <p className="select-all rounded-[var(--radius-ctl)] border border-dashed border-line bg-surface-2 py-3 text-center font-mono text-2xl font-semibold tracking-[0.25em] text-accent-text">
-          {code}
+      <section className="card relative flex flex-col gap-4 overflow-hidden" aria-label="Invite people">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24" style={{ background: 'linear-gradient(180deg, var(--accent-soft), transparent)' }} />
+        <div className="relative flex items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-accent-ink"><Icon name="plus" size={20} /></span>
+          <div className="min-w-0">
+            <h2 className="font-display text-base font-bold leading-tight">Invite cousins</h2>
+            <p className="text-sm text-muted">They enter this code after making an account.</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void copy('code')}
+          aria-label={`Invite code ${code.split('').join(' ')}. Tap to copy.`}
+          className="relative flex w-full items-center gap-3 rounded-[var(--radius-ctl)] py-1"
+        >
+          {[code.slice(0, Math.ceil(code.length / 2)), code.slice(Math.ceil(code.length / 2))].map((group, gi) => (
+            <span key={gi} className="flex min-w-0 flex-1 gap-1.5">
+              {group.split('').map((ch, i) => (
+                <span key={i} aria-hidden="true" className="grid h-12 min-w-0 flex-1 place-items-center rounded-lg border border-line bg-surface-2 font-mono text-xl font-bold text-accent-text">
+                  {ch}
+                </span>
+              ))}
+            </span>
+          ))}
+        </button>
+        <p role="status" className="-mt-2 text-center text-xs font-semibold text-muted">
+          {copied === 'code' ? 'Code copied' : 'Tap the code to copy it'}
         </p>
+
         <div className="grid grid-cols-2 gap-3">
-          <button className="btn btn-primary" onClick={copy}>
-            {copied ? 'Copied' : 'Copy invite'}
-          </button>
-          {canShare() && (
-            <button className="btn btn-plain" onClick={() => shareText(inviteText, `Join ${family.name} on Cznnect`).catch(() => {})}>
-              Share
+          {canShare() ? (
+            <>
+              <button className="btn btn-primary !min-h-11 !text-sm" onClick={() => shareText(inviteText, `Join ${family.name} on Cznnect`).catch(() => {})}>
+                Share invite
+              </button>
+              <button className="btn btn-plain !min-h-11 !text-sm" onClick={() => void copy('invite')}>
+                {copied === 'invite' ? 'Copied' : 'Copy message'}
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-primary col-span-2 !min-h-11 !text-sm" onClick={() => void copy('invite')}>
+              {copied === 'invite' ? 'Copied' : 'Copy invite message'}
             </button>
           )}
         </div>
@@ -121,7 +168,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
       </section>
 
       <section className="card flex flex-col gap-2">
-        <h2 className="font-display text-lg font-bold">
+        <h2 className="font-display text-base font-bold">
           Members {members.length > 0 && <span className="text-muted">({members.length})</span>}
         </h2>
         {error && (

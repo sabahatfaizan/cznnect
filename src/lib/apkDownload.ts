@@ -10,6 +10,8 @@ export type ApkState = { phase: ApkPhase; percent: number | null; message: strin
 const IDLE: ApkState = { phase: 'idle', percent: null, message: '', id: null }
 const POLL_MS = 1000
 const GIVE_UP_MS = 15 * 60_000
+// A download that has not moved a single byte for this long is stuck (the usual "frozen at 99%"): the browser takes over.
+const STALL_MS = 30_000
 
 // Android's DownloadManager error codes, in words.
 export function failureText(reason: number | undefined): string {
@@ -61,6 +63,8 @@ export function useApkDownload() {
     const myId = id
     const began = Date.now()
     let unknowns = 0
+    let lastBytes = -1
+    let lastMoved = Date.now()
     set({ phase: 'downloading', percent: 0, message: 'Downloading…', id: myId })
     timer.current = window.setInterval(async () => {
       try {
@@ -75,6 +79,13 @@ export function useApkDownload() {
         } else if (s.status === 'paused' || s.status === 'pending') {
           set({ phase: 'waiting', percent: null, message: 'Waiting for a connection…', id: myId })
         } else if (s.status === 'running') {
+          if ((s.downloaded ?? 0) !== lastBytes) { lastBytes = s.downloaded ?? 0; lastMoved = Date.now() }
+          else if (Date.now() - lastMoved > STALL_MS) {
+            stop()
+            set({ phase: 'failed', percent: null, message: 'The download got stuck. Opening your browser to download it instead.', id: myId })
+            await openInBrowser(url)
+            return
+          }
           const pct = s.total && s.total > 0 ? Math.min(99, Math.round(((s.downloaded ?? 0) / s.total) * 100)) : null
           set({ phase: 'downloading', percent: pct, message: pct === null ? 'Downloading…' : `Downloading… ${pct}%`, id: myId })
         }

@@ -475,6 +475,17 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
       {isOwner && current === 'updates' && (
         <section className="card flex flex-col gap-3">
+                <p className="eyebrow">Tell Android users an update is ready</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <p><span className="text-muted">Latest build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
+                  <p><span className="text-muted">Announced now</span><br /><b>{settings && settings.announcedBuild > 0 ? `build ${settings.announcedBuild}` : 'nothing'}</b></p>
+                </div>
+                <p className="text-sm text-muted">Nobody sees the update card until you announce it. People on older builds stay on them.</p>
+                <button type="button" className="btn btn-primary" disabled={busy || !ready || !latestBuild || settings?.announcedBuild === latestBuild} onClick={() => latestBuild && void save({ announced_build: latestBuild }, `Build ${latestBuild} is announced. Older apps now see the update card.`)}>
+                  {latestBuild ? `Announce build ${latestBuild}` : 'Latest build unknown'}
+                </button>
+                <button type="button" className="btn btn-plain" disabled={busy || !ready || !settings || settings.announcedBuild === 0} onClick={() => void save({ announced_build: 0 }, 'No update is announced. Everyone stays on their build.')}>Hide the update card</button>
+                <hr className="border-line" />
                 <p className="eyebrow">Force old Android apps to update</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <p><span className="text-muted">Latest app build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>

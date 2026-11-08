@@ -29,6 +29,8 @@ export type AppSettings = {
   minBuild: number
   /** Every new app build automatically becomes the required build while forced updates are on. */
   autoRaiseMinBuild: boolean
+  /** The newest build the owner has chosen to announce. Older Android apps are offered it; 0 means no update is announced. */
+  announcedBuild: number
   /** A new app build is being published right now. */
   buildInProgress: boolean
 }
@@ -37,6 +39,7 @@ export type AppSettings = {
 export function parseSettings(row: Record<string, unknown> | null | undefined): AppSettings {
   const r = row ?? {}
   const min = Number(r.min_build)
+  const ann = Number(r.announced_build)
   return {
     maintenanceEnabled: Boolean(r.maintenance_enabled),
     maintenanceMessage: (typeof r.maintenance_message === 'string' && r.maintenance_message) || DEFAULT_MAINTENANCE_MESSAGE,
@@ -49,6 +52,7 @@ export function parseSettings(row: Record<string, unknown> | null | undefined): 
     announcementText: typeof r.announcement_text === 'string' ? r.announcement_text : '',
     minBuild: Number.isFinite(min) && min > 0 ? Math.floor(min) : 0,
     autoRaiseMinBuild: Boolean(r.auto_raise_min_build),
+    announcedBuild: Number.isFinite(ann) && ann > 0 ? Math.floor(ann) : 0,
     buildInProgress: isBuildActive(r.build_in_progress, r.build_started_at),
   }
 }

@@ -152,7 +152,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </div>
         </header>
         <OfflineBanner />
-        <UpdatePrompt building={Boolean(appSettings?.buildInProgress)} />
+        <UpdatePrompt building={Boolean(appSettings?.buildInProgress)} announcedBuild={appSettings?.announcedBuild ?? 0} />
         {appSettings?.announcementEnabled && appSettings.announcementText.trim() && (
           <p role="status" className="card mb-4 text-sm font-semibold">{appSettings.announcementText}</p>
         )}

@@ -35,7 +35,9 @@ function load(): Item[] {
   } catch { return [] }
 }
 
-export default function YouTubeLinks({ onStart }: { onStart: () => void }) {
+export type NowPlaying = { key: string; id: string; kind: 'video' | 'list'; title: string }
+
+export default function YouTubeLinks({ onStart, onNow, halt }: { onStart: () => void; onNow: (n: NowPlaying | null) => void; halt: number }) {
   const [items, setItems] = useState<Item[]>(load)
   const [text, setText] = useState('')
   const [error, setError] = useState('')
@@ -44,6 +46,9 @@ export default function YouTubeLinks({ onStart }: { onStart: () => void }) {
   useEffect(() => {
     try { localStorage.setItem(KEY, JSON.stringify(items)) } catch { /* the list just is not remembered */ }
   }, [items])
+
+  // Playing a song from the phone stops the YouTube player.
+  useEffect(() => { setPlaying(null) }, [halt])
 
   async function add() {
     const p = parse(text)
@@ -70,6 +75,14 @@ export default function YouTubeLinks({ onStart }: { onStart: () => void }) {
   }
 
   const now = items.find((i) => `${i.kind}:${i.id}` === playing)
+  const nowKey = now ? `${now.kind}:${now.id}` : ''
+  const nowTitle = now?.title ?? ''
+  const nowId = now?.id ?? ''
+  const nowKind = now?.kind ?? 'video'
+  // Tells the page (and Listen together) which video is playing, or that none is.
+  useEffect(() => {
+    onNow(nowKey ? { key: nowKey, id: nowId, kind: nowKind, title: nowTitle } : null)
+  }, [nowKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const src = now
     ? now.kind === 'list'
       ? `https://www.youtube-nocookie.com/embed/videoseries?list=${now.id}&playsinline=1&autoplay=1`

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import ListenTogether from '../components/ListenTogether'
-import YouTubeLinks from '../components/YouTubeLinks'
+import YouTubeLinks, { type NowPlaying } from '../components/YouTubeLinks'
 
 type Track = { id: string; name: string; url: string }
 
@@ -30,6 +30,8 @@ export default function Music() {
   const [duration, setDuration] = useState(0)
   const [shuffle, setShuffle] = useState(false)
   const [repeat, setRepeat] = useState(false)
+  const [yt, setYt] = useState<NowPlaying | null>(null)
+  const [halt, setHalt] = useState(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const tracksRef = useRef<Track[]>([])
   tracksRef.current = tracks
@@ -97,7 +99,7 @@ export default function Music() {
 
   return (
     <div className="space-y-5">
-      <audio ref={audioRef} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={onEnded}
+      <audio ref={audioRef} onPlay={() => { setPlaying(true); setHalt((h) => h + 1) }} onPause={() => setPlaying(false)} onEnded={onEnded}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 
       <div className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
@@ -136,9 +138,9 @@ export default function Music() {
         <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
       </label>
 
-      <YouTubeLinks onStart={() => audioRef.current?.pause()} />
+      <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={setYt} halt={halt} />
 
-      <ListenTogether getAudio={() => audioRef.current} current={current} />
+      <ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} />
 
       {tracks.length === 0 ? (
         <p className="text-center text-xs text-muted">Songs stay on this device and are cleared when you close the app.</p>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
+import type { NowPlaying } from './YouTubeLinks'
 
 // "Listen together": one phone hosts a song, the others join with a 4-letter code and hear the same song in sync.
 // The song travels straight from the host's phone to each listener (WebRTC), nothing is uploaded to a server, and
@@ -8,7 +9,7 @@ import { supabase } from '../supabase'
 // messages between the phones.
 
 type Track = { id: string; name: string; url: string }
-type Msg = { to?: string; from: string; type: string; sdp?: RTCSessionDescriptionInit; ice?: RTCIceCandidateInit; st?: SyncState }
+type Msg = { to?: string; from: string; type: string; sdp?: RTCSessionDescriptionInit; ice?: RTCIceCandidateInit; st?: SyncState; yt?: NowPlaying | null }
 type SyncState = { track: string; playing: boolean; pos: number }
 
 const ICE: RTCConfiguration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
@@ -19,7 +20,7 @@ const newId = () => Math.random().toString(36).slice(2, 10)
 
 type Mode = 'idle' | 'host' | 'guest'
 
-export default function ListenTogether({ getAudio, current }: { getAudio: () => HTMLAudioElement | null; current: Track | undefined }) {
+export default function ListenTogether({ getAudio, current, yt }: { getAudio: () => HTMLAudioElement | null; current: Track | undefined; yt: NowPlaying | null }) {
   const [mode, setMode] = useState<Mode>('idle')
   const [code, setCode] = useState('')
   const [typed, setTyped] = useState('')
@@ -29,6 +30,7 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
   const [title, setTitle] = useState('')
   const [needTap, setNeedTap] = useState(false)
   const [open, setOpen] = useState(false)
+  const [guestYt, setGuestYt] = useState<NowPlaying | null>(null)
 
   const me = useRef(newId())
   const channel = useRef<RealtimeChannel | null>(null)
@@ -36,7 +38,11 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
   const modeRef = useRef<Mode>('idle')
   const currentRef = useRef(current)
   currentRef.current = current
+  const ytRef = useRef(yt)
+  ytRef.current = yt
   const guestAudio = useRef<HTMLAudioElement | null>(null)
+  const guestYtRef = useRef<NowPlaying | null>(null)
+  guestYtRef.current = guestYt
   const guestUrl = useRef('')
   const guestTrack = useRef('')
   const pending = useRef<SyncState | null>(null)
@@ -56,7 +62,7 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
     guestUrl.current = ''
     guestTrack.current = ''
     pending.current = null
-    setMode('idle'); setCode(''); setListeners(0); setStatus(''); setProgress(0); setTitle(''); setNeedTap(false)
+    setMode('idle'); setCode(''); setListeners(0); setStatus(''); setProgress(0); setTitle(''); setNeedTap(false); setGuestYt(null)
   }, [])
 
   useEffect(() => stop, [stop])
@@ -89,6 +95,11 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
     if (st && modeRef.current === 'host') send({ type: 'state', st })
   }, [hostState, send])
 
+  // The host's YouTube video (or none) goes to everyone as a small message: each phone plays it in its own player.
+  const sendYt = useCallback(() => {
+    if (modeRef.current === 'host') send({ type: 'yt', yt: ytRef.current })
+  }, [send])
+
   const addGuest = useCallback(async (guest: string) => {
     peers.current.get(guest)?.pc.close()
     const pc = new RTCPeerConnection(ICE)
@@ -99,22 +110,23 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
       setListeners([...peers.current.values()].filter((p) => p.dc?.readyState === 'open').length)
       void sendFile(dc)
       broadcastState()
+      sendYt()
     }
     dc.onclose = () => setListeners([...peers.current.values()].filter((p) => p.dc?.readyState === 'open').length)
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
     send({ to: guest, type: 'offer', sdp: offer })
-  }, [broadcastState, send, sendFile])
+  }, [broadcastState, send, sendFile, sendYt])
 
   const startHost = () => {
-    if (!current) return
+    if (!current && !yt) return
     const c = newCode()
     modeRef.current = 'host'
     setMode('host'); setCode(c); setStatus('Waiting for friends to join…')
     const ch = supabase.channel(`listen-${c}`, { config: { broadcast: { self: false } } })
     ch.on('broadcast', { event: 'm' }, ({ payload }) => {
       const m = payload as Msg
-      if (m.type === 'hello') void addGuest(m.from)
+      if (m.type === 'hello') { void addGuest(m.from); window.setTimeout(sendYt, 1500) }
       else if (m.to === me.current && m.type === 'answer' && m.sdp) void peers.current.get(m.from)?.pc.setRemoteDescription(m.sdp)
       else if (m.to === me.current && m.type === 'ice' && m.ice) void peers.current.get(m.from)?.pc.addIceCandidate(m.ice).catch(() => {})
     })
@@ -139,12 +151,20 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
     }
   }, [mode, getAudio, broadcastState])
 
+  // A different YouTube video on the host (or back to a song): tell everyone, and repeat now and then for late joiners.
+  useEffect(() => {
+    if (mode !== 'host') return
+    sendYt()
+    const beat = window.setInterval(sendYt, 5000)
+    return () => window.clearInterval(beat)
+  }, [mode, yt?.key, sendYt])
+
   // A different song on the host: send it to everyone.
   useEffect(() => {
-    if (mode !== 'host' || !current) return
+    if (mode !== 'host' || !current || yt) return
     peers.current.forEach((p) => { if (p.dc) void sendFile(p.dc) })
     broadcastState()
-  }, [mode, current?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, current?.id, yt?.key]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- guest ----------
 
@@ -173,7 +193,13 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
     let got = 0
     ch.on('broadcast', { event: 'm' }, async ({ payload }) => {
       const m = payload as Msg
-      if (m.type === 'state' && m.st) { applyState(m.st); return }
+      if (m.type === 'yt') {
+        const next = m.yt ?? null
+        setGuestYt((old) => (old?.key === next?.key ? old : next))
+        if (next) { guestAudio.current?.pause(); setStatus('Listening together') }
+        return
+      }
+      if (m.type === 'state' && m.st) { if (!guestYtRef.current) applyState(m.st); return }
       if (m.to !== me.current) return
       if (m.type === 'offer' && m.sdp) {
         pc?.close()
@@ -241,14 +267,28 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
     return (
       <div className={`${box} text-center`}>
         <div className="text-xs font-semibold uppercase tracking-widest text-muted">Room {code}</div>
-        <div className="mt-1 truncate text-lg font-bold">{title || 'Waiting for the host…'}</div>
-        {progress > 0 && progress < 1 && (
+        <div className="mt-1 truncate text-lg font-bold">{guestYt ? guestYt.title : title || 'Waiting for the host…'}</div>
+        {guestYt && (
+          <div className="mt-3 overflow-hidden rounded-xl">
+            <iframe
+              key={guestYt.key}
+              title={guestYt.title}
+              src={guestYt.kind === 'list'
+                ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(guestYt.id)}&playsinline=1&autoplay=1`
+                : `https://www.youtube-nocookie.com/embed/${encodeURIComponent(guestYt.id)}?playsinline=1&autoplay=1`}
+              className="aspect-video w-full border-0"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )}
+        {!guestYt && progress > 0 && progress < 1 && (
           <div className="mx-auto mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[var(--line)]">
             <div className="h-full bg-[var(--accent)]" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
         )}
         <p className="mt-2 text-sm text-muted">{status}</p>
-        {needTap && <button className="btn btn-primary mt-3" onClick={tapPlay}>Tap to play</button>}
+        {needTap && !guestYt && <button className="btn btn-primary mt-3" onClick={tapPlay}>Tap to play</button>}
         <div><button className="btn btn-plain mt-3" onClick={stop}>Leave</button></div>
       </div>
     )
@@ -262,8 +302,8 @@ export default function ListenTogether({ getAudio, current }: { getAudio: () => 
       {open && (
         <div className="mt-2">
           <p className="mb-3 text-sm text-muted">Play a song on everyone’s phone at once. Nothing is saved or uploaded.</p>
-          <button className="btn btn-primary w-full" disabled={!current} onClick={startHost}>
-            {current ? `Host “${current.name}”` : 'Pick a song to host'}
+          <button className="btn btn-primary w-full" disabled={!current && !yt} onClick={startHost}>
+            {yt ? `Host “${yt.title}”` : current ? `Host “${current.name}”` : 'Pick a song or video to host'}
           </button>
           <div className="mt-3 flex gap-2">
             <input className="input !w-28 text-center font-bold uppercase tracking-widest" maxLength={4} placeholder="CODE" value={typed}

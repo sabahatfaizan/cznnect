@@ -186,7 +186,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             aria-label="Main menu"
             aria-modal="true"
             role="dialog"
-            className={`menu-panel absolute right-2 top-2 flex h-[calc(100%-1rem)] w-[min(56vw,16.8rem)] flex-col overflow-y-auto rounded-3xl border border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`menu-panel absolute right-2 top-2 flex h-[calc(100%-1rem)] w-[min(70vw,24rem)] flex-col overflow-y-auto rounded-3xl border border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="mb-5 flex items-center justify-between">
               <div>

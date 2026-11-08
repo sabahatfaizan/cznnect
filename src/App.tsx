@@ -142,6 +142,7 @@ function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, building 
           <button type="button" className="shrink-0 cursor-default rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" aria-label="Cznnect logo" onClick={handleLogoTap}>
             <Logo big />
           </button>
+          <span aria-hidden="true" className="h-12 w-px shrink-0 bg-line" />
           <div className="min-w-0">
             <h1 className="font-display text-xl font-bold leading-tight">Cznnect</h1>
             <p className="text-sm text-muted">{title}</p>
@@ -230,7 +231,7 @@ function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, building 
         )}
       </div>
 
-      <p className="pt-6 text-center text-xs tabular-nums text-muted">
+      <p className="pt-6 pb-[max(3.5rem,calc(env(safe-area-inset-bottom)+1rem))] text-center text-xs tabular-nums text-muted">
         {requiredBuild ? `Your build ${current ?? 'unknown'} · Required build ${requiredBuild}` : current ? `Build ${current}` : ''}
       </p>
     </div>

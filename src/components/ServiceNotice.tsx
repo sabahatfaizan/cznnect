@@ -61,6 +61,7 @@ export function InstallHelp({ onClose, focus = 'android' }: { onClose: () => voi
 export function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, building = false, showApk = false, showIos = false, installLabel = 'Install', title = 'Cznnect is getting an update', preview = false, reassurance }: { message: string; requiredBuild?: number; onUnlock?: () => void; onContinue?: () => void; building?: boolean; showApk?: boolean; showIos?: boolean; installLabel?: string; title?: string; preview?: boolean; reassurance?: string }) {
   const [help, setHelp] = useState<null | 'android' | 'ios'>(null)
   const apk = useApkDownload()
+  const [webLink, setWebLink] = useState<string | null>(null)
   // An iPhone cannot install the Android file and an Android phone has no use for the iPhone steps, so each phone
   // only sees the card that can work for it. Computers see both.
   const device = deviceKind(typeof navigator === 'undefined' ? '' : navigator.userAgent)
@@ -129,7 +130,7 @@ export function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, bu
             {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
             onClick={(e) => {
               if (preview) { e.preventDefault(); return }
-              if (!isNativeApp()) return
+              if (!isNativeApp()) { setWebLink(LATEST_APK_URL); return }
               // Inside the app, Android's download manager does the download; the plain link is the fallback.
               e.preventDefault()
               void apk.start(LATEST_APK_URL)
@@ -139,13 +140,19 @@ export function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, bu
           </a>
         )}
         {androidCard && <ApkStatus apk={apk} />}
+        {androidCard && webLink && !isNativeApp() && (
+          <div role="status" className="flex flex-col gap-2 rounded-xl border border-line p-3 text-sm">
+            <p>The download should start in your browser. If nothing happens, copy this address and open it in Chrome:</p>
+            <p className="select-all break-all font-mono text-xs">{webLink}</p>
+          </div>
+        )}
         {androidCard && !building && apk.state.phase === 'failed' && (
           <a
             className="mx-auto text-sm text-muted underline underline-offset-4"
             href={APK_BACKUP_URL}
             {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
             onClick={(e) => {
-              if (!isNativeApp()) return
+              if (!isNativeApp()) { setWebLink(APK_BACKUP_URL); return }
               e.preventDefault()
               void apk.start(APK_BACKUP_URL)
             }}

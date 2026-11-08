@@ -1780,3 +1780,7 @@ input, textarea, select, [contenteditable='true'], a[href], .selectable {
 @keyframes scan-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @keyframes scan-sweep { from { top: 4%; } to { top: calc(96% - 3px); } }
 @keyframes step-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.progress-indeterminate { animation: progress-slide 1.2s ease-in-out infinite alternate; }
+@keyframes progress-slide { from { margin-left: 0; } to { margin-left: 66%; } }
+@media (prefers-reduced-motion: reduce) { .progress-indeterminate { animation: none; margin-left: 33%; } }

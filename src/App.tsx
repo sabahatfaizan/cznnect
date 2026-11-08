@@ -98,7 +98,7 @@ function InstallHelp({ onClose, focus = 'android' }: { onClose: () => void; focu
   )
 }
 
-function ServiceNotice({ message, detail, onUnlock, onContinue, building = false, showApk = false, showIos = false, androidLabel = 'Download the new app', title = 'Cznnect is getting an update' }: { message: string; detail?: string; onUnlock?: () => void; onContinue?: () => void; building?: boolean; showApk?: boolean; showIos?: boolean; androidLabel?: string; title?: string }) {
+function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, building = false, showApk = false, showIos = false, installLabel = 'Install', title = 'Cznnect is getting an update' }: { message: string; requiredBuild?: number; onUnlock?: () => void; onContinue?: () => void; building?: boolean; showApk?: boolean; showIos?: boolean; installLabel?: string; title?: string }) {
   const [help, setHelp] = useState<null | 'android' | 'ios'>(null)
   const apk = useApkDownload()
   // An iPhone cannot install the Android file and an Android phone has no use for the iPhone steps, so each phone
@@ -132,85 +132,83 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, building = false
 
   if (help) return <InstallHelp focus={help} onClose={() => setHelp(null)} />
 
+  const started = apk.state.phase !== 'idle' && apk.state.phase !== 'failed'
+  const current = thisBuild()
+
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-6 p-6">
-      <button type="button" className="mx-auto block cursor-default rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" aria-label="Cznnect logo" onClick={handleLogoTap}>
-        <Logo big />
-      </button>
-      <div className="card">
-        <h1 className="font-display text-2xl font-bold">{title}</h1>
-        <p className="mt-3 text-muted">{message}</p>
-        {detail && <p className="mt-2 text-sm font-bold tabular-nums">{detail}</p>}
-        {(androidCard || iosCard) && (
-          <div className="mt-5 flex flex-col gap-3">
-            {androidCard && building && (
-              <div role="status" aria-live="polite" className="flex items-center gap-4 rounded-2xl border border-line p-4 opacity-80">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text"><Icon name="info" size={24} /></span>
-                <span className="font-bold">New app is being prepared. Please wait a few minutes.</span>
-              </div>
-            )}
-            {androidCard && !building && (
-              <a
-                className="flex items-center gap-4 rounded-2xl border border-line p-4 no-underline transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-                href={LATEST_APK_URL}
-                {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
-                onClick={(e) => {
-                  if (!isNativeApp()) return
-                  // Inside the app, Android's download manager does the download; the plain link is the fallback.
-                  e.preventDefault()
-                  void apk.start(LATEST_APK_URL)
-                }}
-              >
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon name="download" size={24} /></span>
-                <span className="font-bold">{androidLabel}</span>
-              </a>
-            )}
-            {androidCard && !building && (
-              <a
-                className="mx-auto text-sm text-muted underline underline-offset-4"
-                href={APK_BACKUP_URL}
-                {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
-                onClick={(e) => {
-                  if (!isNativeApp()) return
-                  e.preventDefault()
-                  void apk.start(APK_BACKUP_URL)
-                }}
-              >
-                Download stuck? Use the backup link
-              </a>
-            )}
-            <ApkStatus apk={apk} />
-            {iosCard && (
-              <button
-                type="button"
-                onClick={() => setHelp('ios')}
-                className="flex items-center gap-4 rounded-2xl border border-line p-4 text-left transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-              >
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon name="phone" size={24} /></span>
-                <span className="font-bold">Install on iPhone</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setHelp(androidCard ? 'android' : 'ios')}
-              className="mx-auto flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-accent-text underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              <Icon name="info" size={16} />
-              Learn more
-            </button>
+    <div className="mx-auto flex min-h-full max-w-md flex-col p-6">
+      <div className="flex flex-1 flex-col justify-center gap-5">
+        <div className="flex items-center gap-4">
+          <button type="button" className="shrink-0 cursor-default rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" aria-label="Cznnect logo" onClick={handleLogoTap}>
+            <Logo big />
+          </button>
+          <div className="min-w-0">
+            <h1 className="font-display text-xl font-bold leading-tight">Cznnect</h1>
+            <p className="text-sm text-muted">{title}</p>
           </div>
+        </div>
+
+        <p className="text-sm text-muted">{message}</p>
+
+        {androidCard && building && (
+          <p role="status" className="text-sm font-semibold">The new app is being prepared. Please wait a few minutes.</p>
         )}
-        {onContinue && (
+
+        {androidCard && !building && !started && (
+          <a
+            className="btn btn-primary !min-h-12 w-full no-underline"
+            href={LATEST_APK_URL}
+            {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
+            onClick={(e) => {
+              if (!isNativeApp()) return
+              // Inside the app, Android's download manager does the download; the plain link is the fallback.
+              e.preventDefault()
+              void apk.start(LATEST_APK_URL)
+            }}
+          >
+            {installLabel}
+          </a>
+        )}
+        {androidCard && <ApkStatus apk={apk} />}
+        {androidCard && !building && apk.state.phase === 'failed' && (
+          <a
+            className="mx-auto text-sm text-muted underline underline-offset-4"
+            href={APK_BACKUP_URL}
+            {...(isNativeApp() ? {} : { target: '_blank', rel: 'noopener noreferrer', download: 'cznnect.apk' })}
+            onClick={(e) => {
+              if (!isNativeApp()) return
+              e.preventDefault()
+              void apk.start(APK_BACKUP_URL)
+            }}
+          >
+            Try the backup link
+          </a>
+        )}
+
+        {iosCard && (
+          <button type="button" className="btn btn-primary !min-h-12 w-full" onClick={() => setHelp('ios')}>
+            Add to Home Screen
+          </button>
+        )}
+
+        {(androidCard || iosCard) && !started && (
           <button
             type="button"
-            onClick={onContinue}
-            className="mt-5 w-full rounded-xl border border-line px-4 py-3 text-center font-semibold transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            onClick={() => setHelp(androidCard ? 'android' : 'ios')}
+            className="mx-auto rounded-lg px-2 py-1 text-sm text-muted underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
           >
+            Need help?
+          </button>
+        )}
+
+        {onContinue && !started && (
+          <button type="button" onClick={onContinue} className="btn btn-plain !min-h-11 w-full !text-sm">
             Continue on the web
           </button>
         )}
+
         {onUnlock && showPinUnlock && (
-          <form className="mt-5 flex flex-col gap-3" onSubmit={submitPin}>
+          <form className="flex flex-col gap-3" onSubmit={submitPin}>
             <label className="label" htmlFor="maintenance-pin">Have an access PIN?</label>
             <input
               id="maintenance-pin"
@@ -231,6 +229,10 @@ function ServiceNotice({ message, detail, onUnlock, onContinue, building = false
           </form>
         )}
       </div>
+
+      <p className="pt-6 text-center text-xs tabular-nums text-muted">
+        {requiredBuild ? `Your build ${current ?? 'unknown'} · Required build ${requiredBuild}` : current ? `Build ${current}` : ''}
+      </p>
     </div>
   )
 }
@@ -341,12 +343,12 @@ export default function App() {
   ) {
     return (
       <><ServiceNotice
-        title="Get the Cznnect app"
-        message="Cznnect works best as an app. Get it for your phone below, or carry on in your browser."
+        title="Get the app"
+        message="Cznnect works best as an app on your phone."
         showApk={maintenance.androidDownloadEnabled}
         building={maintenance.buildInProgress}
         showIos={maintenance.iosInstallEnabled}
-        androidLabel="Download for Android"
+        installLabel="Install"
         onContinue={maintenance.webContinueEnabled ? continueOnWeb : undefined}
         onUnlock={() => setPinUnlocked(true)}
       /><NetworkStatus /></>
@@ -356,7 +358,7 @@ export default function App() {
   // so the owner can always sign in there to change the required build. The database refuses old apps too
   // (supabase/10_enforce_min_build.sql).
   if (maintenance && mustUpdate({ minBuild: maintenance.minBuild, build: thisBuild(), native: isNativeApp() })) {
-    return <><ServiceNotice title="Update required" message={maintenance.buildInProgress ? "This version of Cznnect is out of date. The new version is being prepared, so please wait a few minutes and try again." : "This version of Cznnect is out of date. Download the new app to keep using it."} building={maintenance.buildInProgress} detail={`Your version: build ${thisBuild() ?? 'unknown'} · Required: build ${maintenance.minBuild}`} showApk /><NetworkStatus /></>
+    return <><ServiceNotice title="Update required" installLabel="Update" message={maintenance.buildInProgress ? "This version is out of date. The new version is being prepared, so please wait a few minutes and try again." : "This version is out of date. Update to keep using Cznnect."} building={maintenance.buildInProgress} requiredBuild={maintenance.minBuild} showApk /><NetworkStatus /></>
   }
   // On the website there is always a way to get the app from the sign-in screen, even after "Continue on the web".
   const canOfferApp = Boolean(

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import ListenTogether from '../components/ListenTogether'
+import YouTubeLinks from '../components/YouTubeLinks'
 
 type Track = { id: string; name: string; url: string }
 
@@ -134,6 +135,8 @@ export default function Music() {
         + Add songs from your phone
         <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
       </label>
+
+      <YouTubeLinks onStart={() => audioRef.current?.pause()} />
 
       <ListenTogether getAudio={() => audioRef.current} current={current} />
 

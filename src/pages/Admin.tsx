@@ -68,6 +68,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [messages, setMessages] = useState<Msg[]>([])
   const [messagesLoaded, setMessagesLoaded] = useState(false)
   const [notifyText, setNotifyText] = useState('')
+  const [notifyAll, setNotifyAll] = useState(false)
   const [preview, setPreview] = useState<Preview | null>(null)
   useBackClose(() => setPreview(null), preview !== null)
   const myBuild = thisBuild()
@@ -178,11 +179,11 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   async function sendNotify() {
     const text = notifyText.trim()
     if (!text || busy) return
-    if (!window.confirm('Send this notification to every phone in the family?')) return
+    if (!window.confirm(notifyAll ? 'Send this notification to EVERY phone that uses Cznnect, in all families?' : 'Send this notification to every phone in your family?')) return
     setBusy(true)
     setNotice('')
     try {
-      const { data, error } = await supabase.functions.invoke('send-push', { body: { body: text, family_id: family.id } })
+      const { data, error } = await supabase.functions.invoke('send-push', { body: { body: text, family_id: family.id, audience: notifyAll ? 'all' : 'family' } })
       if (data?.error) throw new Error(data.error)
       if (error) throw error
       setNotice(`Sent to ${data?.sent ?? 0} of ${data?.total ?? 0} phones.`)
@@ -305,10 +306,24 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
       {isOwner && current === 'notify' && (
         <section className="card flex flex-col gap-3">
-          <label className="label" htmlFor="admin-notify">Message to every phone</label>
+          <div role="radiogroup" aria-label="Who gets it" className="grid grid-cols-2 gap-1 rounded-xl border border-line p-1">
+            {([[false, 'My family'], [true, 'Everyone']] as Array<[boolean, string]>).map(([all, label]) => (
+              <button
+                key={label}
+                type="button"
+                role="radio"
+                aria-checked={notifyAll === all}
+                onClick={() => setNotifyAll(all)}
+                className={`rounded-lg py-2 text-sm font-bold transition ${notifyAll === all ? 'bg-accent text-accent-ink' : 'text-muted'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="label" htmlFor="admin-notify">{notifyAll ? 'Message to every phone using Cznnect' : 'Message to your family'}</label>
           <textarea id="admin-notify" className="input !min-h-20" maxLength={200} value={notifyText} onChange={(e) => setNotifyText(e.target.value)} placeholder="Type the notification" />
           <div className="flex items-center justify-between text-xs text-muted">
-            <span>Shows your name as the sender.</span>
+            <span>{notifyAll ? 'Shows as Cznnect. Not added to any chat.' : 'Shows your name and also appears in the family chat.'}</span>
             <span>{notifyText.length}/200</span>
           </div>
           <button type="button" className="btn btn-primary !min-h-11 !text-sm" disabled={busy || !notifyText.trim()} onClick={() => void sendNotify()}>Send to everyone</button>

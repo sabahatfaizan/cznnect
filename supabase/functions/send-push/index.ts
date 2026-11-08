@@ -4,6 +4,7 @@
 // Deploy: supabase functions deploy send-push
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const OWNER_EMAIL = 'faizanplayz11@gmail.com' // same as src/owner.ts
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-build',
@@ -54,11 +55,14 @@ Deno.serve(async (req) => {
     const me = u.user
     if (!me) return json({ error: 'Sign in first.' }, 401)
 
-    const { body, family_id } = await req.json()
+    const { body, family_id, audience } = await req.json()
+    // Only the owner can notify everyone who uses the app. Everyone else only ever reaches their own family.
+    const everyone = audience === 'all'
+    if (everyone && (me.email ?? '').toLowerCase() !== OWNER_EMAIL) return json({ error: 'Only the owner can notify everyone.' }, 403)
     const b = String(body ?? '').trim().slice(0, 200)
     if (!b) return json({ error: 'Type a message first.' }, 400)
 
-    const { data: mine } = await admin.from('family_members').select('family_id').eq('user_id', me.id).eq('family_id', String(family_id ?? '')).maybeSingle()
+    const { data: mine } = everyone ? { data: true } : await admin.from('family_members').select('family_id').eq('user_id', me.id).eq('family_id', String(family_id ?? '')).maybeSingle()
     if (!mine) return json({ error: 'You are not in this family.' }, 403)
 
     // A short gap between messages, so a stuck button cannot send the same thing twice.
@@ -72,10 +76,11 @@ Deno.serve(async (req) => {
     if ((lastHour ?? 0) >= 60) return json({ error: 'You have sent a lot of messages this hour. Try again a little later.' }, 429)
 
     const { data: prof } = await admin.from('profiles').select('display_name, nickname').eq('id', me.id).maybeSingle()
-    const t = (prof?.nickname?.trim() || prof?.display_name || 'Someone').slice(0, 40)
+    const t = everyone ? 'Cznnect' : (prof?.nickname?.trim() || prof?.display_name || 'Someone').slice(0, 40)
 
     // The message is saved first, so it shows up in the family chat even when notifications are not set up yet.
-    await admin.from('push_broadcasts').insert({ user_id: me.id, family_id, body: b })
+    // An app-wide notice is a notification only: it is not added to anyone's family chat.
+    if (!everyone) await admin.from('push_broadcasts').insert({ user_id: me.id, family_id, body: b })
 
     const saRaw = Deno.env.get('FCM_SERVICE_ACCOUNT')
     if (!saRaw) return json({ sent: 0, total: 0, note: 'Saved. Notifications are not set up on the server yet.' })
@@ -87,12 +92,16 @@ Deno.serve(async (req) => {
       return json({ sent: 0, total: 0, note: 'Saved. Could not reach Firebase to notify phones.' })
     }
 
-    // Everyone in the family except the sender.
-    const { data: members } = await admin.from('family_members').select('user_id').eq('family_id', family_id).neq('user_id', me.id)
-    const ids = (members ?? []).map((m) => m.user_id)
-    const { data: rows, error } = ids.length
-      ? await admin.from('push_tokens').select('token').in('user_id', ids)
-      : { data: [], error: null }
+    // The whole app for an owner notice, otherwise everyone in the family except the sender.
+    let rows: Array<{ token: string }> | null = null
+    let error: { message: string } | null = null
+    if (everyone) {
+      ;({ data: rows, error } = await admin.from('push_tokens').select('token').limit(5000))
+    } else {
+      const { data: members } = await admin.from('family_members').select('user_id').eq('family_id', family_id).neq('user_id', me.id)
+      const ids = (members ?? []).map((m) => m.user_id)
+      ;({ data: rows, error } = ids.length ? await admin.from('push_tokens').select('token').in('user_id', ids) : { data: [], error: null })
+    }
     if (error) return json({ error: error.message }, 500)
 
     let sent = 0

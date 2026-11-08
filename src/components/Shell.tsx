@@ -227,7 +227,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                   className="menu-item"
                   onClick={() => { setMenuOpen(false); setEntryMode('admin') }}
                 >
-                  <span className="menu-item-label"><Icon name="admin" size={22} />Switch to Administrator</span>
+                  <span className="menu-item-label"><Icon name="swap" size={22} />Switch to Administrator</span>
                   <span aria-hidden="true" className="menu-chevron">›</span>
                 </button>
               )}

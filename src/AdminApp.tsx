@@ -39,7 +39,7 @@ export default function AdminApp({ userId, live }: { userId: string; live: boole
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
-          <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-xs" onClick={() => setEntryMode('family')}>Family</button>
+          <button type="button" className="btn btn-plain !min-h-9 !w-11 !px-0" aria-label="Switch to Family" title="Switch to Family" onClick={() => setEntryMode('family')}><Icon name="swap" size={20} /></button>
           <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-xs" onClick={() => void signOut()}>Sign out</button>
         </div>
       </header>

@@ -1,8 +1,15 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group' | 'share' | 'copy' | 'check'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group' | 'share' | 'copy' | 'check' | 'swap'
 
 const PATHS: Record<IconName, ReactNode> = {
+  // Two arrows pointing opposite ways: switch between two views.
+  swap: (
+    <>
+      <path d="M3.5 8H12.5M21 16H11.5" />
+      <path d="M14 4.5l6 3.5-6 3.5zM10 12.5L4 16l6 3.5z" fill="currentColor" />
+    </>
+  ),
   search: (
     <>
       <circle cx="11" cy="11" r="6.5" />

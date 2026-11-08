@@ -103,14 +103,31 @@ export default function Music() {
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 
       <div className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
-        <div className="mx-auto grid aspect-square w-full max-w-[16rem] place-items-center overflow-hidden rounded-2xl text-[var(--accent-ink)]"
-          style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-text))', boxShadow: '0 12px 32px -12px var(--accent)' }}>
-          <div className={playing ? 'animate-pulse' : ''}><NoteI /></div>
-        </div>
+        {yt ? (
+          // A YouTube link plays right here, in the big player picture's place.
+          <div className="mx-auto w-full overflow-hidden rounded-2xl bg-black" style={{ boxShadow: '0 12px 32px -12px var(--accent)' }}>
+            <iframe
+              key={yt.key}
+              title={yt.title}
+              src={yt.kind === 'list'
+                ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(yt.id)}&playsinline=1&autoplay=1`
+                : `https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt.id)}?playsinline=1&autoplay=1`}
+              className="aspect-video w-full border-0"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
+        ) : (
+          <div className="mx-auto grid aspect-square w-full max-w-[16rem] place-items-center overflow-hidden rounded-2xl text-[var(--accent-ink)]"
+            style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-text))', boxShadow: '0 12px 32px -12px var(--accent)' }}>
+            <div className={playing ? 'animate-pulse' : ''}><NoteI /></div>
+          </div>
+        )}
 
         <div className="mt-5 text-center">
-          <div className="truncate text-lg font-bold">{current ? current.name : 'Nothing playing'}</div>
-          <div className="text-sm text-muted">{current ? `Song ${(index ?? 0) + 1} of ${tracks.length}` : 'Add some songs to begin'}</div>
+          <div className="truncate text-lg font-bold">{yt ? yt.title : current ? current.name : 'Nothing playing'}</div>
+          <div className="text-sm text-muted">{yt ? 'YouTube' : current ? `Song ${(index ?? 0) + 1} of ${tracks.length}` : 'Add some songs to begin'}</div>
         </div>
 
         <div className="mt-4">

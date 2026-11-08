@@ -83,12 +83,6 @@ export default function YouTubeLinks({ onStart, onNow, halt }: { onStart: () => 
   useEffect(() => {
     onNow(nowKey ? { key: nowKey, id: nowId, kind: nowKind, title: nowTitle } : null)
   }, [nowKey]) // eslint-disable-line react-hooks/exhaustive-deps
-  const src = now
-    ? now.kind === 'list'
-      ? `https://www.youtube-nocookie.com/embed/videoseries?list=${now.id}&playsinline=1&autoplay=1`
-      : `https://www.youtube-nocookie.com/embed/${now.id}?playsinline=1&autoplay=1`
-    : null
-
   return (
     <section className="space-y-3 rounded-2xl border border-line bg-surface p-4" aria-label="YouTube links">
       <p className="text-sm font-semibold">Play from a YouTube link</p>
@@ -97,11 +91,6 @@ export default function YouTubeLinks({ onStart, onNow, halt }: { onStart: () => 
         <button type="submit" className="btn btn-primary">Play</button>
       </form>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      {src && (
-        <div className="overflow-hidden rounded-xl">
-          <iframe key={playing} title={now?.title ?? 'YouTube'} src={src} className="aspect-video w-full border-0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
-        </div>
-      )}
       {items.length > 0 && (
         <ul className="overflow-hidden rounded-xl border border-line">
           {items.map((i) => {

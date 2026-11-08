@@ -158,7 +158,16 @@ jobs:
           grep -n "versionCode\|versionName\|cznnect-debug" android/app/build.gradle
 
       - name: Build debug APK
-        run: cd android && ./gradlew assembleDebug
+        # GitHub's servers sometimes drop a connection while Gradle starts up or downloads. Trying again a couple of
+        # times turns those one-off failures into a slightly slower build instead of a missing update.
+        run: |
+          cd android
+          for attempt in 1 2 3; do
+            ./gradlew assembleDebug && exit 0
+            echo "Build attempt $attempt failed."
+            [ "$attempt" -lt 3 ] && sleep 20
+          done
+          exit 1
 
       - name: Give APK a unique build filename
         run: |

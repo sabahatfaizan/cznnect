@@ -9,7 +9,9 @@ import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
 import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
-import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_RELEASE_API, thisBuild, useAppSettings } from '../lib/appSettings'
+import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNativeApp, thisBuild, useAppSettings } from '../lib/appSettings'
+import { useApkDownload } from '../lib/apkDownload'
+import ApkStatus from '../components/ApkStatus'
 
 type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
@@ -88,6 +90,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [preview, setPreview] = useState<Preview | null>(null)
   useBackClose(() => setPreview(null), preview !== null)
   const myBuild = thisBuild()
+  const apk = useApkDownload()
 
   // Fill the editable fields once, from the first load, so polling never overwrites what is being typed.
   useEffect(() => {
@@ -491,6 +494,15 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                     }}
                   />
                 </Row>
+                <button
+                  type="button"
+                  className="btn btn-plain"
+                  disabled={!isNativeApp() || !latestBuild || (myBuild !== null && latestBuild <= myBuild) || apk.state.phase === 'starting' || apk.state.phase === 'downloading'}
+                  onClick={() => void apk.start(LATEST_APK_URL)}
+                >
+                  {!isNativeApp() ? 'Open the Android app to install' : !latestBuild ? 'Latest build unknown' : myBuild !== null && latestBuild <= myBuild ? 'This phone has the latest build' : `Install build ${latestBuild} on this phone`}
+                </button>
+                <ApkStatus apk={apk} />
                 <hr className="border-line" />
                 <p className="eyebrow">Force old Android apps to update</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">

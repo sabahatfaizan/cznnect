@@ -1798,3 +1798,12 @@ body::before {
   z-index: 45;
   pointer-events: none;
 }
+
+/* No rubber-band bounce or pull-to-refresh when you drag past the top or bottom: the page stops dead, and so do
+   scrolling lists inside it. */
+html, body, #root {
+  overscroll-behavior: none;
+}
+* {
+  overscroll-behavior: none;
+}

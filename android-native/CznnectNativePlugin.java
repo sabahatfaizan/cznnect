@@ -115,25 +115,25 @@ public class CznnectNativePlugin extends Plugin {
      * installers that start from the background). If this app is not yet allowed to install apps, the settings page
      * for that opens instead and false is returned; the person then taps Install again.
      */
-    private boolean launchInstaller(File apk) {
+    private String launchInstaller(File apk) {
         try {
-            if (apk == null || !apk.exists()) return false;
+            if (apk == null || !apk.exists()) return "The downloaded file is missing. Download it again.";
             Context ctx = getContext();
             Context starter = getActivity() != null ? getActivity() : ctx;
             if (Build.VERSION.SDK_INT >= 26 && !ctx.getPackageManager().canRequestPackageInstalls()) {
                 Intent allow = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + ctx.getPackageName()));
                 allow.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 starter.startActivity(allow);
-                return false;
+                return "Allow Cznnect to install apps in the page that opened, then come back and tap Install again.";
             }
             Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".fileprovider", apk);
             Intent open = new Intent(Intent.ACTION_VIEW);
             open.setDataAndType(uri, "application/vnd.android.package-archive");
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             starter.startActivity(open);
-            return true;
+            return null;
         } catch (Exception e) {
-            return false;
+            return "Android could not open the installer (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ").";
         }
     }
 
@@ -306,8 +306,9 @@ public class CznnectNativePlugin extends Plugin {
             call.reject("The update is still downloading. Try again in a moment.");
             return;
         }
-        if (launchInstaller(apk)) call.resolve();
-        else call.reject("Allow Cznnect to install apps in the page that opened, then tap Install again.");
+        String problem = launchInstaller(apk);
+        if (problem == null) call.resolve();
+        else call.reject(problem);
     }
 
     /**

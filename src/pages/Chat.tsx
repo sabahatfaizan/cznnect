@@ -326,9 +326,19 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
               if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send() }
             }}
           />
-          <button type="submit" className="btn btn-primary !h-11 !w-11 shrink-0 !rounded-full !p-0" aria-label={editing ? 'Save edit' : 'Send'} disabled={!text.trim() || busy}>
-            <Icon name="send" size={20} />
-          </button>
+          {(() => {
+            const ready = Boolean(text.trim()) && !busy
+            return (
+              <button
+                type="submit"
+                className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border-0 bg-transparent p-0 transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${ready ? 'scale-100 text-accent-text active:bg-accent-soft' : 'scale-90 text-muted opacity-60'}`}
+                aria-label={editing ? 'Save edit' : 'Send'}
+                disabled={!ready}
+              >
+                <span style={ready ? { filter: 'drop-shadow(0 0 6px var(--accent))' } : undefined}><Icon name="send" size={24} /></span>
+              </button>
+            )
+          })()}
         </div>
       </form>
 

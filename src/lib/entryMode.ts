@@ -6,7 +6,12 @@ import { useSyncExternalStore } from 'react'
 // choice is offered at every entry.
 export type EntryMode = 'admin' | 'family'
 
+// The code asked for before the Administrator side opens. It is a convenience lock on this screen: the real
+// protection is the server, which checks the owner's email on every admin action.
+export const ADMIN_PIN = '4124'
+
 let current: EntryMode | null = null
+let wantAdmin = false
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
 
@@ -22,4 +27,16 @@ export function useEntryMode(): EntryMode | null {
     () => current,
     () => null,
   )
+}
+
+// "Switch to Administrator" from the family menu: back to the entry screen with the code box already open.
+export function requestAdmin() {
+  wantAdmin = true
+  setEntryMode(null)
+}
+
+export function takeWantAdmin(): boolean {
+  const w = wantAdmin
+  wantAdmin = false
+  return w
 }

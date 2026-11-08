@@ -164,7 +164,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       setNotice(done)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Could not save.'
-      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql, 11_download_options.sql, 13_login_download_button.sql and 21_min_build_auto_raise.sql in Supabase.`)
+      setNotice(`${msg} If this is the first time, run supabase/08_apk_download_toggle.sql, 09_admin.sql, 11_download_options.sql, 13_login_download_button.sql, 21_min_build_auto_raise.sql and 23_announce_update.sql in Supabase.`)
     } finally { setBusy(false) }
   }
 

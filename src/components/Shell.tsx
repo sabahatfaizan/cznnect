@@ -20,7 +20,7 @@ import { useChatPulse, useHeartbeat } from '../lib/pulse'
 import Settings from '../pages/Settings'
 import Chat from '../pages/Chat'
 import Admin from '../pages/Admin'
-import { setEntryMode } from '../lib/entryMode'
+import { requestAdmin } from '../lib/entryMode'
 import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
@@ -236,7 +236,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <button
                   type="button"
                   className="menu-item"
-                  onClick={() => { setMenuOpen(false); setEntryMode('admin') }}
+                  onClick={() => { setMenuOpen(false); requestAdmin() }}
                 >
                   <span className="menu-item-label"><Icon name="admin" size={22} />Admin</span>
                   <span aria-hidden="true" className="menu-chevron">›</span>

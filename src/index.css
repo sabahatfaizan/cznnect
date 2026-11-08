@@ -1784,3 +1784,15 @@ input, textarea, select, [contenteditable='true'], a[href], .selectable {
 .progress-indeterminate { animation: progress-slide 1.2s ease-in-out infinite alternate; }
 @keyframes progress-slide { from { margin-left: 0; } to { margin-left: 66%; } }
 @media (prefers-reduced-motion: reduce) { .progress-indeterminate { animation: none; margin-left: 33%; } }
+
+/* A solid strip behind the phone's clock, battery and signal icons, so scrolling content never shows through or
+   collides with them. It is only as tall as the status bar, sits above the page and below pop-ups, and ignores taps. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--app-top-safe, 36px);
+  background: var(--page);
+  z-index: 45;
+  pointer-events: none;
+}

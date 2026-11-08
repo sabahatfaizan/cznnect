@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { ServiceNotice } from '../components/ServiceNotice'
+import { useBackClose } from '../lib/backStack'
 import type { Family, FamilyRole } from '../types'
 import MemberSheet from '../components/MemberSheet'
 import { supabase } from '../supabase'
@@ -7,7 +10,8 @@ import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
 import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_RELEASE_API, thisBuild, useAppSettings } from '../lib/appSettings'
 
-type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify'
+type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews'
+type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
 
@@ -64,6 +68,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [messages, setMessages] = useState<Msg[]>([])
   const [messagesLoaded, setMessagesLoaded] = useState(false)
   const [notifyText, setNotifyText] = useState('')
+  const [preview, setPreview] = useState<Preview | null>(null)
+  useBackClose(() => setPreview(null), preview !== null)
   const myBuild = thisBuild()
 
   // Fill the editable fields once, from the first load, so polling never overwrites what is being typed.
@@ -202,6 +208,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
     { id: 'family', icon: 'family', title: 'Family', hint: `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
+    { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
   ]
@@ -274,6 +281,26 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             ))}
           </section>
         </>
+      )}
+
+      {isOwner && current === 'previews' && (
+        <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Previews">
+          <p className="px-4 py-3 text-xs text-muted">Previews use your current settings and text, including anything you typed but have not saved. Nothing is sent to anyone.</p>
+          {([
+            ['maintenance', 'Maintenance screen', 'What people see while maintenance mode is on'],
+            ['banner', 'Announcement banner', 'The notice at the top of the app'],
+            ['download', 'Download screen', 'What website visitors see before signing in'],
+            ['update', 'Update required screen', 'What old app versions see'],
+          ] as Array<[Preview, string, string]>).map(([id, title, hint]) => (
+            <button key={id} type="button" className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => setPreview(id)}>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold leading-tight">{title}</p>
+                <p className="truncate text-xs text-muted">{hint}</p>
+              </div>
+              <span className="text-xs font-bold text-accent-text">View</span>
+            </button>
+          ))}
+        </section>
       )}
 
       {isOwner && current === 'notify' && (
@@ -473,6 +500,42 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       )}
 
       <p className="flex items-center justify-center gap-1.5 pb-2 text-xs text-muted"><Icon name="admin" size={14} />{isOwner ? 'Owner only' : 'Owner and moderators only'}</p>
+      {preview && settings && createPortal(
+        <div className="fixed inset-0 z-[150] overflow-y-auto bg-[var(--page)] text-[var(--ink)]" role="dialog" aria-modal="true" aria-label="Preview">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted">Preview · nothing is live</p>
+            <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-sm" onClick={() => setPreview(null)}>Close</button>
+          </div>
+          {preview === 'maintenance' && (
+            <ServiceNotice preview message={maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE} showApk={settings.androidDownloadEnabled} onUnlock={() => {}} />
+          )}
+          {preview === 'download' && (
+            <ServiceNotice
+              preview
+              title="Get the app"
+              message="Cznnect works best as an app on your phone."
+              showApk={settings.androidDownloadEnabled}
+              showIos={settings.iosInstallEnabled}
+              onContinue={settings.webContinueEnabled ? () => {} : undefined}
+              onUnlock={() => {}}
+            />
+          )}
+          {preview === 'update' && (
+            <ServiceNotice preview title="Update required" installLabel="Update" message="This version is out of date. Update to keep using Cznnect." requiredBuild={settings.minBuild || undefined} showApk />
+          )}
+          {preview === 'banner' && (
+            <div className="mx-auto max-w-md p-4">
+              <p className="mb-3 text-xs text-muted">This is how the banner looks at the top of the app.</p>
+              {(announceText.trim() || settings.announcementText.trim()) ? (
+                <p role="status" className="card text-sm font-semibold">{announceText.trim() || settings.announcementText}</p>
+              ) : (
+                <p className="card text-sm text-muted">There is no banner text yet. Write it under Manage, App status.</p>
+              )}
+            </div>
+          )}
+        </div>,
+        document.body,
+      )}
     </div>
   )
 }

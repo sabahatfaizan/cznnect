@@ -141,7 +141,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
               aria-label="Switch to Administrator"
               title="Switch to Administrator"
-              onClick={() => setEntryMode('admin')}
+              onClick={() => requestAdmin()}
             >
               <Icon name="swap" size={18} />
             </button>

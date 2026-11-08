@@ -43,34 +43,39 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
   return lines.slice(0, maxLines)
 }
 
-// Draws the banner as a 1200x630 picture, the size link previews and status posts use. Returns base64 PNG.
+const COPYRIGHT = '© 2026 Sabahat Faizan. All rights reserved.'
+
+// Draws the banner as a tall 1080x1920 picture, the portrait size phones use for stories and status posts. Returns base64 PNG.
 function drawBanner(b: Banner): string | null {
   const t = THEMES.find((x) => x.id === b.theme) ?? THEMES[0]
   const canvas = document.createElement('canvas')
-  canvas.width = 1200
-  canvas.height = 630
+  canvas.width = 1080
+  canvas.height = 1920
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
-  const bg = ctx.createLinearGradient(0, 0, 1200, 630)
+  const bg = ctx.createLinearGradient(0, 0, 1080, 1920)
   bg.addColorStop(0, t.from)
   bg.addColorStop(1, t.to)
   ctx.fillStyle = bg
-  ctx.fillRect(0, 0, 1200, 630)
+  ctx.fillRect(0, 0, 1080, 1920)
   ctx.fillStyle = t.accent
-  ctx.fillRect(80, 76, 96, 8)
+  ctx.fillRect(90, 170, 130, 12)
   ctx.fillStyle = '#ffffff'
-  ctx.font = `800 96px ${FONT}`
-  ctx.fillText(b.brand.slice(0, 20), 80, 186, 1040)
-  ctx.font = `700 54px ${FONT}`
-  wrap(ctx, b.headline, 1040, 2).forEach((l, i) => ctx.fillText(l, 80, 262 + i * 64))
+  ctx.font = `800 150px ${FONT}`
+  ctx.fillText(b.brand.slice(0, 20), 90, 350, 900)
+  ctx.font = `700 90px ${FONT}`
+  wrap(ctx, b.headline, 900, 4).forEach((l, i) => ctx.fillText(l, 90, 520 + i * 108))
   ctx.fillStyle = '#d3d9e4'
-  ctx.font = `400 32px ${FONT}`
-  wrap(ctx, b.pitch, 1040, 3).forEach((l, i) => ctx.fillText(l, 80, 400 + i * 44))
+  ctx.font = `400 46px ${FONT}`
+  wrap(ctx, b.pitch, 900, 6).forEach((l, i) => ctx.fillText(l, 90, 1010 + i * 64))
   ctx.fillStyle = t.accent
-  ctx.font = `700 34px ${FONT}`
-  ctx.fillText(b.cta, 80, 556, 1040)
-  ctx.font = `600 30px ${FONT}`
-  ctx.fillText(SHOWN_LINK, 80, 598, 1040)
+  ctx.font = `700 52px ${FONT}`
+  wrap(ctx, b.cta, 900, 2).forEach((l, i) => ctx.fillText(l, 90, 1490 + i * 64))
+  ctx.font = `600 44px ${FONT}`
+  ctx.fillText(SHOWN_LINK, 90, 1670, 900)
+  ctx.fillStyle = '#9aa3b2'
+  ctx.font = `400 30px ${FONT}`
+  ctx.fillText(COPYRIGHT, 90, 1836, 900)
   return canvas.toDataURL('image/png').split(',')[1] ?? null
 }
 
@@ -128,13 +133,19 @@ export default function ShareAppCard() {
   return (
     <section className="card flex flex-col gap-3" aria-label="Share the app">
       <p className="eyebrow">Banner preview</p>
-      <div className="overflow-hidden rounded-2xl p-5 text-white" style={{ background: `linear-gradient(135deg,${theme.from},${theme.to})` }}>
-        <div className="mb-3 h-1 w-10 rounded-full" style={{ background: theme.accent }} />
+      <div
+        className="mx-auto flex w-full max-w-[280px] flex-col overflow-hidden rounded-2xl p-5 text-white"
+        style={{ aspectRatio: '9 / 16', background: `linear-gradient(160deg,${theme.from},${theme.to})` }}
+      >
+        <div className="mb-3 mt-4 h-1 w-10 rounded-full" style={{ background: theme.accent }} />
         <p className="font-display text-3xl font-extrabold leading-none">{b.brand}</p>
-        <p className="mt-2 text-lg font-bold">{b.headline}</p>
-        <p className="mt-2 text-sm" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
-        <p className="mt-3 text-sm font-bold" style={{ color: theme.accent }}>{b.cta}</p>
-        <p className="text-sm font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
+        <p className="mt-3 text-lg font-bold leading-tight">{b.headline}</p>
+        <p className="mt-3 text-xs" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
+        <div className="mt-auto">
+          <p className="text-xs font-bold" style={{ color: theme.accent }}>{b.cta}</p>
+          <p className="text-xs font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
+          <p className="mt-3 text-[9px]" style={{ color: '#9aa3b2' }}>{COPYRIGHT}</p>
+        </div>
       </div>
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Banner colours">
         {THEMES.map((t) => (

@@ -84,7 +84,10 @@ export default function ShareAppCard() {
   const [b, setB] = useState<Banner>(load)
   const [notice, setNotice] = useState('')
   const theme = THEMES.find((x) => x.id === b.theme) ?? THEMES[0]
-  const message = [b.headline.trim(), b.pitch.trim(), '', `${b.cta.trim()}:`, WEB_APP_URL].filter((l, i) => l !== '' || i === 2).join('\n')
+  // The colon only follows a line that has text and no punctuation of its own; an empty line adds nothing.
+  const cta = b.cta.trim()
+  const ctaLine = cta ? (/[.:!?]$/.test(cta) ? cta : `${cta}:`) : ''
+  const message = [[b.headline.trim(), b.pitch.trim()].filter(Boolean).join('\n'), ctaLine ? `${ctaLine}\n${WEB_APP_URL}` : WEB_APP_URL].filter(Boolean).join('\n\n')
 
   function edit(patch: Partial<Banner>) {
     const next = { ...b, ...patch }
@@ -142,7 +145,7 @@ export default function ShareAppCard() {
         <p className="mt-3 text-lg font-bold leading-tight">{b.headline}</p>
         <p className="mt-3 text-xs" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
         <div className="mt-auto">
-          <p className="text-xs font-bold" style={{ color: theme.accent }}>{b.cta}</p>
+          {b.cta.trim() && <p className="text-xs font-bold" style={{ color: theme.accent }}>{b.cta}</p>}
           <p className="text-xs font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
           <p className="mt-3 text-[9px]" style={{ color: '#9aa3b2' }}>{COPYRIGHT}</p>
         </div>

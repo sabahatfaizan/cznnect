@@ -12,8 +12,7 @@ import { ServiceNotice, InstallHelp, MAINTENANCE_REASSURANCE } from './component
 import Authed from './Authed'
 import AdminApp from './AdminApp'
 import EntryChooser from './components/EntryChooser'
-import { setEntryMode, useAdminUnlocked, useEntryMode } from './lib/entryMode'
-import AdminCodeGate from './components/AdminCodeGate'
+import { setEntryMode, useEntryMode } from './lib/entryMode'
 import { isOwnerEmail } from './owner'
 import { isPasswordRecoveryEvent } from './lib/auth'
 import { isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
@@ -51,7 +50,6 @@ function NetworkStatus() {
 
 export default function App() {
   const entryMode = useEntryMode()
-  const adminUnlocked = useAdminUnlocked()
   const [session, setSession] = useState<Session | null>(null)
   const [recoveryMode, setRecoveryMode] = useState(false)
   const [ready, setReady] = useState(false)
@@ -189,7 +187,6 @@ export default function App() {
   // live = a real login. The saved one used for opening offline has no access token.
   // The owner chooses how to come in: as the Administrator or as a family member.
   if (isOwner && entryMode === null) return <><EntryChooser /><NetworkStatus /></>
-  if (isOwner && entryMode === 'admin' && !adminUnlocked) return <><AdminCodeGate /><NetworkStatus /></>
   if (isOwner && entryMode === 'admin') return <><AdminApp userId={session.user.id} live={Boolean(session.access_token)} /><NetworkStatus /></>
   return <Authed userId={session.user.id} email={session.user.email ?? ''} live={Boolean(session.access_token)} />
 }

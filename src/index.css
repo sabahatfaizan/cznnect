@@ -1807,19 +1807,3 @@ body::before {
 html.page-scrolled body::before {
   opacity: 1;
 }
-
-/* No rubber-band bounce or pull-to-refresh when you drag past the top or bottom: the page stops dead, and so do
-   scrolling lists inside it. */
-html, body, #root {
-  overscroll-behavior: none;
-}
-* {
-  overscroll-behavior: none;
-}
-
-/* The map is a clipped box, which counts as a scroll container, so the no-bounce rule above stopped a one-finger
-   drag over it from scrolling the page. Let it hand the scroll on to the page again; the map itself only moves with
-   two fingers (cooperative gestures). */
-.maplibregl-map, .maplibregl-map * {
-  overscroll-behavior: auto;
-}

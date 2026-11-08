@@ -33,3 +33,11 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     })
   })
 }
+
+// Marks the page as scrolled, which shows the strip behind the phone's status bar (see index.css).
+function markScrolled() {
+  document.documentElement.classList.toggle('page-scrolled', window.scrollY > 2)
+}
+window.addEventListener('scroll', markScrolled, { passive: true })
+window.addEventListener('popstate', markScrolled)
+markScrolled()

@@ -18,6 +18,17 @@ type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
 
+type AppUser = {
+  user_id: string
+  display_name: string
+  nickname: string | null
+  avatar: string | null
+  email: string | null
+  created_at: string | null
+  last_sign_in_at: string | null
+  families: string | null
+}
+
 type AdminMember = {
   user_id: string
   role: FamilyRole
@@ -78,6 +89,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [minBuildInput, setMinBuildInput] = useState('')
   const [latestBuild, setLatestBuild] = useState<number | null>(null)
   const [members, setMembers] = useState<AdminMember[]>([])
+  const [users, setUsers] = useState<AppUser[] | null>(null)
+  const [usersError, setUsersError] = useState('')
   const [viewing, setViewing] = useState<AdminMember | null>(null)
   const [copied, setCopied] = useState(false)
   const [loadedFields, setLoadedFields] = useState(false)
@@ -124,6 +137,17 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   }, [family.id])
 
   useEffect(() => { void loadMembers() }, [loadMembers])
+
+  // Every account in the app (owner only). Needs supabase/24_admin_all_users.sql.
+  const loadUsers = useCallback(async () => {
+    if (!isOwner) return
+    const { data, error } = await supabase.rpc('admin_all_users')
+    if (error) { setUsersError('Could not load all users. Run supabase/24_admin_all_users.sql in Supabase first.'); return }
+    setUsersError('')
+    setUsers((data ?? []) as AppUser[])
+  }, [isOwner])
+
+  useEffect(() => { void loadUsers() }, [loadUsers])
 
   // Saves some settings columns. The database only lets the owner's email do this.
   async function save(patch: Record<string, unknown>, done: string) {
@@ -227,7 +251,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'app', icon: 'megaphone', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
-    { id: 'family', icon: 'family', title: 'Family', hint: `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
+    { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
@@ -531,6 +555,32 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
       {current === 'family' && (
         <>
+          {isOwner && (
+            <section className="card flex flex-col gap-3">
+              <p className="eyebrow">All users{users ? ` (${users.length})` : ''}</p>
+              {usersError && <p role="status" className="text-sm font-semibold text-danger">{usersError}</p>}
+              {!users && !usersError && <p className="text-sm text-muted">Loading…</p>}
+              {users?.map((u) => {
+                const name = shownName({ display_name: u.display_name, nickname: u.nickname })
+                return (
+                  <div key={u.user_id} className="flex items-center gap-3">
+                    <Avatar value={u.avatar} name={name} size={40} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold">{name}{u.user_id === userId ? ' (you)' : ''}</p>
+                      {u.email && <p className="truncate text-sm text-muted">{u.email}</p>}
+                      <p className="text-xs text-muted">
+                        {u.created_at ? `Joined ${new Date(u.created_at).toLocaleDateString()}` : ''}
+                        {u.last_sign_in_at ? ` · last seen ${new Date(u.last_sign_in_at).toLocaleDateString()}` : ''}
+                        {u.families ? ` · ${u.families}` : ' · no family yet'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+              {users && users.length === 0 && <p className="text-sm text-muted">No users yet.</p>}
+              <button type="button" className="btn btn-plain" onClick={() => void loadUsers()}>Refresh</button>
+            </section>
+          )}
           {isOwner && (
             <section className="card flex flex-col gap-3">
                     <p className="eyebrow">Invite code</p>

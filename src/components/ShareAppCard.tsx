@@ -1,3 +1,4 @@
+import { Mark } from './Logo'
 import { useState } from 'react'
 import { WEB_APP_URL, canShare, shareImage, shareText } from '../lib/native'
 
@@ -158,14 +159,18 @@ export default function ShareAppCard() {
     <section className="card flex flex-col gap-3" aria-label="Share the app">
       <p className="eyebrow">Banner preview</p>
       <div
-        className="mx-auto flex w-full max-w-[280px] flex-col overflow-hidden rounded-2xl p-5 text-white"
+        className="mx-auto relative flex w-full max-w-[280px] flex-col overflow-hidden rounded-2xl p-5 text-white"
         style={{ aspectRatio: '9 / 16', background: `linear-gradient(160deg,${theme.from},${theme.to})` }}
       >
-        <div className="mb-3 mt-4 h-1 w-10 rounded-full" style={{ background: theme.accent }} />
-        <p className="font-display text-3xl font-extrabold leading-none">{b.brand}</p>
-        <p className="mt-3 text-lg font-bold leading-tight">{b.headline}</p>
-        <p className="mt-3 text-xs" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
-        <div className="mt-auto">
+        {/* The faint square in the middle, same as on the picture that gets shared. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center" style={{ opacity: 0.5 }}>
+          <Mark className="h-3/5 w-3/5" />
+        </div>
+        <div className="relative mb-3 mt-4 h-1 w-10 rounded-full" style={{ background: theme.accent }} />
+        <p className="relative font-display text-3xl font-extrabold leading-none">{b.brand}</p>
+        <p className="relative mt-3 text-lg font-bold leading-tight">{b.headline}</p>
+        <p className="relative mt-3 text-xs" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
+        <div className="relative mt-auto">
           {b.cta.trim() && <p className="text-xs font-bold" style={{ color: theme.accent }}>{b.cta}</p>}
           <p className="text-xs font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
           <p className="mt-3 text-[9px]" style={{ color: '#9aa3b2' }}>{COPYRIGHT}</p>

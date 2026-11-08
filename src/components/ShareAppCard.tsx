@@ -58,6 +58,27 @@ function drawBanner(b: Banner): string | null {
   bg.addColorStop(1, t.to)
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, 1080, 1920)
+  // The Cznnect square (an O and a Z in one frame) sits faint in the middle, behind the text.
+  ctx.save()
+  ctx.globalAlpha = 0.14
+  ctx.translate(540 - 400, 960 - 400)
+  ctx.scale(800 / 64, 800 / 64)
+  const mark = ctx.createLinearGradient(6, 6, 58, 58)
+  mark.addColorStop(0, '#ffffff')
+  mark.addColorStop(0.4, t.accent)
+  mark.addColorStop(1, '#ffffff')
+  ctx.fillStyle = mark
+  ctx.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
+  ctx.strokeStyle = mark
+  ctx.lineWidth = 10
+  ctx.beginPath()
+  ctx.rect(6, 6, 52, 52)
+  ctx.clip()
+  ctx.beginPath()
+  ctx.moveTo(0, 64)
+  ctx.lineTo(64, 0)
+  ctx.stroke()
+  ctx.restore()
   ctx.fillStyle = t.accent
   ctx.fillRect(90, 170, 130, 12)
   ctx.fillStyle = '#ffffff'

@@ -77,7 +77,13 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   useEffect(() => {
     const nav = document.querySelector('.app-nav') as HTMLElement | null
     if (!nav) return
-    const measure = () => setNavH(Math.round(nav.getBoundingClientRect().height))
+    // Distance from the bottom of the screen to the top of the bar. Measuring the bar's height alone is not enough
+    // when the bar floats above the bottom edge (Glass theme), because the message box then sat behind it.
+    const measure = () => {
+      const r = nav.getBoundingClientRect()
+      const floating = window.innerHeight - r.bottom > 2
+      setNavH(Math.round(window.innerHeight - r.top) + (floating ? 8 : 0))
+    }
     measure()
     const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
     ro?.observe(nav)

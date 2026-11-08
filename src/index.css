@@ -1793,14 +1793,12 @@ body::before {
   position: fixed;
   inset: 0 0 auto 0;
   height: calc(var(--app-top-safe, 36px) + 64px);
-  background: linear-gradient(to bottom,
-    var(--page) 0,
-    var(--page) var(--app-top-safe, 36px),
-    color-mix(in srgb, var(--page) 85%, transparent) calc(var(--app-top-safe, 36px) + 10px),
-    color-mix(in srgb, var(--page) 60%, transparent) calc(var(--app-top-safe, 36px) + 22px),
-    color-mix(in srgb, var(--page) 30%, transparent) calc(var(--app-top-safe, 36px) + 38px),
-    color-mix(in srgb, var(--page) 10%, transparent) calc(var(--app-top-safe, 36px) + 52px),
-    transparent 100%);
+  /* The very same background as the page (including its glows and any theme picture), faded out with a mask, so the
+     strip has no visible edge or box of its own: it just looks as if the content fades away under the icons. */
+  background: inherit;
+  background-attachment: fixed;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 var(--app-top-safe, 36px), rgb(0 0 0 / 0.6) calc(var(--app-top-safe, 36px) + 20px), rgb(0 0 0 / 0.2) calc(var(--app-top-safe, 36px) + 42px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 var(--app-top-safe, 36px), rgb(0 0 0 / 0.6) calc(var(--app-top-safe, 36px) + 20px), rgb(0 0 0 / 0.2) calc(var(--app-top-safe, 36px) + 42px), transparent 100%);
   opacity: 0;
   transition: opacity 0.15s ease;
   z-index: 45;

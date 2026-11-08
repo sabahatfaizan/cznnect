@@ -1792,9 +1792,8 @@ body::before {
   content: '';
   position: fixed;
   inset: 0 0 auto 0;
-  height: var(--app-top-safe, 36px);
-  background: var(--page);
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
+  height: calc(var(--app-top-safe, 36px) + 22px);
+  background: linear-gradient(to bottom, var(--page) 0, var(--page) var(--app-top-safe, 36px), transparent 100%);
   opacity: 0;
   transition: opacity 0.15s ease;
   z-index: 45;

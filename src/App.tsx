@@ -10,6 +10,9 @@ import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
 import { ServiceNotice, InstallHelp, MAINTENANCE_REASSURANCE } from './components/ServiceNotice'
 import Authed from './Authed'
+import AdminApp from './AdminApp'
+import EntryChooser from './components/EntryChooser'
+import { setEntryMode, useEntryMode } from './lib/entryMode'
 import { isOwnerEmail } from './owner'
 import { isPasswordRecoveryEvent } from './lib/auth'
 import { isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
@@ -46,6 +49,7 @@ function NetworkStatus() {
 }
 
 export default function App() {
+  const entryMode = useEntryMode()
   const [session, setSession] = useState<Session | null>(null)
   const [recoveryMode, setRecoveryMode] = useState(false)
   const [ready, setReady] = useState(false)
@@ -81,7 +85,7 @@ export default function App() {
     // missed while the app is booting. Supabase processes the PKCE/hash callback
     // and emits PASSWORD_RECOVERY when the recovery session is established.
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
-      if (event === 'SIGNED_OUT') { clearFamilies(localStorage); clearSavedData() }
+      if (event === 'SIGNED_OUT') { clearFamilies(localStorage); clearSavedData(); setEntryMode(null) }
       // Offline, a saved login that needs refreshing comes back empty. That is not a sign-out: keep the person in.
       const saved = !s && event !== 'SIGNED_OUT' && isOffline() ? readStoredUser(localStorage, SUPABASE_URL) : null
       if (saved) {
@@ -181,5 +185,8 @@ export default function App() {
     return <><AuthScreen apps={apps} /><NetworkStatus /></>
   }
   // live = a real login. The saved one used for opening offline has no access token.
+  // The owner chooses how to come in: as the Administrator or as a family member.
+  if (isOwner && entryMode === null) return <><EntryChooser /><NetworkStatus /></>
+  if (isOwner && entryMode === 'admin') return <><AdminApp userId={session.user.id} live={Boolean(session.access_token)} /><NetworkStatus /></>
   return <Authed userId={session.user.id} email={session.user.email ?? ''} live={Boolean(session.access_token)} />
 }

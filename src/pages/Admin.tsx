@@ -231,6 +231,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
   ]
   const current: Section | null = isOwner ? section : 'family'
+  useBackClose(() => open(null), isOwner && section !== null)
   const currentTile = tiles.find((t) => t.id === current)
 
   const stat = (label: string, value: string | number | undefined) => (

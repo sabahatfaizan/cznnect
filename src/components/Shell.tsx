@@ -20,6 +20,7 @@ import { useChatPulse, useHeartbeat } from '../lib/pulse'
 import Settings from '../pages/Settings'
 import Chat from '../pages/Chat'
 import Admin from '../pages/Admin'
+import { setEntryMode } from '../lib/entryMode'
 import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
@@ -67,7 +68,8 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
     })
     return () => { alive = false }
   }, [family.id, userId])
-  const canAdmin = isOwner || familyRole === 'moderator'
+  // The owner's admin tools live in the Administrator side now; family moderators keep their member tools here.
+  const canAdmin = !isOwner && familyRole === 'moderator'
   const { settings: appSettings } = useAppSettings()
 
   // Birthdays: one query feeds the menu badge, the device reminders and the Birthdays page.
@@ -219,6 +221,16 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                 <span className="menu-item-label"><Icon name="settings" size={22} />Settings</span>
                 <span aria-hidden="true" className="menu-chevron">›</span>
               </button>
+              {isOwner && (
+                <button
+                  type="button"
+                  className="menu-item"
+                  onClick={() => { setMenuOpen(false); setEntryMode('admin') }}
+                >
+                  <span className="menu-item-label"><Icon name="admin" size={22} />Switch to Administrator</span>
+                  <span aria-hidden="true" className="menu-chevron">›</span>
+                </button>
+              )}
               {canAdmin && (
                 <button
                   type="button"
@@ -256,7 +268,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           {tab === 'plans' && <Plans family={family} userId={userId} />}
           {tab === 'me' && <Profile userId={userId} />}
           {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-          {tab === 'admin' && canAdmin && <Admin family={family} userId={userId} isOwner={isOwner} onFamilyChanged={onFamilyChanged} />}
+          {tab === 'admin' && canAdmin && <Admin family={family} userId={userId} isOwner={false} onFamilyChanged={onFamilyChanged} />}
         </div>
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>

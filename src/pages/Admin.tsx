@@ -511,6 +511,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
         <section className="card flex flex-col gap-3">
                 <p className="eyebrow">Tell Android users an update is ready</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
+                  <p><span className="text-muted">Your build</span><br /><b>{myBuild ? `build ${myBuild}` : 'website / local'}</b></p>
                   <p><span className="text-muted">Latest build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
                   <p><span className="text-muted">Announced now</span><br /><b>{settings && settings.announcedBuild > 0 ? `build ${settings.announcedBuild}` : 'nothing'}</b></p>
                 </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import ShareAppCard from '../components/ShareAppCard'
 import TitleBadge from '../components/TitleBadge'
 import { createPortal } from 'react-dom'
 import { ServiceNotice, MAINTENANCE_REASSURANCE } from '../components/ServiceNotice'
@@ -14,7 +15,7 @@ import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNati
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 
-type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders'
+type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
@@ -257,6 +258,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
+    { id: 'share', icon: 'share', title: 'Share the app', hint: 'A banner and pitch to send to anyone' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
   ]
@@ -356,6 +358,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           ))}
         </section>
       )}
+
+      {isOwner && current === 'share' && <ShareAppCard />}
 
       {isOwner && current === 'previews' && (
         <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Previews">

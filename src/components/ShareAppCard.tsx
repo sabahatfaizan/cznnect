@@ -60,7 +60,7 @@ function drawBanner(b: Banner): string | null {
   ctx.fillRect(0, 0, 1080, 1920)
   // The Cznnect square (an O and a Z in one frame) sits faint in the middle, behind the text.
   ctx.save()
-  ctx.globalAlpha = 0.14
+  ctx.globalAlpha = 0.5
   ctx.translate(540 - 400, 960 - 400)
   ctx.scale(800 / 64, 800 / 64)
   const mark = ctx.createLinearGradient(6, 6, 58, 58)

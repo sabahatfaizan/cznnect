@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TitleBadge from './TitleBadge'
 import { supabase } from '../supabase'
 import { shownName } from '../lib/avatars'
 import type { FamilyRole } from '../types'
@@ -9,7 +10,7 @@ export type SheetMember = {
   user_id: string
   role: FamilyRole
   joined_at?: string | null
-  profiles: { display_name: string; nickname?: string | null; bio?: string | null; avatar?: string | null } | null
+  profiles: { display_name: string; nickname?: string | null; bio?: string | null; avatar?: string | null; title?: string | null } | null
 }
 
 const ROLES: Record<FamilyRole, { label: string; blurb: string }> = {
@@ -74,7 +75,7 @@ export default function MemberSheet({
         <div className="flex items-center gap-4">
           <Avatar value={member.profiles?.avatar} name={name} size={72} />
           <div className="min-w-0">
-            <p className="truncate text-lg font-bold">{name}{isMe ? ' (you)' : ''}</p>
+            <p className="truncate text-lg font-bold">{name}{isMe ? ' (you)' : ''}<TitleBadge title={member.profiles?.title} /></p>
             {real && name !== real && <p className="truncate text-sm text-muted">{real}</p>}
             {member.joined_at && <p className="text-sm text-muted">Joined {new Date(member.joined_at).toLocaleDateString()}</p>}
           </div>

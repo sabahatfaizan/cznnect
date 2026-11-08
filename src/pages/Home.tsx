@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import TitleBadge from '../components/TitleBadge'
 import { supabase } from '../supabase'
 import { appUrl, canShare, shareText } from '../lib/native'
 import Avatar from '../components/Avatar'
@@ -27,8 +28,9 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
   const loadMembers = useCallback(async () => {
     const q = (cols: string) =>
       supabase.from('family_members').select(`user_id, role, profiles(${cols})`).eq('family_id', family.id).order('joined_at')
-    let { data, error } = await q('display_name, nickname, bio, avatar')
-    // Falls back to the old columns until supabase/08_profile.sql has been run.
+    let { data, error } = await q('display_name, nickname, bio, avatar, title')
+    // Falls back to the older columns until supabase/25_cofounder_title.sql and 08_profile.sql have been run.
+    if (error) ({ data, error } = await q('display_name, nickname, bio, avatar'))
     if (error) ({ data, error } = await q('display_name'))
     if (error) setError(error.message)
     else {
@@ -185,7 +187,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
               <li key={m.user_id} className="flex flex-wrap items-center gap-x-3">
                 <Avatar value={m.profiles?.avatar} name={name} size={40} className="my-2" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{name}</span>
+                  <span className="block truncate font-semibold">{name}<TitleBadge title={m.profiles?.title} /></span>
                   {real && name !== real && <span className="block truncate text-xs text-muted">{real}</span>}
                   {bio && <span className="block text-sm text-muted">{bio}</span>}
                   {ct && (ct.phone || ct.contact_email) && (

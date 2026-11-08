@@ -9,5 +9,5 @@ export type FamilyRole = 'owner' | 'moderator' | 'member'
 export type Member = {
   user_id: string
   role: FamilyRole
-  profiles: { display_name: string; nickname: string | null; bio: string | null; avatar: string | null } | null
+  profiles: { display_name: string; nickname: string | null; bio: string | null; avatar: string | null; title?: string | null } | null
 }

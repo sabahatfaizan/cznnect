@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import TitleBadge from '../components/TitleBadge'
 import { createPortal } from 'react-dom'
 import { ServiceNotice, MAINTENANCE_REASSURANCE } from '../components/ServiceNotice'
 import { useBackClose } from '../lib/backStack'
@@ -23,6 +24,7 @@ type AppUser = {
   display_name: string
   nickname: string | null
   avatar: string | null
+  title?: string | null
   email: string | null
   created_at: string | null
   last_sign_in_at: string | null
@@ -33,7 +35,7 @@ type AdminMember = {
   user_id: string
   role: FamilyRole
   joined_at: string | null
-  profiles: { display_name: string; nickname?: string | null; bio?: string | null; avatar?: string | null } | null
+  profiles: { display_name: string; nickname?: string | null; bio?: string | null; avatar?: string | null; title?: string | null } | null
 }
 
 function Switch({ on, onChange, label, disabled, onColor = 'green' }: { on: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean; onColor?: 'green' | 'red' }) {
@@ -130,7 +132,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const loadMembers = useCallback(async () => {
     const q = (cols: string) =>
       supabase.from('family_members').select(`user_id, role, joined_at, profiles(${cols})`).eq('family_id', family.id).order('joined_at')
-    let { data, error } = await q('display_name, nickname, bio, avatar')
+    let { data, error } = await q('display_name, nickname, bio, avatar, title')
+    if (error) ({ data, error } = await q('display_name, nickname, bio, avatar'))
     if (error) ({ data, error } = await q('display_name'))
     if (error) setNotice(error.message)
     else setMembers((data ?? []) as unknown as AdminMember[])
@@ -566,7 +569,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   <div key={u.user_id} className="flex items-center gap-3">
                     <Avatar value={u.avatar} name={name} size={40} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold">{name}{u.user_id === userId ? ' (you)' : ''}</p>
+                      <p className="truncate font-bold">{name}{u.user_id === userId ? ' (you)' : ''}<TitleBadge title={u.title} /></p>
                       {u.email && <p className="truncate text-sm text-muted">{u.email}</p>}
                       <p className="text-xs text-muted">
                         {u.created_at ? `Joined ${new Date(u.created_at).toLocaleDateString()}` : ''}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ServiceNotice, MAINTENANCE_REASSURANCE } from '../components/ServiceNotice'
 import { useBackClose } from '../lib/backStack'
+import { remindersAreScheduled, sendTestReminder } from '../lib/birthdayReminders'
 import type { Family, FamilyRole } from '../types'
 import MemberSheet from '../components/MemberSheet'
 import { supabase } from '../supabase'
@@ -10,7 +11,7 @@ import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
 import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_RELEASE_API, thisBuild, useAppSettings } from '../lib/appSettings'
 
-type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews'
+type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
@@ -50,6 +51,21 @@ function Row({ title, hint, children }: { title: string; hint: string; children:
     </div>
   )
 }
+
+// Ready-made maintenance messages. Tapping one fills the box; the box can still be typed in freely.
+const MAINTENANCE_PRESETS = [
+  DEFAULT_MAINTENANCE_MESSAGE,
+  'We’re making Cznnect faster and better. We’ll be back in a few minutes.',
+  'Cznnect is getting a big update. Everything is safe and we’ll be back shortly.',
+  'Scheduled maintenance is in progress. Please try again in about an hour.',
+  'We’re fixing a problem. Thanks for your patience, we’ll be back soon.',
+]
+
+const REMINDER_TESTS: Array<[string, string, string]> = [
+  ['Birthday today', 'Birthday reminder', 'It’s Sample’s birthday today (21). Send a wish!'],
+  ['Birthday tomorrow', 'Birthday reminder', 'Sample’s birthday is tomorrow (21).'],
+  ['In a week', 'Birthday reminder', 'Sample’s birthday is in one week (21).'],
+]
 
 export default function Admin({ family, userId, isOwner, onFamilyChanged }: { family: Family; userId: string; isOwner: boolean; onFamilyChanged: () => void }) {
   const { settings, error: settingsError, reload } = useAppSettings(60000)
@@ -210,6 +226,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
     { id: 'family', icon: 'family', title: 'Family', hint: `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
+    { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
   ]
@@ -284,6 +301,31 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
         </>
       )}
 
+      {isOwner && current === 'reminders' && (
+        <section className="card flex flex-col gap-3" aria-label="Test reminders">
+          <p className="text-sm text-muted">
+            Sends a sample birthday reminder to this phone in about two seconds.
+            {' '}{remindersAreScheduled() ? 'Real reminders arrive at 9:00 am, even when the app is closed.' : 'In a browser, reminders only show when the app is open.'}
+          </p>
+          {REMINDER_TESTS.map(([label, title, body]) => (
+            <button
+              key={label}
+              type="button"
+              className="btn btn-plain !min-h-11 !text-sm"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true)
+                const r = await sendTestReminder(title, body)
+                setBusy(false)
+                setNotice(r === 'sent' ? 'Sent. It should appear in a couple of seconds. Close the app to see how it arrives.' : r === 'blocked' ? 'Notifications are blocked for Cznnect on this phone. Allow them in the phone’s settings.' : 'This device cannot show reminders.')
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </section>
+      )}
+
       {isOwner && current === 'previews' && (
         <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Previews">
           <p className="px-4 py-3 text-xs text-muted">Previews use your current settings and text, including anything you typed but have not saved. Nothing is sent to anyone.</p>
@@ -344,7 +386,25 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                     />
                   </Row>
                   <div className="flex flex-col gap-2">
-                    <label className="label" htmlFor="admin-maint-msg">Message people see</label>
+                    <p className="label">Preloaded messages</p>
+                    <div className="flex flex-col gap-1.5" role="radiogroup" aria-label="Preloaded maintenance messages">
+                      {MAINTENANCE_PRESETS.map((m) => {
+                        const on = (maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE) === m
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            role="radio"
+                            aria-checked={on}
+                            onClick={() => setMaintMessage(m)}
+                            className={`rounded-xl border px-3 py-2 text-left text-xs transition ${on ? 'border-accent bg-accent-soft font-semibold' : 'border-line text-muted'}`}
+                          >
+                            {m}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <label className="label mt-1" htmlFor="admin-maint-msg">Or write your own</label>
                     <textarea id="admin-maint-msg" className="input min-h-20" maxLength={240} value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} placeholder={DEFAULT_MAINTENANCE_MESSAGE} />
                     <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, 'Message saved.')}>Save message</button>
                   </div>

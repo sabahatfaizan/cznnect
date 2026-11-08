@@ -191,7 +191,7 @@ export function remindersAreScheduled(): boolean {
 }
 
 // A quick check that notifications really reach the phone: sends one in a couple of seconds.
-export async function sendTestReminder(): Promise<'sent' | 'blocked' | 'unsupported'> {
+export async function sendTestReminder(title = 'Birthday reminder', body = 'This is how your reminders will look.'): Promise<'sent' | 'blocked' | 'unsupported'> {
   const native = nativePlugin()
   if (native) {
     try {
@@ -200,7 +200,7 @@ export async function sendTestReminder(): Promise<'sent' | 'blocked' | 'unsuppor
       nativeKnown = state
       if (state !== 'granted') return 'blocked'
       await native.schedule({
-        notifications: [{ id: hash(`test:${Date.now()}`), title: 'Birthday reminder', body: 'This is how your reminders will look.', schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true } }],
+        notifications: [{ id: hash(`test:${Date.now()}`), title, body, schedule: { at: new Date(Date.now() + 2000), allowWhileIdle: true } }],
       })
       return 'sent'
     } catch {
@@ -209,7 +209,7 @@ export async function sendTestReminder(): Promise<'sent' | 'blocked' | 'unsuppor
   }
   if (typeof Notification === 'undefined') return 'unsupported'
   if (Notification.permission !== 'granted') return 'blocked'
-  await show('Birthday reminder', 'This is how your reminders will look.', 'test')
+  await show(title, body, 'test')
   return 'sent'
 }
 

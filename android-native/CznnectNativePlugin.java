@@ -1,13 +1,9 @@
 package com.sabahatfaizan.cznnect;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -19,6 +15,13 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
@@ -90,56 +93,40 @@ public class CznnectNativePlugin extends Plugin {
         }
     }
 
-    /**
-     * Downloads the app update with Android's own download manager. The in-app browser view could not finish saving
-     * the file, but the download manager always does and shows progress in the notification shade. With install set,
-     * the installer opens by itself when the download finishes; otherwise it opens when the notification is tapped. Only this app's GitHub releases and its own website are allowed.
-     */
-    private BroadcastReceiver installReceiver;
-    private long pendingInstallId = -1;
+    // ---- The app update download. The app downloads the file itself (Android's download manager could sit "pending"
+    // or frozen near the end with no way to see why), so it follows the redirect, shows real progress, gives up on a
+    // stalled connection after 20 seconds and tries again, up to three times. ----
+    private static long dlId = 0;
+    private static String dlStatus = "unknown"; // running, success or failed
+    private static long dlDownloaded = 0;
+    private static long dlTotal = -1;
+    private static int dlReason = 0;
+    private static File dlFile = null;
 
-    private static final String PREFS = "cznnect_update";
-
-    private long savedDownloadId() {
-        return getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong("id", -1);
-    }
-
-    private void saveDownloadId(long id) {
-        getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putLong("id", id).apply();
-    }
-
-    /** True when the download manager has finished saving the given download. */
-    private boolean downloadFinished(DownloadManager dm, long id) {
-        Cursor c = null;
-        try {
-            c = dm.query(new DownloadManager.Query().setFilterById(id));
-            if (c != null && c.moveToFirst()) {
-                return c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL;
-            }
-        } catch (Exception ignored) {
-        } finally {
-            if (c != null) c.close();
-        }
-        return false;
+    private File updatesDir() {
+        File dir = new File(getContext().getCacheDir(), "updates");
+        //noinspection ResultOfMethodCallIgnored
+        dir.mkdirs();
+        return dir;
     }
 
     /**
-     * Opens Android's installer for a finished download, from the app's own screen when there is one (Android
-     * blocks installers that start from the background). If this app is not yet allowed to install apps, the
-     * settings page for that opens instead and false is returned; the person then taps Install again.
+     * Opens Android's installer for the finished file, from the app's own screen when there is one (Android blocks
+     * installers that start from the background). If this app is not yet allowed to install apps, the settings page
+     * for that opens instead and false is returned; the person then taps Install again.
      */
-    private boolean launchInstaller(DownloadManager dm, long id) {
+    private boolean launchInstaller(File apk) {
         try {
+            if (apk == null || !apk.exists()) return false;
             Context ctx = getContext();
             Context starter = getActivity() != null ? getActivity() : ctx;
-            Uri uri = dm.getUriForDownloadedFile(id);
-            if (uri == null) return false;
             if (Build.VERSION.SDK_INT >= 26 && !ctx.getPackageManager().canRequestPackageInstalls()) {
                 Intent allow = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + ctx.getPackageName()));
                 allow.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 starter.startActivity(allow);
                 return false;
             }
+            Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".fileprovider", apk);
             Intent open = new Intent(Intent.ACTION_VIEW);
             open.setDataAndType(uri, "application/vnd.android.package-archive");
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -150,29 +137,82 @@ public class CznnectNativePlugin extends Plugin {
         }
     }
 
-    /** Opens the installer as soon as the given download finishes (the app must still be open). */
-    private void watchForInstall(final DownloadManager dm, final long id) {
-        final Context ctx = getContext();
-        pendingInstallId = id;
-        if (installReceiver != null) {
-            try { ctx.unregisterReceiver(installReceiver); } catch (Exception ignored) { }
-        }
-        installReceiver = new BroadcastReceiver() {
+    private void runDownload(final long id, final String url, final File target, final boolean install) {
+        new Thread(new Runnable() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                long done = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-                if (done != pendingInstallId) return;
-                try { context.unregisterReceiver(this); } catch (Exception ignored) { }
-                installReceiver = null;
-                if (downloadFinished(dm, done)) launchInstaller(dm, done);
+            public void run() {
+                boolean ok = false;
+                int reason = 0;
+                for (int attempt = 1; attempt <= 3 && !ok; attempt++) {
+                    HttpURLConnection conn = null;
+                    File part = new File(target.getPath() + ".part");
+                    try {
+                        synchronized (CznnectNativePlugin.class) {
+                            if (dlId != id) return; // a newer download replaced this one
+                            dlDownloaded = 0;
+                            dlTotal = -1;
+                        }
+                        conn = (HttpURLConnection) new URL(url).openConnection();
+                        conn.setConnectTimeout(15000);
+                        conn.setReadTimeout(20000);
+                        conn.setInstanceFollowRedirects(true);
+                        conn.setRequestProperty("User-Agent", "CznnectApp");
+                        int code = conn.getResponseCode();
+                        if (code != 200) {
+                            reason = code;
+                            throw new IOException("HTTP " + code);
+                        }
+                        long total = conn.getContentLengthLong();
+                        synchronized (CznnectNativePlugin.class) { if (dlId == id) dlTotal = total; }
+                        InputStream in = conn.getInputStream();
+                        FileOutputStream out = new FileOutputStream(part);
+                        try {
+                            byte[] buf = new byte[32 * 1024];
+                            long got = 0;
+                            int n;
+                            while ((n = in.read(buf)) != -1) {
+                                out.write(buf, 0, n);
+                                got += n;
+                                synchronized (CznnectNativePlugin.class) {
+                                    if (dlId != id) return;
+                                    dlDownloaded = got;
+                                }
+                            }
+                            if (total > 0 && got != total) throw new IOException("Short file");
+                        } finally {
+                            try { out.close(); } catch (Exception ignored) { }
+                            try { in.close(); } catch (Exception ignored) { }
+                        }
+                        if (target.exists()) {
+                            //noinspection ResultOfMethodCallIgnored
+                            target.delete();
+                        }
+                        if (!part.renameTo(target)) throw new IOException("Could not save the file");
+                        ok = true;
+                    } catch (Exception e) {
+                        if (reason == 0) reason = -1;
+                        //noinspection ResultOfMethodCallIgnored
+                        part.delete();
+                        try { Thread.sleep(1500); } catch (InterruptedException ignored) { }
+                    } finally {
+                        if (conn != null) conn.disconnect();
+                    }
+                }
+                synchronized (CznnectNativePlugin.class) {
+                    if (dlId != id) return;
+                    dlStatus = ok ? "success" : "failed";
+                    dlReason = ok ? 0 : reason;
+                    if (ok) dlFile = target;
+                }
+                if (ok && install && getActivity() != null) {
+                    final File apk = target;
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() { launchInstaller(apk); }
+                    });
+                }
             }
-        };
-        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        if (Build.VERSION.SDK_INT >= 33) {
-            ctx.registerReceiver(installReceiver, filter, Context.RECEIVER_EXPORTED);
-        } else {
-            ctx.registerReceiver(installReceiver, filter);
-        }
+        }).start();
     }
 
     @PluginMethod
@@ -188,21 +228,24 @@ public class CznnectNativePlugin extends Plugin {
         String stem = name.endsWith(".apk") ? name.substring(0, name.length() - 4) : name;
         name = stem + "-" + (System.currentTimeMillis() / 1000) + ".apk";
         try {
-            DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
-            req.setTitle(name);
-            req.setDescription("Tap when finished to install");
-            req.setMimeType("application/vnd.android.package-archive");
-            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
-            DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-            // The previous update file goes first, so old copies do not pile up in Downloads.
-            long last = savedDownloadId();
-            if (last >= 0) {
-                try { dm.remove(last); } catch (Exception ignored) { }
+            File dir = updatesDir();
+            // Earlier update files go first, so old copies do not pile up.
+            File[] old = dir.listFiles();
+            if (old != null) for (File f : old) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
             }
-            long id = dm.enqueue(req);
-            saveDownloadId(id);
-            if (Boolean.TRUE.equals(call.getBoolean("install"))) watchForInstall(dm, id);
+            File target = new File(dir, name);
+            long id = System.currentTimeMillis();
+            synchronized (CznnectNativePlugin.class) {
+                dlId = id;
+                dlStatus = "running";
+                dlDownloaded = 0;
+                dlTotal = -1;
+                dlReason = 0;
+                dlFile = null;
+            }
+            runDownload(id, url, target, Boolean.TRUE.equals(call.getBoolean("install")));
             // The id lets the web code watch the download (downloadStatus) instead of just hoping it works.
             JSObject out = new JSObject();
             out.put("id", id);
@@ -212,7 +255,7 @@ public class CznnectNativePlugin extends Plugin {
         }
     }
 
-    /** How a download is doing: pending, running, paused, success or failed, with bytes and the download manager's reason code. */
+    /** How the download is doing: running, success or failed, with bytes so far and the total (-1 when unknown). */
     @PluginMethod
     public void downloadStatus(PluginCall call) {
         Long id = call.getLong("id");
@@ -220,29 +263,18 @@ public class CznnectNativePlugin extends Plugin {
             call.reject("No download id");
             return;
         }
-        Cursor c = null;
-        try {
-            DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-            c = dm.query(new DownloadManager.Query().setFilterById(id));
-            JSObject out = new JSObject();
-            if (c == null || !c.moveToFirst()) {
+        JSObject out = new JSObject();
+        synchronized (CznnectNativePlugin.class) {
+            if (id != dlId) {
                 out.put("status", "unknown");
             } else {
-                int s = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
-                out.put("status", s == DownloadManager.STATUS_SUCCESSFUL ? "success"
-                    : s == DownloadManager.STATUS_FAILED ? "failed"
-                    : s == DownloadManager.STATUS_PAUSED ? "paused"
-                    : s == DownloadManager.STATUS_PENDING ? "pending" : "running");
-                out.put("downloaded", c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)));
-                out.put("total", c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)));
-                out.put("reason", c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)));
+                out.put("status", dlStatus);
+                out.put("downloaded", dlDownloaded);
+                out.put("total", dlTotal);
+                out.put("reason", dlReason);
             }
-            call.resolve(out);
-        } catch (Exception e) {
-            call.reject("Could not read the download");
-        } finally {
-            if (c != null) c.close();
         }
+        call.resolve(out);
     }
 
     /** Opens one of this app's own download addresses in the phone's browser, the fallback when the download manager fails. */
@@ -266,13 +298,15 @@ public class CznnectNativePlugin extends Plugin {
     /** Opens the installer for the update that was downloaded last. The Install button in the app calls this. */
     @PluginMethod
     public void installUpdate(PluginCall call) {
-        DownloadManager dm = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-        long id = savedDownloadId();
-        if (id < 0 || !downloadFinished(dm, id)) {
+        File apk;
+        synchronized (CznnectNativePlugin.class) {
+            apk = "success".equals(dlStatus) ? dlFile : null;
+        }
+        if (apk == null) {
             call.reject("The update is still downloading. Try again in a moment.");
             return;
         }
-        if (launchInstaller(dm, id)) call.resolve();
+        if (launchInstaller(apk)) call.resolve();
         else call.reject("Allow Cznnect to install apps in the page that opened, then tap Install again.");
     }
 

@@ -46,6 +46,50 @@ public class CznnectNativePlugin extends Plugin {
         call.resolve();
     }
 
+    /** Shares a PNG (base64) with text. The picture is saved to Pictures/Cznnect so any app can read it. */
+    @PluginMethod
+    public void shareImage(PluginCall call) {
+        String b64 = call.getString("base64");
+        String text = call.getString("text");
+        if (b64 == null || b64.isEmpty()) {
+            call.reject("No picture");
+            return;
+        }
+        if (Build.VERSION.SDK_INT < 29) {
+            call.reject("Sharing a picture needs Android 10 or newer");
+            return;
+        }
+        try {
+            byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            android.content.ContentResolver cr = getContext().getContentResolver();
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "cznnect-banner-" + System.currentTimeMillis() + ".png");
+            v.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png");
+            v.put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Cznnect");
+            Uri uri = cr.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+            if (uri == null) {
+                call.reject("Could not save the picture");
+                return;
+            }
+            java.io.OutputStream out = cr.openOutputStream(uri);
+            if (out == null) {
+                call.reject("Could not save the picture");
+                return;
+            }
+            out.write(bytes);
+            out.close();
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("image/png");
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            if (text != null && !text.isEmpty()) send.putExtra(Intent.EXTRA_TEXT, text);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(Intent.createChooser(send, null));
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Could not share the picture");
+        }
+    }
+
     /**
      * Downloads the app update with Android's own download manager. The in-app browser view could not finish saving
      * the file, but the download manager always does and shows progress in the notification shade. With install set,

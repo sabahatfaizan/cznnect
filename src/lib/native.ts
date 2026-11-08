@@ -52,6 +52,26 @@ export async function shareText(text: string, title?: string): Promise<void> {
   await navigator.share({ text, title })
 }
 
+// Shares a PNG picture (base64, no prefix) with text. Inside the Android app this uses the phone's own share sheet;
+// on the web it uses the browser's. Returns false when neither can send a picture, so the caller can fall back.
+export async function shareImage(base64: string, text: string): Promise<boolean> {
+  try {
+    if (isNative()) {
+      await callNative('shareImage', { base64, text })
+      return true
+    }
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+    const file = new File([bytes], 'cznnect-banner.png', { type: 'image/png' })
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], text })
+      return true
+    }
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') return true // closed the share sheet
+  }
+  return false
+}
+
 // Switches the launcher icon on the phone's home screen to match the chosen app icon.
 export function setLauncherIcon(id: string) {
   if (!isNative()) return

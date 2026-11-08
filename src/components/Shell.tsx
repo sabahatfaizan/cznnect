@@ -135,6 +135,17 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </div>
           <div className="flex items-center gap-2">
           <FamilyBell familyId={family.id} userId={userId} chat={chatPulse} nextBirthday={upcoming[0] ?? null} onOpen={setTab} />
+          {isOwner && (
+            <button
+              type="button"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              aria-label="Switch to Administrator"
+              title="Switch to Administrator"
+              onClick={() => setEntryMode('admin')}
+            >
+              <Icon name="swap" size={18} />
+            </button>
+          )}
           <button
             type="button"
             className="menu-btn flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-current transition hover:bg-surface/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
@@ -175,7 +186,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             aria-label="Main menu"
             aria-modal="true"
             role="dialog"
-            className={`menu-panel absolute right-2 top-2 flex h-[calc(100%-1rem)] w-[min(80vw,24rem)] flex-col overflow-y-auto rounded-3xl border border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`menu-panel absolute right-2 top-2 flex h-[calc(100%-1rem)] w-[min(56vw,16.8rem)] flex-col overflow-y-auto rounded-3xl border border-line bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-300 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -227,7 +238,7 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
                   className="menu-item"
                   onClick={() => { setMenuOpen(false); setEntryMode('admin') }}
                 >
-                  <span className="menu-item-label"><Icon name="swap" size={22} />Switch to Administrator</span>
+                  <span className="menu-item-label"><Icon name="admin" size={22} />Admin</span>
                   <span aria-hidden="true" className="menu-chevron">›</span>
                 </button>
               )}

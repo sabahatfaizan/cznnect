@@ -1793,6 +1793,8 @@ body::before {
   inset: 0 0 auto 0;
   height: var(--app-top-safe, 36px);
   background: var(--page);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent);
   z-index: 45;
   pointer-events: none;
 }

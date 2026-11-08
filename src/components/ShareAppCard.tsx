@@ -10,13 +10,14 @@ const THEMES: Theme[] = [
   { id: 'forest', name: 'Forest', from: '#0d1f1a', to: '#1f4a3b', accent: '#9fe3c4' },
 ]
 
-type Banner = { brand: string; headline: string; pitch: string; cta: string; theme: string }
+type Banner = { brand: string; headline: string; pitch: string; cta: string; theme: string; logo: number }
 const DEFAULTS: Banner = {
   brand: 'Cznnect',
   headline: 'Your family, in one place',
   pitch: 'A private home for your family: a family tree, shared plans and places, birthday reminders and chat, all in one app.',
   cta: 'Use this link to unlock the full features',
   theme: 'midnight',
+  logo: 50,
 }
 const KEY = 'cznnect-share-banner'
 const SHOWN_LINK = WEB_APP_URL.replace(/^https?:\/\//, '')
@@ -61,7 +62,7 @@ function drawBanner(b: Banner): string | null {
   ctx.fillRect(0, 0, 1080, 1920)
   // The Cznnect square (an O and a Z in one frame) sits faint in the middle, behind the text.
   ctx.save()
-  ctx.globalAlpha = 0.5
+  ctx.globalAlpha = Math.min(100, Math.max(0, b.logo)) / 100
   ctx.translate(540 - 400, 960 - 400)
   ctx.scale(800 / 64, 800 / 64)
   const mark = ctx.createLinearGradient(6, 6, 58, 58)
@@ -163,7 +164,7 @@ export default function ShareAppCard() {
         style={{ aspectRatio: '9 / 16', background: `linear-gradient(160deg,${theme.from},${theme.to})` }}
       >
         {/* The faint square in the middle, same as on the picture that gets shared. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center" style={{ opacity: 0.5 }}>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center" style={{ opacity: b.logo / 100 }}>
           <Mark className="h-3/5 w-3/5" />
         </div>
         <div className="relative mb-3 mt-4 h-1 w-10 rounded-full" style={{ background: theme.accent }} />
@@ -191,6 +192,8 @@ export default function ShareAppCard() {
           />
         ))}
       </div>
+      <label className="label" htmlFor="share-logo">Logo strength: {b.logo}%</label>
+      <input id="share-logo" type="range" min={0} max={100} step={5} value={b.logo} onChange={(e) => edit({ logo: Number(e.target.value) })} className="w-full" />
       {field('brand', 'Name', 20)}
       {field('headline', 'Headline', 70)}
       {field('pitch', 'Pitch', 200, true)}

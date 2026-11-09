@@ -44,12 +44,18 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
           .eq('user_id', userId)
         if (dismissedError) throw dismissedError
         const excluded = (dismissed ?? []).map((row) => row.announcement_id)
-        let query = supabase.from('app_announcements').select('id,title,body,image_url,action_label,action_url')
-          .eq('published', true).order('created_at', { ascending: false }).limit(1)
-        if (excluded.length) query = query.not('id', 'in', `(${excluded.join(',')})`)
-        const { data, error } = await query
+        const { data, error } = await supabase.from('app_announcements')
+          .select('id,title,body,image_url,action_label,action_url,starts_at,ends_at')
+          .eq('published', true).order('created_at', { ascending: false }).limit(50)
         if (error) throw error
-        if (alive) setItem((data?.[0] as Announcement | undefined) ?? null)
+        const now = Date.now()
+        const hidden = new Set(excluded)
+        const eligible = (data ?? []).find((row) =>
+          !hidden.has(row.id) &&
+          (!row.starts_at || new Date(row.starts_at).getTime() <= now) &&
+          (!row.ends_at || new Date(row.ends_at).getTime() > now),
+        )
+        if (alive) setItem((eligible as Announcement | undefined) ?? null)
       } catch (error) {
         console.warn('Could not load Cznnect announcements:', error)
       } finally {
@@ -111,7 +117,7 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
           onContextMenu={(event) => event.preventDefault()}
           className={`absolute right-3 top-3 z-10 grid h-10 w-10 touch-none select-none place-items-center rounded-full border border-white/75 bg-black/55 text-white shadow-lg backdrop-blur-md transition ${holding ? 'scale-95 ring-4 ring-white/40' : ''}`}
         >
-          <Icon name="back" size={18} />
+          <span className="text-2xl leading-none" aria-hidden="true">×</span>
           <span className="sr-only">{holding ? 'Keep holding to close' : 'Hold to close'}</span>
         </button>
         {item.image_url && <img src={item.image_url} alt="" className="block max-h-[42vh] w-full object-cover" />}

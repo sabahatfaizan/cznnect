@@ -26,25 +26,8 @@ import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import { setGlassAllowed } from '../theme'
 import { isOwnerEmail } from '../owner'
-import SecretCoin from './SecretCoin'
-import UnlockToast from './UnlockToast'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'chat' | 'birthdays' | 'settings' | 'music' | 'admin'
-// Taglines for the Red Dead and Uncharted screen banners. Other themes hide the banner.
-const BANNERS: Record<Tab, { rdr2: string; unc: string }> = {
-  home: { rdr2: 'Camp', unc: 'Expedition Base' },
-  tree: { rdr2: 'Kin', unc: 'The Lineage Chart' },
-  explore: { rdr2: 'Scouting', unc: 'Uncharted Territory' },
-  plans: { rdr2: 'Next Job', unc: 'The Next Expedition' },
-  birthdays: { rdr2: 'Marked Days', unc: 'Dates in the Journal' },
-  me: { rdr2: 'Wanted', unc: "Explorer's Dossier" },
-  irl: { rdr2: 'Riding', unc: 'The Field Team' },
-  chat: { rdr2: 'Camp Talk', unc: 'Radio Channel' },
-  scoreboard: { rdr2: 'Bounties', unc: 'Treasure Tally' },
-  settings: { rdr2: 'Supplies', unc: 'Gear & Supplies' },
-  music: { rdr2: 'Campfire Songs', unc: 'The Soundtrack' },
-  admin: { rdr2: 'The Law', unc: 'Command Post' },
-}
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'irl', label: 'Convoy', icon: 'irl' },
@@ -119,7 +102,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
 
   return (
     <div className="mx-auto min-h-full max-w-xl">
-      <UnlockToast />
       <main data-tab={tab} className="p-4 pb-36 pt-[max(2.25rem,env(safe-area-inset-top),36px)]">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -127,10 +109,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
             <div className="brand-default">
               <Wordmark className="font-display text-xl font-extrabold" />
             </div>
-            {/* The pirate coin is the seven-tap secret for Red Dead. Only the Uncharted theme shows it. */}
-            <SecretCoin />
-            {/* Compact Red Dead wordmark; CSS applies the Chinese Rocks typeface only in this theme. */}
-            <span className="brand-rdr2-text">Cznnect</span>
           </div>
           </div>
           <div className="flex items-center gap-2">
@@ -266,7 +244,6 @@ export default function Shell({ family, userId, email, onFamilyChanged }: { fami
           </aside>
         </div>
         <div key={tab} className="screen-in">
-          <div className="screen-banner" aria-hidden="true" data-rdr2={BANNERS[tab].rdr2} data-unc={BANNERS[tab].unc} />
           {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
           {tab === 'chat' && <Chat family={family} userId={userId} canDelete={familyRole === 'owner'} />}
           {tab === 'irl' && <Irl family={family} userId={userId} />}

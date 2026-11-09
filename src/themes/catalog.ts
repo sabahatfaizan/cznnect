@@ -14,20 +14,12 @@ export const THEMES: ThemeMeta[] = [
     preview: { page: '#111318', surface: '#1b1e25', ink: '#edf0f5', muted: '#a0a7b4', accent: '#7ea7ff', soft: '#26334d', border: '#343945' },
   },
   {
-    id: 'rdr2', label: 'Red Dead', hint: 'Outlaw frontier', badge: 'Exclusive',
-    preview: { page: '#211710', surface: '#392719', ink: '#f6e7c9', muted: '#c3a987', accent: '#d49a4e', soft: '#4d3421', border: '#745034' },
+    id: 'midnight', label: 'Midnight', hint: 'Pure black, easy on the eyes',
+    preview: { page: '#000000', surface: '#0c0c0e', ink: '#f2f2f4', muted: '#9a9aa3', accent: '#8ab4ff', soft: '#16171c', border: '#26262c' },
   },
   {
-    id: 'uncharted', label: 'Uncharted', hint: 'Treasure-map adventure', badge: 'Exclusive',
-    preview: { page: '#14251f', surface: '#203b31', ink: '#e9f3df', muted: '#a9c2aa', accent: '#d5b76a', soft: '#354b35', border: '#4c6850' },
-  },
-  {
-    id: 'moonknight', label: 'Moon Knight Ink', hint: 'Ink-black comic night', badge: 'Exclusive',
-    preview: { page: '#000000', surface: '#0b0b0b', ink: '#f4f4f4', muted: '#a6a6a6', accent: '#ffffff', soft: '#1c1c1c', border: '#3a3a3a' },
-  },
-  {
-    id: 'moonpaper', label: 'Moon Knight Paper', hint: 'Black ink on white newsprint', badge: 'Exclusive',
-    preview: { page: '#f7f7f5', surface: '#ffffff', ink: '#0a0a0a', muted: '#5c5c5c', accent: '#0a0a0a', soft: '#e9e9e6', border: '#0a0a0a' },
+    id: 'dusk', label: 'Dusk', hint: 'Deep, dark purple', 
+    preview: { page: '#15101f', surface: '#1f1830', ink: '#efe9fb', muted: '#a99dc4', accent: '#b794f6', soft: '#2e2347', border: '#3b2f58' },
   },
   {
     id: 'glass', label: 'Liquid Glass', hint: 'Glass-inspired finish', badge: 'Owner',

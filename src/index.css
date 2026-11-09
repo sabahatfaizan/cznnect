@@ -52,6 +52,53 @@
   color-scheme: dark;
 }
 
+/* Midnight: pure black. Dusk: deep dark purple. Same tokens as Dark, different colours. */
+:root[data-theme="midnight"] {
+  --page: #000000;
+  --surface: #0c0c0e;
+  --surface-2: #16171c;
+  --ink: #f2f2f4;
+  --muted: #9a9aa3;
+  --line: #26262c;
+  --accent: #8ab4ff;
+  --accent-ink: #101827;
+  --accent-soft: #16233b;
+  --accent-text: #b4cdff;
+  --ok: #73d6a0;
+  --danger: #ff8989;
+  --radius-card: 14px;
+  --radius-ctl: 10px;
+  --radius-avatar: 9999px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.16), 0 4px 12px rgb(0 0 0 / 0.12);
+  --font-heading: "Manrope", system-ui, sans-serif;
+  --heading-case: none;
+  --heading-track: -0.01em;
+  color-scheme: dark;
+}
+
+:root[data-theme="dusk"] {
+  --page: #15101f;
+  --surface: #1f1830;
+  --surface-2: #2a2140;
+  --ink: #efe9fb;
+  --muted: #a99dc4;
+  --line: #3b2f58;
+  --accent: #b794f6;
+  --accent-ink: #1a1030;
+  --accent-soft: #2e2347;
+  --accent-text: #cdb6fa;
+  --ok: #73d6a0;
+  --danger: #ff8989;
+  --radius-card: 14px;
+  --radius-ctl: 10px;
+  --radius-avatar: 9999px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.16), 0 4px 12px rgb(0 0 0 / 0.12);
+  --font-heading: "Manrope", system-ui, sans-serif;
+  --heading-case: none;
+  --heading-track: -0.01em;
+  color-scheme: dark;
+}
+
 
 /* Lets Tailwind classes like bg-surface and text-muted follow the tokens above. */
 @theme inline {
@@ -91,7 +138,9 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  :root[data-theme="dark"] body {
+  :root[data-theme="dark"] body,
+  :root[data-theme="midnight"] body,
+  :root[data-theme="dusk"] body {
     background: var(--page);
     background-attachment: fixed;
   }
@@ -1305,7 +1354,6 @@ input[type="checkbox"] {
 /* The coin is only shown by the Uncharted theme; the worn-poster wordmark only by Red Dead. */
 .brand-coin { display: none; }
 /* Theme-specific wordmarks stay hidden unless their theme explicitly enables them. */
-.brand-rdr2-text { display: none; }
 .brand-rdr2 { display: none; }
 
 /* Extra mark details that only some themes show. */

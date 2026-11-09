@@ -1,25 +1,17 @@
 import { THEMES } from '../themes/catalog'
-import type { ExclusiveTheme, ThemePref } from '../theme'
+import type { ThemePref } from '../theme'
 
-// The theme cards in Settings. Exclusive themes only appear once unlocked, Liquid Glass only for the owner.
+// The theme cards in Settings. Liquid Glass shows only for the owner.
 export default function ThemePicker({
   theme,
-  unlocked,
   isOwner,
-  fresh,
   onPick,
 }: {
   theme: ThemePref
-  unlocked: ExclusiveTheme[]
   isOwner: boolean
-  fresh: ExclusiveTheme | null
   onPick: (id: ThemePref) => void
 }) {
-  const visible = THEMES.filter((t) => {
-    if (t.id === 'glass') return isOwner
-    if (t.id === 'rdr2' || t.id === 'uncharted' || t.id === 'moonknight' || t.id === 'moonpaper') return unlocked.includes(t.id)
-    return true
-  })
+  const visible = THEMES.filter((t) => t.id !== 'glass' || isOwner)
 
   return (
     <div className="mt-3 grid grid-cols-2 gap-3">
@@ -44,11 +36,7 @@ export default function ThemePicker({
             </div>
             <div className="flex flex-col gap-2 p-2">
               <div className="flex min-h-8 flex-col gap-1">
-                {fresh === t.id ? (
-                  <span className="theme-badge theme-badge-new">New</span>
-                ) : (
-                  t.badge && <span className="theme-badge">{t.badge}</span>
-                )}
+                {t.badge && <span className="theme-badge">{t.badge}</span>}
                 <p className="text-xs text-muted">{t.hint}</p>
               </div>
               <button

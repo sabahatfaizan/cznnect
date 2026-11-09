@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { redeemCode } from '../lib/redeem'
-import { getUnlockedThemes, onUnlocksChanged, relockThemes, setThemePref, type ExclusiveTheme } from '../theme'
-import { themeLabel } from '../themes/catalog'
+import { getUnlockedThemes, onUnlocksChanged, relockThemes, type ExclusiveTheme } from '../theme'
 
 const MAX_TRIES = 5
 const COOLDOWN_S = 15
@@ -39,7 +38,6 @@ export default function RedeemCard({ isOwner, onRedeemed }: { isOwner: boolean; 
     setState({ kind: 'checking' })
     const result = await redeemCode(code)
     if (result.status === 'ok') {
-      setThemePref(result.theme)
       onRedeemed(result.theme)
       setState({ kind: 'ok', theme: result.theme, isNew: result.isNew })
       setCode('')
@@ -101,9 +99,7 @@ export default function RedeemCard({ isOwner, onRedeemed }: { isOwner: boolean; 
                 <path className="redeem-ok-tick" d="M7 12.5l3.2 3.2L17 8.8" pathLength={1} />
               </svg>
               <span>
-                {state.isNew
-                  ? `Code accepted. ${themeLabel(state.theme)} unlocked and equipped.`
-                  : `${themeLabel(state.theme)} was already unlocked. Equipped.`}
+                {state.isNew ? 'Code accepted. New icons and avatar styles unlocked.' : 'That code was already used on this phone.'}
               </span>
             </p>
           )}

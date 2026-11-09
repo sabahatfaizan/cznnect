@@ -1,14 +1,16 @@
-// Standard themes: Light and Dark. Red Dead, Uncharted and Moon Knight are exclusive unlocks; Liquid Glass is owner-only.
-// The choice (and which exclusives are unlocked) is saved on this device, so each cousin has their own.
-export type ThemePref = 'light' | 'dark' | 'rdr2' | 'uncharted' | 'moonknight' | 'moonpaper' | 'glass'
+// Themes: Light, Dark, Midnight (black) and Dusk (dark purple) are open to everyone; Liquid Glass is owner-only.
+// The choice is saved on this device, so each cousin has their own.
+// The retired Red Dead, Uncharted and Moon Knight themes are gone. Their old unlock names stay only because the
+// avatar and icon packs that came with them still use them.
+export type ThemePref = 'light' | 'dark' | 'midnight' | 'dusk' | 'glass'
 export type ExclusiveTheme = 'rdr2' | 'uncharted' | 'moonknight' | 'moonpaper'
 
 export const EXCLUSIVE_THEMES: ExclusiveTheme[] = ['rdr2', 'uncharted', 'moonknight', 'moonpaper']
-const ALL_THEMES: ThemePref[] = ['light', 'dark', 'rdr2', 'uncharted', 'moonknight', 'moonpaper', 'glass']
+const ALL_THEMES: ThemePref[] = ['light', 'dark', 'midnight', 'dusk', 'glass']
+const RETIRED_THEMES = ['rdr2', 'uncharted', 'moonknight', 'moonpaper']
 
 const KEY = 'cznnect-theme'
 const UNLOCKS_KEY = 'cznnect-unlocked-themes'
-const UNLOCK_EVENT = 'cznnect-theme-unlocked'
 const CHANGE_EVENT = 'cznnect-unlocks-changed'
 
 const isExclusive = (t: string): t is ExclusiveTheme => (EXCLUSIVE_THEMES as string[]).includes(t)
@@ -38,7 +40,6 @@ export function unlockTheme(theme: ExclusiveTheme): boolean {
   } catch {
     // Storage can be blocked; this visit can still use it.
   }
-  window.dispatchEvent(new CustomEvent(UNLOCK_EVENT, { detail: theme }))
   window.dispatchEvent(new Event(CHANGE_EVENT))
   return true
 }
@@ -54,13 +55,6 @@ export function relockThemes() {
   window.dispatchEvent(new Event(CHANGE_EVENT))
 }
 
-// Fires when a theme is newly unlocked (for the celebration).
-export function onThemeUnlocked(callback: (theme: ExclusiveTheme) => void) {
-  const handler = (event: Event) => callback((event as CustomEvent<ExclusiveTheme>).detail)
-  window.addEventListener(UNLOCK_EVENT, handler)
-  return () => window.removeEventListener(UNLOCK_EVENT, handler)
-}
-
 // Fires whenever the unlocked set changes in either direction (for screens that list themes).
 export function onUnlocksChanged(callback: () => void) {
   window.addEventListener(CHANGE_EVENT, callback)
@@ -70,8 +64,9 @@ export function onUnlocksChanged(callback: () => void) {
 export function getThemePref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    if (v && isExclusive(v) && !isThemeUnlocked(v)) return 'dark'
     if (v && (ALL_THEMES as string[]).includes(v)) return v as ThemePref
+    // Retired themes become Midnight, the nearest dark look.
+    if (v && RETIRED_THEMES.includes(v)) return 'midnight'
     // Retired themes (Call of Duty, Tactical, Midnight) become the plain Dark theme.
     if (v === 'tactical' || v === 'mw4' || v === 'midnight') return 'dark'
   } catch {
@@ -93,10 +88,8 @@ export function setGlassAllowed(allowed: boolean) {
 const THEME_COLOR: Record<ThemePref, string> = {
   light: '#ffffff',
   dark: '#111318',
-  rdr2: '#171310',
-  uncharted: '#e8d9b5',
-  moonknight: '#000000',
-  moonpaper: '#f7f7f5',
+  midnight: '#000000',
+  dusk: '#15101f',
   glass: '#070b16',
 }
 
@@ -107,7 +100,6 @@ export function applyTheme(pref: ThemePref) {
 }
 
 export function setThemePref(pref: ThemePref) {
-  if (isExclusive(pref) && !isThemeUnlocked(pref)) pref = 'dark'
   try {
     localStorage.setItem(KEY, pref)
   } catch {

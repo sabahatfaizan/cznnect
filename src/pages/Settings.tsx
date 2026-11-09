@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
-import { getThemePref, getUnlockedThemes, onThemeUnlocked, onUnlocksChanged, setThemePref, type ExclusiveTheme, type ThemePref } from '../theme'
+import { getThemePref, getUnlockedThemes, onUnlocksChanged, setThemePref, type ThemePref } from '../theme'
 import { themeLabel } from '../themes/catalog'
 import { ICONS, ICON_GROUPS, getIconPref, iconGroupAvailable, renderIcon, setIconPref, type IconId } from '../appIcon'
 import { isOwnerEmail } from '../owner'
@@ -19,27 +19,20 @@ type Panel = 'family' | 'theme' | 'icon' | 'redeem' | 'password'
 // Picking a theme also picks a matching home-screen/browser icon. Exclusive themes
 // choose one of their own unlocked icon variants; the user can still change it manually.
 function iconForTheme(theme: ThemePref): IconId {
-  const group = theme === 'rdr2' ? 'Red Dead'
-    : theme === 'uncharted' ? 'Uncharted'
-    : theme === 'moonknight' || theme === 'moonpaper' ? 'Moon Knight'
-    : 'Classic'
-  const choices = ICONS.filter((item) => item.group === group)
-  if (theme === 'rdr2' || theme === 'uncharted' || theme === 'moonknight' || theme === 'moonpaper') {
-    return choices[Math.floor(Math.random() * choices.length)]?.id ?? 'ocean'
-  }
-  const matching: Record<'light' | 'dark' | 'glass', IconId> = {
+  const matching: Record<ThemePref, IconId> = {
     light: 'ocean',
     dark: 'graphite',
+    midnight: 'graphite',
+    dusk: 'orchid',
     glass: 'aurora',
   }
-  return matching[theme as 'light' | 'dark' | 'glass'] ?? 'ocean'
+  return matching[theme] ?? 'ocean'
 }
 
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
   const [unlockedThemes, setUnlockedThemes] = useState(() => getUnlockedThemes())
   const [icon, setIcon] = useState<IconId>(getIconPref())
-  const [fresh, setFresh] = useState<ExclusiveTheme | null>(null)
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<string | null>(null)
@@ -61,7 +54,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
   // Keep the theme list in step with unlocks from a code, the secret coin, or an owner re-lock.
   useEffect(() => onUnlocksChanged(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
-  useEffect(() => onThemeUnlocked(setFresh), [])
 
   const availableIconGroups = ICON_GROUPS.filter((group) => iconGroupAvailable(group, unlockedThemes))
   const isIconAvailable = (id: IconId) => {
@@ -245,7 +237,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
       {panel === 'theme' && (
         <Sheet title="Theme" onClose={() => setPanel(null)}>
-          <ThemePicker theme={theme} unlocked={unlockedThemes} isOwner={isOwnerEmail(email)} fresh={fresh} onPick={pickTheme} />
+          <ThemePicker theme={theme} isOwner={isOwnerEmail(email)} onPick={pickTheme} />
         </Sheet>
       )}
 

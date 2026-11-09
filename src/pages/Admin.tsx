@@ -15,7 +15,7 @@ import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNati
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 
-type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share'
+type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
@@ -103,6 +103,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [messagesLoaded, setMessagesLoaded] = useState(false)
   const [notifyText, setNotifyText] = useState('')
   const [notifyAll, setNotifyAll] = useState(false)
+  const [meetupCode, setMeetupCode] = useState('')
   const [preview, setPreview] = useState<Preview | null>(null)
   useBackClose(() => setPreview(null), preview !== null)
   const myBuild = thisBuild()
@@ -250,6 +251,23 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     void rpc('clear_family_messages', { fid: family.id }, 'All messages deleted.', () => { void loadMessages(); void loadOverview() })
   }
 
+  async function clearMeetupData() {
+    if (!/^\\d{4}$/.test(meetupCode)) { setNotice('Enter the 4-digit confirmation code.'); return }
+    if (!window.confirm('Delete ALL Convoy / meetup history, participants, points and pair cooldowns for this family? This cannot be undone.')) return
+    if (!window.confirm('Final confirmation: permanently clear all meetup data? Family accounts, chats, plans and places will stay.')) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const { data, error } = await supabase.rpc('admin_clear_meetup_data', { fid: family.id, p_code: meetupCode })
+      if (error) throw error
+      setNotice(`Meetup data cleared. ${data?.meetups_deleted ?? 0} meetups, ${data?.point_records_deleted ?? 0} point records and ${data?.pair_cooldowns_deleted ?? 0} pair cooldowns deleted.`)
+      setMeetupCode('')
+      void loadOverview()
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not clear meetup data.')
+    } finally { setBusy(false) }
+  }
+
 
   const tiles: { id: Section; icon: IconName; title: string; hint: string }[] = [
     { id: 'app', icon: 'megaphone', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
@@ -261,6 +279,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'share', icon: 'share', title: 'Share the app', hint: 'A banner and pitch to send to anyone' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
+    { id: 'data', icon: 'irl', title: 'Meetup data', hint: 'Clear Convoy meetups, check-ins and points' },
   ]
   const current: Section | null = isOwner ? section : 'family'
   useBackClose(() => open(null), isOwner && section !== null)
@@ -637,6 +656,17 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   )}
                 </section>
         </>
+      )}
+
+      {isOwner && current === 'data' && (
+        <section className="card flex flex-col gap-3" aria-label="Clear meetup data">
+          <p className="eyebrow">Danger zone · Convoy</p>
+          <p className="text-sm text-muted">Permanently deletes this family’s meetup history, participant confirmations, points ledger and pair cooldown records. Family accounts, QR identities, chats, plans, places and other app data are not affected.</p>
+          <label className="label" htmlFor="admin-meetup-code">4-digit confirmation code</label>
+          <input id="admin-meetup-code" className="input" type="password" inputMode="numeric" autoComplete="off" maxLength={4} value={meetupCode} onChange={(e) => setMeetupCode(e.target.value.replace(/\\D/g, '').slice(0, 4))} placeholder="Enter code" />
+          <button type="button" className="btn btn-plain !min-h-11 !text-sm" disabled={busy || meetupCode.length !== 4} onClick={() => void clearMeetupData()}>Clear all meetup data</button>
+          <p className="text-xs text-muted">This action cannot be undone. The owner account is checked by the database; the code is an additional confirmation step.</p>
+        </section>
       )}
 
       {isOwner && current === 'messages' && (

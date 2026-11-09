@@ -68,7 +68,9 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  const startHold = () => {
+  const startHold = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return
+    event.currentTarget.setPointerCapture?.(event.pointerId)
     held.current = false
     setHolding(true)
     window.clearTimeout(timer.current)
@@ -76,7 +78,7 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
       held.current = true
       setHolding(false)
       void dismiss()
-    }, 2000)
+    }, 2500)
   }
   const cancelHold = () => {
     window.clearTimeout(timer.current)
@@ -98,7 +100,7 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[180] flex items-center justify-center bg-black/65 p-5" role="presentation" onClick={() => void dismiss()}>
+    <div className="fixed inset-0 z-[180] flex flex-col items-center justify-center gap-4 bg-black/65 p-5" role="presentation" onClick={() => void dismiss()}>
       <section
         role="dialog"
         aria-modal="true"
@@ -106,20 +108,6 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
         className="relative w-full max-w-md overflow-hidden rounded-[26px] border border-white/15 bg-[var(--surface)] text-[var(--ink)] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          aria-label="Hold for 2 seconds to dismiss announcement"
-          title="Hold for 2 seconds to dismiss"
-          onPointerDown={startHold}
-          onPointerUp={cancelHold}
-          onPointerLeave={cancelHold}
-          onPointerCancel={cancelHold}
-          onContextMenu={(event) => event.preventDefault()}
-          className={`absolute right-3 top-3 z-10 grid h-10 w-10 touch-none select-none place-items-center rounded-full border border-white/75 bg-black/55 text-white shadow-lg backdrop-blur-md transition ${holding ? 'scale-95 ring-4 ring-white/40' : ''}`}
-        >
-          <span className="text-2xl leading-none" aria-hidden="true">×</span>
-          <span className="sr-only">{holding ? 'Keep holding to close' : 'Hold to close'}</span>
-        </button>
         {item.image_url && <img src={item.image_url} alt="" className="block max-h-[42vh] w-full object-cover" />}
         <div className="flex flex-col gap-3 p-5">
           <p className="text-[10px] font-bold uppercase tracking-[.18em] text-accent-text">Cznnect announcement</p>
@@ -131,6 +119,35 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
           {holding && <p className="text-center text-xs text-muted">Keep holding to dismiss…</p>}
         </div>
       </section>
+      <button
+        type="button"
+        aria-label="Hold for 2.5 seconds to dismiss announcement"
+        title="Hold to dismiss"
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={startHold}
+        onPointerUp={cancelHold}
+        onPointerLeave={cancelHold}
+        onPointerCancel={cancelHold}
+        onLostPointerCapture={cancelHold}
+        onContextMenu={(event) => event.preventDefault()}
+        className={`relative grid h-16 w-16 touch-none select-none place-items-center rounded-full bg-black/45 text-white shadow-xl backdrop-blur-md transition-transform duration-200 ${holding ? 'scale-95' : 'hover:scale-105'}`}
+      >
+        <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(255,255,255,.42)" strokeWidth="1.5" />
+          <circle
+            cx="24" cy="24" r="21" fill="none" stroke="white" strokeWidth="2.5"
+            strokeLinecap="round" strokeDasharray="131.95"
+            style={{
+              strokeDashoffset: holding ? 0 : 131.95,
+              transition: holding ? 'stroke-dashoffset 2500ms linear' : 'none',
+              filter: holding ? 'drop-shadow(0 0 3px rgba(255,255,255,.85))' : 'none',
+            }}
+          />
+        </svg>
+        <span className="relative text-[30px] font-light leading-none" aria-hidden="true">×</span>
+        <span className="sr-only">{holding ? 'Keep holding to close' : 'Hold to close'}</span>
+      </button>
+      <span className="text-[10px] font-semibold uppercase tracking-[.2em] text-white/75">Hold to dismiss</span>
     </div>,
     document.body,
   )

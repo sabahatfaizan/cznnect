@@ -4,7 +4,7 @@ import Logo from './Logo'
 import { signOut } from '../lib/push'
 
 // Shown once, right after sign-up: start a family space or join one with an invite code.
-export default function FamilySetup({ onDone }: { onDone: () => void }) {
+export default function FamilySetup({ onDone }: { onDone: (familyId?: string) => void }) {
   const [familyName, setFamilyName] = useState('')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState<'' | 'create' | 'join'>('')
@@ -14,20 +14,20 @@ export default function FamilySetup({ onDone }: { onDone: () => void }) {
     e.preventDefault()
     setBusy('create')
     setError('')
-    const { error } = await supabase.rpc('create_family', { family_name: familyName })
+    const { data, error } = await supabase.rpc('create_family', { family_name: familyName })
     setBusy('')
     if (error) setError(error.message)
-    else onDone()
+    else onDone(typeof data === 'string' ? data : undefined)
   }
 
   async function join(e: FormEvent) {
     e.preventDefault()
     setBusy('join')
     setError('')
-    const { error } = await supabase.rpc('join_family', { code })
+    const { data, error } = await supabase.rpc('join_family', { code })
     setBusy('')
     if (error) setError(error.message)
-    else onDone()
+    else onDone(typeof data === 'string' ? data : undefined)
   }
 
   return (

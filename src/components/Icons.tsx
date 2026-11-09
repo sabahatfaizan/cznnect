@@ -1,8 +1,15 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group' | 'share' | 'copy' | 'check' | 'swap'
+export type IconName = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'settings' | 'trophy' | 'cake' | 'key' | 'lock' | 'music' | 'family' | 'palette' | 'phone' | 'search' | 'list' | 'plus' | 'back' | 'download' | 'info' | 'admin' | 'bell' | 'megaphone' | 'chat' | 'send' | 'camera' | 'refresh' | 'group' | 'share' | 'copy' | 'check' | 'swap' | 'online'
 
 const PATHS: Record<IconName, ReactNode> = {
+  // A ring around a solid dot: an "active now" status light.
+  online: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" fill="currentColor" />
+    </>
+  ),
   // Two arrows pointing opposite ways: switch between two views.
   swap: (
     <>

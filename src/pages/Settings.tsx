@@ -149,7 +149,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         className="set-redeem !mt-0"
         onClick={() => { const next = !showOnline; setShowOnline(next); void setPresenceVisible(next) }}
       >
-        <span className="set-tile-icon" aria-hidden="true"><Icon name="family" size={22} /></span>
+        <span className="set-tile-icon" aria-hidden="true"><Icon name="online" size={22} /></span>
         <span className="set-tile-label flex-1 text-left">Show when I'm online</span>
         <span className="text-sm font-semibold text-muted">{showOnline ? 'On' : 'Off'}</span>
       </button>

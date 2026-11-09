@@ -13,6 +13,7 @@ import {
 import IrlMyCode from '../components/IrlMyCode'
 import IrlMeetupCard from '../components/IrlMeetupCard'
 import IrlScanSheet from '../components/IrlScanSheet'
+import IrlGatherings from '../components/IrlGatherings'
 import Sheet from '../components/Sheet'
 import { Icon } from '../components/Icons'
 
@@ -158,6 +159,8 @@ export default function Irl({ family, userId }: { family: Family; userId: string
               </button>
             </div>
           </section>
+
+          <IrlGatherings familyId={family.id} userId={userId} />
 
           {rest.length > 0 && (
             <section className="flex flex-col gap-3" aria-label="In progress">

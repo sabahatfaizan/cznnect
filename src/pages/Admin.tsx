@@ -15,7 +15,7 @@ import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNati
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 
-type Section = 'app' | 'downloads' | 'updates' | 'builds' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data'
+type Section = 'app' | 'downloads' | 'updates' | 'builds' | 'pages' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
@@ -239,7 +239,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     } finally { setBuildsLoading(false) }
   }, [])
 
-  useEffect(() => { if (section === 'builds') void loadBuilds() }, [section, loadBuilds])
+  useEffect(() => { if (section === 'builds' || section === 'pages') void loadBuilds() }, [section, loadBuilds])
 
   async function manageBuild(action: string, payload: Record<string, unknown>, confirmation: string) {
     if (busy || !window.confirm(confirmation)) return
@@ -310,7 +310,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'app', icon: 'megaphone', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
-    { id: 'builds', icon: 'list', title: 'Build manager', hint: 'View and delete APK builds and releases' },
+    { id: 'builds', icon: 'download', title: 'APK Builds', hint: 'Android APK build history, artifacts and releases' },
+    { id: 'pages', icon: 'globe', title: 'GitHub Pages Deployments', hint: 'Website deployment history and status' },
     { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
@@ -566,7 +567,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
 
       {isOwner && current === 'builds' && (
-        <section className="flex flex-col gap-3" aria-label="Build manager">
+        <section className="flex flex-col gap-3" aria-label="APK builds">
           <div className="card flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -585,25 +586,52 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           </div>
           <div className="card flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <p className="eyebrow">Recent workflow builds</p>
-              <span className="text-xs text-muted">{buildRuns.length} shown</span>
+              <p className="eyebrow">APK workflow runs</p>
+              <span className="text-xs text-muted">{buildRuns.filter((run) => /apk/i.test(run.name)).length} shown</span>
             </div>
             {buildsError && <p role="alert" className="text-sm text-danger">{buildsError}</p>}
-            {buildsLoading && <p className="text-sm text-muted">Loading builds…</p>}
-            {!buildsLoading && buildRuns.map((run) => (
+            {buildsLoading && <p className="text-sm text-muted">Loading APK builds…</p>}
+            {!buildsLoading && buildRuns.filter((run) => /apk/i.test(run.name)).map((run) => (
               <div key={run.id} className="flex items-start gap-3 border-b border-line pb-3 last:border-0 last:pb-0">
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">Build #{run.run_number} · {run.conclusion || run.status}</p>
-                  <p className="text-xs text-muted">{run.name} · {new Date(run.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-muted">{new Date(run.created_at).toLocaleString()}</p>
                   <p className="text-xs text-muted">{run.head_sha.slice(0, 7)} · {run.event}</p>
                   <a className="text-xs font-semibold text-accent-text underline" href={run.html_url} target="_blank" rel="noreferrer">Open on GitHub</a>
                 </div>
-                <button type="button" className="btn btn-plain !min-h-9 shrink-0 !px-2 !text-xs" disabled={busy || run.status === 'in_progress' || run.status === 'queued'} onClick={() => void manageBuild('delete_run', { run_id: run.id }, `Delete build #${run.run_number}, its logs and attached APK artifacts? This cannot be undone.`)}>Delete</button>
+                <button type="button" className="btn btn-plain !min-h-9 shrink-0 !px-2 !text-xs" disabled={busy || run.status === 'in_progress' || run.status === 'queued'} onClick={() => void manageBuild('delete_run', { run_id: run.id }, `Delete APK build #${run.run_number}, its logs and attached artifacts? This cannot be undone.`)}>Delete</button>
               </div>
             ))}
-            {!buildsLoading && !buildsError && buildRuns.length === 0 && <p className="text-sm text-muted">No workflow builds found.</p>}
-            <p className="text-xs text-muted">Deleting a workflow build removes its logs and attached artifacts. It does not change the live app or delete source code.</p>
+            {!buildsLoading && !buildsError && buildRuns.filter((run) => /apk/i.test(run.name)).length === 0 && <p className="text-sm text-muted">No APK builds found.</p>}
+            <p className="text-xs text-muted">Deleting a workflow run removes its logs and attached artifacts. It does not change the live app or delete source code.</p>
           </div>
+        </section>
+      )}
+
+      {isOwner && current === 'pages' && (
+        <section className="card flex flex-col gap-3" aria-label="GitHub Pages deployments">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow">GitHub Pages</p>
+              <p className="text-sm text-muted">Website deployment runs, separate from Android APK builds.</p>
+            </div>
+            <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-xs" disabled={buildsLoading} onClick={() => void loadBuilds()}><Icon name="refresh" size={16} /> Refresh</button>
+          </div>
+          {buildsError && <p role="alert" className="text-sm text-danger">{buildsError}</p>}
+          {buildsLoading && <p className="text-sm text-muted">Loading deployments…</p>}
+          {!buildsLoading && buildRuns.filter((run) => /pages/i.test(run.name)).map((run) => (
+            <div key={run.id} className="flex items-start gap-3 border-b border-line pb-3 last:border-0 last:pb-0">
+              <div className="min-w-0 flex-1">
+                <p className="font-bold">Deployment #{run.run_number} · {run.conclusion || run.status}</p>
+                <p className="text-xs text-muted">{new Date(run.created_at).toLocaleString()}</p>
+                <p className="text-xs text-muted">{run.head_sha.slice(0, 7)} · {run.event}</p>
+                <a className="text-xs font-semibold text-accent-text underline" href={run.html_url} target="_blank" rel="noreferrer">Open on GitHub</a>
+              </div>
+              <button type="button" className="btn btn-plain !min-h-9 shrink-0 !px-2 !text-xs" disabled={busy || run.status === 'in_progress' || run.status === 'queued'} onClick={() => void manageBuild('delete_run', { run_id: run.id }, `Delete Pages deployment #${run.run_number} and its logs? This cannot be undone.`)}>Delete</button>
+            </div>
+          ))}
+          {!buildsLoading && !buildsError && buildRuns.filter((run) => /pages/i.test(run.name)).length === 0 && <p className="text-sm text-muted">No Pages deployments found.</p>}
+          <p className="text-xs text-muted">Deleting a deployment run removes its logs. It does not remove the published website or repository files.</p>
         </section>
       )}
 

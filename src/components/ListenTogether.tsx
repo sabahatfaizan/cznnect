@@ -251,68 +251,77 @@ export default function ListenTogether({ getAudio, current, yt }: { getAudio: ()
 
   const tapPlay = () => { void guestAudio.current?.play().then(() => setNeedTap(false)).catch(() => {}) }
 
-  const box = 'rounded-2xl border border-line bg-surface p-4'
+  const box = 'relative overflow-hidden rounded-[26px] border border-line bg-surface shadow-[var(--shadow-card)]'
+  const bars = [35, 70, 48, 88, 55, 76, 42]
+  const visual = (
+    <div className="relative flex h-24 items-center justify-center gap-1.5 overflow-hidden rounded-2xl border border-white/10 bg-[#101522]">
+      <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: 'radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 68%)' }} />
+      {bars.map((h, i) => <span key={i} className="relative w-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_14px_var(--accent)]" style={{ height: `${h}%`, opacity: mode === 'idle' ? .48 : 1, animation: mode !== 'idle' ? `pulse 900ms ease-in-out ${i * 110}ms infinite alternate` : undefined }} />)}
+      <div className="absolute bottom-2 left-3 text-[9px] font-bold uppercase tracking-[.22em] text-white/55">Cznnect audio link</div>
+      <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white/80">
+        <span className={mode === 'idle' ? 'h-1.5 w-1.5 rounded-full bg-white/50' : 'h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400'} />
+        {mode === 'idle' ? 'Ready' : 'Live'}
+      </div>
+    </div>
+  )
+
   if (mode === 'host') {
     return (
-      <div className={`${box} text-center`}>
-        <div className="text-xs font-semibold uppercase tracking-widest text-muted">Listening together</div>
-        <div className="my-2 text-4xl font-extrabold tracking-[0.3em] text-[var(--accent-text)]">{code}</div>
-        <p className="text-sm text-muted">Friends open Music, type this code and tap Join.</p>
-        <p className="mt-1 text-sm font-semibold">{listeners ? `${listeners} listening` : status}</p>
-        <button className="btn btn-plain mt-3" onClick={stop}>Stop</button>
-      </div>
+      <section className={box}>
+        <div className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[var(--accent-text)]">Listen together</p><h3 className="mt-1 text-lg font-bold">Your room is live</h3></div>
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent-text)]">♫</span>
+          </div>
+          {visual}
+          <p className="mt-4 text-center text-xs font-semibold uppercase tracking-[.16em] text-muted">Share this room code</p>
+          <button type="button" onClick={() => { void navigator.clipboard?.writeText(code).catch(() => {}) }} className="mx-auto mt-1 flex items-center gap-2 rounded-2xl border border-line bg-[var(--surface-2,var(--surface))] px-5 py-3 text-3xl font-black tracking-[.32em] text-[var(--accent-text)]">
+            {code}<span className="text-sm tracking-normal text-muted">⧉</span>
+          </button>
+          <div className="mt-3 flex items-center justify-between rounded-xl bg-[var(--surface-2,var(--surface))] px-3 py-3">
+            <span className="text-sm text-muted">{status || 'Waiting for friends to join…'}</span>
+            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold text-[var(--accent-text)]">{listeners} listening</span>
+          </div>
+          <button className="btn btn-plain mt-3 w-full" onClick={stop}>End listening session</button>
+        </div>
+      </section>
     )
   }
   if (mode === 'guest') {
     return (
-      <div className={`${box} text-center`}>
-        <div className="text-xs font-semibold uppercase tracking-widest text-muted">Room {code}</div>
-        <div className="mt-1 truncate text-lg font-bold">{guestYt ? guestYt.title : title || 'Waiting for the host…'}</div>
-        {guestYt && (
-          <div className="mt-3 overflow-hidden rounded-xl">
-            <iframe
-              key={guestYt.key}
-              title={guestYt.title}
-              src={guestYt.kind === 'list'
-                ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(guestYt.id)}&playsinline=1&autoplay=1`
-                : `https://www.youtube-nocookie.com/embed/${encodeURIComponent(guestYt.id)}?playsinline=1&autoplay=1`}
-              className="aspect-video w-full border-0"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
-        {!guestYt && progress > 0 && progress < 1 && (
-          <div className="mx-auto mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[var(--line)]">
-            <div className="h-full bg-[var(--accent)]" style={{ width: `${Math.round(progress * 100)}%` }} />
-          </div>
-        )}
-        <p className="mt-2 text-sm text-muted">{status}</p>
-        {needTap && !guestYt && <button className="btn btn-primary mt-3" onClick={tapPlay}>Tap to play</button>}
-        <div><button className="btn btn-plain mt-3" onClick={stop}>Leave</button></div>
-      </div>
+      <section className={box}>
+        <div className="p-4">
+          <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[var(--accent-text)]">Listen together</p><h3 className="mt-1 text-lg font-bold">You’re in the room</h3></div><span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">Connected</span></div>
+          {visual}
+          <div className="mt-4"><p className="truncate text-base font-bold">{guestYt ? guestYt.title : title || 'Waiting for the host…'}</p><p className="mt-1 text-xs text-muted">Room {code} · {status}</p></div>
+          {guestYt && <div className="mt-3 overflow-hidden rounded-2xl"><iframe key={guestYt.key} title={guestYt.title} src={guestYt.kind === 'list' ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(guestYt.id)}&playsinline=1&autoplay=1` : `https://www.youtube-nocookie.com/embed/${encodeURIComponent(guestYt.id)}?playsinline=1&autoplay=1`} className="aspect-video w-full border-0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /></div>}
+          {!guestYt && progress > 0 && progress < 1 && <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--line)]"><div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${Math.round(progress * 100)}%` }} /></div>}
+          {needTap && !guestYt && <button className="btn btn-primary mt-3 w-full" onClick={tapPlay}>Tap to start audio</button>}
+          <button className="btn btn-plain mt-3 w-full" onClick={stop}>Leave room</button>
+        </div>
+      </section>
     )
   }
   return (
-    <div className={box}>
-      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
-        <span className="font-semibold">Listen together</span>
-        <span aria-hidden="true" className={`text-lg leading-none text-muted transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
-      </button>
-      {open && (
-        <div className="mt-2">
-          <p className="mb-3 text-sm text-muted">Play a song on everyone’s phone at once. Nothing is saved or uploaded.</p>
-          <button className="btn btn-primary w-full" disabled={!current && !yt} onClick={startHost}>
-            {yt ? `Host “${yt.title}”` : current ? `Host “${current.name}”` : 'Pick a song or video to host'}
-          </button>
-          <div className="mt-3 flex gap-2">
-            <input className="input !w-28 text-center font-bold uppercase tracking-widest" maxLength={4} placeholder="CODE" value={typed}
-              onChange={(e) => setTyped(e.target.value.replace(/[^a-zA-Z]/g, ''))} aria-label="Room code" />
-            <button className="btn btn-plain flex-1" onClick={startGuest}>Join</button>
-          </div>
-          {status && <p className="mt-2 text-sm text-danger">{status}</p>}
+    <section className={box}>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[var(--accent-text)]">Cznnect · Social audio</p><h3 className="mt-1 text-xl font-bold tracking-tight">Listen together</h3><p className="mt-1 max-w-[250px] text-xs leading-relaxed text-muted">Same song, same moment. Bring everyone into one listening room.</p></div>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)] text-2xl text-[var(--accent-text)]">♫</span>
         </div>
-      )}
-    </div>
+        <div className="mt-4">{visual}</div>
+        <div className="mt-4 rounded-2xl border border-line bg-[var(--surface-2,var(--surface))] p-3">
+          <div className="mb-2 flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--accent-soft)] text-sm text-[var(--accent-text)]">◉</span><div><p className="text-sm font-bold">Start a listening room</p><p className="text-[11px] text-muted">Host the track playing on your phone</p></div></div>
+          <button className="btn btn-primary w-full" disabled={!current && !yt} onClick={startHost}>{yt ? 'Host current YouTube audio' : current ? 'Host current song' : 'Choose a song to host'}</button>
+        </div>
+        <div className="my-3 flex items-center gap-3"><span className="h-px flex-1 bg-line" /><span className="text-[10px] font-bold uppercase tracking-[.18em] text-muted">or join a room</span><span className="h-px flex-1 bg-line" /></div>
+        <div className="flex gap-2">
+          <input className="input !h-12 min-w-0 flex-1 text-center font-bold uppercase tracking-[.28em]" maxLength={4} placeholder="ROOM CODE" value={typed} onChange={(e) => setTyped(e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase())} aria-label="Room code" />
+          <button className="btn btn-plain !h-12 !px-5" disabled={typed.trim().length !== 4} onClick={startGuest}>Join room</button>
+        </div>
+        {status && <p className="mt-2 text-center text-xs text-danger">{status}</p>}
+        <p className="mt-3 text-center text-[10px] text-muted">Private peer-to-peer audio · Nothing is stored on Cznnect servers</p>
+      </div>
+    </section>
   )
 }

@@ -1,12 +1,25 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Sheet from './Sheet'
+import { Icon } from './Icons'
+import { useBackClose } from '../lib/backStack'
 import { MAX_FAMILIES } from '../lib/families'
 import type { Family } from '../types'
 
 // The "Your families" part of the menu: the families this account is in (up to three), a tap to switch, and a way to
 // join or start another. The family open when the app closes is the one it opens in next time.
-export function FamilyList({
+// The menu shows just one row, "Your families". The list itself opens in a box over a blurred page, so a long family
+// name can never stretch the menu.
+export function FamiliesButton({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button type="button" className="menu-item" onClick={onOpen} aria-haspopup="dialog">
+      <span className="menu-item-label"><Icon name="family" size={22} />Your families</span>
+      <span aria-hidden="true" className="menu-chevron">›</span>
+    </button>
+  )
+}
+
+export function FamiliesModal({
   families,
   activeId,
   onSwitch,
@@ -19,28 +32,41 @@ export function FamilyList({
   onAdd: () => void
   onClose: () => void
 }) {
+  useBackClose(onClose, true)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return (
-    <div className="grid gap-1" aria-label="Your families">
-      <p className="eyebrow px-3 pb-1">Your families</p>
-      {families.map((f) => {
-        const on = f.id === activeId
-        return (
-          <button
-            key={f.id}
-            type="button"
-            className={`menu-item ${on ? 'menu-item-on' : ''}`}
-            aria-current={on ? 'true' : undefined}
-            onClick={() => { if (!on) onSwitch(f.id); onClose() }}
-          >
-            <span className="menu-item-label"><span className="truncate">{f.name}</span></span>
-            {on ? <span className="text-xs font-bold text-accent-text">Open</span> : <span aria-hidden="true" className="menu-chevron">›</span>}
-          </button>
-        )
-      })}
-      <button type="button" className="menu-item" onClick={onAdd} aria-haspopup="dialog">
-        <span className="menu-item-label"><span aria-hidden="true" className="text-xl leading-none">+</span>Add a family</span>
-        <span className="text-xs text-muted">{families.length}/{MAX_FAMILIES}</span>
-      </button>
+    <div className="fixed inset-0 z-[70] grid place-items-center p-5" role="dialog" aria-modal="true" aria-label="Your families">
+      <button type="button" aria-label="Close" className="absolute inset-0 cursor-default bg-black/45 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-sm rounded-3xl border border-line bg-surface p-5 shadow-2xl">
+        <p className="font-display text-xl font-extrabold">Your families</p>
+        <p className="mt-1 text-sm text-muted">Tap one to open it. The app opens in the one you used last.</p>
+        <ul className="mt-4 grid gap-2">
+          {families.map((f) => {
+            const on = f.id === activeId
+            return (
+              <li key={f.id}>
+                <button
+                  type="button"
+                  aria-current={on ? 'true' : undefined}
+                  onClick={() => { if (!on) onSwitch(f.id); onClose() }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left ${on ? 'border-accent bg-accent-soft' : 'border-line'}`}
+                >
+                  <span className={`min-w-0 flex-1 truncate font-semibold ${on ? 'text-accent-text' : ''}`}>{f.name}</span>
+                  {on && <span className="shrink-0 text-xs font-bold text-accent-text">Open</span>}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        <button type="button" className="btn btn-plain mt-3 w-full" onClick={onAdd}>
+          + Add a family <span className="ml-1 text-muted">{families.length}/{MAX_FAMILIES}</span>
+        </button>
+      </div>
     </div>
   )
 }

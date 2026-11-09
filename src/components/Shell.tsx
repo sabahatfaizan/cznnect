@@ -21,7 +21,7 @@ import Settings from '../pages/Settings'
 import Chat from '../pages/Chat'
 import Admin from '../pages/Admin'
 import { requestAdmin } from '../lib/entryMode'
-import AddFamilySheet, { FamilyList } from './MyFamilies'
+import AddFamilySheet, { FamiliesButton, FamiliesModal } from './MyFamilies'
 import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
@@ -88,6 +88,7 @@ export default function Shell({
   useBackClose(() => setTab('home'), tab !== 'home')
   const [musicUnlocked, setMusicUnlocked] = useState(false)
   const [addingFamily, setAddingFamily] = useState(false)
+  const [familiesOpen, setFamiliesOpen] = useState(false)
   const holdTimer = useRef<number | undefined>(undefined)
   const heldOpen = useRef(false)
   const startHold = () => {
@@ -219,7 +220,7 @@ export default function Shell({
               </button>
             </div>
             <div className="mt-6 border-t border-line pt-6">
-              <FamilyList families={families} activeId={family.id} onSwitch={onSwitchFamily} onAdd={() => { setMenuOpen(false); setAddingFamily(true) }} onClose={() => setMenuOpen(false)} />
+              <FamiliesButton onOpen={() => { setMenuOpen(false); setFamiliesOpen(true) }} />
             </div>
             <div className="mt-6 border-t border-line pt-8">
               <div className="pb-4"><p className="eyebrow px-3">Settings</p></div>
@@ -264,6 +265,7 @@ export default function Shell({
             </div>
           </aside>
         </div>
+        {familiesOpen && <FamiliesModal families={families} activeId={family.id} onSwitch={onSwitchFamily} onAdd={() => { setFamiliesOpen(false); setAddingFamily(true) }} onClose={() => setFamiliesOpen(false)} />}
         {addingFamily && <AddFamilySheet count={families.length} onAdded={onFamilyAdded} onClose={() => setAddingFamily(false)} />}
         <div key={tab} className="screen-in">
           {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}

@@ -1335,12 +1335,9 @@ input[type="checkbox"] {
 .icon-tile img { width: 3.75rem; height: 3.75rem; border-radius: 22%; box-shadow: 0 4px 12px rgb(0 0 0 / 0.25); }
 .icon-tile-on { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
 
-/* The C of the wordmark wears the same gradient as the mark. */
+/* Only the square mark carries the icon colours. The C is plain text in the same colour as "nnect", in every theme. */
 .wordmark-c {
-  background: linear-gradient(135deg, var(--logo-a, #5aa9ff), var(--logo-b, #1f3fd0));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: inherit;
 }
 
 /* Loading screen footer: Sic Parvis Magna is exclusive to the Uncharted theme. */

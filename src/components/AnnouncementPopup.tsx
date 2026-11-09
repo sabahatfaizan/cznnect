@@ -85,7 +85,7 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
         className="relative w-full max-w-md overflow-hidden rounded-[26px] border border-white/15 bg-[var(--surface)] text-[var(--ink)] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        {item.image_url && <img src={item.image_url} alt="" className="block h-auto w-auto max-h-[calc(100dvh-3rem)] max-w-full object-contain" />}
+        {item.image_url && <img src={item.image_url} alt="" className="block h-auto w-auto max-h-[65vh] max-w-full object-contain" />}
         <div className="flex flex-col gap-3 p-5">
           <p className="text-[10px] font-bold uppercase tracking-[.18em] text-accent-text">Cznnect announcement</p>
           <h2 id="cznnect-announcement-title" className="font-display text-xl font-bold leading-tight">{item.title}</h2>

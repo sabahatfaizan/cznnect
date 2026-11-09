@@ -10,7 +10,7 @@ const THEMES: Theme[] = [
   { id: 'forest', name: 'Forest', from: '#0d1f1a', to: '#1f4a3b', accent: '#9fe3c4' },
 ]
 
-type Banner = { brand: string; headline: string; pitch: string; cta: string; theme: string; logo: number }
+type Banner = { brand: string; headline: string; pitch: string; cta: string; theme: string; logo: number; stores: boolean }
 const DEFAULTS: Banner = {
   brand: 'Cznnect',
   headline: 'Your family, in one place',
@@ -18,7 +18,16 @@ const DEFAULTS: Banner = {
   cta: 'Use this link to unlock the full features',
   theme: 'midnight',
   logo: 50,
+  stores: true,
 }
+// The Android and Apple logos (24x24), drawn in the banner's own accent colour so they match its theme.
+const ANDROID_PATH = 'M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0004.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0989L4.841 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6892-7.5743-6.1185-9.4396'
+const APPLE_PATH = 'M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701'
+const STORES = [
+  { label: 'Android', path: ANDROID_PATH },
+  { label: 'iPhone', path: APPLE_PATH },
+] as const
+
 const KEY = 'cznnect-share-banner'
 const SHOWN_LINK = WEB_APP_URL.replace(/^https?:\/\//, '')
 const FONT = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
@@ -94,9 +103,40 @@ function drawBanner(b: Banner): string | null {
   wrap(ctx, b.pitch, 900, 6).forEach((l, i) => ctx.fillText(l, 90, 650 + i * 54))
   ctx.fillStyle = t.accent
   ctx.font = `700 46px ${FONT}`
-  wrap(ctx, b.cta, 900, 2).forEach((l, i) => ctx.fillText(l, 90, 1050 + i * 56))
+  wrap(ctx, b.cta, 900, 2).forEach((l, i) => ctx.fillText(l, 90, (b.stores ? 1015 : 1050) + i * 56))
+  if (b.stores) {
+    // "Available on" badges: a pill each for Android and iPhone, in the accent colour.
+    ctx.font = `700 32px ${FONT}`
+    let x = 90
+    for (const st of STORES) {
+      const textW = ctx.measureText(st.label).width
+      const w = 28 + 36 + 12 + textW + 28
+      ctx.save()
+      ctx.globalAlpha = 0.16
+      ctx.fillStyle = t.accent
+      ctx.beginPath()
+      ctx.roundRect(x, 1085, w, 70, 35)
+      ctx.fill()
+      ctx.restore()
+      ctx.strokeStyle = t.accent
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.roundRect(x, 1085, w, 70, 35)
+      ctx.stroke()
+      ctx.save()
+      ctx.translate(x + 28, 1085 + 17)
+      ctx.scale(36 / 24, 36 / 24)
+      ctx.fillStyle = t.accent
+      ctx.fill(new Path2D(st.path))
+      ctx.restore()
+      ctx.fillStyle = t.accent
+      ctx.fillText(st.label, x + 28 + 36 + 12, 1085 + 46)
+      x += w + 20
+    }
+  }
   ctx.font = `600 42px ${FONT}`
-  ctx.fillText(SHOWN_LINK, 90, 1190, 900)
+  ctx.fillStyle = t.accent
+  ctx.fillText(SHOWN_LINK, 90, b.stores ? 1228 : 1190, 900)
   ctx.fillStyle = '#9aa3b2'
   ctx.font = `400 28px ${FONT}`
   ctx.fillText(COPYRIGHT, 90, 1296, 900)
@@ -174,6 +214,16 @@ export default function ShareAppCard() {
         <p className="relative mt-[18px] text-[10.4px] leading-[1.35]" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
         <div className="relative mt-auto">
           {b.cta.trim() && <p className="text-[12px] font-bold leading-[1.2]" style={{ color: theme.accent }}>{b.cta}</p>}
+          {b.stores && (
+            <div className="mt-[8px] flex gap-[5px]">
+              {STORES.map((st) => (
+                <span key={st.label} className="inline-flex items-center gap-[3px] rounded-full border px-[7px] py-[2px] text-[8px] font-bold" style={{ color: theme.accent, borderColor: theme.accent, background: `color-mix(in srgb, ${theme.accent} 16%, transparent)` }}>
+                  <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor" aria-hidden="true"><path d={st.path} /></svg>
+                  {st.label}
+                </span>
+              ))}
+            </div>
+          )}
           <p className="mt-[8px] text-[11px] font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
           <p className="mt-[16px] text-[7px]" style={{ color: '#9aa3b2' }}>{COPYRIGHT}</p>
         </div>
@@ -193,6 +243,10 @@ export default function ShareAppCard() {
           />
         ))}
       </div>
+      <label className="flex items-center justify-between gap-3 text-sm font-semibold" htmlFor="share-stores">
+        Show “Android” and “iPhone” badges
+        <input id="share-stores" type="checkbox" className="h-5 w-5" style={{ accentColor: 'var(--accent)' }} checked={b.stores} onChange={(e) => edit({ stores: e.target.checked })} />
+      </label>
       <label className="label" htmlFor="share-logo">Logo strength: {b.logo}%</label>
       <input id="share-logo" type="range" min={0} max={100} step={5} value={b.logo} onChange={(e) => edit({ logo: Number(e.target.value) })} className="w-full" />
       {field('brand', 'Name', 20)}

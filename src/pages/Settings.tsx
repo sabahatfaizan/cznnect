@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
-import { getThemePref, getUnlockedThemes, onUnlocksChanged, setThemePref, type ThemePref } from '../theme'
+import { getThemePref, setThemePref, type ThemePref } from '../theme'
 import { themeLabel } from '../themes/catalog'
 import { ICONS, ICON_GROUPS, getIconPref, iconGroupAvailable, renderIcon, setIconPref, type IconId } from '../appIcon'
 import { isOwnerEmail } from '../owner'
 import ThemePicker from '../components/ThemePicker'
-import RedeemCard from '../components/RedeemCard'
 import ChangePassword from '../components/ChangePassword'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
@@ -14,7 +13,7 @@ import { appUrl, canShare, isNative, shareText } from '../lib/native'
 import { pushEnabled, setPushEnabled } from '../lib/push'
 import { getPresenceVisible, setPresenceVisible } from '../lib/pulse'
 
-type Panel = 'family' | 'theme' | 'icon' | 'redeem' | 'password'
+type Panel = 'family' | 'theme' | 'icon' | 'password'
 
 // Picking a theme also picks a matching home-screen/browser icon. Exclusive themes
 // choose one of their own unlocked icon variants; the user can still change it manually.
@@ -31,7 +30,6 @@ function iconForTheme(theme: ThemePref): IconId {
 
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
   const [theme, setTheme] = useState<ThemePref>(getThemePref())
-  const [unlockedThemes, setUnlockedThemes] = useState(() => getUnlockedThemes())
   const [icon, setIcon] = useState<IconId>(getIconPref())
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
@@ -52,10 +50,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'Local build'
   const buildCommit = import.meta.env.VITE_BUILD_COMMIT?.slice(0, 7) || ''
 
-  // Keep the theme list in step with unlocks from a code, the secret coin, or an owner re-lock.
-  useEffect(() => onUnlocksChanged(() => { setUnlockedThemes(getUnlockedThemes()); setTheme(getThemePref()) }), [])
-
-  const availableIconGroups = ICON_GROUPS.filter((group) => iconGroupAvailable(group, unlockedThemes))
+  const availableIconGroups = ICON_GROUPS.filter((group) => iconGroupAvailable(group))
   const isIconAvailable = (id: IconId) => {
     const item = ICONS.find((candidate) => candidate.id === id)
     return Boolean(item && availableIconGroups.includes(item.group))
@@ -66,7 +61,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
       setIconPref('ocean')
       setIcon('ocean')
     }
-  }, [icon, unlockedThemes])
+  }, [icon])
 
   useEffect(() => {
     supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle()
@@ -157,12 +152,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         <span className="set-tile-icon" aria-hidden="true"><Icon name="family" size={22} /></span>
         <span className="set-tile-label flex-1 text-left">Show when I'm online</span>
         <span className="text-sm font-semibold text-muted">{showOnline ? 'On' : 'Off'}</span>
-      </button>
-
-      <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('redeem')} aria-haspopup="dialog">
-        <span className="set-tile-icon" aria-hidden="true"><Icon name="key" size={22} /></span>
-        <span className="set-tile-label flex-1 text-left">Redeem code</span>
-        <span aria-hidden="true" className="expander-chevron">›</span>
       </button>
 
       <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('password')} aria-haspopup="dialog">
@@ -274,11 +263,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         </Sheet>
       )}
 
-      {panel === 'redeem' && (
-        <Sheet title="Redeem code" onClose={() => setPanel(null)}>
-          <RedeemCard isOwner={isOwnerEmail(email)} onRedeemed={(t) => { setTheme(t); setUnlockedThemes(getUnlockedThemes()) }} />
-        </Sheet>
-      )}
     </div>
   )
 }

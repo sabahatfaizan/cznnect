@@ -5,7 +5,6 @@ import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
 import ColorWheel from '../components/ColorWheel'
 import { AVATAR_ICONS, DEFAULT_AVATAR_COLOR, EMOJI_GROUPS, TYPO_AVATARS, TYPO_PACKS, encodeAvatar, encodeTypoAvatar, parseAvatar, parseTypoAvatar } from '../lib/avatars'
-import { getUnlockedThemes, onUnlocksChanged } from '../theme'
 import { signOut } from '../lib/push'
 
 const BIO_MAX = 140
@@ -19,11 +18,9 @@ export default function Profile({ userId }: { userId: string }) {
   const [color, setColor] = useState(DEFAULT_AVATAR_COLOR)
   const [typo, setTypo] = useState('')
   const [tab, setTab] = useState<'emoji' | 'letters'>('emoji')
-  const [unlocked, setUnlocked] = useState(getUnlockedThemes)
-  useEffect(() => onUnlocksChanged(() => setUnlocked(getUnlockedThemes())), [])
   const [typoBg, setTypoBg] = useState('') // wheel colour for a lettering avatar; '' keeps its themed background
   const [colorTouched, setColorTouched] = useState(false)
-  // A pack is offered once its theme is unlocked. The one already in use stays visible.
+  // Retired packs are only listed for someone already using one.
   const inUse = typo ? TYPO_AVATARS.find((t) => t.id === typo)?.pack : AVATAR_ICONS.find((i) => symbol === `i:${i.id}`)?.pack
   const [phone, setPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
@@ -235,7 +232,7 @@ export default function Profile({ userId }: { userId: string }) {
 
           {tab === 'letters' && (
             <>
-              {TYPO_PACKS.filter((pack) => !pack.requires || unlocked.includes(pack.requires) || inUse === pack.name).map((pack) => (
+              {TYPO_PACKS.filter((pack) => !pack.retired || inUse === pack.name).map((pack) => (
                 <div key={pack.name} role="radiogroup" aria-label={`${pack.name} avatars`}>
                   <p className="label mb-1.5">{pack.name}</p>
                   <div className="flex flex-wrap gap-2.5">

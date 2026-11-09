@@ -1,7 +1,6 @@
 // Custom app icon: a colour variant for the Cznnect mark. It recolours the logo inside the app and the
 // icon the browser uses for the tab and for new Home Screen shortcuts. An icon that is already on a
 // phone's Home Screen keeps its look until the app is removed and added again.
-import type { ExclusiveTheme } from './theme'
 import { setLauncherIcon } from './lib/native'
 
 export type IconId =
@@ -24,14 +23,12 @@ export const ICONS: { id: IconId; label: string; group: string; a: string; b: st
   { id: 'khonshu', label: 'Khonshu', group: 'Moon Knight', a: '#f4f4f4', b: '#111111' },
   { id: 'crescent', label: 'Crescent', group: 'Moon Knight', a: '#111111', b: '#f4f4f4' },
 ]
-export const ICON_GROUPS = ['Classic', 'Uncharted', 'Red Dead', 'Moon Knight']
+export const ICON_GROUPS = ['Classic']
 
-// The Uncharted and Red Dead colour sets belong to those themes, so they appear once the theme is unlocked.
-export function iconGroupAvailable(group: string, unlocked: ExclusiveTheme[]): boolean {
-  if (group === 'Uncharted') return unlocked.includes('uncharted')
-  if (group === 'Red Dead') return unlocked.includes('rdr2')
-  if (group === 'Moon Knight') return unlocked.includes('moonknight')
-  return true
+// Only the Classic colours are offered. The older themed sets are no longer in the picker (a phone that had one
+// chosen goes back to Ocean), but their definitions stay so the app's native icon list keeps matching.
+export function iconGroupAvailable(group: string): boolean {
+  return group === 'Classic'
 }
 
 const KEY = 'cznnect-icon'

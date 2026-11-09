@@ -3,10 +3,9 @@
 // Stored in profiles.avatar (16 characters at most) as "<symbol>|#rrggbb", for example "🦊|#f59e0b" or
 // "i:lasso|#3b82f6". Older avatars saved as "<emoji>|<colour number>" still load.
 // Lettering avatars (below) are stored as "t:<id>" or "t:<id>|<rrggbb>", for example "t:mk-moon".
-import type { ExclusiveTheme } from '../theme'
 
 // Drawn icons: a hand-sketched Wild West set plus a bat. The ids are short so the stored value fits.
-// Each drawn icon sits inside its theme's pack (see TYPO_PACKS), so it only shows once that theme is unlocked.
+// Each drawn icon sits inside one of the retired packs (see TYPO_PACKS), so it is only listed for people already using it.
 export const AVATAR_ICONS: { id: string; label: string; pack: string }[] = [
   { id: 'lasso', label: 'Lasso', pack: 'Arthur Morgan' },
   { id: 'hat', label: 'Cowboy hat', pack: 'Arthur Morgan' },
@@ -147,12 +146,14 @@ export type TypoAvatar = {
   custom?: string // a background picked on the colour wheel, when there is one
 }
 
-export const TYPO_PACKS: { name: string; requires: ExclusiveTheme | null }[] = [
-  { name: 'Dark', requires: null },
-  { name: 'Moon Knight', requires: 'moonknight' },
-  { name: 'Batman', requires: 'moonknight' }, // there is no Batman theme, so this pack goes with the dark Moon Knight one
-  { name: 'Arthur Morgan', requires: 'rdr2' },
-  { name: 'Nathan Drake', requires: 'uncharted' },
+// The themed packs are retired: they are no longer offered for new picks, but a person who already uses one keeps
+// it, and everyone can still see it on their profile.
+export const TYPO_PACKS: { name: string; retired: boolean }[] = [
+  { name: 'Dark', retired: false },
+  { name: 'Moon Knight', retired: true },
+  { name: 'Batman', retired: true },
+  { name: 'Arthur Morgan', retired: true },
+  { name: 'Nathan Drake', retired: true },
 ]
 
 const MK: [string, string] = ['#1a1a1a', '#000000']

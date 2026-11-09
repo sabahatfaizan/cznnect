@@ -186,7 +186,7 @@ export default function ShareAppCard() {
     } catch { /* closed the share sheet */ }
   }
 
-  const field = (id: keyof Banner, label: string, max: number, multi = false) => (
+  const field = (id: 'brand' | 'headline' | 'pitch' | 'cta', label: string, max: number, multi = false) => (
     <>
       <label className="label" htmlFor={`share-${id}`}>{label}</label>
       {multi ? (

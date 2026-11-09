@@ -157,15 +157,27 @@ jobs:
           PY
           grep -n "versionCode\|versionName\|cznnect-debug" android/app/build.gradle
 
+      - name: Keep Gradle downloads between builds
+        # Once a build has downloaded its libraries they are kept here, so a later outage at Maven Central or
+        # GitHub's release servers cannot stop an update that only needs files it already has.
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - name: Build debug APK
-        # GitHub's servers sometimes drop a connection while Gradle starts up or downloads. Trying again a couple of
-        # times turns those one-off failures into a slightly slower build instead of a missing update.
+        # Downloads sometimes fail for a few minutes (a 504 from GitHub's or Maven's servers). Up to 5 tries with a
+        # longer wait each time turns that into a slower build instead of a missing update.
         run: |
           cd android
-          for attempt in 1 2 3; do
+          for attempt in 1 2 3 4 5; do
             ./gradlew assembleDebug && exit 0
             echo "Build attempt $attempt failed."
-            [ "$attempt" -lt 3 ] && sleep 20
+            [ "$attempt" -lt 5 ] && sleep $((attempt * 45))
           done
           exit 1
 

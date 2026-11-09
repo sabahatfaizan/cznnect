@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import ShareAppCard from '../components/ShareAppCard'
 import TitleBadge from '../components/TitleBadge'
 import { createPortal } from 'react-dom'
-import { ServiceNotice, MAINTENANCE_REASSURANCE } from '../components/ServiceNotice'
+import { ServiceNotice } from '../components/ServiceNotice'
 import { useBackClose } from '../lib/backStack'
 import { remindersAreScheduled, sendTestReminder } from '../lib/birthdayReminders'
 import type { Family, FamilyRole } from '../types'
@@ -670,7 +670,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-sm" onClick={() => setPreview(null)}>Close</button>
           </div>
           {preview === 'maintenance' && (
-            <ServiceNotice preview title="Back soon" message={maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE} reassurance={MAINTENANCE_REASSURANCE} onUnlock={() => {}} />
+            <ServiceNotice preview title="Back soon" message={maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE} onUnlock={() => {}} />
           )}
           {preview === 'download' && (
             <ServiceNotice

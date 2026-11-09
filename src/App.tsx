@@ -8,7 +8,7 @@ import { SUPABASE_URL, configured } from './config'
 import AuthScreen from './components/AuthScreen'
 import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
-import { ServiceNotice, InstallHelp, MAINTENANCE_REASSURANCE } from './components/ServiceNotice'
+import { ServiceNotice, InstallHelp } from './components/ServiceNotice'
 import Authed from './Authed'
 import AdminApp from './AdminApp'
 import EntryChooser from './components/EntryChooser'
@@ -145,7 +145,7 @@ export default function App() {
   const isOwner = isOwnerEmail(session?.user.email)
   if (recoveryMode) return <><PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} /><NetworkStatus /></>
   if (maintenance?.maintenanceEnabled && !isOwner && !pinUnlocked) {
-    return <><ServiceNotice title="Back soon" message={maintenance.maintenanceMessage} reassurance={MAINTENANCE_REASSURANCE} onUnlock={() => setPinUnlocked(true)} /><NetworkStatus /></>
+    return <><ServiceNotice title="Back soon" message={maintenance.maintenanceMessage} onUnlock={() => setPinUnlocked(true)} /><NetworkStatus /></>
   }
   // With the download option on, people on the plain website (not the Android app, not the home-screen web app)
   // see the download page instead of signing in. The owner account and anyone with the access PIN still get through.

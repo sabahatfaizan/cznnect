@@ -6,7 +6,6 @@ import { APK_BACKUP_URL, LATEST_APK_URL, isNativeApp, thisBuild } from '../lib/a
 import { deviceKind } from '../lib/updateGate'
 import { useApkDownload } from '../lib/apkDownload'
 
-export const MAINTENANCE_REASSURANCE = 'Hang tight. This only takes a little while, and there is nothing you need to do. Your data is safe.'
 const MAINTENANCE_PIN = '4124'
 const LOGO_TAPS_FOR_PIN = 7
 
@@ -58,7 +57,7 @@ export function InstallHelp({ onClose, focus = 'android' }: { onClose: () => voi
   )
 }
 
-export function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, building = false, showApk = false, showIos = false, installLabel = 'Install', title = 'Cznnect is getting an update', preview = false, reassurance }: { message: string; requiredBuild?: number; onUnlock?: () => void; onContinue?: () => void; building?: boolean; showApk?: boolean; showIos?: boolean; installLabel?: string; title?: string; preview?: boolean; reassurance?: string }) {
+export function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, building = false, showApk = false, showIos = false, installLabel = 'Install', title = 'Cznnect is getting an update', preview = false }: { message: string; requiredBuild?: number; onUnlock?: () => void; onContinue?: () => void; building?: boolean; showApk?: boolean; showIos?: boolean; installLabel?: string; title?: string; preview?: boolean }) {
   const [help, setHelp] = useState<null | 'android' | 'ios'>(null)
   const apk = useApkDownload()
   const [webLink, setWebLink] = useState<string | null>(null)
@@ -111,13 +110,6 @@ export function ServiceNotice({ message, requiredBuild, onUnlock, onContinue, bu
         </div>
 
         <p className="text-sm text-muted">{message}</p>
-
-        {reassurance && (
-          <p role="status" className="flex items-center gap-2.5 rounded-xl border border-line px-4 py-3 text-sm font-semibold">
-            <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-accent" />
-            {reassurance}
-          </p>
-        )}
 
         {androidCard && building && (
           <p role="status" className="text-sm font-semibold">The new app is being prepared. Please wait a few minutes.</p>

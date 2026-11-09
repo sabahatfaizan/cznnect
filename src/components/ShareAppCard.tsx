@@ -47,24 +47,25 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
 
 const COPYRIGHT = '© 2026 Sabahat Faizan. All rights reserved.'
 
-// Draws the banner as a tall 1080x1920 picture, the portrait size phones use for stories and status posts. Returns base64 PNG.
+// Draws the banner as a 1080x1350 (4:5) picture. That shape shows whole inside a WhatsApp chat or any feed without
+// being cropped or needing a tap to open, which a tall story-sized picture does not. Returns base64 PNG.
 function drawBanner(b: Banner): string | null {
   const t = THEMES.find((x) => x.id === b.theme) ?? THEMES[0]
   const canvas = document.createElement('canvas')
   canvas.width = 1080
-  canvas.height = 1920
+  canvas.height = 1350
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
-  const bg = ctx.createLinearGradient(0, 0, 1080, 1920)
+  const bg = ctx.createLinearGradient(0, 0, 1080, 1350)
   bg.addColorStop(0, t.from)
   bg.addColorStop(1, t.to)
   ctx.fillStyle = bg
-  ctx.fillRect(0, 0, 1080, 1920)
+  ctx.fillRect(0, 0, 1080, 1350)
   // The Cznnect square (an O and a Z in one frame) sits faint in the middle, behind the text.
   ctx.save()
   ctx.globalAlpha = Math.min(100, Math.max(0, b.logo)) / 100
-  ctx.translate(540 - 400, 960 - 400)
-  ctx.scale(800 / 64, 800 / 64)
+  ctx.translate(540 - 340, 675 - 340)
+  ctx.scale(680 / 64, 680 / 64)
   const mark = ctx.createLinearGradient(6, 6, 58, 58)
   mark.addColorStop(0, '#ffffff')
   mark.addColorStop(0.4, t.accent)
@@ -82,23 +83,23 @@ function drawBanner(b: Banner): string | null {
   ctx.stroke()
   ctx.restore()
   ctx.fillStyle = t.accent
-  ctx.fillRect(90, 170, 130, 12)
+  ctx.fillRect(90, 110, 130, 12)
   ctx.fillStyle = '#ffffff'
-  ctx.font = `800 150px ${FONT}`
-  ctx.fillText(b.brand.slice(0, 20), 90, 350, 900)
-  ctx.font = `700 90px ${FONT}`
-  wrap(ctx, b.headline, 900, 4).forEach((l, i) => ctx.fillText(l, 90, 520 + i * 108))
+  ctx.font = `800 130px ${FONT}`
+  ctx.fillText(b.brand.slice(0, 20), 90, 255, 900)
+  ctx.font = `700 76px ${FONT}`
+  wrap(ctx, b.headline, 900, 3).forEach((l, i) => ctx.fillText(l, 90, 370 + i * 90))
   ctx.fillStyle = '#d3d9e4'
-  ctx.font = `400 46px ${FONT}`
-  wrap(ctx, b.pitch, 900, 6).forEach((l, i) => ctx.fillText(l, 90, 1010 + i * 64))
+  ctx.font = `400 40px ${FONT}`
+  wrap(ctx, b.pitch, 900, 6).forEach((l, i) => ctx.fillText(l, 90, 650 + i * 54))
   ctx.fillStyle = t.accent
-  ctx.font = `700 52px ${FONT}`
-  wrap(ctx, b.cta, 900, 2).forEach((l, i) => ctx.fillText(l, 90, 1490 + i * 64))
-  ctx.font = `600 44px ${FONT}`
-  ctx.fillText(SHOWN_LINK, 90, 1670, 900)
+  ctx.font = `700 46px ${FONT}`
+  wrap(ctx, b.cta, 900, 2).forEach((l, i) => ctx.fillText(l, 90, 1050 + i * 56))
+  ctx.font = `600 42px ${FONT}`
+  ctx.fillText(SHOWN_LINK, 90, 1190, 900)
   ctx.fillStyle = '#9aa3b2'
-  ctx.font = `400 30px ${FONT}`
-  ctx.fillText(COPYRIGHT, 90, 1836, 900)
+  ctx.font = `400 28px ${FONT}`
+  ctx.fillText(COPYRIGHT, 90, 1296, 900)
   return canvas.toDataURL('image/png').split(',')[1] ?? null
 }
 
@@ -160,21 +161,21 @@ export default function ShareAppCard() {
     <section className="card flex flex-col gap-3" aria-label="Share the app">
       <p className="eyebrow">Banner preview</p>
       <div
-        className="mx-auto relative flex w-full max-w-[280px] flex-col overflow-hidden rounded-2xl p-5 text-white"
-        style={{ aspectRatio: '9 / 16', background: `linear-gradient(160deg,${theme.from},${theme.to})` }}
+        className="mx-auto relative flex w-full max-w-[280px] flex-col overflow-hidden rounded-2xl px-[23px] pb-[20px] pt-[24px] text-white"
+        style={{ aspectRatio: '4 / 5', background: `linear-gradient(160deg,${theme.from},${theme.to})` }}
       >
         {/* The faint square in the middle, same as on the picture that gets shared. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center" style={{ opacity: b.logo / 100 }}>
           <Mark className="h-3/5 w-3/5" />
         </div>
-        <div className="relative mb-3 mt-4 h-1 w-10 rounded-full" style={{ background: theme.accent }} />
-        <p className="relative font-display text-3xl font-extrabold leading-none">{b.brand}</p>
-        <p className="relative mt-3 text-lg font-bold leading-tight">{b.headline}</p>
-        <p className="relative mt-3 text-xs" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
+        <div className="relative mb-[10px] h-[3px] w-[34px] rounded-full" style={{ background: theme.accent }} />
+        <p className="relative font-display text-[34px] font-extrabold leading-none">{b.brand}</p>
+        <p className="relative mt-[18px] text-[20px] font-bold leading-[1.18]">{b.headline}</p>
+        <p className="relative mt-[18px] text-[10.4px] leading-[1.35]" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
         <div className="relative mt-auto">
-          {b.cta.trim() && <p className="text-xs font-bold" style={{ color: theme.accent }}>{b.cta}</p>}
-          <p className="text-xs font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
-          <p className="mt-3 text-[9px]" style={{ color: '#9aa3b2' }}>{COPYRIGHT}</p>
+          {b.cta.trim() && <p className="text-[12px] font-bold leading-[1.2]" style={{ color: theme.accent }}>{b.cta}</p>}
+          <p className="mt-[8px] text-[11px] font-semibold" style={{ color: theme.accent }}>{SHOWN_LINK}</p>
+          <p className="mt-[16px] text-[7px]" style={{ color: '#9aa3b2' }}>{COPYRIGHT}</p>
         </div>
       </div>
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Banner colours">

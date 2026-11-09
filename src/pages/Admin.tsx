@@ -252,7 +252,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   }
 
   async function clearMeetupData() {
-    if (!/^\\d{4}$/.test(meetupCode)) { setNotice('Enter the 4-digit confirmation code.'); return }
+    if (!/^\d{4}$/.test(meetupCode)) { setNotice('Enter the 4-digit confirmation code.'); return }
     if (!window.confirm('Delete ALL Convoy / meetup history, participants, points and pair cooldowns for this family? This cannot be undone.')) return
     if (!window.confirm('Final confirmation: permanently clear all meetup data? Family accounts, chats, plans and places will stay.')) return
     setBusy(true)
@@ -663,7 +663,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           <p className="eyebrow">Danger zone · Convoy</p>
           <p className="text-sm text-muted">Permanently deletes this family’s meetup history, participant confirmations, points ledger and pair cooldown records. Family accounts, QR identities, chats, plans, places and other app data are not affected.</p>
           <label className="label" htmlFor="admin-meetup-code">4-digit confirmation code</label>
-          <input id="admin-meetup-code" className="input" type="password" inputMode="numeric" autoComplete="off" maxLength={4} value={meetupCode} onChange={(e) => setMeetupCode(e.target.value.replace(/\\D/g, '').slice(0, 4))} placeholder="Enter code" />
+          <input id="admin-meetup-code" className="input" type="password" inputMode="numeric" autoComplete="off" maxLength={4} value={meetupCode} onChange={(e) => setMeetupCode(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="Enter code" />
           <button type="button" className="btn btn-plain !min-h-11 !text-sm" disabled={busy || meetupCode.length !== 4} onClick={() => void clearMeetupData()}>Clear all meetup data</button>
           <p className="text-xs text-muted">This action cannot be undone. The owner account is checked by the database; the code is an additional confirmation step.</p>
         </section>

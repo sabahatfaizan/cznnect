@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import Sheet from './Sheet'
 import PlaceForm from './PlaceForm'
-import { averageStars, kindLabel, mapsLink, starText, statusLabel, type Place, type Rating } from '../lib/places'
-import { deletePlace, ratePlace, removeRating, updatePlace } from '../lib/placesApi'
+import { averageStars, kindLabel, mapsLink, starText, statusLabel, whoBeen, type Place, type Rating, type Visit } from '../lib/places'
+import { deletePlace, markVisited, ratePlace, removeMyVisit, removeRating, updatePlace } from '../lib/placesApi'
 
 type Mode = 'view' | 'edit' | 'delete'
 
@@ -11,6 +11,8 @@ export default function PlaceSheet({
   place,
   places,
   ratings,
+  visits,
+  visitsOn,
   names,
   userId,
   isOwner,
@@ -21,6 +23,8 @@ export default function PlaceSheet({
   place: Place
   places: Place[]
   ratings: Rating[]
+  visits: Visit[]
+  visitsOn: boolean
   names: Map<string, string>
   userId: string
   isOwner: boolean
@@ -36,6 +40,8 @@ export default function PlaceSheet({
   const [error, setError] = useState('')
 
   const avg = averageStars(ratings)
+  const been = whoBeen(visits, ratings)
+  const albumOk = Boolean(place.album_url && /^https:\/\//i.test(place.album_url))
   const canRemove = place.created_by === userId || isOwner
   const when = place.visited_on ? ` · ${place.visited_on}` : ''
 
@@ -54,6 +60,19 @@ export default function PlaceSheet({
     }
     await onChanged()
     onNotice('Rating saved')
+  }
+
+  async function toggleVisit() {
+    setBusy(true)
+    setError('')
+    const problem = visits.some((v) => v.user_id === userId) ? await removeMyVisit(place.id) : await markVisited(place.id, '')
+    setBusy(false)
+    if (problem) {
+      setError(problem)
+      return
+    }
+    await onChanged()
+    onNotice(visits.some((v) => v.user_id === userId) ? 'Visit removed' : 'Saved. You have been here')
   }
 
   async function clearRating() {
@@ -89,7 +108,7 @@ export default function PlaceSheet({
     return (
       <Sheet title="Edit place" onClose={() => setMode('view')}>
         <PlaceForm
-          initial={{ ...place, cuisine: place.cuisine ?? '', address: place.address ?? '', notes: place.notes ?? '', visited_on: place.visited_on ?? '' }}
+          initial={{ ...place, album_url: place.album_url ?? '', cuisine: place.cuisine ?? '', address: place.address ?? '', notes: place.notes ?? '', visited_on: place.visited_on ?? '' }}
           places={places}
           editingId={place.id}
           submitLabel="Save"
@@ -150,6 +169,36 @@ export default function PlaceSheet({
         <a className="btn btn-plain" href={mapsLink(place.lat, place.lng)} target="_blank" rel="noopener noreferrer">
           Open in Maps
         </a>
+
+        {albumOk && (
+          <a className="btn btn-primary" href={place.album_url ?? undefined} target="_blank" rel="noopener noreferrer">
+            Open photo album
+          </a>
+        )}
+
+        {(visitsOn || been.size > 0) && (
+          <section className="card flex flex-col gap-3">
+            <h3 className="font-display text-lg font-bold">Who has been here</h3>
+            {been.size === 0 ? (
+              <p className="text-muted">Nobody has marked this place yet.</p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {[...been.entries()].map(([id, on]) => (
+                  <li key={id} className="py-2 font-semibold">
+                    {names.get(id) ?? 'A cousin'}
+                    {id === userId ? ' (you)' : ''}
+                    {on ? <span className="font-normal text-muted"> · {on}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {visitsOn && (
+              <button className="btn btn-plain" disabled={busy} onClick={toggleVisit}>
+                {visits.some((v) => v.user_id === userId) ? 'Remove my visit' : "I've been here"}
+              </button>
+            )}
+          </section>
+        )}
 
         <section className="card flex flex-col gap-3">
           <h3 className="font-display text-lg font-bold">Your rating</h3>

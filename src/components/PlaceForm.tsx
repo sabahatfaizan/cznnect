@@ -28,6 +28,8 @@ export default function PlaceForm({
   const [visited, setVisited] = useState(initial.visited_on ?? '')
   const [address, setAddress] = useState(initial.address ?? '')
   const [notes, setNotes] = useState(initial.notes ?? '')
+  const [album, setAlbum] = useState(initial.album_url ?? '')
+  const hadAlbum = Boolean(initial.album_url)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,6 +42,10 @@ export default function PlaceForm({
       setError('Please enter a name.')
       return
     }
+    if (album.trim() && !/^https:\/\//i.test(album.trim())) {
+      setError('The album link must start with https://')
+      return
+    }
     setBusy(true)
     setError('')
     const problem = await onSubmit({
@@ -50,6 +56,8 @@ export default function PlaceForm({
       address,
       notes,
       visited_on: visited,
+      album_url: album,
+      clear_album: hadAlbum && !album.trim(),
       lat: initial.lat,
       lng: initial.lng,
     })
@@ -164,6 +172,13 @@ export default function PlaceForm({
           Notes (optional)
         </label>
         <textarea id="pl-notes" className="input" value={notes} maxLength={1000} onChange={(e) => setNotes(e.target.value)} />
+      </div>
+
+      <div>
+        <label className="label" htmlFor="pl-album">
+          Photo album link (optional)
+        </label>
+        <input id="pl-album" className="input" type="url" inputMode="url" autoComplete="off" placeholder="https://" value={album} maxLength={300} onChange={(e) => setAlbum(e.target.value)} />
       </div>
 
       {error && (

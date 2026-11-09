@@ -11,6 +11,9 @@ import {
   validLatLng,
   type Place,
   type Rating,
+  type Visit,
+  groupVisits,
+  whoBeen,
   type StatusFilter,
 } from '../lib/places'
 import { addPlace, type Found } from '../lib/placesApi'
@@ -37,6 +40,8 @@ const STATUSES: { id: StatusFilter; label: string }[] = [
 export default function Explore({ family, userId }: { family: Family; userId: string }) {
   const [places, setPlaces] = useState<Place[]>([])
   const [ratings, setRatings] = useState<Rating[]>([])
+  const [visits, setVisits] = useState<Visit[]>([])
+  const [visitsOn, setVisitsOn] = useState(false)
   const [names, setNames] = useState<Map<string, string>>(new Map())
   const [isOwner, setIsOwner] = useState(false)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -74,6 +79,10 @@ export default function Explore({ family, userId }: { family: Family; userId: st
       const members = (m.data ?? []) as unknown as Member[]
       setPlaces((p.data ?? []) as Place[])
       setRatings((r.data ?? []) as Rating[])
+      // The visits table comes from supabase/26_place_visits.sql; until it is run, Explore works as before.
+      const v = await supabase.from('place_visits').select('place_id, user_id, visited_on').eq('family_id', family.id)
+      setVisitsOn(!v.error)
+      setVisits(v.error ? [] : ((v.data ?? []) as Visit[]))
       setNames(new Map(members.map((x) => [x.user_id, x.profiles?.display_name ?? 'A cousin'])))
       setIsOwner(members.some((x) => x.user_id === userId && x.role === 'owner'))
       setStatus('ready')
@@ -94,12 +103,13 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   }, [])
 
   const byPlace = useMemo(() => groupRatings(ratings), [ratings])
+  const visitsByPlace = useMemo(() => groupVisits(visits), [visits])
   // A cousin's rating is the existing signal that they have personally been to a place.
   const shown = useMemo(() => {
     const filtered = filterPlaces(places, { kind: 'all', status: state, query })
     if (visitedBy === 'all') return filtered
-    return filtered.filter((p) => byPlace.get(p.id)?.some((r) => r.user_id === visitedBy))
-  }, [places, state, query, visitedBy, byPlace])
+    return filtered.filter((p) => whoBeen(visitsByPlace.get(p.id), byPlace.get(p.id)).has(visitedBy))
+  }, [places, state, query, visitedBy, byPlace, visitsByPlace])
   const selected = selectedId ? (places.find((p) => p.id === selectedId) ?? null) : null
 
   // If a place was removed by someone else while its card was open, close the card.
@@ -229,7 +239,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
                   <option key={id} value={id}>{id === userId ? 'You' : name}</option>
                 ))}
             </select>
-            <p className="mt-1 text-xs text-muted">Shows places that cousin has rated, as a record of places they’ve been.</p>
+            <p className="mt-1 text-xs text-muted">Shows places that cousin has marked as visited or rated.</p>
           </div>
 
           <div role="tablist" aria-label="How to view places" className="grid grid-cols-2 gap-2">
@@ -297,13 +307,14 @@ export default function Explore({ family, userId }: { family: Family; userId: st
             <ul className="divide-y divide-line">
               {sorted.map((p) => {
                 const avg = averageStars(byPlace.get(p.id))
+                const beenCount = whoBeen(visitsByPlace.get(p.id), byPlace.get(p.id)).size
                 return (
                   <li key={p.id}>
                     <button type="button" className="flex min-h-14 w-full items-center gap-3 py-1 text-left" onClick={() => setSelectedId(p.id)}>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-semibold">{p.name}</span>
                         <span className="block truncate text-sm text-muted">
-                          {kindLabel(p)} · {statusLabel(p.status)}
+                          {kindLabel(p)} · {statusLabel(p.status)}{beenCount > 0 ? ` · ${beenCount} been here` : ''}
                         </span>
                       </span>
                       <span className="flex-none text-sm font-bold text-accent-text" aria-label={avg === null ? 'No ratings' : `${avg} out of 5`}>
@@ -362,6 +373,8 @@ export default function Explore({ family, userId }: { family: Family; userId: st
           place={selected}
           places={places}
           ratings={byPlace.get(selected.id) ?? []}
+          visits={visitsByPlace.get(selected.id) ?? []}
+          visitsOn={visitsOn}
           names={names}
           userId={userId}
           isOwner={isOwner}

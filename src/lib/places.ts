@@ -17,6 +17,13 @@ export type Place = {
   visited_on: string | null
   created_by: string | null
   created_at: string
+  album_url?: string | null
+}
+
+export type Visit = {
+  place_id: string
+  user_id: string
+  visited_on: string | null
 }
 
 export type Rating = {
@@ -41,6 +48,24 @@ export function groupRatings(ratings: Rating[]): Map<string, Rating[]> {
     if (list) list.push(r)
     else m.set(r.place_id, [r])
   }
+  return m
+}
+
+export function groupVisits(visits: Visit[]): Map<string, Visit[]> {
+  const m = new Map<string, Visit[]>()
+  for (const v of visits) {
+    const list = m.get(v.place_id)
+    if (list) list.push(v)
+    else m.set(v.place_id, [v])
+  }
+  return m
+}
+
+// Everyone who has been to a place: those who marked it and those who rated it (a rating also means they went).
+export function whoBeen(visits: Visit[] | undefined, ratings: Rating[] | undefined): Map<string, string | null> {
+  const m = new Map<string, string | null>()
+  for (const r of ratings ?? []) m.set(r.user_id, null)
+  for (const v of visits ?? []) m.set(v.user_id, v.visited_on)
   return m
 }
 

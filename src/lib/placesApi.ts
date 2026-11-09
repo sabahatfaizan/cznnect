@@ -14,6 +14,8 @@ export type PlaceValues = {
   visited_on: string // '' when unknown
   lat: number
   lng: number
+  album_url?: string // only sent when given, so saving still works before supabase/26_place_visits.sql is run
+  clear_album?: boolean
 }
 
 type DbError = { message: string; code?: string }
@@ -51,6 +53,7 @@ function clean(v: PlaceValues) {
     visited_on: v.status === 'been' ? v.visited_on || null : null,
     lat: v.lat,
     lng: v.lng,
+    ...(v.album_url?.trim() ? { album_url: v.album_url.trim() } : v.clear_album ? { album_url: null } : {}),
   }
 }
 
@@ -108,4 +111,17 @@ export async function searchPlace(query: string): Promise<{ results: Found[]; er
   } catch {
     return { results: [], error: 'Could not search. Check your connection, or pick the spot on the map instead.' }
   }
+}
+
+// "I've been here": add or change your own visit. Needs supabase/26_place_visits.sql.
+export async function markVisited(placeId: string, date: string): Promise<string | null> {
+  const r = await run<null>(() => supabase.rpc('mark_place_visited', { pid: placeId, on_date: date || null }))
+  if (r.error && /mark_place_visited|schema cache/.test(r.error)) return 'This needs supabase/26_place_visits.sql to be run in Supabase first.'
+  return r.error
+}
+
+// Takes your own visit back. Row rules mean only your own row can ever be removed.
+export async function removeMyVisit(placeId: string): Promise<string | null> {
+  const r = await run<{ place_id: string }[]>(() => supabase.from('place_visits').delete().eq('place_id', placeId).select('place_id'))
+  return r.error
 }

@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !serviceKey) return json({ error: 'Server authentication is not configured.' }, 500)
     if (!token) return json({ error: 'GitHub management is not configured yet. Add GITHUB_ADMIN_TOKEN to Supabase Edge Function secrets.' }, 503)
 
-    const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\\s+/i, '')
+    const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
     const admin = createClient(supabaseUrl, serviceKey)
     const { data: auth, error: authError } = await admin.auth.getUser(jwt)
     if (authError || (auth.user?.email ?? '').toLowerCase() !== OWNER_EMAIL) return json({ error: 'Owner access only.' }, 403)

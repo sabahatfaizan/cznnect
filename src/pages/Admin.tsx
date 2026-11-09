@@ -376,19 +376,41 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             ))}
           </section>
 
-          <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Manage">
-            <p className="eyebrow px-4 pb-2 pt-3">Manage</p>
-            {tiles.map((t) => (
-              <button key={t.id} type="button" className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => open(t.id)}>
-                <Icon name={t.icon} size={20} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold leading-tight">{t.title}</p>
-                  <p className="truncate text-xs text-muted">{t.hint}</p>
+          <div className="flex flex-col gap-3" aria-label="Manage">
+            {[
+              { title: 'App & Website', hint: 'Status, downloads, updates and sharing', ids: ['app', 'downloads', 'updates', 'previews', 'share'] as Section[] },
+              { title: 'Builds & Deployments', hint: 'Android APKs and website publishing', ids: ['builds', 'pages'] as Section[] },
+              { title: 'Family & Communication', hint: 'Members, messages, notifications and reminders', ids: ['family', 'messages', 'notify', 'reminders'] as Section[] },
+              { title: 'Data & Maintenance', hint: 'Meetup history and family data tools', ids: ['data'] as Section[] },
+            ].map((group, index) => (
+              <details key={group.title} className="card !p-0 overflow-hidden" open={index === 0}>
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold">{group.title}</p>
+                    <p className="mt-0.5 text-xs text-muted">{group.hint}</p>
+                  </div>
+                  <span className="text-xs text-muted">{group.ids.length}</span>
+                  <span aria-hidden="true" className="text-muted transition-transform">⌄</span>
+                </summary>
+                <div className="flex flex-col divide-y divide-[var(--line)] border-t border-[var(--line)]">
+                  {group.ids.map((id) => {
+                    const tile = tiles.find((item) => item.id === id)
+                    if (!tile) return null
+                    return (
+                      <button key={tile.id} type="button" className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => open(tile.id)}>
+                        <Icon name={tile.icon} size={19} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-tight">{tile.title}</p>
+                          <p className="truncate text-xs text-muted">{tile.hint}</p>
+                        </div>
+                        <span aria-hidden="true" className="menu-chevron">›</span>
+                      </button>
+                    )
+                  })}
                 </div>
-                <span aria-hidden="true" className="menu-chevron">›</span>
-              </button>
+              </details>
             ))}
-          </section>
+          </div>
         </>
       )}
 

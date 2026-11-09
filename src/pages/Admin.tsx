@@ -311,7 +311,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
     { id: 'builds', icon: 'download', title: 'APK Builds', hint: 'Android APK build history, artifacts and releases' },
-    { id: 'pages', icon: 'globe', title: 'GitHub Pages Deployments', hint: 'Website deployment history and status' },
+    { id: 'pages', icon: 'list', title: 'GitHub Pages Deployments', hint: 'Website deployment history and status' },
     { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },

@@ -2,6 +2,7 @@ import FamilyBell from './FamilyBell'
 import { useBackClose } from '../lib/backStack'
 import OfflineBanner from './OfflineBanner'
 import UpdatePrompt from './UpdatePrompt'
+import AnnouncementPopup from './AnnouncementPopup'
 import { useEffect, useRef, useState } from 'react'
 import type { Family } from '../types'
 import { supabase } from '../supabase'
@@ -284,6 +285,7 @@ export default function Shell({
         </div>
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>
+      <AnnouncementPopup userId={userId} live={true} />
       <nav aria-label="Main" className="app-nav fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-2 py-1.5">
           {TABS.map((t) => (

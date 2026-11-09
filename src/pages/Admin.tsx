@@ -15,10 +15,12 @@ import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNati
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 
-type Section = 'app' | 'downloads' | 'updates' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data'
+type Section = 'app' | 'downloads' | 'updates' | 'builds' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
+type BuildRun = { id: number; run_number: number; name: string; status: string; conclusion: string | null; created_at: string; head_sha: string; html_url: string; event: string }
+type BuildRelease = { id: number; name: string; body: string; html_url: string; tag_name: string; assets: Array<{ id: number; name: string; size: number; download_count: number }> }
 
 type AppUser = {
   user_id: string
@@ -104,6 +106,10 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [notifyText, setNotifyText] = useState('')
   const [notifyAll, setNotifyAll] = useState(false)
   const [meetupCode, setMeetupCode] = useState('')
+  const [buildRuns, setBuildRuns] = useState<BuildRun[]>([])
+  const [buildRelease, setBuildRelease] = useState<BuildRelease | null>(null)
+  const [buildsLoading, setBuildsLoading] = useState(false)
+  const [buildsError, setBuildsError] = useState('')
   const [preview, setPreview] = useState<Preview | null>(null)
   useBackClose(() => setPreview(null), preview !== null)
   const myBuild = thisBuild()
@@ -219,6 +225,37 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
   useEffect(() => { if (section === 'messages' && !messagesLoaded) void loadMessages() }, [section, messagesLoaded, loadMessages])
 
+  const loadBuilds = useCallback(async () => {
+    setBuildsLoading(true)
+    setBuildsError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-builds', { body: { action: 'list' } })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      setBuildRuns((data?.runs ?? []) as BuildRun[])
+      setBuildRelease((data?.release ?? null) as BuildRelease | null)
+    } catch (e) {
+      setBuildsError(e instanceof Error ? e.message : 'Could not load builds.')
+    } finally { setBuildsLoading(false) }
+  }, [])
+
+  useEffect(() => { if (section === 'builds') void loadBuilds() }, [section, loadBuilds])
+
+  async function manageBuild(action: string, payload: Record<string, unknown>, confirmation: string) {
+    if (busy || !window.confirm(confirmation)) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-builds', { body: { action, ...payload } })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      setNotice(data?.message || 'Done.')
+      await loadBuilds()
+    } catch (e) {
+      setBuildsError(e instanceof Error ? e.message : 'Build action failed.')
+    } finally { setBusy(false) }
+  }
+
   function open(next: Section | null) {
     setNotice('')
     setSection(next)
@@ -273,6 +310,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'app', icon: 'megaphone', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
     { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
+    { id: 'builds', icon: 'list', title: 'Build manager', hint: 'View and delete APK builds and releases' },
     { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
@@ -524,6 +562,49 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   />
                 </Row>
               </section>
+      )}
+
+
+      {isOwner && current === 'builds' && (
+        <section className="flex flex-col gap-3" aria-label="Build manager">
+          <div className="card flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow">Latest APK release</p>
+                <p className="text-sm font-bold">{buildRelease?.name || 'No published release'}</p>
+                {buildRelease?.body && <p className="text-xs text-muted">{buildRelease.body}</p>}
+              </div>
+              <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-xs" disabled={buildsLoading} onClick={() => void loadBuilds()}><Icon name="refresh" size={16} /> Refresh</button>
+            </div>
+            {buildRelease?.assets.map((a) => (
+              <p key={a.id} className="text-xs text-muted">{a.name} · {(a.size / 1048576).toFixed(1)} MB · {a.download_count} downloads</p>
+            ))}
+            {buildRelease && (
+              <button type="button" className="btn btn-plain !min-h-10 !text-sm" disabled={busy} onClick={() => void manageBuild('delete_latest_release', {}, 'Delete the Latest Cznnect APK release and its tag? The in-app update checker will stop finding a new APK until the next successful build. This does not delete source code.')}>Delete latest APK release</button>
+            )}
+          </div>
+          <div className="card flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <p className="eyebrow">Recent workflow builds</p>
+              <span className="text-xs text-muted">{buildRuns.length} shown</span>
+            </div>
+            {buildsError && <p role="alert" className="text-sm text-danger">{buildsError}</p>}
+            {buildsLoading && <p className="text-sm text-muted">Loading builds…</p>}
+            {!buildsLoading && buildRuns.map((run) => (
+              <div key={run.id} className="flex items-start gap-3 border-b border-line pb-3 last:border-0 last:pb-0">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold">Build #{run.run_number} · {run.conclusion || run.status}</p>
+                  <p className="text-xs text-muted">{run.name} · {new Date(run.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-muted">{run.head_sha.slice(0, 7)} · {run.event}</p>
+                  <a className="text-xs font-semibold text-accent-text underline" href={run.html_url} target="_blank" rel="noreferrer">Open on GitHub</a>
+                </div>
+                <button type="button" className="btn btn-plain !min-h-9 shrink-0 !px-2 !text-xs" disabled={busy || run.status === 'in_progress' || run.status === 'queued'} onClick={() => void manageBuild('delete_run', { run_id: run.id }, `Delete build #${run.run_number}, its logs and attached APK artifacts? This cannot be undone.`)}>Delete</button>
+              </div>
+            ))}
+            {!buildsLoading && !buildsError && buildRuns.length === 0 && <p className="text-sm text-muted">No workflow builds found.</p>}
+            <p className="text-xs text-muted">Deleting a workflow build removes its logs and attached artifacts. It does not change the live app or delete source code.</p>
+          </div>
+        </section>
       )}
 
       {isOwner && current === 'updates' && (

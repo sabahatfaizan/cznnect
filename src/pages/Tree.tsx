@@ -138,7 +138,6 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
   if (status === 'loading') {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl font-extrabold">Family Tree</h1>
         <p className="text-muted">Loading the tree...</p>
       </div>
     )
@@ -147,7 +146,6 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
   if (status === 'error') {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl font-extrabold">Family Tree</h1>
         <div className="card flex flex-col gap-3">
           <p role="alert" className="font-semibold">
             {error}
@@ -346,7 +344,6 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
     <div className="flex flex-col gap-4">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-extrabold">Family Tree</h1>
           <p className="text-sm text-muted">
             {people.length === 0 ? 'No one yet' : `${people.length} ${people.length === 1 ? 'person' : 'people'}`}
           </p>

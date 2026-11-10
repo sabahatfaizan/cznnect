@@ -121,7 +121,6 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="font-display text-2xl font-extrabold">Settings</h1>
       <div className="set-grid">
         {tile('family', 'Family', 'family', family.name)}
         {tile('theme', 'Theme', 'palette', themeLabel(theme))}

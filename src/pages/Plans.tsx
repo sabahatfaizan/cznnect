@@ -146,7 +146,6 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
   if (status === 'loading') {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl font-extrabold">Plans</h1>
         <p className="text-muted">Loading...</p>
       </div>
     )
@@ -155,7 +154,6 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
   if (status === 'error') {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl font-extrabold">Plans</h1>
         <div className="card flex flex-col gap-3">
           <p role="alert" className="font-semibold">
             {error}
@@ -180,10 +178,7 @@ export default function Plans({ family, userId }: { family: Family; userId: stri
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold">Plans</h1>
-        </div>
+      <header className="flex items-end justify-end gap-3">
         <button className="btn btn-primary" onClick={() => setFlow(view === 'lists' ? 'item' : 'poll')}>
           {view === 'lists' ? '+ Add' : '+ New poll'}
         </button>

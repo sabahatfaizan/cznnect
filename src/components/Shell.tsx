@@ -3,7 +3,7 @@ import { useBackClose } from '../lib/backStack'
 import OfflineBanner from './OfflineBanner'
 import UpdatePrompt from './UpdatePrompt'
 import AnnouncementPopup from './AnnouncementPopup'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Family } from '../types'
 import { supabase } from '../supabase'
 import Home from '../pages/Home'
@@ -40,6 +40,14 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 ]
 
 const SWIPE_ORDER = TABS.map((t) => t.id)
+
+// The header names the screen you are on, like WhatsApp: the Cznnect wordmark on Home, the page name everywhere else.
+// While you swipe, the two names slide and cross-fade with the page.
+const TITLES: Record<Tab, string> = {
+  home: 'Cznnect', irl: 'Convoy', explore: 'Explore', chat: 'Chat', me: 'Profile', plans: 'Plans', tree: 'Family Tree',
+  scoreboard: 'Scoreboard', birthdays: 'Birthdays', settings: 'Settings', music: 'Music', admin: 'Admin',
+}
+const TITLE_SHIFT_PX = 32
 
 const SECRET_HOLD_MS = 4000
 
@@ -87,6 +95,26 @@ export default function Shell({
     if (bday.loaded) runReminders(rank(bday.people).upcoming, loadPrefs())
   }, [bday.loaded, bday.people])
   const current: Tab = tab
+
+  // Header title: one label per swipeable page, positioned straight from the pager's scroll position (no re-renders).
+  const inPager = SWIPE_ORDER.includes(tab)
+  const titleEls = useRef<(HTMLElement | null)[]>([])
+  const titlePos = useRef(0)
+  const placeTitles = useCallback((pos: number) => {
+    // A tap on the bottom bar jumps several pages at once: ease that. A finger drag moves a little each frame: follow it exactly.
+    const jump = Math.abs(pos - titlePos.current) > 1.05
+    titlePos.current = pos
+    titleEls.current.forEach((el, i) => {
+      if (!el) return
+      const d = i - pos
+      const gone = Math.abs(d) >= 1
+      el.style.transition = jump ? 'transform 200ms ease-out, opacity 200ms ease-out' : 'none'
+      el.style.opacity = String(gone ? 0 : 1 - Math.abs(d))
+      el.style.transform = `translateX(${d * TITLE_SHIFT_PX}px)`
+      el.setAttribute('aria-hidden', gone ? 'true' : 'false')
+    })
+  }, [])
+  useLayoutEffect(() => { placeTitles(inPager ? SWIPE_ORDER.indexOf(tab) : -9) }, [tab, inPager, placeTitles])
   // Android Back: close the menu first, then return to Home from any other screen. Only Home lets Back leave the app.
   useBackClose(() => setMenuOpen(false), menuOpen)
   useBackClose(() => setTab('home'), tab !== 'home')
@@ -148,12 +176,24 @@ export default function Shell({
     <div className="mx-auto min-h-full max-w-xl">
       <main data-tab={tab} className="p-4 pb-36 pt-[max(2.25rem,env(safe-area-inset-top),36px)]">
         <header className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-          <div>
-            <div className="brand-default">
-              <Wordmark className="font-display text-xl font-extrabold" />
-            </div>
-          </div>
+          <div className="hdr-stage" role="presentation">
+            {SWIPE_ORDER.map((id, i) => (
+              <div key={id} ref={(el) => { titleEls.current[i] = el }} className="hdr-title">
+                {id === 'home' ? (
+                  <div className="brand-default">
+                    <Wordmark className="font-display text-xl font-extrabold" />
+                  </div>
+                ) : (
+                  <h1 className="font-display text-xl font-extrabold">{TITLES[id]}</h1>
+                )}
+              </div>
+            ))}
+            {/* Screens outside the swipe row (opened from the menu) just slide their name in. */}
+            {!inPager && (
+              <div key={tab} className="hdr-title hdr-title-in">
+                <h1 className="font-display text-xl font-extrabold">{TITLES[tab]}</h1>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
           <FamilyBell familyId={family.id} userId={userId} chat={chatPulse} nextBirthday={upcoming[0] ?? null} onOpen={setTab} />
@@ -292,7 +332,7 @@ export default function Shell({
         </div>
         {familiesOpen && <FamiliesModal families={families} activeId={family.id} onSwitch={onSwitchFamily} onAdd={() => { setFamiliesOpen(false); setAddingFamily(true) }} onClose={() => setFamiliesOpen(false)} />}
         {addingFamily && <AddFamilySheet count={families.length} onAdded={onFamilyAdded} onClose={() => setAddingFamily(false)} />}
-        <SwipePager order={SWIPE_ORDER} current={tab} enabled={SWIPE_ORDER.includes(tab) && !menuOpen && !familiesOpen && !addingFamily} onChange={setTab} render={renderTab} />
+        <SwipePager order={SWIPE_ORDER} current={tab} enabled={SWIPE_ORDER.includes(tab) && !menuOpen && !familiesOpen && !addingFamily} onChange={setTab} onProgress={placeTitles} render={renderTab} />
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>
       <AnnouncementPopup userId={userId} live={true} />

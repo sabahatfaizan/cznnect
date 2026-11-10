@@ -110,9 +110,6 @@ export default function Birthdays({ people, loaded, error, reload, onOpenProfile
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-2xl font-extrabold">Birthdays</h1>
-      </header>
 
       {error && (
         <div className="card flex flex-col gap-3">

@@ -136,7 +136,6 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   if (status === 'loading') {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl font-extrabold">Explore</h1>
         <p className="text-muted">Loading places...</p>
       </div>
     )
@@ -145,7 +144,6 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   if (status === 'error') {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-2xl font-extrabold">Explore</h1>
         <div className="card flex flex-col gap-3">
           <p role="alert" className="font-semibold">
             {error}
@@ -173,7 +171,6 @@ export default function Explore({ family, userId }: { family: Family; userId: st
     <div className="flex flex-col gap-4">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-extrabold">Explore</h1>
           <p className="text-sm text-muted">
             {places.length === 0 ? 'Nothing saved yet' : `${places.length} ${places.length === 1 ? 'place' : 'places'} saved`}
           </p>

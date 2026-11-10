@@ -495,7 +495,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           <button type="button" className="btn btn-plain shrink-0" onClick={() => open(null)} aria-label="Back to admin overview"><Icon name="back" size={18} /></button>
         )}
         <div className="min-w-0">
-          <h1 className="font-display text-xl font-bold leading-tight">{currentTile && isOwner ? currentTile.title : 'Admin'}</h1>
+          <h1 className={isOwner ? 'font-display text-xl font-bold leading-tight' : 'sr-only'}>{currentTile && isOwner ? currentTile.title : 'Admin'}</h1>
           {!current && <p className="text-xs text-muted">{isOwner ? 'Owner controls' : 'Moderator tools: tap a member to see their role or remove them.'}</p>}
         </div>
       </div>

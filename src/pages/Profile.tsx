@@ -119,7 +119,6 @@ export default function Profile({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="font-display text-2xl font-extrabold">My Profile</h1>
 
       <form onSubmit={save} className="flex flex-col gap-4">
         <section className="card flex flex-col gap-4">

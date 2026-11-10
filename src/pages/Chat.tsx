@@ -267,7 +267,6 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   return (
     <div className="flex flex-col gap-3">
       <header>
-        <h1 className="font-display text-2xl font-extrabold">Chat</h1>
         <p className="text-sm text-muted">Visible to the whole family. Hold a message for options.</p>
       </header>
 

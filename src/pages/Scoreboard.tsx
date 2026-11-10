@@ -33,9 +33,6 @@ export default function Scoreboard({ family, userId }: { family: Family; userId:
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-2xl font-extrabold">Scoreboard</h1>
-      </header>
       {error ? (
         <div className="card flex flex-col gap-3">
           <p role="alert" className="font-semibold text-danger">{error}</p>

@@ -20,18 +20,20 @@ export default function SwipePager<T extends string>({
   current,
   enabled,
   onChange,
+  onProgress,
   render,
 }: {
   order: readonly T[]
   current: T
   enabled: boolean
   onChange: (id: T) => void
+  onProgress?: (position: number) => void
   render: (id: T) => ReactNode
 }) {
   const idx = order.indexOf(current)
   // A screen that is not one of the pager's pages (Settings, Admin, …) is shown on its own.
   if (idx < 0) return <>{render(current)}</>
-  return <Pager order={order} current={current} idx={idx} enabled={enabled} onChange={onChange} render={render} />
+  return <Pager order={order} current={current} idx={idx} enabled={enabled} onChange={onChange} onProgress={onProgress} render={render} />
 }
 
 function Pager<T extends string>({
@@ -40,6 +42,7 @@ function Pager<T extends string>({
   idx,
   enabled,
   onChange,
+  onProgress,
   render,
 }: {
   order: readonly T[]
@@ -47,12 +50,15 @@ function Pager<T extends string>({
   idx: number
   enabled: boolean
   onChange: (id: T) => void
+  onProgress?: (position: number) => void
   render: (id: T) => ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
   const pages = useRef<(HTMLDivElement | null)[]>([])
   const cur = useRef({ idx, current, onChange })
   cur.current = { idx, current, onChange }
+  const progress = useRef(onProgress)
+  progress.current = onProgress
   const touching = useRef(false)
   const timer = useRef(0)
   const first = useRef(true)
@@ -120,6 +126,8 @@ function Pager<T extends string>({
     // The bottom bar follows the page as it passes the halfway mark, so it moves in step with the swipe.
     let lit = -1
     const live = () => {
+      // The header title follows the page too: 0 = first page, 1.5 = halfway between the second and third.
+      progress.current?.(el.scrollLeft / width())
       const i = Math.max(0, Math.min(order.length - 1, Math.round(el.scrollLeft / width())))
       if (i === lit) return
       lit = i

@@ -231,7 +231,7 @@ export default function Shell({
                   {item.id === 'birthdays' && soon.length > 0 ? (
                     <span className="menu-badge" aria-label={`${soon.length} birthdays this week`}>{soon.length}</span>
                   ) : (
-                    <span aria-hidden="true" className="menu-chevron">›</span>
+                    <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                   )}
                 </button>
               ))}
@@ -241,7 +241,7 @@ export default function Shell({
                 onClick={() => { setTab('scoreboard'); setMenuOpen(false) }}
               >
                 <span className="menu-item-label"><Icon name="trophy" size={22} />Scoreboard</span>
-                <span aria-hidden="true" className="menu-chevron">›</span>
+                <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
               </button>
             </div>
             <div className="mt-6 border-t border-line pt-6">
@@ -255,7 +255,7 @@ export default function Shell({
                 onClick={() => { setTab('settings'); setMenuOpen(false) }}
               >
                 <span className="menu-item-label"><Icon name="settings" size={22} />Settings</span>
-                <span aria-hidden="true" className="menu-chevron">›</span>
+                <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
               </button>
               {isOwner && (
                 <button
@@ -264,7 +264,7 @@ export default function Shell({
                   onClick={() => { setMenuOpen(false); requestAdmin() }}
                 >
                   <span className="menu-item-label"><Icon name="admin" size={22} />Admin</span>
-                  <span aria-hidden="true" className="menu-chevron">›</span>
+                  <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                 </button>
               )}
               {canAdmin && (
@@ -274,7 +274,7 @@ export default function Shell({
                   onClick={() => { setTab('admin'); setMenuOpen(false) }}
                 >
                   <span className="menu-item-label"><Icon name="admin" size={22} />Admin</span>
-                  <span aria-hidden="true" className="menu-chevron">›</span>
+                  <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                 </button>
               )}
               {musicUnlocked && (
@@ -284,7 +284,7 @@ export default function Shell({
                   onClick={() => { setTab('music'); setMenuOpen(false) }}
                 >
                   <span className="menu-item-label"><Icon name="music" size={22} />Music</span>
-                  <span aria-hidden="true" className="menu-chevron">›</span>
+                  <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                 </button>
               )}
             </div>

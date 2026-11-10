@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import ShareAppCard from '../components/ShareAppCard'
+import Fold from '../components/Fold'
 import TitleBadge from '../components/TitleBadge'
 import { createPortal } from 'react-dom'
 import { ServiceNotice } from '../components/ServiceNotice'
@@ -101,6 +102,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [copied, setCopied] = useState(false)
   const [loadedFields, setLoadedFields] = useState(false)
   const [section, setSection] = useState<Section | null>(null)
+  const [query, setQuery] = useState('')
   const [overview, setOverview] = useState<Overview | null>(null)
   const [messages, setMessages] = useState<Msg[]>([])
   const [messagesLoaded, setMessagesLoaded] = useState(false)
@@ -401,6 +403,15 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const current: Section | null = isOwner ? section : 'family'
   useBackClose(() => open(null), isOwner && section !== null)
   const currentTile = tiles.find((t) => t.id === current)
+  const needle = query.trim().toLowerCase()
+  const matchesQuery = (id: Section) => {
+    const t = tiles.find((item) => item.id === id)
+    return Boolean(t) && (!needle || `${t?.title} ${t?.hint}`.toLowerCase().includes(needle))
+  }
+  // Keep the chip of the control you are in on screen when you jump between controls.
+  useEffect(() => {
+    document.querySelector('[data-chip-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [current])
 
   const stat = (label: string, value: string | number | undefined) => (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2.5">
@@ -422,6 +433,24 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           {!current && <p className="text-xs text-muted">{isOwner ? 'Owner controls' : 'Moderator tools: tap a member to see their role or remove them.'}</p>}
         </div>
       </div>
+
+      {isOwner && current && (
+        <nav aria-label="Jump to another control" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {tiles.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-current={t.id === current ? 'page' : undefined}
+              data-chip-current={t.id === current ? '' : undefined}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold ${t.id === current ? 'border-transparent bg-accent-soft text-accent-text' : 'border-line text-muted'}`}
+              onClick={() => open(t.id)}
+            >
+              <Icon name={t.icon} size={16} />
+              {t.title}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {(settingsError || notice) && (
         <p role="status" className="card text-sm">{notice || settingsError}</p>
@@ -454,20 +483,35 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             ))}
           </section>
 
+          <input
+            className="input"
+            type="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            placeholder="Find a control…"
+            aria-label="Find a control"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {needle && !tiles.some((t) => matchesQuery(t.id)) && <p className="text-sm text-muted">Nothing matches “{query.trim()}”.</p>}
+
           <div className="flex flex-col gap-5" aria-label="Manage">
             {[
               { title: 'App & website', hint: 'What people see and how they get the app', ids: ['app', 'announcements', 'downloads', 'updates', 'previews', 'share'] as Section[] },
               { title: 'Builds & publishing', hint: 'Android APKs and the website', ids: ['builds', 'pages'] as Section[] },
               { title: 'Family & messages', hint: 'People, chat, notifications and reminders', ids: ['family', 'messages', 'notify', 'reminders'] as Section[] },
               { title: 'Data', hint: 'Meetup history and points', ids: ['data'] as Section[] },
-            ].map((group) => (
+            ].map((group) => {
+              const ids = group.ids.filter(matchesQuery)
+              if (ids.length === 0) return null
+              return (
               <section key={group.title} className="flex flex-col gap-2" aria-label={group.title}>
                 <div className="px-1">
                   <p className="eyebrow">{group.title}</p>
                   <p className="text-xs text-muted">{group.hint}</p>
                 </div>
                 <div className="card flex flex-col divide-y divide-[var(--line)] overflow-hidden !p-0">
-                  {group.ids.map((id) => {
+                  {ids.map((id) => {
                     const tile = tiles.find((item) => item.id === id)
                     if (!tile) return null
                     return (
@@ -477,13 +521,14 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                           <p className="text-sm font-semibold leading-tight">{tile.title}</p>
                           <p className="mt-0.5 truncate text-xs text-muted">{tile.hint}</p>
                         </div>
-                        <span aria-hidden="true" className="menu-chevron">›</span>
+                        <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                       </button>
                     )
                   })}
                 </div>
               </section>
-            ))}
+              )
+            })}
           </div>
         </>
       )}
@@ -767,8 +812,9 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       )}
 
       {isOwner && current === 'updates' && (
-        <section className="card flex flex-col gap-3">
-                <p className="eyebrow">Tell Android users an update is ready</p>
+        <section className="flex flex-col gap-3">
+                <div className="card flex flex-col gap-3">
+                <p className="eyebrow">Updates at a glance</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <p><span className="text-muted">Your build</span><br /><b>{myBuild ? `build ${myBuild}` : 'website / local'}</b></p>
                   <p><span className="text-muted">Latest build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
@@ -779,6 +825,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                     Forced updates are ON: phones below build {settings.minBuild} are stopped at an “Update required” screen, whatever is announced here. Use “Turn off forced updates” further down if people should stay on older builds.
                   </p>
                 )}
+                </div>
+                <Fold title="Announce a build" status={settings && settings.announcedBuild > 0 ? `Build ${settings.announcedBuild} is announced` : 'Nothing announced'}>
                 {(() => {
                   const ann = settings?.announcedBuild ?? 0
                   // Builds that finished fine, newest first. Only these can be announced.
@@ -786,7 +834,6 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   const sel = pickBuild ?? null
                   return (
                     <>
-                      <p className="eyebrow">Announce a build</p>
                       <p className="text-xs text-muted">
                         {ann > 0 ? `Build ${ann} is announced now: phones on an older build see the update card.` : 'Nothing is announced: nobody is told about an update.'}
                       </p>
@@ -830,6 +877,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   )
                 })()}
                 <p className="text-xs text-muted">The update card always downloads the newest build, whichever one you announce: the choice only sets which older phones are told. Phones running a build older than 205 do not have this switch, so they show new builds by themselves.</p>
+                </Fold>
+                <Fold title="Install on this phone" status={!isNativeApp() ? 'Open the Android app' : myBuild !== null && latestBuild !== null && latestBuild <= myBuild ? 'This phone is up to date' : latestBuild ? `Build ${latestBuild} is available` : 'Latest build unknown'}>
                 <button
                   type="button"
                   className="btn btn-plain"
@@ -839,8 +888,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   {!isNativeApp() ? 'Open the Android app to install' : !latestBuild ? 'Latest build unknown' : myBuild !== null && latestBuild <= myBuild ? 'This phone has the latest build' : `Install build ${latestBuild} on this phone`}
                 </button>
                 <ApkStatus apk={apk} />
-                <hr className="border-line" />
-                <p className="eyebrow">Force old Android apps to update</p>
+                </Fold>
+                <Fold title="Forced updates" status={settings && settings.minBuild > 0 ? `Required: build ${settings.minBuild}` : 'Off. Nobody is forced'}>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <p><span className="text-muted">Latest app build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
                   <p><span className="text-muted">Required now</span><br /><b>{settings && settings.minBuild > 0 ? `build ${settings.minBuild}` : 'nobody forced'}</b></p>
@@ -862,6 +911,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             onChange={(next) => void save({ auto_raise_min_build: next }, next ? 'New versions will be required automatically.' : 'The required build now stays where you set it.')}
           />
         </Row>
+                </Fold>
               </section>
       )}
 
@@ -924,7 +974,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                             {m.joined_at ? ` · joined ${new Date(m.joined_at).toLocaleDateString()}` : ''}
                           </p>
                         </div>
-                        <span aria-hidden="true" className="menu-chevron">›</span>
+                        <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                       </button>
                     )
                   })}

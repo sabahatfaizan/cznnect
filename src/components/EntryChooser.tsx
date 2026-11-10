@@ -32,7 +32,7 @@ export default function EntryChooser() {
                     <span className="block font-display text-lg font-bold leading-tight">{o.title}</span>
                     <span className="block text-sm text-muted">{o.hint}</span>
                   </span>
-                  <span aria-hidden="true" className="menu-chevron">›</span>
+                  <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
                 </button>
               ))}
             </div>

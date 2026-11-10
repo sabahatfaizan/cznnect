@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Icon } from './Icons'
 import Avatar from './Avatar'
 import { shownName } from '../lib/avatars'
 import { countdownText, type Upcoming } from '../lib/birthdays'
@@ -85,7 +86,7 @@ export default function FamilyBox({
                 <span className={l.strong ? 'font-bold' : 'font-semibold'}>{l.text}</span>
                 {l.sub && <span className="text-muted"> · {l.sub}</span>}
               </span>
-              <span aria-hidden="true" className="text-muted">›</span>
+              <span aria-hidden="true" className="text-muted"><Icon name="chevron" size={18} /></span>
             </button>
           </li>
         ))}

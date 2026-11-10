@@ -157,7 +157,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
       <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('password')} aria-haspopup="dialog">
         <span className="set-tile-icon" aria-hidden="true"><Icon name="lock" size={22} /></span>
         <span className="set-tile-label flex-1 text-left">Change password</span>
-        <span aria-hidden="true" className="expander-chevron">›</span>
+        <span aria-hidden="true" className="expander-chevron"><Icon name="chevronDown" size={20} /></span>
       </button>
 
       <p className="text-center text-xs text-muted" aria-label="App build version">Build {buildNumber}{buildCommit ? ` · ${buildCommit}` : ''}</p>

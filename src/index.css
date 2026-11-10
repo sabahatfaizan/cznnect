@@ -1310,12 +1310,11 @@ input[type="checkbox"] {
 .expander[open] > summary { padding-top: 0.25rem; }
 .expander[open] { padding-bottom: 1rem; }
 .expander-chevron {
+  display: inline-flex;
   color: var(--muted);
-  font-size: 1.5rem;
-  line-height: 1;
   transition: transform 0.25s;
 }
-.expander[open] .expander-chevron { transform: rotate(90deg); }
+.expander[open] .expander-chevron { transform: rotate(180deg); }
 .expander > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 0.5rem; }
 @media (prefers-reduced-motion: reduce) { .expander-chevron { transition: none; } }
 

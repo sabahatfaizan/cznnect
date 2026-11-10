@@ -217,7 +217,7 @@ export default function Profile({ userId }: { userId: string }) {
             <details className="expander border-t border-line pt-3" open>
               <summary>
                 <span className="font-bold">Background colour</span>
-                <span aria-hidden="true" className="expander-chevron">›</span>
+                <span aria-hidden="true" className="expander-chevron"><Icon name="chevronDown" size={20} /></span>
               </summary>
               <div className="mt-3">
                 <ColorWheel value={color} onChange={(c) => { setColor(c); setColorTouched(true); if (typo) setTypoBg(c) }} />

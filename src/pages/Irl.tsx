@@ -183,7 +183,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
           <details className="card expander" aria-label="How points work">
             <summary>
               <span className="font-display text-base font-bold">How points work</span>
-              <span aria-hidden="true" className="expander-chevron">›</span>
+              <span aria-hidden="true" className="expander-chevron"><Icon name="chevronDown" size={20} /></span>
             </summary>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
               <li>Two cousins meet: scan each other, both confirm, 10 points each.</li>

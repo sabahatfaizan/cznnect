@@ -14,7 +14,7 @@ export function FamiliesButton({ onOpen }: { onOpen: () => void }) {
   return (
     <button type="button" className="menu-item" onClick={onOpen} aria-haspopup="dialog">
       <span className="menu-item-label"><Icon name="family" size={22} />Your families</span>
-      <span aria-hidden="true" className="menu-chevron">›</span>
+      <span aria-hidden="true" className="menu-chevron"><Icon name="chevron" size={18} /></span>
     </button>
   )
 }

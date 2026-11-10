@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Icon } from '../components/Icons'
 import { useBackClose } from '../lib/backStack'
 import ListenTogether from '../components/ListenTogether'
 import YouTubeLinks, { type NowPlaying } from '../components/YouTubeLinks'
@@ -171,7 +172,7 @@ export default function Music() {
       <button type="button" onClick={() => setLibOpen(true)} aria-haspopup="dialog" className="mx-auto flex flex-col items-center gap-1 px-6 py-2 text-sm font-semibold text-muted">
         <span aria-hidden="true" className="h-1 w-10 rounded-full bg-[var(--line)]" />
         Songs, YouTube and Listen together
-        <span aria-hidden="true" className="text-lg leading-none">⌃</span>
+        <span aria-hidden="true" className="rotate-180"><Icon name="chevronDown" size={22} /></span>
       </button>
 
       {/* The library panel stays mounted (just out of sight) so a room you host or a link that is playing carries on while it is closed. */}

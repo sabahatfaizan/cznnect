@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ShareAppCard from '../components/ShareAppCard'
 import Fold from '../components/Fold'
 import TitleBadge from '../components/TitleBadge'
@@ -43,8 +43,30 @@ type AdminMember = {
   profiles: { display_name: string; nickname?: string | null; bio?: string | null; avatar?: string | null; title?: string | null } | null
 }
 
-function Switch({ on, onChange, label, disabled, onColor = 'green' }: { on: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean; onColor?: 'green' | 'red' }) {
-  const onClass = onColor === 'red' ? 'border-red-500 bg-red-500' : 'border-green-500 bg-green-500'
+type Tone = 'ok' | 'warn' | 'danger' | 'accent' | 'muted'
+const TONE: Record<Tone, string> = {
+  ok: 'var(--ok)',
+  warn: 'var(--warn, #d99a1d)',
+  danger: 'var(--danger)',
+  accent: 'var(--accent-text, var(--accent))',
+  muted: 'var(--muted)',
+}
+
+// A small coloured label for a status, so the state reads at a glance without a sentence.
+function Chip({ tone = 'muted', children }: { tone?: Tone; children: React.ReactNode }) {
+  return (
+    <span
+      className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-bold leading-tight"
+      style={{ color: TONE[tone], background: `color-mix(in srgb, ${TONE[tone]} 15%, transparent)` }}
+    >
+      {children}
+    </span>
+  )
+}
+
+// Switches follow the theme colour; only the dangerous one (maintenance) stays red.
+function Switch({ on, onChange, label, disabled, onColor = 'accent' }: { on: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean; onColor?: 'accent' | 'green' | 'red' }) {
+  const c = onColor === 'red' ? 'var(--danger)' : onColor === 'green' ? 'var(--ok)' : 'var(--accent)'
   return (
     <button
       type="button"
@@ -53,23 +75,50 @@ function Switch({ on, onChange, label, disabled, onColor = 'green' }: { on: bool
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!on)}
-      className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${on ? onClass : 'border-line bg-black/20'}`}
+      className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors duration-200 disabled:cursor-wait disabled:opacity-60 ${on ? '' : 'border-line bg-black/20'}`}
+      style={on ? { background: c, borderColor: c } : undefined}
     >
       <span className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-200 ${on ? 'translate-x-6' : 'translate-x-0'}`} />
     </button>
   )
 }
 
-function Row({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
+// One setting: a title with an On/Off chip (or a short hint) and its switch.
+function Row({ title, hint, status, statusTone, children }: { title: string; hint?: string; status?: string; statusTone?: Tone; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="font-bold">{title}</p>
-        <p className="mt-1 text-sm text-muted">{hint}</p>
+        <p className="flex flex-wrap items-center gap-2 font-bold">
+          {title}
+          {status && <Chip tone={statusTone ?? 'muted'}>{status}</Chip>}
+        </p>
+        {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
       </div>
       {children}
     </div>
   )
+}
+
+// Counts up to a number instead of jumping, so a refreshed figure feels alive.
+function useCountUp(value: number | undefined): number | undefined {
+  const [shown, setShown] = useState<number | undefined>(value)
+  const from = useRef(value)
+  useEffect(() => {
+    if (value === undefined) { setShown(undefined); return }
+    const start = from.current ?? 0
+    if (start === value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setShown(value); from.current = value; return }
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / 700)
+      setShown(Math.round(start + (value - start) * (1 - Math.pow(1 - k, 3))))
+      if (k < 1) raf = requestAnimationFrame(tick)
+      else from.current = value
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  return shown
 }
 
 // Ready-made maintenance messages. Tapping one fills the box; the box can still be typed in freely.
@@ -104,6 +153,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [section, setSection] = useState<Section | null>(null)
   const [query, setQuery] = useState('')
   const [overview, setOverview] = useState<Overview | null>(null)
+  const [overviewAt, setOverviewAt] = useState<number | null>(null)
+  const [clock, setClock] = useState(() => Date.now())
   const [messages, setMessages] = useState<Msg[]>([])
   const [messagesLoaded, setMessagesLoaded] = useState(false)
   const [notifyText, setNotifyText] = useState('')
@@ -226,7 +277,10 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     if (!isOwner) return
     const { data, error } = await supabase.rpc('admin_overview', { fid: family.id })
     const row = Array.isArray(data) ? data[0] : data
-    if (!error && row) setOverview(row as Overview)
+    if (!error && row) {
+      setOverview(row as Overview)
+      setOverviewAt(Date.now())
+    }
   }, [family.id, isOwner])
 
   useEffect(() => { void loadOverview() }, [loadOverview])
@@ -413,14 +467,26 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     document.querySelector('[data-chip-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' })
   }, [current])
 
-  const stat = (label: string, value: string | number | undefined) => (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2.5">
-      <p className="text-lg font-bold leading-none">{value ?? '–'}</p>
-      <p className="truncate text-[11px] text-muted">{label}</p>
-    </div>
-  )
-
   const ready = Boolean(settings)
+
+  // The figures on the overview refresh by themselves and count up when they change.
+  useEffect(() => {
+    if (!isOwner) return
+    const t = window.setInterval(() => setClock(Date.now()), 15000)
+    return () => window.clearInterval(t)
+  }, [isOwner])
+  useEffect(() => {
+    if (!isOwner || section !== null) return
+    const t = window.setInterval(() => { void loadOverview(); void loadUsers() }, 45000)
+    return () => window.clearInterval(t)
+  }, [isOwner, section, loadOverview, loadUsers])
+  const usersCount = useCountUp(users?.length ?? overview?.members_count ?? members.length)
+  const phonesCount = useCountUp(overview?.devices_count)
+  const msgsCount = useCountUp(overview?.messages_today)
+  const ago = overviewAt === null ? '' : (() => {
+    const secs = Math.max(0, Math.round((clock - overviewAt) / 1000))
+    return secs < 10 ? 'just now' : secs < 60 ? `${secs}s ago` : `${Math.round(secs / 60)} min ago`
+  })()
 
   return (
     <div className="flex flex-col gap-4">
@@ -458,13 +524,61 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
       {isOwner && !current && (
         <>
-          <div className="card flex divide-x divide-[var(--line)] !p-0">
-            {stat('Members', overview?.members_count ?? members.length)}
-            {stat('Phones', overview?.devices_count)}
-            {stat('Msgs today', overview?.messages_today)}
-            {stat('Status', settings?.maintenanceEnabled ? 'Down' : 'Live')}
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-2 text-xs font-semibold text-muted">
+              <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: overview ? TONE.ok : TONE.muted }} />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: overview ? TONE.ok : TONE.muted }} />
+              </span>
+              {overview ? `Live · updated ${ago}` : 'Waiting for live counts'}
+            </p>
+            <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-xs" onClick={() => { void loadOverview(); void loadUsers() }}>
+              <Icon name="refresh" size={16} /> Refresh
+            </button>
           </div>
-          {!overview && <p className="-mt-2 text-xs text-muted">Live counts need supabase/20_admin_overview.sql run once in Supabase.</p>}
+
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { id: 'family', icon: 'family', label: 'Users', value: usersCount, sub: 'all accounts', tone: 'accent' },
+              { id: 'notify', icon: 'phone', label: 'Phones', value: phonesCount, sub: 'with alerts on', tone: 'ok' },
+              { id: 'messages', icon: 'chat', label: 'Msgs today', value: msgsCount, sub: overview ? `${overview.messages_total} in total` : '', tone: 'accent' },
+            ] as { id: Section; icon: IconName; label: string; value: number | undefined; sub: string; tone: Tone }[]).map((t) => (
+              <button key={t.label} type="button" onClick={() => open(t.id)} className="card flex items-center gap-3 !p-3 text-left transition active:scale-[0.97]">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl" style={{ color: TONE[t.tone], background: `color-mix(in srgb, ${TONE[t.tone]} 16%, transparent)` }}>
+                  <Icon name={t.icon} size={22} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display text-2xl font-extrabold leading-none">{t.value ?? '–'}</span>
+                  <span className="mt-1 block truncate text-xs text-muted">{t.label}</span>
+                  {t.sub && <span className="block truncate text-[11px] font-semibold" style={{ color: TONE[t.tone] }}>{t.sub}</span>}
+                </span>
+              </button>
+            ))}
+            <button type="button" onClick={() => open('app')} className="card flex items-center gap-3 !p-3 text-left transition active:scale-[0.97]">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl" style={{ color: settings?.maintenanceEnabled ? TONE.danger : TONE.ok, background: `color-mix(in srgb, ${settings?.maintenanceEnabled ? TONE.danger : TONE.ok} 16%, transparent)` }}>
+                <Icon name="online" size={22} />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-display text-2xl font-extrabold leading-none" style={{ color: settings?.maintenanceEnabled ? TONE.danger : TONE.ok }}>{settings?.maintenanceEnabled ? 'Down' : 'Live'}</span>
+                <span className="mt-1 block truncate text-xs text-muted">App status</span>
+                <span className="block truncate text-[11px] font-semibold" style={{ color: TONE.accent }}>{latestBuild ? `Build ${latestBuild}` : ''}</span>
+              </span>
+            </button>
+          </div>
+
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label="Shortcuts">
+            {([
+              { id: 'share', icon: 'share', label: 'Share the app' },
+              { id: 'notify', icon: 'bell', label: 'Notify everyone' },
+              { id: 'updates', icon: 'refresh', label: 'Updates' },
+              { id: 'previews', icon: 'search', label: 'Previews' },
+            ] as { id: Section; icon: IconName; label: string }[]).map((q) => (
+              <button key={q.id} type="button" onClick={() => open(q.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm font-semibold active:bg-[var(--surface-2)]">
+                <Icon name={q.icon} size={16} />
+                {q.label}
+              </button>
+            ))}
+          </div>
 
           <section className="card flex flex-col divide-y divide-[var(--line)] !p-0" aria-label="Quick controls">
             <p className="eyebrow px-4 pb-2 pt-3">Quick controls</p>
@@ -475,7 +589,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             ].map((r) => (
               <div key={r.label} className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <p className="min-w-0 text-sm font-semibold">{r.label}</p>
-                <Switch on={r.on} onColor={r.red ? 'red' : 'green'} label={r.label} disabled={busy || !ready} onChange={(next) => {
+                <Switch on={r.on} onColor={r.red ? 'red' : 'accent'} label={r.label} disabled={busy || !ready} onChange={(next) => {
                   if (r.label === 'Announcement banner' && next && !announceText.trim()) { setNotice('Write the banner text first, under Manage, App status.'); return }
                   void save(r.patch(next), r.done(next))
                 }} />
@@ -643,9 +757,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
       {isOwner && current === 'app' && (
         <>
-          <section className="card flex flex-col gap-4">
-                  <p className="eyebrow">Maintenance</p>
-                  <Row title="Maintenance mode" hint={settings?.maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live for everyone'}>
+          <Fold title="Maintenance" status={settings?.maintenanceEnabled ? 'Visitors see the maintenance screen' : 'App is live'} open>
+                  <Row title="Maintenance mode" status={settings?.maintenanceEnabled ? 'On' : 'Live'} statusTone={settings?.maintenanceEnabled ? 'danger' : 'ok'}>
                     <Switch
                       on={Boolean(settings?.maintenanceEnabled)}
                       onColor="red"
@@ -677,10 +790,9 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                     <textarea id="admin-maint-msg" className="input min-h-20" maxLength={240} value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} placeholder={DEFAULT_MAINTENANCE_MESSAGE} />
                     <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ maintenance_message: maintMessage.trim() || DEFAULT_MAINTENANCE_MESSAGE }, 'Message saved.')}>Save message</button>
                   </div>
-                </section>
-          <section className="card flex flex-col gap-3">
-                  <p className="eyebrow">Announcement banner</p>
-                  <Row title="Show banner" hint={settings?.announcementEnabled ? 'Everyone sees it at the top' : 'Hidden'}>
+                </Fold>
+          <Fold title="Announcement banner" status={settings?.announcementEnabled ? 'Showing to everyone' : 'Hidden'}>
+                  <Row title="Show banner" status={settings?.announcementEnabled ? 'On' : 'Off'} statusTone={settings?.announcementEnabled ? 'accent' : 'muted'}>
                     <Switch
                       on={Boolean(settings?.announcementEnabled)}
                       label="Show announcement banner"
@@ -691,56 +803,38 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   <label className="label" htmlFor="admin-announce">Message</label>
                   <textarea id="admin-announce" className="input min-h-20" maxLength={200} value={announceText} onChange={(e) => setAnnounceText(e.target.value)} placeholder="Reunion on Friday at 7pm" />
                   <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ announcement_text: announceText.trim() }, 'Banner text saved.')}>Save text</button>
-                </section>
+                </Fold>
         </>
       )}
 
-      {isOwner && current === 'downloads' && (
-        <section className="card flex flex-col gap-4">
-                <p className="eyebrow">App downloads</p>
-                <Row title="Send website visitors to the app" hint={settings?.apkDownloadEnabled ? 'The website shows the download page before sign-in. Installed apps, the home-screen web app and you still go straight in.' : 'Anyone can sign in on the website'}>
-                  <Switch
-                    on={Boolean(settings?.apkDownloadEnabled)}
-                    label="Send website visitors to the app"
-                    disabled={busy || !ready}
-                    onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Website visitors now see the download page.' : 'The website lets people sign in again.')}
-                  />
-                </Row>
-                <Row title="Android download" hint={settings?.androidDownloadEnabled ? 'Android phones are offered the APK' : 'The Android download is hidden'}>
-                  <Switch
-                    on={Boolean(settings?.androidDownloadEnabled)}
-                    label="Show the Android download"
-                    disabled={busy || !ready}
-                    onChange={(next) => void save({ android_download_enabled: next }, next ? 'Android download is shown.' : 'Android download is hidden.')}
-                  />
-                </Row>
-                <Row title="iPhone install" hint={settings?.iosInstallEnabled ? 'iPhones are shown how to add it to the Home Screen' : 'The iPhone option is hidden'}>
-                  <Switch
-                    on={Boolean(settings?.iosInstallEnabled)}
-                    label="Show the iPhone install option"
-                    disabled={busy || !ready}
-                    onChange={(next) => void save({ ios_install_enabled: next }, next ? 'iPhone option is shown.' : 'iPhone option is hidden.')}
-                  />
-                </Row>
-                <Row title="Continue on the web" hint={settings?.webContinueEnabled ? 'Visitors can skip the download page and use the website' : 'Visitors must get the app'}>
-                  <Switch
-                    on={Boolean(settings?.webContinueEnabled)}
-                    label="Let visitors continue on the web"
-                    disabled={busy || !ready}
-                    onChange={(next) => void save({ web_continue_enabled: next }, next ? 'Visitors can continue on the web.' : 'Visitors must get the app.')}
-                  />
-                </Row>
-                <Row title="Download button on sign-in" hint={settings?.loginDownloadButtonEnabled ? 'The website sign-in screen has a Download the app button' : 'The sign-in screen has no download button'}>
-                  <Switch
-                    on={Boolean(settings?.loginDownloadButtonEnabled)}
-                    label="Show a Download the app button on the sign-in screen"
-                    disabled={busy || !ready}
-                    onChange={(next) => void save({ login_download_button_enabled: next }, next ? 'The sign-in screen shows the download button.' : 'The sign-in screen has no download button.')}
-                  />
-                </Row>
-              </section>
-      )}
-
+      {isOwner && current === 'downloads' && (() => {
+        const webOn = [settings?.apkDownloadEnabled, settings?.webContinueEnabled, settings?.loginDownloadButtonEnabled].filter(Boolean).length
+        const phoneOn = [settings?.androidDownloadEnabled, settings?.iosInstallEnabled].filter(Boolean).length
+        const chip = (on: boolean | undefined) => ({ status: on ? 'On' : 'Off', statusTone: (on ? 'accent' : 'muted') as Tone })
+        return (
+          <section className="flex flex-col gap-3">
+            <Fold title="Website" status={`${webOn} of 3 on`} open>
+              <Row title="Send visitors to the app" {...chip(settings?.apkDownloadEnabled)}>
+                <Switch on={Boolean(settings?.apkDownloadEnabled)} label="Send website visitors to the app" disabled={busy || !ready} onChange={(next) => void save({ apk_download_enabled: next }, next ? 'Website visitors now see the download page.' : 'The website lets people sign in again.')} />
+              </Row>
+              <Row title="Continue on the web" {...chip(settings?.webContinueEnabled)}>
+                <Switch on={Boolean(settings?.webContinueEnabled)} label="Let visitors continue on the web" disabled={busy || !ready} onChange={(next) => void save({ web_continue_enabled: next }, next ? 'Visitors can continue on the web.' : 'Visitors must get the app.')} />
+              </Row>
+              <Row title="Download button on sign-in" {...chip(settings?.loginDownloadButtonEnabled)}>
+                <Switch on={Boolean(settings?.loginDownloadButtonEnabled)} label="Show a Download the app button on the sign-in screen" disabled={busy || !ready} onChange={(next) => void save({ login_download_button_enabled: next }, next ? 'The sign-in screen shows the download button.' : 'The sign-in screen has no download button.')} />
+              </Row>
+            </Fold>
+            <Fold title="Phones" status={`${phoneOn} of 2 on`} open>
+              <Row title="Android download" {...chip(settings?.androidDownloadEnabled)}>
+                <Switch on={Boolean(settings?.androidDownloadEnabled)} label="Show the Android download" disabled={busy || !ready} onChange={(next) => void save({ android_download_enabled: next }, next ? 'Android download is shown.' : 'Android download is hidden.')} />
+              </Row>
+              <Row title="iPhone install" {...chip(settings?.iosInstallEnabled)}>
+                <Switch on={Boolean(settings?.iosInstallEnabled)} label="Show the iPhone install option" disabled={busy || !ready} onChange={(next) => void save({ ios_install_enabled: next }, next ? 'iPhone option is shown.' : 'iPhone option is hidden.')} />
+              </Row>
+            </Fold>
+          </section>
+        )
+      })()}
 
       {isOwner && current === 'builds' && (
         <section className="flex flex-col gap-3" aria-label="APK builds">
@@ -815,16 +909,25 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
         <section className="flex flex-col gap-3">
                 <div className="card flex flex-col gap-3">
                 <p className="eyebrow">Updates at a glance</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <p><span className="text-muted">Your build</span><br /><b>{myBuild ? `build ${myBuild}` : 'website / local'}</b></p>
-                  <p><span className="text-muted">Latest build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
-                  <p><span className="text-muted">Announced now</span><br /><b>{settings && settings.announcedBuild > 0 ? `build ${settings.announcedBuild}` : 'nothing'}</b></p>
-                </div>
-                {settings && settings.minBuild > 0 && (
-                  <p role="status" className="rounded-xl border border-line px-3 py-2 text-sm font-semibold">
-                    Forced updates are ON: phones below build {settings.minBuild} are stopped at an “Update required” screen, whatever is announced here. Use “Turn off forced updates” further down if people should stay on older builds.
-                  </p>
-                )}
+                {(() => {
+                  const ann = settings?.announcedBuild ?? 0
+                  const min = settings?.minBuild ?? 0
+                  const upToDate = myBuild !== null && latestBuild !== null && myBuild >= latestBuild
+                  const cell = (label: string, value: string, tone: Tone) => (
+                    <div className="rounded-xl border border-line px-3 py-2">
+                      <p className="text-[11px] text-muted">{label}</p>
+                      <p className="font-display text-lg font-extrabold leading-tight" style={{ color: TONE[tone] }}>{value}</p>
+                    </div>
+                  )
+                  return (
+                    <div className="grid grid-cols-2 gap-2">
+                      {cell('Latest build', latestBuild ? `${latestBuild}` : '?', 'accent')}
+                      {cell('This phone', myBuild ? `${myBuild}` : 'web', upToDate ? 'ok' : 'warn')}
+                      {cell('Announced', ann > 0 ? `${ann}` : 'none', ann > 0 ? 'ok' : 'muted')}
+                      {cell('Forced', min > 0 ? `${min}+` : 'off', min > 0 ? 'warn' : 'muted')}
+                    </div>
+                  )
+                })()}
                 </div>
                 <Fold title="Announce a build" status={settings && settings.announcedBuild > 0 ? `Build ${settings.announcedBuild} is announced` : 'Nothing announced'}>
                 {(() => {
@@ -834,9 +937,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   const sel = pickBuild ?? null
                   return (
                     <>
-                      <p className="text-xs text-muted">
-                        {ann > 0 ? `Build ${ann} is announced now: phones on an older build see the update card.` : 'Nothing is announced: nobody is told about an update.'}
-                      </p>
+                      <p className="text-xs text-muted">Pick a build; phones older than it are told.</p>
                       {buildsLoading && <p className="text-sm text-muted">Loading recent builds…</p>}
                       {buildsError && <p role="alert" className="text-sm text-danger">{buildsError}</p>}
                       {!buildsLoading && !buildsError && good.length === 0 && <p className="text-sm text-muted">No finished builds found yet.</p>}
@@ -876,7 +977,6 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                     </>
                   )
                 })()}
-                <p className="text-xs text-muted">The update card always downloads the newest build, whichever one you announce: the choice only sets which older phones are told. Phones running a build older than 205 do not have this switch, so they show new builds by themselves.</p>
                 </Fold>
                 <Fold title="Install on this phone" status={!isNativeApp() ? 'Open the Android app' : myBuild !== null && latestBuild !== null && latestBuild <= myBuild ? 'This phone is up to date' : latestBuild ? `Build ${latestBuild} is available` : 'Latest build unknown'}>
                 <button

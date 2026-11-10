@@ -18,6 +18,7 @@
   --accent-text: #2457d6;
   --ok: #16794c;
   --danger: #c0352b;
+  --warn: #a15c00;
   --radius-card: 14px;
   --radius-ctl: 10px;
   --radius-avatar: 9999px;
@@ -42,6 +43,7 @@
   --accent-text: #a8c4ff;
   --ok: #73d6a0;
   --danger: #ff8989;
+  --warn: #f4b94e;
   --radius-card: 14px;
   --radius-ctl: 10px;
   --radius-avatar: 9999px;

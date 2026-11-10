@@ -26,6 +26,7 @@ import AddFamilySheet, { FamiliesButton, FamiliesModal } from './MyFamilies'
 import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
+import SwipePager from './SwipePager'
 import { setGlassAllowed } from '../theme'
 import { isOwnerEmail } from '../owner'
 
@@ -37,6 +38,8 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'chat', label: 'Chat', icon: 'chat' },
   { id: 'me', label: 'Profile', icon: 'me' },
 ]
+
+const SWIPE_ORDER = TABS.map((t) => t.id)
 
 const SECRET_HOLD_MS = 4000
 
@@ -119,6 +122,27 @@ export default function Shell({
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [menuOpen])
+
+  // Every screen the shell can show. The pager also asks for a neighbouring one while you swipe.
+  function renderTab(t: Tab) {
+    return (
+      <>
+          {t === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+        {t === 'chat' && <Chat family={family} userId={userId} canDelete={familyRole === 'owner'} />}
+        {t === 'irl' && <Irl family={family} userId={userId} />}
+        {t === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
+        {t === 'birthdays' && (
+          <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />
+        )}
+        {t === 'tree' && <Tree family={family} userId={userId} onExit={() => setTab('home')} />}
+        {t === 'explore' && <Explore family={family} userId={userId} />}
+        {t === 'plans' && <Plans family={family} userId={userId} />}
+        {t === 'me' && <Profile userId={userId} />}
+        {t === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
+        {t === 'admin' && canAdmin && <Admin family={family} userId={userId} isOwner={false} onFamilyChanged={onFamilyChanged} />}
+      </>
+    )
+  }
 
   return (
     <div className="mx-auto min-h-full max-w-xl">
@@ -268,21 +292,7 @@ export default function Shell({
         </div>
         {familiesOpen && <FamiliesModal families={families} activeId={family.id} onSwitch={onSwitchFamily} onAdd={() => { setFamiliesOpen(false); setAddingFamily(true) }} onClose={() => setFamiliesOpen(false)} />}
         {addingFamily && <AddFamilySheet count={families.length} onAdded={onFamilyAdded} onClose={() => setAddingFamily(false)} />}
-        <div key={tab} className="screen-in">
-          {tab === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-          {tab === 'chat' && <Chat family={family} userId={userId} canDelete={familyRole === 'owner'} />}
-          {tab === 'irl' && <Irl family={family} userId={userId} />}
-          {tab === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
-          {tab === 'birthdays' && (
-            <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />
-          )}
-          {tab === 'tree' && <Tree family={family} userId={userId} onExit={() => setTab('home')} />}
-          {tab === 'explore' && <Explore family={family} userId={userId} />}
-          {tab === 'plans' && <Plans family={family} userId={userId} />}
-          {tab === 'me' && <Profile userId={userId} />}
-          {tab === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
-          {tab === 'admin' && canAdmin && <Admin family={family} userId={userId} isOwner={false} onFamilyChanged={onFamilyChanged} />}
-        </div>
+        <SwipePager order={SWIPE_ORDER} current={tab} enabled={SWIPE_ORDER.includes(tab) && !menuOpen && !familiesOpen && !addingFamily} onChange={setTab} render={renderTab} />
         {musicUnlocked && <div hidden={tab !== 'music'}><Music /></div>}
       </main>
       <AnnouncementPopup userId={userId} live={true} />

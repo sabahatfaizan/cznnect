@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icons'
 import { useBackClose } from '../lib/backStack'
 import ListenTogether from '../components/ListenTogether'
+import Fold from '../components/Fold'
 import YouTubeLinks, { type NowPlaying } from '../components/YouTubeLinks'
 
 type Track = { id: string; name: string; url: string }
@@ -185,19 +186,13 @@ export default function Music() {
             <button type="button" aria-label="Close library" onClick={() => setLibOpen(false)} className="mx-auto block h-1.5 w-12 rounded-full bg-[var(--line)]" />
             <p className="mt-2 text-center font-display text-base font-extrabold">Library</p>
           </div>
-          <div className="space-y-4 overflow-y-auto px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="space-y-4 overflow-y-auto px-4 pb-[calc(max(1.25rem,env(safe-area-inset-bottom))+3.5rem)]">
       <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
         + Add songs from your phone
         <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
       </label>
 
-      <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={setYt} halt={halt} />
-
-      <ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} />
-
-      {tracks.length === 0 ? (
-        <p className="text-center text-xs text-muted">Songs stay on this device and are cleared when you close the app.</p>
-      ) : (
+      {tracks.length > 0 && (
         <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
           {tracks.map((t, i) => {
             const on = i === index
@@ -219,6 +214,13 @@ export default function Music() {
           })}
         </ul>
       )}
+
+      <Fold title="YouTube link" status={yt ? yt.title : 'Paste a link to play'}>
+        <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={setYt} halt={halt} />
+      </Fold>
+
+      <ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} />
+
           </div>
         </div>
       </div>

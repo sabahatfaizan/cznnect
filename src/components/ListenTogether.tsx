@@ -304,23 +304,18 @@ export default function ListenTogether({ getAudio, current, yt }: { getAudio: ()
   }
   return (
     <section className={box}>
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[var(--accent-text)]">Cznnect · Social audio</p><h3 className="mt-1 text-xl font-bold tracking-tight">Listen together</h3><p className="mt-1 max-w-[250px] text-xs leading-relaxed text-muted">Same song, same moment. Bring everyone into one listening room.</p></div>
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)] text-2xl text-[var(--accent-text)]">♫</span>
+      <div className="space-y-3 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-bold tracking-tight">Listen together</h3>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)] text-xl text-[var(--accent-text)]">♫</span>
         </div>
-        <div className="mt-4">{visual}</div>
-        <div className="mt-4 rounded-2xl border border-line bg-[var(--surface-2,var(--surface))] p-3">
-          <div className="mb-2 flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--accent-soft)] text-sm text-[var(--accent-text)]">◉</span><div><p className="text-sm font-bold">Start a listening room</p><p className="text-[11px] text-muted">Host the track playing on your phone</p></div></div>
-          <button className="btn btn-primary w-full" disabled={!current && !yt} onClick={startHost}>{yt ? 'Host current YouTube audio' : current ? 'Host current song' : 'Choose a song to host'}</button>
-        </div>
-        <div className="my-3 flex items-center gap-3"><span className="h-px flex-1 bg-line" /><span className="text-[10px] font-bold uppercase tracking-[.18em] text-muted">or join a room</span><span className="h-px flex-1 bg-line" /></div>
+        <button className="btn btn-primary w-full" disabled={!current && !yt} onClick={startHost}>{yt ? 'Host current YouTube audio' : current ? 'Host current song' : 'Choose a song to host'}</button>
+        <div className="flex items-center gap-3"><span className="h-px flex-1 bg-line" /><span className="text-[10px] font-bold uppercase tracking-[.18em] text-muted">or join</span><span className="h-px flex-1 bg-line" /></div>
         <div className="flex gap-2">
           <input className="input !h-12 min-w-0 flex-1 text-center font-bold uppercase tracking-[.28em]" maxLength={4} placeholder="ROOM CODE" value={typed} onChange={(e) => setTyped(e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase())} aria-label="Room code" />
-          <button className="btn btn-plain !h-12 !px-5" disabled={typed.trim().length !== 4} onClick={startGuest}>Join room</button>
+          <button className="btn btn-plain !h-12 !px-5" disabled={typed.trim().length !== 4} onClick={startGuest}>Join</button>
         </div>
-        {status && <p className="mt-2 text-center text-xs text-danger">{status}</p>}
-        <p className="mt-3 text-center text-[10px] text-muted">Private peer-to-peer audio · Nothing is stored on Cznnect servers</p>
+        {status && <p className="text-center text-xs text-danger">{status}</p>}
       </div>
     </section>
   )

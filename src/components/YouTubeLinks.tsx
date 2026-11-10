@@ -84,8 +84,7 @@ export default function YouTubeLinks({ onStart, onNow, halt }: { onStart: () => 
     onNow(nowKey ? { key: nowKey, id: nowId, kind: nowKind, title: nowTitle } : null)
   }, [nowKey]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <section className="space-y-3 rounded-2xl border border-line bg-surface p-4" aria-label="YouTube links">
-      <p className="text-sm font-semibold">Play from a YouTube link</p>
+    <section className="space-y-3" aria-label="YouTube links">
       <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void add() }}>
         <input className="input min-w-0 flex-1" inputMode="url" autoCapitalize="off" autoCorrect="off" placeholder="Paste a YouTube link" value={text} onChange={(e) => { setText(e.target.value); setError('') }} aria-label="YouTube link" />
         <button type="submit" className="btn btn-primary">Play</button>
@@ -105,7 +104,6 @@ export default function YouTubeLinks({ onStart, onNow, halt }: { onStart: () => 
           })}
         </ul>
       )}
-      <p className="text-xs text-muted">Plays with YouTube's own player, so it needs internet and may stop when the screen locks. Some videos cannot be played outside YouTube.</p>
     </section>
   )
 }

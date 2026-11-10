@@ -42,7 +42,7 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 const SWIPE_ORDER = TABS.map((t) => t.id)
 
 // The header names the screen you are on, like WhatsApp: the Cznnect wordmark on Home, the page name everywhere else.
-// The name changes the moment the page settles.
+// The name flips instantly once a swipe passes halfway to the next page.
 const TITLES: Record<Tab, string> = {
   home: 'Cznnect', irl: 'Convoy', explore: 'Explore', chat: 'Chat', me: 'Profile', plans: 'Plans', tree: 'Family Tree',
   scoreboard: 'Scoreboard', birthdays: 'Birthdays', settings: 'Settings', music: 'Music', admin: 'Admin',
@@ -99,9 +99,8 @@ export default function Shell({
   const inPager = SWIPE_ORDER.includes(tab)
   const titleEls = useRef<(HTMLElement | null)[]>([])
   const placeTitles = useCallback((pos: number) => {
-    // No sliding: the name stays put while you drag and switches the instant the page has settled (within 1%).
+    // No sliding: the name flips instantly as soon as the swipe is past halfway to the next page, without waiting for it to settle.
     const nearest = Math.round(pos)
-    if (pos >= 0 && Math.abs(pos - nearest) > 0.01) return
     titleEls.current.forEach((el, i) => {
       if (!el) return
       const on = i === nearest && pos >= 0

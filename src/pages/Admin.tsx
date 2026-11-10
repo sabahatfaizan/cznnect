@@ -108,6 +108,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [notifyAll, setNotifyAll] = useState(false)
   const [meetupCode, setMeetupCode] = useState('')
   const [buildRuns, setBuildRuns] = useState<BuildRun[]>([])
+  const [pickBuild, setPickBuild] = useState<number | null>(null)
   const [buildRelease, setBuildRelease] = useState<BuildRelease | null>(null)
   const [buildsLoading, setBuildsLoading] = useState(false)
   const [buildsError, setBuildsError] = useState('')
@@ -251,7 +252,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     } finally { setBuildsLoading(false) }
   }, [])
 
-  useEffect(() => { if (section === 'builds' || section === 'pages') void loadBuilds() }, [section, loadBuilds])
+  useEffect(() => { if (section === 'builds' || section === 'pages' || section === 'updates') void loadBuilds() }, [section, loadBuilds])
 
   const loadAnnouncements = useCallback(async () => {
     setAnnouncementLoading(true)
@@ -383,15 +384,15 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
 
   const tiles: { id: Section; icon: IconName; title: string; hint: string }[] = [
-    { id: 'app', icon: 'megaphone', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
+    { id: 'app', icon: 'admin', title: 'App status', hint: settings?.maintenanceEnabled ? 'Maintenance is ON' : settings?.announcementEnabled ? 'Banner is live' : 'Live for everyone' },
     { id: 'announcements', icon: 'megaphone', title: 'Announcements', hint: announcements.length ? `${announcements.length} announcement${announcements.length === 1 ? '' : 's'} · popup editor` : 'Create poster-based in-app announcements' },
     { id: 'downloads', icon: 'download', title: 'Downloads', hint: settings?.apkDownloadEnabled ? 'Website sends visitors to the app' : 'Website sign-in is open' },
-    { id: 'updates', icon: 'phone', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
-    { id: 'builds', icon: 'download', title: 'APK Builds', hint: 'Android APK build history, artifacts and releases' },
-    { id: 'pages', icon: 'list', title: 'GitHub Pages Deployments', hint: 'Website deployment history and status' },
+    { id: 'updates', icon: 'refresh', title: 'Updates', hint: settings && settings.minBuild > 0 ? `Build ${settings.minBuild}+ required` : 'No forced update' },
+    { id: 'builds', icon: 'phone', title: 'App builds', hint: 'Build history, releases and cleanup' },
+    { id: 'pages', icon: 'explore', title: 'Website deployments', hint: 'Website publishing history and status' },
     { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
-    { id: 'previews', icon: 'phone', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
-    { id: 'reminders', icon: 'bell', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
+    { id: 'previews', icon: 'search', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
+    { id: 'reminders', icon: 'cake', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
     { id: 'share', icon: 'share', title: 'Share the app', hint: 'A banner and pitch to send to anyone' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
@@ -453,39 +454,35 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             ))}
           </section>
 
-          <div className="flex flex-col gap-3" aria-label="Manage">
+          <div className="flex flex-col gap-5" aria-label="Manage">
             {[
-              { title: 'App & Website', hint: 'Status, downloads, updates and sharing', ids: ['app', 'announcements', 'downloads', 'updates', 'previews', 'share'] as Section[] },
-              { title: 'Builds & Deployments', hint: 'Android APKs and website publishing', ids: ['builds', 'pages'] as Section[] },
-              { title: 'Family & Communication', hint: 'Members, messages, notifications and reminders', ids: ['family', 'messages', 'notify', 'reminders'] as Section[] },
-              { title: 'Data & Maintenance', hint: 'Meetup history and family data tools', ids: ['data'] as Section[] },
-            ].map((group, index) => (
-              <details key={group.title} className="card !p-0 overflow-hidden" open={index === 0}>
-                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold">{group.title}</p>
-                    <p className="mt-0.5 text-xs text-muted">{group.hint}</p>
-                  </div>
-                  <span className="text-xs text-muted">{group.ids.length}</span>
-                  <span aria-hidden="true" className="text-muted transition-transform">⌄</span>
-                </summary>
-                <div className="flex flex-col divide-y divide-[var(--line)] border-t border-[var(--line)]">
+              { title: 'App & website', hint: 'What people see and how they get the app', ids: ['app', 'announcements', 'downloads', 'updates', 'previews', 'share'] as Section[] },
+              { title: 'Builds & publishing', hint: 'Android APKs and the website', ids: ['builds', 'pages'] as Section[] },
+              { title: 'Family & messages', hint: 'People, chat, notifications and reminders', ids: ['family', 'messages', 'notify', 'reminders'] as Section[] },
+              { title: 'Data', hint: 'Meetup history and points', ids: ['data'] as Section[] },
+            ].map((group) => (
+              <section key={group.title} className="flex flex-col gap-2" aria-label={group.title}>
+                <div className="px-1">
+                  <p className="eyebrow">{group.title}</p>
+                  <p className="text-xs text-muted">{group.hint}</p>
+                </div>
+                <div className="card flex flex-col divide-y divide-[var(--line)] overflow-hidden !p-0">
                   {group.ids.map((id) => {
                     const tile = tiles.find((item) => item.id === id)
                     if (!tile) return null
                     return (
-                      <button key={tile.id} type="button" className="flex w-full items-center gap-3 px-4 py-3 text-left" onClick={() => open(tile.id)}>
-                        <Icon name={tile.icon} size={19} />
+                      <button key={tile.id} type="button" className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-[var(--surface-2)]" onClick={() => open(tile.id)}>
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text"><Icon name={tile.icon} size={20} /></span>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold leading-tight">{tile.title}</p>
-                          <p className="truncate text-xs text-muted">{tile.hint}</p>
+                          <p className="mt-0.5 truncate text-xs text-muted">{tile.hint}</p>
                         </div>
                         <span aria-hidden="true" className="menu-chevron">›</span>
                       </button>
                     )
                   })}
                 </div>
-              </details>
+              </section>
             ))}
           </div>
         </>
@@ -784,35 +781,55 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                 )}
                 {(() => {
                   const ann = settings?.announcedBuild ?? 0
-                  const covers = latestBuild !== null && ann >= latestBuild // the newest build is the one announced
-                  const stale = ann > 0 && !covers // an older build is still announced
-                  const hint = ann === 0
-                    ? 'Off. Nobody is told about an update.'
-                    : covers
-                      ? `On. Build ${ann} is announced: phones on an older build see the update card.`
-                      : `Off for the newest build. Build ${ann} is still announced, so phones below ${ann} still see the update card. Build ${latestBuild ?? '?'} is newer.`
+                  // Builds that finished fine, newest first. Only these can be announced.
+                  const good = buildRuns.filter((r) => /apk/i.test(r.name) && r.conclusion === 'success').slice(0, 10)
+                  const sel = pickBuild ?? null
                   return (
                     <>
-                      <Row title={`Announce the newest build${latestBuild ? ` (${latestBuild})` : ''}`} hint={hint}>
-                        <Switch
-                          on={covers}
-                          label="Announce the newest build"
-                          disabled={busy || !ready || (!covers && !latestBuild)}
-                          onChange={(next) => {
-                            if (next && latestBuild) void save({ announced_build: latestBuild }, `Build ${latestBuild} is announced. Phones on an older build now see the update card.`)
-                            else if (!next) void save({ announced_build: 0 }, 'Nothing is announced now. Everyone stays on their build.')
-                          }}
-                        />
-                      </Row>
-                      {stale && (
-                        <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ announced_build: 0 }, 'Nothing is announced now. Everyone stays on their build.')}>
-                          Stop announcing build {ann}
-                        </button>
-                      )}
+                      <p className="eyebrow">Announce a build</p>
+                      <p className="text-xs text-muted">
+                        {ann > 0 ? `Build ${ann} is announced now: phones on an older build see the update card.` : 'Nothing is announced: nobody is told about an update.'}
+                      </p>
+                      {buildsLoading && <p className="text-sm text-muted">Loading recent builds…</p>}
+                      {buildsError && <p role="alert" className="text-sm text-danger">{buildsError}</p>}
+                      {!buildsLoading && !buildsError && good.length === 0 && <p className="text-sm text-muted">No finished builds found yet.</p>}
+                      <ul className="flex flex-col divide-y divide-[var(--line)] overflow-hidden rounded-xl border border-line" role="radiogroup" aria-label="Recent builds">
+                        {good.map((r, i) => {
+                          const on = sel === r.run_number
+                          const live = ann === r.run_number
+                          return (
+                            <li key={r.id}>
+                              <label className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 ${on ? 'bg-accent-soft' : ''}`}>
+                                <input type="radio" name="announce-build" className="h-5 w-5 shrink-0" style={{ accentColor: 'var(--accent)' }} checked={on} onChange={() => setPickBuild(r.run_number)} />
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex flex-wrap items-center gap-1.5">
+                                    <span className="text-sm font-bold">Build {r.run_number}</span>
+                                    {i === 0 && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent-text">Newest</span>}
+                                    {live && <span className="rounded-full bg-[var(--ok)]/15 px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">Announced</span>}
+                                    {myBuild === r.run_number && <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted">This phone</span>}
+                                  </span>
+                                  <span className="block truncate text-xs text-muted">{new Date(r.created_at).toLocaleString()} · {r.head_sha.slice(0, 7)}</span>
+                                </span>
+                              </label>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={busy || !ready || sel === null || sel === ann}
+                        onClick={() => { if (sel !== null) void save({ announced_build: sel }, `Build ${sel} is announced. Phones on an older build now see the update card.`) }}
+                      >
+                        {sel === null ? 'Pick a build above' : sel === ann ? `Build ${sel} is already announced` : `Announce build ${sel}`}
+                      </button>
+                      <button type="button" className="btn btn-plain" disabled={busy || !ready || ann === 0} onClick={() => void save({ announced_build: 0 }, 'Nothing is announced now. Everyone stays on their build.')}>
+                        Stop announcing{ann > 0 ? ` (build ${ann})` : ''}
+                      </button>
                     </>
                   )
                 })()}
-                <p className="text-xs text-muted">The update card always downloads the newest build, whichever number is announced. Phones running a build older than 205 do not have this switch, so they show new builds by themselves.</p>
+                <p className="text-xs text-muted">The update card always downloads the newest build, whichever one you announce: the choice only sets which older phones are told. Phones running a build older than 205 do not have this switch, so they show new builds by themselves.</p>
                 <button
                   type="button"
                   className="btn btn-plain"

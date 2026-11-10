@@ -6,6 +6,7 @@ import { Icon } from '../components/Icons'
 import { friendlyError } from '../lib/offline'
 import Sheet from '../components/Sheet'
 import { markChatRead } from '../lib/pulse'
+import { useScreenVisible } from '../lib/screenVisible'
 
 type Msg = { id: number; user_id: string; sender: string; avatar: string | null; body: string; created_at: string; edited_at?: string | null }
 
@@ -98,10 +99,11 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   }, [])
 
   // Anything on screen counts as read, which clears the badge on the Chat tab and on Home.
+  const visible = useScreenVisible()
   useEffect(() => {
     const last = messages[messages.length - 1]
-    if (last) markChatRead(family.id, last.id)
-  }, [messages, family.id])
+    if (last && visible) markChatRead(family.id, last.id)
+  }, [messages, family.id, visible])
 
   useLayoutEffect(() => {
     if (!loaded) return

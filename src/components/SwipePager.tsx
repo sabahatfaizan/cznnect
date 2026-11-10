@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
+import { ScreenVisible } from '../lib/screenVisible'
 
 // Swipe left or right anywhere on the screen to move between the screens in the bottom bar, the way WhatsApp's tabs
 // work: the screens slide with your finger and the next one settles into place.
@@ -40,6 +41,9 @@ export default function SwipePager<T extends string>({
   const [engaged, setEngaged] = useState(false)
   const [top, setTop] = useState(0)
   const [vh, setVh] = useState(0)
+  // The neighbouring screens are built in the background a moment after a screen settles, so when a swipe starts they are
+  // already there (no loading flash, no stutter while the finger is moving). Until then they take no room and are invisible.
+  const [warm, setWarm] = useState(false)
 
   const idx = order.indexOf(current)
   const prev = idx > 0 ? order[idx - 1] : null
@@ -47,6 +51,13 @@ export default function SwipePager<T extends string>({
 
   const live = useRef({ enabled, prev, next, onChange })
   useEffect(() => { live.current = { enabled, prev, next, onChange } })
+
+  useEffect(() => {
+    setWarm(false)
+    if (!enabled) return
+    const id = window.setTimeout(() => setWarm(true), 700)
+    return () => window.clearTimeout(id)
+  }, [current, enabled])
 
   // A screen that arrived by swiping is already on show, so it must not play its entrance animation again.
   useEffect(() => {
@@ -161,19 +172,24 @@ export default function SwipePager<T extends string>({
     }
   }, [])
 
-  const pane = (id: T, style?: CSSProperties) => (
+  const hiddenPane: CSSProperties = { position: 'absolute', top: 0, left: 0, width: '100%', height: 0, overflow: 'hidden', visibility: 'hidden', pointerEvents: 'none' }
+  const pane = (id: T, style?: CSSProperties, shown = true) => (
     <div key={id} className={id === current && !noAnim.current.has(id) ? 'screen-in' : undefined} style={style} aria-hidden={id === current ? undefined : true}>
-      {render(id)}
+      <ScreenVisible.Provider value={shown}>{render(id)}</ScreenVisible.Provider>
     </div>
   )
+  const sideStyle = (dir: -1 | 1): CSSProperties | undefined =>
+    engaged
+      ? { position: 'absolute', top, left: dir < 0 ? '-100%' : '100%', width: '100%', height: vh || undefined, overflow: 'hidden', pointerEvents: 'none' }
+      : hiddenPane
 
   return (
     <div ref={rootEl} style={{ position: 'relative' }}>
       {/* No transform at rest: a transform would trap fixed sheets and menus inside the screen. */}
       <div ref={trackEl}>
-        {engaged && prev && pane(prev, { position: 'absolute', top, left: '-100%', width: '100%', height: vh || undefined, overflow: 'hidden', pointerEvents: 'none' })}
+        {(engaged || warm) && prev && pane(prev, sideStyle(-1), engaged)}
         {pane(current)}
-        {engaged && next && pane(next, { position: 'absolute', top, left: '100%', width: '100%', height: vh || undefined, overflow: 'hidden', pointerEvents: 'none' })}
+        {(engaged || warm) && next && pane(next, sideStyle(1), engaged)}
       </div>
     </div>
   )

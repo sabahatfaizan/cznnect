@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useBackClose } from '../lib/backStack'
 import ListenTogether from '../components/ListenTogether'
 import YouTubeLinks, { type NowPlaying } from '../components/YouTubeLinks'
 
@@ -32,6 +33,9 @@ export default function Music() {
   const [repeat, setRepeat] = useState(false)
   const [yt, setYt] = useState<NowPlaying | null>(null)
   const [halt, setHalt] = useState(0)
+  const [libOpen, setLibOpen] = useState(false)
+  useBackClose(() => setLibOpen(false), libOpen)
+  const swipe = useRef<{ y: number; x: number } | null>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const tracksRef = useRef<Track[]>([])
   tracksRef.current = tracks
@@ -97,12 +101,26 @@ export default function Music() {
 
   const pct = duration ? (time / duration) * 100 : 0
 
+  // Swiping up on the player (or tapping the bar under it) opens the library panel; swiping down on its handle closes it.
+  const onDown = (e: React.PointerEvent) => { swipe.current = { y: e.clientY, x: e.clientX } }
+  const onUp = (e: React.PointerEvent, dir: 'up' | 'down') => {
+    const g = swipe.current
+    swipe.current = null
+    if (!g) return
+    const dy = e.clientY - g.y
+    const dx = e.clientX - g.x
+    if (Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx) * 1.5) {
+      if (dir === 'up' && dy < 0) setLibOpen(true)
+      if (dir === 'down' && dy > 0) setLibOpen(false)
+    }
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="flex min-h-[calc(100dvh-12rem)] flex-col justify-center gap-4">
       <audio ref={audioRef} onPlay={() => { setPlaying(true); setHalt((h) => h + 1) }} onPause={() => setPlaying(false)} onEnded={onEnded}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 
-      <div className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+      <div className="touch-none rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]" onPointerDown={onDown} onPointerUp={(e) => onUp(e, 'up')}>
         {yt ? (
           // A YouTube link plays right here, in the big player picture's place.
           <div className="mx-auto w-full overflow-hidden rounded-2xl bg-black" style={{ boxShadow: '0 12px 32px -12px var(--accent)' }}>
@@ -150,6 +168,23 @@ export default function Music() {
         </div>
       </div>
 
+      <button type="button" onClick={() => setLibOpen(true)} aria-haspopup="dialog" className="mx-auto flex flex-col items-center gap-1 px-6 py-2 text-sm font-semibold text-muted">
+        <span aria-hidden="true" className="h-1 w-10 rounded-full bg-[var(--line)]" />
+        Songs, YouTube and Listen together
+        <span aria-hidden="true" className="text-lg leading-none">⌃</span>
+      </button>
+
+      {/* The library panel stays mounted (just out of sight) so a room you host or a link that is playing carries on while it is closed. */}
+      <div className={`fixed inset-0 z-[60] ${libOpen ? '' : 'pointer-events-none'}`} aria-hidden={!libOpen}>
+        <button type="button" aria-label="Close" tabIndex={libOpen ? 0 : -1} onClick={() => setLibOpen(false)}
+          className={`absolute inset-0 bg-black/45 backdrop-blur-sm transition-opacity duration-200 ${libOpen ? 'opacity-100' : 'opacity-0'}`} />
+        <div role="dialog" aria-modal="true" aria-label="Music library"
+          className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[86dvh] max-w-xl flex-col rounded-t-3xl border border-b-0 border-line bg-surface shadow-2xl transition-transform duration-300 ease-out ${libOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+          <div className="touch-none px-4 pb-2 pt-3" data-no-swipe onPointerDown={onDown} onPointerUp={(e) => onUp(e, 'down')}>
+            <button type="button" aria-label="Close library" onClick={() => setLibOpen(false)} className="mx-auto block h-1.5 w-12 rounded-full bg-[var(--line)]" />
+            <p className="mt-2 text-center font-display text-base font-extrabold">Library</p>
+          </div>
+          <div className="space-y-4 overflow-y-auto px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
         + Add songs from your phone
         <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
@@ -183,6 +218,9 @@ export default function Music() {
           })}
         </ul>
       )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -39,6 +39,7 @@ export default function SwipePager<T extends string>({
   const noAnim = useRef<Set<T>>(new Set())
   const [engaged, setEngaged] = useState(false)
   const [top, setTop] = useState(0)
+  const [vh, setVh] = useState(0)
 
   const idx = order.indexOf(current)
   const prev = idx > 0 ? order[idx - 1] : null
@@ -84,9 +85,16 @@ export default function SwipePager<T extends string>({
         if (Math.abs(my) > 10 && Math.abs(my) > Math.abs(mx)) { t = null; return } // an ordinary scroll
         if (Math.abs(mx) < START_PX || Math.abs(mx) < Math.abs(my) * 1.3) return
         t.drag = true
-        setTop(Math.max(0, -(rootEl.current?.getBoundingClientRect().top ?? 0)))
+        const rootTop = rootEl.current?.getBoundingClientRect().top ?? 0
+        setTop(Math.max(0, -rootTop))
+        setVh(window.innerHeight)
         document.documentElement.style.overflowX = 'clip'
-        if (trackEl.current) trackEl.current.style.willChange = 'transform'
+        if (trackEl.current) {
+          trackEl.current.style.willChange = 'transform'
+          // While the track is moving it also becomes the frame that fixed things inside a screen (Chat's message bar)
+          // are placed against. Make that frame reach the bottom of the screen, so they stay where they belong.
+          trackEl.current.style.minHeight = `${Math.max(0, window.innerHeight - rootTop)}px`
+        }
         setEngaged(true)
       }
       const dt = e.timeStamp - t.lastT
@@ -104,6 +112,7 @@ export default function SwipePager<T extends string>({
         trackEl.current.style.transition = 'none'
         trackEl.current.style.transform = ''
         trackEl.current.style.willChange = ''
+        trackEl.current.style.minHeight = ''
       }
       document.documentElement.style.overflowX = ''
     }
@@ -162,9 +171,9 @@ export default function SwipePager<T extends string>({
     <div ref={rootEl} style={{ position: 'relative' }}>
       {/* No transform at rest: a transform would trap fixed sheets and menus inside the screen. */}
       <div ref={trackEl}>
-        {engaged && prev && pane(prev, { position: 'absolute', top, left: '-100%', width: '100%', pointerEvents: 'none' })}
+        {engaged && prev && pane(prev, { position: 'absolute', top, left: '-100%', width: '100%', height: vh || undefined, overflow: 'hidden', pointerEvents: 'none' })}
         {pane(current)}
-        {engaged && next && pane(next, { position: 'absolute', top, left: '100%', width: '100%', pointerEvents: 'none' })}
+        {engaged && next && pane(next, { position: 'absolute', top, left: '100%', width: '100%', height: vh || undefined, overflow: 'hidden', pointerEvents: 'none' })}
       </div>
     </div>
   )

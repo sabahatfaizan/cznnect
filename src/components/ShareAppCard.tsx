@@ -1,13 +1,14 @@
-import { Mark } from './Logo'
-import { useState } from 'react'
+import { Mark, Wordmark } from './Logo'
+import { useState, type CSSProperties } from 'react'
 import { WEB_APP_URL, canShare, shareImage, shareText } from '../lib/native'
 
-type Theme = { id: string; name: string; from: string; to: string; accent: string }
+type Logo = { hi: string; a: string; b: string; edge: string }
+type Theme = { id: string; name: string; from: string; to: string; accent: string; logo: Logo }
 const THEMES: Theme[] = [
-  { id: 'midnight', name: 'Midnight', from: '#0e1116', to: '#1f2735', accent: '#a8c7fa' },
-  { id: 'moon', name: 'Moon', from: '#000000', to: '#222222', accent: '#ffffff' },
-  { id: 'sunset', name: 'Sunset', from: '#2b1020', to: '#7a2e3a', accent: '#ffd29a' },
-  { id: 'forest', name: 'Forest', from: '#0d1f1a', to: '#1f4a3b', accent: '#9fe3c4' },
+  { id: 'midnight', name: 'Midnight', from: '#0e1116', to: '#1f2735', accent: '#a8c7fa', logo: { hi: '#d6e6ff', a: '#8ab4f8', b: '#3d5fd6', edge: '#0b1a5c' } },
+  { id: 'moon', name: 'Moon', from: '#000000', to: '#222222', accent: '#ffffff', logo: { hi: '#ffffff', a: '#dcdcdc', b: '#8c8c8c', edge: '#303030' } },
+  { id: 'sunset', name: 'Sunset', from: '#2b1020', to: '#7a2e3a', accent: '#ffd29a', logo: { hi: '#fff1d6', a: '#ffc98a', b: '#e0693f', edge: '#5a1d24' } },
+  { id: 'forest', name: 'Forest', from: '#0d1f1a', to: '#1f4a3b', accent: '#9fe3c4', logo: { hi: '#dcfff1', a: '#9fe3c4', b: '#2f9e78', edge: '#0c2a20' } },
 ]
 
 type Banner = { brand: string; headline: string; pitch: string; cta: string; theme: string; logo: number; stores: boolean }
@@ -54,6 +55,81 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
   return lines.slice(0, maxLines)
 }
 
+// The app's own logo is used while the name is "Cznnect" (or empty); typing anything else uses plain text instead.
+const usesLogo = (brand: string) => !brand.trim() || /^cznnect$/i.test(brand.trim())
+
+// The Cznnect mark (an O and a Z in one square) drawn in the banner theme's own colours, with the dark outline.
+function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, p: Logo) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.scale(size / 64, size / 64)
+  const g = ctx.createLinearGradient(6, 6, 58, 58)
+  g.addColorStop(0, p.hi)
+  g.addColorStop(0.38, p.a)
+  g.addColorStop(1, p.b)
+  const frame = new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z')
+  // The outline goes down first; the fills then cover everything but the outside edge.
+  ctx.lineJoin = 'miter'
+  ctx.strokeStyle = p.edge
+  ctx.lineWidth = 3
+  ctx.stroke(frame)
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(4.5, 4.5, 55, 55)
+  ctx.clip()
+  ctx.lineWidth = 13
+  ctx.beginPath()
+  ctx.moveTo(0, 64)
+  ctx.lineTo(64, 0)
+  ctx.stroke()
+  ctx.restore()
+  ctx.fillStyle = g
+  ctx.fill(frame, 'evenodd')
+  // The thin channel round the frame, and a light rim just inside the edge.
+  ctx.fillStyle = 'rgba(0,0,0,0.2)'
+  ctx.fill(new Path2D('M9 9H55V55H9Z M13 13V51H51V13Z'), 'evenodd')
+  ctx.save()
+  ctx.clip(frame, 'evenodd')
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'
+  ctx.lineWidth = 2.8
+  ctx.stroke(frame)
+  ctx.restore()
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(6, 6, 52, 52)
+  ctx.clip()
+  ctx.strokeStyle = g
+  ctx.lineWidth = 10
+  ctx.beginPath()
+  ctx.moveTo(0, 64)
+  ctx.lineTo(64, 0)
+  ctx.stroke()
+  ctx.restore()
+  ctx.restore()
+}
+
+// "C", the mark standing in for the z, then "nnect": the same wordmark the app shows. Baseline at y.
+function drawWordmark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, p: Logo) {
+  ctx.font = `800 ${size}px ${FONT}`
+  let wC = ctx.measureText('C').width
+  let wN = ctx.measureText('nnect').width
+  let total = wC + size * 0.98 + wN
+  if (total > 900) {
+    size = (size * 900) / total
+    ctx.font = `800 ${size}px ${FONT}`
+    wC = ctx.measureText('C').width
+    wN = ctx.measureText('nnect').width
+  }
+  const gap = size * 0.04
+  const box = size * 0.9
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText('C', x, y)
+  const s = box / 64
+  drawMark(ctx, x + wC + gap, y - 58 * s, box, p)
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText('nnect', x + wC + gap + box + gap, y)
+}
+
 const COPYRIGHT = '© 2026 Sabahat Faizan. All rights reserved.'
 
 // Draws the banner as a 1080x1350 (4:5) picture. That shape shows whole inside a WhatsApp chat or any feed without
@@ -95,7 +171,8 @@ function drawBanner(b: Banner): string | null {
   ctx.fillRect(90, 110, 130, 12)
   ctx.fillStyle = '#ffffff'
   ctx.font = `800 130px ${FONT}`
-  ctx.fillText(b.brand.slice(0, 20), 90, 255, 900)
+  if (usesLogo(b.brand)) drawWordmark(ctx, 90, 255, 130, t.logo)
+  else ctx.fillText(b.brand.slice(0, 20), 90, 255, 900)
   ctx.font = `700 76px ${FONT}`
   wrap(ctx, b.headline, 900, 3).forEach((l, i) => ctx.fillText(l, 90, 370 + i * 90))
   ctx.fillStyle = '#d3d9e4'
@@ -209,7 +286,14 @@ export default function ShareAppCard() {
           <Mark className="h-3/5 w-3/5" />
         </div>
         <div className="relative mb-[10px] h-[3px] w-[34px] rounded-full" style={{ background: theme.accent }} />
-        <p className="relative font-display text-[34px] font-extrabold leading-none">{b.brand}</p>
+        {usesLogo(b.brand) ? (
+          <Wordmark
+            className="relative font-display text-[34px] font-extrabold"
+            style={{ '--logo-hi': theme.logo.hi, '--logo-a': theme.logo.a, '--logo-b': theme.logo.b, '--logo-edge': theme.logo.edge } as CSSProperties}
+          />
+        ) : (
+          <p className="relative font-display text-[34px] font-extrabold leading-none">{b.brand}</p>
+        )}
         <p className="relative mt-[18px] text-[20px] font-bold leading-[1.18]">{b.headline}</p>
         <p className="relative mt-[18px] text-[10.4px] leading-[1.35]" style={{ color: '#d3d9e4' }}>{b.pitch}</p>
         <div className="relative mt-auto">
@@ -250,6 +334,7 @@ export default function ShareAppCard() {
       <label className="label" htmlFor="share-logo">Logo strength: {b.logo}%</label>
       <input id="share-logo" type="range" min={0} max={100} step={5} value={b.logo} onChange={(e) => edit({ logo: Number(e.target.value) })} className="w-full" />
       {field('brand', 'Name', 20)}
+      <p className="text-xs text-muted">“Cznnect” shows the app logo, in the banner’s colours. Type something else for plain text.</p>
       {field('headline', 'Headline', 70)}
       {field('pitch', 'Pitch', 200, true)}
       {field('cta', 'Line above the link', 60)}

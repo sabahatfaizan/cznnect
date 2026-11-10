@@ -1,26 +1,19 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { flushSync } from 'react-dom'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ScreenVisible } from '../lib/screenVisible'
 
-// Swipe left or right anywhere on the screen to move between the screens in the bottom bar, the way WhatsApp's tabs
-// work: the screens slide with your finger and the next one settles into place.
+// WhatsApp-style tabs on a native horizontal scroller. The browser does the touch handling: the pages follow the
+// finger, fling with natural momentum and snap one page at a time (scroll-snap), so nothing runs in JavaScript while
+// the finger is down. Vertical scrolling stays with the page (the document), and anything that scrolls sideways on
+// its own (maps, carousels, text fields) keeps working because the browser gives the gesture to the innermost scroller.
 //
-// - The finger movement moves the screens directly, without re-drawing them, so it stays smooth even in Chat.
-// - The neighbouring screen is only mounted while a swipe is under way, so nothing extra loads until you swipe.
-// - It is not started on text fields, sliders, dialogs (the full-screen map is one) or anything that scrolls sideways.
-const NO_SWIPE = 'input, textarea, select, canvas, [data-no-swipe], [role="slider"], [contenteditable="true"], [role="dialog"], [aria-modal="true"], dialog'
-const SETTLE_MS = 240
-const START_PX = 7
-
-function scrollsSideways(el: Element | null): boolean {
-  for (let n = el; n && n !== document.body; n = n.parentElement) {
-    const s = getComputedStyle(n)
-    if ((s.overflowX === 'auto' || s.overflowX === 'scroll') && n.scrollWidth > n.clientWidth + 1) return true
-  }
-  return false
-}
-
-type Track = { x: number; y: number; id: number; lastX: number; lastT: number; v: number; dx: number; width: number; drag: boolean }
+// - The tab only changes once the pager has come to rest, so there are no re-renders while you drag.
+// - Tapping a tab in the bottom bar scrolls the pager there smoothly.
+// - Only the page on show is un-clipped; the others are cut to one screen so they never stretch the document.
+// - Neighbouring pages are built shortly after load (and the rest a little later) so a swipe never lands on a blank page.
+//   `data-pager` / `data-pager-index` let a fixed element inside a page (the Chat message bar) slide with its page.
+const SETTLE_MS = 90
+const NEAR_MS = 350
+const REST_MS = 1800
 
 export default function SwipePager<T extends string>({
   order,
@@ -35,162 +28,152 @@ export default function SwipePager<T extends string>({
   onChange: (id: T) => void
   render: (id: T) => ReactNode
 }) {
-  const rootEl = useRef<HTMLDivElement>(null)
-  const trackEl = useRef<HTMLDivElement>(null)
-  const noAnim = useRef<Set<T>>(new Set())
-  const [engaged, setEngaged] = useState(false)
-  const [top, setTop] = useState(0)
-  const [vh, setVh] = useState(0)
-  // The neighbouring screens are built in the background a moment after a screen settles, so when a swipe starts they are
-  // already there (no loading flash, no stutter while the finger is moving). Until then they take no room and are invisible.
-  const [warm, setWarm] = useState(false)
-
   const idx = order.indexOf(current)
-  const prev = idx > 0 ? order[idx - 1] : null
-  const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : null
+  // A screen that is not one of the pager's pages (Settings, Admin, …) is shown on its own.
+  if (idx < 0) return <>{render(current)}</>
+  return <Pager order={order} current={current} idx={idx} enabled={enabled} onChange={onChange} render={render} />
+}
 
-  const live = useRef({ enabled, prev, next, onChange })
-  useEffect(() => { live.current = { enabled, prev, next, onChange } })
+function Pager<T extends string>({
+  order,
+  current,
+  idx,
+  enabled,
+  onChange,
+  render,
+}: {
+  order: readonly T[]
+  current: T
+  idx: number
+  enabled: boolean
+  onChange: (id: T) => void
+  render: (id: T) => ReactNode
+}) {
+  const box = useRef<HTMLDivElement>(null)
+  const pages = useRef<(HTMLDivElement | null)[]>([])
+  const cur = useRef({ idx, current, onChange })
+  cur.current = { idx, current, onChange }
+  const touching = useRef(false)
+  const target = useRef<number | null>(null)
+  const timer = useRef(0)
+  const targetTimer = useRef(0)
+  const first = useRef(true)
 
+  // Pages that have been built. The one on show first, its neighbours when idle, the rest a little later.
+  const [built, setBuilt] = useState<Set<number>>(() => new Set([idx]))
   useEffect(() => {
-    setWarm(false)
-    if (!enabled) return
-    const id = window.setTimeout(() => setWarm(true), 700)
-    return () => window.clearTimeout(id)
-  }, [current, enabled])
+    const add = (ids: number[]) => setBuilt((s) => (ids.every((i) => s.has(i)) ? s : new Set([...s, ...ids])))
+    const near = window.setTimeout(() => add([idx - 1, idx + 1].filter((i) => i >= 0 && i < order.length)), NEAR_MS)
+    const rest = window.setTimeout(() => add(order.map((_, i) => i)), REST_MS)
+    return () => { window.clearTimeout(near); window.clearTimeout(rest) }
+  }, [idx, order])
+  // A page asked for by a tap or a swipe is built straight away.
+  useEffect(() => { setBuilt((s) => (s.has(idx) ? s : new Set([...s, idx]))) }, [idx])
 
-  // A screen that arrived by swiping is already on show, so it must not play its entrance animation again.
-  useEffect(() => {
-    for (const id of [...noAnim.current]) if (id !== current) noAnim.current.delete(id)
-  }, [current])
-
-  // Sideways moves have to reach the page as they are, so only vertical scrolling is left to the browser.
-  useEffect(() => {
-    if (!enabled) return
-    const el = document.documentElement
-    const before = el.style.touchAction
-    el.style.touchAction = 'pan-y pinch-zoom'
-    return () => { el.style.touchAction = before }
-  }, [enabled])
-
-  useEffect(() => {
-    let t: Track | null = null
-    let settling = false
-    let timer: number | null = null
-
-    const down = (e: PointerEvent) => {
-      const L = live.current
-      if (!L.enabled || settling || e.pointerType === 'mouse' || !e.isPrimary) return
-      const target = e.target instanceof Element ? e.target : null
-      if (!target) return
-      if (target.closest(NO_SWIPE)) return
-      if (scrollsSideways(target)) return
-      t = { x: e.clientX, y: e.clientY, id: e.pointerId, lastX: e.clientX, lastT: e.timeStamp, v: 0, dx: 0, width: rootEl.current?.clientWidth || window.innerWidth, drag: false }
-    }
-
-    const move = (e: PointerEvent) => {
-      if (!t || e.pointerId !== t.id) return
-      const mx = e.clientX - t.x
-      const my = e.clientY - t.y
-      if (!t.drag) {
-        if (Math.abs(my) > 10 && Math.abs(my) > Math.abs(mx)) { t = null; return } // an ordinary scroll
-        if (Math.abs(mx) < START_PX || Math.abs(mx) < Math.abs(my) * 1.3) return
-        t.drag = true
-        const rootTop = rootEl.current?.getBoundingClientRect().top ?? 0
-        setTop(Math.max(0, -rootTop))
-        setVh(window.innerHeight)
-        document.documentElement.style.overflowX = 'clip'
-        if (trackEl.current) {
-          trackEl.current.style.willChange = 'transform'
-          // While the track is moving it also becomes the frame that fixed things inside a screen (Chat's message bar)
-          // are placed against. Make that frame reach the bottom of the screen, so they stay where they belong.
-          trackEl.current.style.minHeight = `${Math.max(0, window.innerHeight - rootTop)}px`
-        }
-        setEngaged(true)
-      }
-      const dt = e.timeStamp - t.lastT
-      if (dt > 0) t.v = (e.clientX - t.lastX) / dt
-      t.lastX = e.clientX
-      t.lastT = e.timeStamp
-      const L = live.current
-      const blocked = (mx < 0 && !L.next) || (mx > 0 && !L.prev)
-      t.dx = blocked ? mx * 0.22 : Math.max(-t.width, Math.min(t.width, mx))
-      if (trackEl.current) trackEl.current.style.transform = `translate3d(${t.dx}px,0,0)`
-    }
-
-    const reset = () => {
-      if (trackEl.current) {
-        trackEl.current.style.transition = 'none'
-        trackEl.current.style.transform = ''
-        trackEl.current.style.willChange = ''
-        trackEl.current.style.minHeight = ''
-      }
-      document.documentElement.style.overflowX = ''
-    }
-
-    const up = (e: PointerEvent) => {
-      if (!t || e.pointerId !== t.id) return
-      const g = t
-      t = null
-      if (!g.drag) return
-      const L = live.current
-      const goNext = g.dx < 0
-      const target = goNext ? L.next : L.prev
-      const commit = Boolean(target) && (Math.abs(g.dx) > g.width * 0.28 || (Math.abs(g.v) > 0.45 && (g.v < 0) === goNext))
-      const done = () => {
-        timer = null
-        // Show the new screen first, then put the track back, so there is never a frame of the old one.
-        flushSync(() => {
-          if (commit && target) {
-            noAnim.current.add(target)
-            L.onChange(target)
-          }
-          setEngaged(false)
-        })
-        if (commit) window.scrollTo({ top: 0 })
-        reset()
-        settling = false
-      }
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !trackEl.current) { done(); return }
-      settling = true
-      trackEl.current.style.transition = `transform ${SETTLE_MS}ms cubic-bezier(0.22, 0.8, 0.3, 1)`
-      trackEl.current.style.transform = `translate3d(${commit ? (goNext ? -g.width : g.width) : 0}px,0,0)`
-      timer = window.setTimeout(done, SETTLE_MS + 30)
-    }
-
-    window.addEventListener('pointerdown', down, true)
-    window.addEventListener('pointermove', move, { passive: true })
-    window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
-    return () => {
-      window.removeEventListener('pointerdown', down, true)
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
-      if (timer) window.clearTimeout(timer)
-      reset()
-    }
+  // While another page is sliding in beside the one on show, it is drawn at the same height on screen as the page
+  // the document is scrolled to, so it does not look blank. Written straight to the elements, not through React.
+  const syncTops = useCallback(() => {
+    const y = window.scrollY
+    pages.current.forEach((el, i) => { if (el) el.style.top = i === cur.current.idx ? '' : `${y}px` })
   }, [])
+  useEffect(() => {
+    let raf = 0
+    const on = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; syncTops() }) }
+    window.addEventListener('scroll', on, { passive: true })
+    return () => { window.removeEventListener('scroll', on); if (raf) cancelAnimationFrame(raf) }
+  }, [syncTops])
 
-  const hiddenPane: CSSProperties = { position: 'absolute', top: 0, left: 0, width: '100%', height: 0, overflow: 'hidden', visibility: 'hidden', pointerEvents: 'none' }
-  const pane = (id: T, style?: CSSProperties, shown = true) => (
-    <div key={id} className={id === current && !noAnim.current.has(id) ? 'screen-in' : undefined} style={style} aria-hidden={id === current ? undefined : true}>
-      <ScreenVisible.Provider value={shown}>{render(id)}</ScreenVisible.Provider>
-    </div>
-  )
-  const sideStyle = (dir: -1 | 1): CSSProperties | undefined =>
-    engaged
-      ? { position: 'absolute', top, left: dir < 0 ? '-100%' : '100%', width: '100%', height: vh || undefined, overflow: 'hidden', pointerEvents: 'none' }
-      : hiddenPane
+  // A page beside the one on show cannot be tapped or focused until it has come to rest in front of you.
+  useLayoutEffect(() => {
+    pages.current.forEach((el, i) => { if (el) el.toggleAttribute('inert', i !== idx) })
+  }, [idx, built])
+
+  const width = () => box.current?.clientWidth || 1
+
+  // The page on show changed: put the document back to the top and bring the pager to the matching page.
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    const left = idx * width()
+    if (first.current) {
+      first.current = false
+      el.scrollLeft = left
+      syncTops()
+      return
+    }
+    window.scrollTo(0, 0)
+    syncTops()
+    if (Math.abs(el.scrollLeft - left) > 2) {
+      // Moved by a tap on the bar, not by a swipe.
+      target.current = idx
+      window.clearTimeout(targetTimer.current)
+      targetTimer.current = window.setTimeout(() => { target.current = null }, 900)
+      el.scrollTo({ left, behavior: 'smooth' })
+    }
+  }, [idx, syncTops])
+
+  const settle = useCallback(() => {
+    const el = box.current
+    if (!el || touching.current) return
+    const w = width()
+    const i = Math.max(0, Math.min(order.length - 1, Math.round(el.scrollLeft / w)))
+    if (Math.abs(el.scrollLeft - i * w) > 2) return // still moving
+    if (target.current !== null) {
+      if (target.current !== i) return
+      target.current = null
+    }
+    if (i !== cur.current.idx) cur.current.onChange(order[i])
+  }, [order])
+
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const later = () => { window.clearTimeout(timer.current); timer.current = window.setTimeout(settle, SETTLE_MS) }
+    const down = () => { touching.current = true; target.current = null }
+    const up = () => { touching.current = false; later() }
+    el.addEventListener('scroll', later, { passive: true })
+    el.addEventListener('scrollend', settle)
+    el.addEventListener('touchstart', down, { passive: true })
+    el.addEventListener('touchend', up, { passive: true })
+    el.addEventListener('touchcancel', up, { passive: true })
+    // Keep the page lined up when the width changes (turning the phone, split screen).
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
+      if (!touching.current) el.scrollLeft = cur.current.idx * width()
+    })
+    ro?.observe(el)
+    return () => {
+      window.clearTimeout(timer.current)
+      window.clearTimeout(targetTimer.current)
+      el.removeEventListener('scroll', later)
+      el.removeEventListener('scrollend', settle)
+      el.removeEventListener('touchstart', down)
+      el.removeEventListener('touchend', up)
+      el.removeEventListener('touchcancel', up)
+      ro?.disconnect()
+    }
+  }, [settle])
 
   return (
-    <div ref={rootEl} style={{ position: 'relative' }}>
-      {/* No transform at rest: a transform would trap fixed sheets and menus inside the screen. */}
-      <div ref={trackEl}>
-        {(engaged || warm) && prev && pane(prev, sideStyle(-1), engaged)}
-        {pane(current)}
-        {(engaged || warm) && next && pane(next, sideStyle(1), engaged)}
-      </div>
+    <div
+      ref={box}
+      data-pager=""
+      className="swipe-pager -mx-4"
+      style={{ overflowX: enabled ? 'auto' : 'hidden' }}
+    >
+      {order.map((id, i) => {
+        const shown = i === idx
+        return (
+          <div
+            key={id}
+            ref={(el) => { pages.current[i] = el }}
+            data-pager-index={i}
+            className={`swipe-page px-4 ${shown ? '' : 'swipe-page-off'}`}
+            aria-hidden={shown ? undefined : true}
+          >
+            {built.has(i) ? <ScreenVisible.Provider value={shown}>{render(id)}</ScreenVisible.Provider> : null}
+          </div>
+        )
+      })}
     </div>
   )
 }

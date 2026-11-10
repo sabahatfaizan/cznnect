@@ -42,6 +42,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   const [navH, setNavH] = useState(72)
   const box = useRef<HTMLTextAreaElement>(null)
   const end = useRef<HTMLDivElement>(null)
+  const bar = useRef<HTMLFormElement>(null)
   const seen = useRef<Set<number>>(new Set())
   const firstLoad = useRef(true)
   const stick = useRef(true) // follow new messages only while the reader is already at the bottom
@@ -105,15 +106,39 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
     if (last && visible) markChatRead(family.id, last.id)
   }, [messages, family.id, visible])
 
+  // The message bar is fixed to the screen, so while the pages slide it has to travel with its own page.
+  useEffect(() => {
+    const el = bar.current
+    const pager = el?.closest<HTMLElement>('[data-pager]')
+    const page = el?.closest<HTMLElement>('[data-pager-index]')
+    if (!el || !pager || !page) return
+    const index = Number(page.dataset.pagerIndex)
+    const sync = () => {
+      const dx = Math.round(index * pager.clientWidth - pager.scrollLeft)
+      el.style.transform = dx ? `translate3d(${dx}px,0,0)` : ''
+    }
+    sync()
+    pager.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    return () => { pager.removeEventListener('scroll', sync); window.removeEventListener('resize', sync); el.style.transform = '' }
+  }, [])
+
+  // Coming back to Chat lands on the newest message.
+  useEffect(() => {
+    if (!visible || !loaded) return
+    const id = requestAnimationFrame(() => end.current?.scrollIntoView({ block: 'end' }))
+    return () => cancelAnimationFrame(id)
+  }, [visible, loaded])
+
   useLayoutEffect(() => {
-    if (!loaded) return
+    if (!loaded || !visible) return
     if (firstLoad.current) {
       firstLoad.current = false
       end.current?.scrollIntoView({ block: 'end' })
     } else if (stick.current) {
       end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
     }
-  }, [messages, pending, loaded])
+  }, [messages, pending, loaded, visible])
 
   const clearPress = () => { if (press.current) { window.clearTimeout(press.current.timer); press.current = null } }
   useEffect(() => clearPress, [])
@@ -303,6 +328,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
       <div ref={end} className="h-20" aria-hidden="true" />
 
       <form
+        ref={bar}
         className="fixed inset-x-0 z-30 border-t border-line bg-surface"
         style={{ bottom: navH }}
         onSubmit={(e) => { e.preventDefault(); void send() }}

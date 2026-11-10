@@ -1852,3 +1852,9 @@ body::before {
 html.page-scrolled body::before {
   opacity: 1;
 }
+
+/* Bottom-bar pages: a native sideways scroller that snaps one page at a time (see SwipePager). */
+.swipe-pager { display: flex; align-items: flex-start; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.swipe-pager::-webkit-scrollbar { display: none; }
+.swipe-page { position: relative; flex: 0 0 100%; min-width: 0; box-sizing: border-box; scroll-snap-align: start; scroll-snap-stop: always; }
+.swipe-page-off { max-height: 100dvh; overflow: hidden; }

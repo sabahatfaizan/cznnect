@@ -42,12 +42,11 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 const SWIPE_ORDER = TABS.map((t) => t.id)
 
 // The header names the screen you are on, like WhatsApp: the Cznnect wordmark on Home, the page name everywhere else.
-// While you swipe, the two names slide and cross-fade with the page.
+// The name changes the moment the page settles.
 const TITLES: Record<Tab, string> = {
   home: 'Cznnect', irl: 'Convoy', explore: 'Explore', chat: 'Chat', me: 'Profile', plans: 'Plans', tree: 'Family Tree',
   scoreboard: 'Scoreboard', birthdays: 'Birthdays', settings: 'Settings', music: 'Music', admin: 'Admin',
 }
-const TITLE_SHIFT_PX = 32
 
 const SECRET_HOLD_MS = 4000
 
@@ -99,19 +98,15 @@ export default function Shell({
   // Header title: one label per swipeable page, positioned straight from the pager's scroll position (no re-renders).
   const inPager = SWIPE_ORDER.includes(tab)
   const titleEls = useRef<(HTMLElement | null)[]>([])
-  const titlePos = useRef(0)
   const placeTitles = useCallback((pos: number) => {
-    // A tap on the bottom bar jumps several pages at once: ease that. A finger drag moves a little each frame: follow it exactly.
-    const jump = Math.abs(pos - titlePos.current) > 1.05
-    titlePos.current = pos
+    // No sliding: the name stays put while you drag and switches the instant the page has settled (within 1%).
+    const nearest = Math.round(pos)
+    if (pos >= 0 && Math.abs(pos - nearest) > 0.01) return
     titleEls.current.forEach((el, i) => {
       if (!el) return
-      const d = i - pos
-      const gone = Math.abs(d) >= 1
-      el.style.transition = jump ? 'transform 200ms ease-out, opacity 200ms ease-out' : 'none'
-      el.style.opacity = String(gone ? 0 : 1 - Math.abs(d))
-      el.style.transform = `translateX(${d * TITLE_SHIFT_PX}px)`
-      el.setAttribute('aria-hidden', gone ? 'true' : 'false')
+      const on = i === nearest && pos >= 0
+      el.style.opacity = on ? '1' : '0'
+      el.setAttribute('aria-hidden', on ? 'false' : 'true')
     })
   }, [])
   useLayoutEffect(() => { placeTitles(inPager ? SWIPE_ORDER.indexOf(tab) : -9) }, [tab, inPager, placeTitles])
@@ -188,9 +183,9 @@ export default function Shell({
                 )}
               </div>
             ))}
-            {/* Screens outside the swipe row (opened from the menu) just slide their name in. */}
+            {/* Screens outside the swipe row (opened from the menu) show their name straight away. */}
             {!inPager && (
-              <div key={tab} className="hdr-title hdr-title-in">
+              <div key={tab} className="hdr-title">
                 <h1 className="font-display text-xl font-extrabold">{TITLES[tab]}</h1>
               </div>
             )}

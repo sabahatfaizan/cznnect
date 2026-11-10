@@ -7,7 +7,7 @@ import { ScreenVisible } from '../lib/screenVisible'
 // its own (maps, carousels, text fields) keeps working because the browser gives the gesture to the innermost scroller.
 //
 // - The tab only changes once the pager has come to rest, so there are no re-renders while you drag.
-// - Tapping a tab in the bottom bar scrolls the pager there smoothly.
+// - Tapping a tab in the bottom bar jumps there at once; swiping moves the bar's highlight along with the page.
 // - Only the page on show is un-clipped; the others are cut to one screen so they never stretch the document.
 // - Neighbouring pages are built shortly after load (and the rest a little later) so a swipe never lands on a blank page.
 //   `data-pager` / `data-pager-index` let a fixed element inside a page (the Chat message bar) slide with its page.
@@ -54,9 +54,7 @@ function Pager<T extends string>({
   const cur = useRef({ idx, current, onChange })
   cur.current = { idx, current, onChange }
   const touching = useRef(false)
-  const target = useRef<number | null>(null)
   const timer = useRef(0)
-  const targetTimer = useRef(0)
   const first = useRef(true)
 
   // Pages that have been built. The one on show first, its neighbours when idle, the rest a little later.
@@ -103,13 +101,8 @@ function Pager<T extends string>({
     }
     window.scrollTo(0, 0)
     syncTops()
-    if (Math.abs(el.scrollLeft - left) > 2) {
-      // Moved by a tap on the bar, not by a swipe.
-      target.current = idx
-      window.clearTimeout(targetTimer.current)
-      targetTimer.current = window.setTimeout(() => { target.current = null }, 900)
-      el.scrollTo({ left, behavior: 'smooth' })
-    }
+    // Moved by a tap on the bar, not by a swipe: jump there at once.
+    if (Math.abs(el.scrollLeft - left) > 2) el.scrollLeft = left
   }, [idx, syncTops])
 
   const settle = useCallback(() => {
@@ -118,18 +111,26 @@ function Pager<T extends string>({
     const w = width()
     const i = Math.max(0, Math.min(order.length - 1, Math.round(el.scrollLeft / w)))
     if (Math.abs(el.scrollLeft - i * w) > 2) return // still moving
-    if (target.current !== null) {
-      if (target.current !== i) return
-      target.current = null
-    }
     if (i !== cur.current.idx) cur.current.onChange(order[i])
   }, [order])
 
   useEffect(() => {
     const el = box.current
     if (!el) return
-    const later = () => { window.clearTimeout(timer.current); timer.current = window.setTimeout(settle, SETTLE_MS) }
-    const down = () => { touching.current = true; target.current = null }
+    // The bottom bar follows the page as it passes the halfway mark, so it moves in step with the swipe.
+    let lit = -1
+    const live = () => {
+      const i = Math.max(0, Math.min(order.length - 1, Math.round(el.scrollLeft / width())))
+      if (i === lit) return
+      lit = i
+      document.querySelectorAll<HTMLElement>('.app-nav [data-tab-id]').forEach((b) => {
+        const on = b.dataset.tabId === order[i]
+        b.classList.toggle('tab-active', on)
+        if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current')
+      })
+    }
+    const later = () => { live(); window.clearTimeout(timer.current); timer.current = window.setTimeout(settle, SETTLE_MS) }
+    const down = () => { touching.current = true }
     const up = () => { touching.current = false; later() }
     el.addEventListener('scroll', later, { passive: true })
     el.addEventListener('scrollend', settle)
@@ -143,7 +144,6 @@ function Pager<T extends string>({
     ro?.observe(el)
     return () => {
       window.clearTimeout(timer.current)
-      window.clearTimeout(targetTimer.current)
       el.removeEventListener('scroll', later)
       el.removeEventListener('scrollend', settle)
       el.removeEventListener('touchstart', down)
@@ -151,7 +151,7 @@ function Pager<T extends string>({
       el.removeEventListener('touchcancel', up)
       ro?.disconnect()
     }
-  }, [settle])
+  }, [settle, order])
 
   return (
     <div

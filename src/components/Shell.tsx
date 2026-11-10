@@ -301,6 +301,7 @@ export default function Shell({
           {TABS.map((t) => (
             <button
               key={t.id}
+              data-tab-id={t.id}
               onClick={() => { if (t.id === 'explore' && heldOpen.current) { heldOpen.current = false; return } setTab(t.id) }}
               {...(t.id === 'explore' ? { onPointerDown: startHold, onPointerUp: cancelHold, onPointerLeave: cancelHold, onPointerCancel: cancelHold, onContextMenu: (e: React.MouseEvent) => e.preventDefault() } : {})}
               aria-current={current === t.id ? 'page' : undefined}

@@ -777,17 +777,42 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                   <p><span className="text-muted">Latest build</span><br /><b>{latestBuild ?? 'unknown'}</b></p>
                   <p><span className="text-muted">Announced now</span><br /><b>{settings && settings.announcedBuild > 0 ? `build ${settings.announcedBuild}` : 'nothing'}</b></p>
                 </div>
-                <Row title="Announce the update" hint={settings && settings.announcedBuild > 0 ? `Build ${settings.announcedBuild} is announced. Older apps see the update card.` : 'Hidden. Everyone stays on the build they have.'}>
-                  <Switch
-                    on={Boolean(settings && settings.announcedBuild > 0)}
-                    label="Announce the update"
-                    disabled={busy || !ready || (!(settings && settings.announcedBuild > 0) && !latestBuild)}
-                    onChange={(next) => {
-                      if (next && latestBuild) void save({ announced_build: latestBuild }, `Build ${latestBuild} is announced. Older apps now see the update card.`)
-                      else if (!next) void save({ announced_build: 0 }, 'No update is announced. Everyone stays on their build.')
-                    }}
-                  />
-                </Row>
+                {settings && settings.minBuild > 0 && (
+                  <p role="status" className="rounded-xl border border-line px-3 py-2 text-sm font-semibold">
+                    Forced updates are ON: phones below build {settings.minBuild} are stopped at an “Update required” screen, whatever is announced here. Use “Turn off forced updates” further down if people should stay on older builds.
+                  </p>
+                )}
+                {(() => {
+                  const ann = settings?.announcedBuild ?? 0
+                  const covers = latestBuild !== null && ann >= latestBuild // the newest build is the one announced
+                  const stale = ann > 0 && !covers // an older build is still announced
+                  const hint = ann === 0
+                    ? 'Off. Nobody is told about an update.'
+                    : covers
+                      ? `On. Build ${ann} is announced: phones on an older build see the update card.`
+                      : `Off for the newest build. Build ${ann} is still announced, so phones below ${ann} still see the update card. Build ${latestBuild ?? '?'} is newer.`
+                  return (
+                    <>
+                      <Row title={`Announce the newest build${latestBuild ? ` (${latestBuild})` : ''}`} hint={hint}>
+                        <Switch
+                          on={covers}
+                          label="Announce the newest build"
+                          disabled={busy || !ready || (!covers && !latestBuild)}
+                          onChange={(next) => {
+                            if (next && latestBuild) void save({ announced_build: latestBuild }, `Build ${latestBuild} is announced. Phones on an older build now see the update card.`)
+                            else if (!next) void save({ announced_build: 0 }, 'Nothing is announced now. Everyone stays on their build.')
+                          }}
+                        />
+                      </Row>
+                      {stale && (
+                        <button type="button" className="btn btn-plain" disabled={busy || !ready} onClick={() => void save({ announced_build: 0 }, 'Nothing is announced now. Everyone stays on their build.')}>
+                          Stop announcing build {ann}
+                        </button>
+                      )}
+                    </>
+                  )
+                })()}
+                <p className="text-xs text-muted">The update card always downloads the newest build, whichever number is announced. Phones running a build older than 205 do not have this switch, so they show new builds by themselves.</p>
                 <button
                   type="button"
                   className="btn btn-plain"

@@ -6,11 +6,9 @@ import { flushSync } from 'react-dom'
 //
 // - The finger movement moves the screens directly, without re-drawing them, so it stays smooth even in Chat.
 // - The neighbouring screen is only mounted while a swipe is under way, so nothing extra loads until you swipe.
-// - It is not started on text fields, sliders, dialogs or anything that scrolls sideways. On the Explore map the
-//   swipe only starts from the narrow strip along the left and right edge, so the map can still be dragged.
+// - It is not started on text fields, sliders, dialogs (the full-screen map is one) or anything that scrolls sideways.
 const NO_SWIPE = 'input, textarea, select, canvas, [data-no-swipe], [role="slider"], [contenteditable="true"], [role="dialog"], [aria-modal="true"], dialog'
 const SETTLE_MS = 240
-const EDGE_PX = 30
 const START_PX = 7
 
 function scrollsSideways(el: Element | null): boolean {
@@ -21,7 +19,7 @@ function scrollsSideways(el: Element | null): boolean {
   return false
 }
 
-type Track = { x: number; y: number; id: number; lastX: number; lastT: number; v: number; dx: number; width: number; drag: boolean; map: boolean }
+type Track = { x: number; y: number; id: number; lastX: number; lastT: number; v: number; dx: number; width: number; drag: boolean }
 
 export default function SwipePager<T extends string>({
   order,
@@ -73,13 +71,9 @@ export default function SwipePager<T extends string>({
       if (!L.enabled || settling || e.pointerType === 'mouse' || !e.isPrimary) return
       const target = e.target instanceof Element ? e.target : null
       if (!target) return
-      const map = Boolean(target.closest('.leaflet-container'))
-      if (!map && target.closest(NO_SWIPE)) return
-      if (map && !(e.clientX < EDGE_PX || e.clientX > window.innerWidth - EDGE_PX)) return
+      if (target.closest(NO_SWIPE)) return
       if (scrollsSideways(target)) return
-      t = { x: e.clientX, y: e.clientY, id: e.pointerId, lastX: e.clientX, lastT: e.timeStamp, v: 0, dx: 0, width: rootEl.current?.clientWidth || window.innerWidth, drag: false, map }
-      // From the map's edge strip the map itself must not start dragging as well.
-      if (map) e.stopPropagation()
+      t = { x: e.clientX, y: e.clientY, id: e.pointerId, lastX: e.clientX, lastT: e.timeStamp, v: 0, dx: 0, width: rootEl.current?.clientWidth || window.innerWidth, drag: false }
     }
 
     const move = (e: PointerEvent) => {

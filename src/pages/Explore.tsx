@@ -47,6 +47,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('map')
+  const [mapOpen, setMapOpen] = useState(false)
   const [state, setState] = useState<StatusFilter>('all')
   const [visitedBy, setVisitedBy] = useState('all')
   const [query, setQuery] = useState('')
@@ -119,6 +120,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
 
   function show(p: Place) {
     setView('map')
+    setMapOpen(true)
     setSelectedId(p.id)
     setFocus({ lat: p.lat, lng: p.lng, tick: Date.now() })
   }
@@ -163,6 +165,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   }
 
   const picking = flow.step === 'pick'
+  const fullMap = mapOpen || picking
   const pin = flow.step === 'form' ? { lat: flow.lat, lng: flow.lng } : null
   const sorted = [...shown].sort((a, b) => a.name.localeCompare(b.name))
 
@@ -179,6 +182,35 @@ export default function Explore({ family, userId }: { family: Family; userId: st
           + Add place
         </button>
       </header>
+
+      {fullMap && (
+        <div role="dialog" aria-modal="true" aria-label="Map" className="fixed inset-0 z-30 flex flex-col" style={{ background: 'var(--page)' }}>
+          <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <button
+              type="button"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-surface ring-1 ring-[var(--line)]"
+              aria-label={picking ? 'Cancel' : 'Close the map'}
+              onClick={() => (picking ? setFlow({ step: 'none' }) : setMapOpen(false))}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            </button>
+            <p className="font-display text-lg font-extrabold">{picking ? 'Tap the map where it is' : 'Map'}</p>
+            <span className="w-11" aria-hidden="true" />
+          </div>
+          <div className="min-h-0 flex-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <PlaceMap
+              mode="screen"
+              places={picking ? places : shown}
+              selectedId={selectedId}
+              onSelect={(id) => setSelectedId(id)}
+              picking={picking}
+              onPick={(lat, lng) => setFlow({ step: 'form', lat, lng, name: '', address: '' })}
+              pin={pin}
+              focus={focus}
+            />
+          </div>
+        </div>
+      )}
 
       {notice && (
         <p role="status" className="rounded-[var(--radius-ctl)] bg-accent-soft px-3 py-2 text-sm font-bold text-accent-text">
@@ -260,15 +292,17 @@ export default function Explore({ family, userId }: { family: Family; userId: st
 
       {(view === 'map' || picking || places.length === 0) && (
         <>
-          <PlaceMap
-            places={picking ? places : shown}
-            selectedId={selectedId}
-            onSelect={(id) => setSelectedId(id)}
-            picking={picking}
-            onPick={(lat, lng) => setFlow({ step: 'form', lat, lng, name: '', address: '' })}
-            pin={pin}
-            focus={focus}
-          />
+          {/* On the page the map is a still picture, so scrolling and swiping never fight it. Tap it for the full map. */}
+          {!fullMap && (
+          <div className="relative">
+            <PlaceMap mode="preview" places={shown} selectedId={selectedId} onSelect={() => {}} picking={false} onPick={() => {}} pin={pin} focus={focus} />
+            <button type="button" className="absolute inset-0 z-10 rounded-[var(--radius-card)]" aria-label="Enlarge the map" onClick={() => setMapOpen(true)} />
+            <span className="pointer-events-none absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm font-bold shadow-md ring-1 ring-[var(--line)]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+              Enlarge
+            </span>
+          </div>
+          )}
           <section className="card !p-3" aria-label="Map legend">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="font-display text-sm font-extrabold">Map key</h2>

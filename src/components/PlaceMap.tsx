@@ -32,6 +32,7 @@ export default function PlaceMap({
   onPick,
   pin,
   focus,
+  mode = 'inline',
 }: {
   places: Place[]
   selectedId: string | null
@@ -40,6 +41,8 @@ export default function PlaceMap({
   onPick: (lat: number, lng: number) => void
   pin: Spot | null
   focus: (Spot & { tick: number }) | null
+  /** preview: a still picture of the map that cannot be dragged; screen: the full-page map; inline: the older in-page map. */
+  mode?: 'preview' | 'screen' | 'inline'
 }) {
   const box = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibreMap | null>(null)
@@ -64,9 +67,10 @@ export default function PlaceMap({
       center: [90.4125, 23.8103],
       zoom: 7,
       attributionControl: {},
-      cooperativeGestures: true,
+      cooperativeGestures: mode === 'inline',
+      interactive: mode !== 'preview',
     })
-    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+    if (mode !== 'preview') m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     m.on('click', (event) => {
       if (pickingRef.current) pickRef.current(event.lngLat.lat, event.lngLat.lng)
     })
@@ -167,8 +171,13 @@ export default function PlaceMap({
   }, [focus])
 
   return (
-    <div className={`map-wrap ${picking ? 'map-picking' : ''}`}>
-      <div ref={box} className="h-[58dvh] min-h-72 w-full" role="region" aria-label="Map of saved places" />
+    <div className={`map-wrap ${picking ? 'map-picking' : ''} ${mode === 'screen' ? 'h-full !rounded-none !border-0' : ''}`}>
+      <div
+        ref={box}
+        className={mode === 'preview' ? 'pointer-events-none h-56 w-full' : mode === 'screen' ? 'h-full w-full' : 'h-[58dvh] min-h-72 w-full'}
+        role={mode === 'preview' ? 'img' : 'region'}
+        aria-label={mode === 'preview' ? 'Map of saved places' : 'Map of saved places'}
+      />
     </div>
   )
 }

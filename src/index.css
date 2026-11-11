@@ -1860,6 +1860,6 @@ html.page-scrolled body::before {
 .swipe-page { position: relative; flex: 0 0 100%; min-width: 0; box-sizing: border-box; scroll-snap-align: start; scroll-snap-stop: always; }
 .swipe-page-off { max-height: 100dvh; overflow: hidden; }
 
-/* Header title (Shell): the wordmark on Home, the page name elsewhere; the name flips instantly once a swipe passes halfway. */
+/* Header title (Shell): the wordmark on Home, the page name elsewhere; the name flips instantly early in a swipe. */
 .hdr-stage { position: relative; flex: 1 1 0; min-width: 0; height: 2.25rem; overflow: hidden; }
 .hdr-title { position: absolute; top: 0; bottom: 0; left: 0; display: flex; align-items: center; white-space: nowrap; pointer-events: none; }

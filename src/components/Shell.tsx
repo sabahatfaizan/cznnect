@@ -42,7 +42,7 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 const SWIPE_ORDER = TABS.map((t) => t.id)
 
 // The header names the screen you are on, like WhatsApp: the Cznnect wordmark on Home, the page name everywhere else.
-// The name flips instantly once a swipe passes halfway to the next page.
+// The name flips instantly, about a fifth of the way into a swipe.
 const TITLES: Record<Tab, string> = {
   home: 'Cznnect', irl: 'Convoy', explore: 'Explore', chat: 'Chat', me: 'Profile', plans: 'Plans', tree: 'Family Tree',
   scoreboard: 'Scoreboard', birthdays: 'Birthdays', settings: 'Settings', music: 'Music', admin: 'Admin',
@@ -98,12 +98,22 @@ export default function Shell({
   // Header title: one label per swipeable page, positioned straight from the pager's scroll position (no re-renders).
   const inPager = SWIPE_ORDER.includes(tab)
   const titleEls = useRef<(HTMLElement | null)[]>([])
+  const lastPos = useRef(0)
+  const shown = useRef(0)
   const placeTitles = useCallback((pos: number) => {
-    // No sliding: the name flips instantly as soon as the swipe is past halfway to the next page, without waiting for it to settle.
-    const nearest = Math.round(pos)
+    // No sliding: the name flips instantly once a swipe is ~20% of the way to the next page, whichever way you swipe.
+    const prev = lastPos.current
+    lastPos.current = pos
+    let target = shown.current
+    if (pos < 0) target = -1
+    else if (prev < 0 || Math.abs(pos - prev) > 1.05) target = Math.round(pos)
+    else if (pos > prev) target = Math.floor(pos + 0.8)
+    else if (pos < prev) target = Math.ceil(pos - 0.8)
+    target = Math.min(target, SWIPE_ORDER.length - 1)
+    shown.current = target
     titleEls.current.forEach((el, i) => {
       if (!el) return
-      const on = i === nearest && pos >= 0
+      const on = i === target
       el.style.opacity = on ? '1' : '0'
       el.setAttribute('aria-hidden', on ? 'false' : 'true')
     })

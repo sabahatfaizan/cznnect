@@ -4,6 +4,15 @@ import type { PlaceValues } from '../lib/placesApi'
 
 // Step 2 of adding a place (and the edit form). While adding, places that look like the
 // same one are shown first, so the family does not save the same restaurant twice.
+function tidyLink(raw: string): string {
+  const t = raw.trim().replace(/\s+/g, '')
+  if (!t) return ''
+  if (/^https:\/\//i.test(t)) return t
+  if (/^http:\/\//i.test(t)) return t.replace(/^http:/i, 'https:')
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/|$|\?|#)/i.test(t)) return `https://${t}`
+  return ''
+}
+
 export default function PlaceForm({
   initial,
   places,
@@ -42,10 +51,13 @@ export default function PlaceForm({
       setError('Please enter a name.')
       return
     }
-    if (album.trim() && !/^https:\/\//i.test(album.trim())) {
-      setError('The album link must start with https://')
+    // Pasted links are tidied up: spaces trimmed, http:// made https://, and a missing https:// added.
+    const link = tidyLink(album)
+    if (album.trim() && !link) {
+      setError('That does not look like a link. Paste the full album link.')
       return
     }
+    if (link !== album) setAlbum(link)
     setBusy(true)
     setError('')
     const problem = await onSubmit({
@@ -56,8 +68,8 @@ export default function PlaceForm({
       address,
       notes,
       visited_on: visited,
-      album_url: album,
-      clear_album: hadAlbum && !album.trim(),
+      album_url: link,
+      clear_album: hadAlbum && !link,
       lat: initial.lat,
       lng: initial.lng,
     })
@@ -178,7 +190,7 @@ export default function PlaceForm({
         <label className="label" htmlFor="pl-album">
           Photo album link (optional)
         </label>
-        <input id="pl-album" className="input" type="url" inputMode="url" autoComplete="off" placeholder="https://" value={album} maxLength={300} onChange={(e) => setAlbum(e.target.value)} />
+        <input id="pl-album" className="input" type="text" inputMode="url" autoCapitalize="off" spellCheck={false} autoComplete="off" placeholder="https://" value={album} maxLength={300} onChange={(e) => setAlbum(e.target.value)} />
       </div>
 
       {error && (

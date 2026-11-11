@@ -30,6 +30,17 @@ function friendly(e: DbError): string {
   return e.message
 }
 
+const ALBUM_SETUP =
+  'The photo album link needs one more setup step: in Supabase, open SQL Editor, paste supabase/26_place_visits.sql and press Run. Until then, clear the album box to save the rest.'
+
+// Saving a link before that file was run fails with a missing-column or permission error: say what to do instead.
+function albumAware(err: string | null, v: PlaceValues): string | null {
+  if (!err) return err
+  const touched = Boolean(v.album_url?.trim()) || Boolean(v.clear_album)
+  if (/album_url/.test(err) || (touched && /do not have permission/.test(err))) return ALBUM_SETUP
+  return err
+}
+
 async function run<T>(
   fn: () => PromiseLike<{ data: T | null; error: DbError | null }>,
 ): Promise<{ data: T | null; error: string | null }> {
@@ -61,12 +72,12 @@ export async function addPlace(familyId: string, v: PlaceValues): Promise<{ id: 
   const r = await run<{ id: string }>(() =>
     supabase.from('places').insert({ family_id: familyId, ...clean(v) }).select('id').single(),
   )
-  return { id: r.data?.id ?? null, error: r.error }
+  return { id: r.data?.id ?? null, error: albumAware(r.error, v) }
 }
 
 export async function updatePlace(id: string, v: PlaceValues): Promise<string | null> {
   const r = await run<{ id: string }[]>(() => supabase.from('places').update(clean(v)).eq('id', id).select('id'))
-  if (r.error) return r.error
+  if (r.error) return albumAware(r.error, v)
   return (r.data?.length ?? 0) === 0 ? 'Could not save. This place may have been removed.' : null
 }
 

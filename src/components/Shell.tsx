@@ -118,6 +118,12 @@ export default function Shell({
       el.setAttribute('aria-hidden', on ? 'false' : 'true')
     })
   }, [])
+  // Convoy and Music are one-screen pages: the document cannot scroll while either is open.
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.toggle('static-page', tab === 'irl' || tab === 'music')
+    return () => root.classList.remove('static-page')
+  }, [tab])
   useLayoutEffect(() => { placeTitles(inPager ? SWIPE_ORDER.indexOf(tab) : -9) }, [tab, inPager, placeTitles])
   // Android Back: close the menu first, then return to Home from any other screen. Only Home lets Back leave the app.
   useBackClose(() => setMenuOpen(false), menuOpen)

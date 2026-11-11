@@ -57,30 +57,29 @@ export default function IrlGatherings({ familyId, userId }: { familyId: string; 
   }
 
   return (
-    <section className="card flex flex-col gap-3" aria-label="Gatherings">
-      <div className="flex items-center justify-between gap-3">
+    <section className="card flex flex-col gap-1.5 !p-3" aria-label="Gatherings">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="eyebrow">Gatherings</h2>
-        <button type="button" className="btn btn-plain !min-h-9 gap-1.5 !px-3 !text-xs" onClick={() => { setFormError(''); setOpen(true) }}>
-          <Icon name="plus" size={16} />
+        <button type="button" className="btn btn-plain !min-h-7 gap-1 !px-2 !text-[11px]" onClick={() => { setFormError(''); setOpen(true) }}>
+          <Icon name="plus" size={14} />
           New
         </button>
       </div>
 
-      {notice && <p role="status" className="text-sm font-semibold">{notice}</p>}
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      {!error && list.length === 0 && <p className="text-sm text-muted">Nothing planned yet. Tap New to plan a get-together.</p>}
+      {notice && <p role="status" className="text-xs font-semibold">{notice}</p>}
+      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {!error && list.length === 0 && <p className="text-xs text-muted">Nothing planned yet.</p>}
 
       {list.length > 0 && (
         <ul className="flex flex-col divide-y divide-[var(--line)]">
-          {list.map((g) => (
-            <li key={g.id} className="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
+          {list.slice(0, 2).map((g) => (
+            <li key={g.id} className="flex items-center gap-2 py-1.5 first:pt-0 last:pb-0">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-bold leading-tight">{g.title}</p>
-                <p className="text-sm text-muted">{whenText(g.starts_at)}{g.place ? ` · ${g.place}` : ''}</p>
-                <p className="text-xs text-muted">Hosted by {g.host_id === userId ? 'you' : names.get(g.host_id)?.name ?? 'a cousin'}</p>
+                <p className="truncate text-sm font-bold leading-tight">{g.title}</p>
+                <p className="truncate text-xs text-muted">{whenText(g.starts_at)}{g.place ? ` · ${g.place}` : ''} · {g.host_id === userId ? 'you' : names.get(g.host_id)?.name ?? 'a cousin'}</p>
               </div>
               {g.host_id === userId && (
-                <button type="button" className="rounded-lg px-2 py-1 text-xs font-bold text-muted underline underline-offset-4" onClick={() => void remove(g.id)}>Remove</button>
+                <button type="button" className="rounded-lg px-1.5 py-1 text-[11px] font-bold text-muted underline underline-offset-4" onClick={() => void remove(g.id)}>Remove</button>
               )}
             </li>
           ))}

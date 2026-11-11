@@ -1863,3 +1863,6 @@ html.page-scrolled body::before {
 /* Header title (Shell): the wordmark on Home, the page name elsewhere; the name flips instantly early in a swipe. */
 .hdr-stage { position: relative; flex: 1 1 0; min-width: 0; height: 2.25rem; overflow: hidden; }
 .hdr-title { position: absolute; top: 0; bottom: 0; left: 0; display: flex; align-items: center; white-space: nowrap; pointer-events: none; }
+
+/* One-screen pages (Convoy, Music): no scrolling up or down. */
+html.static-page, html.static-page body { overflow: hidden; overscroll-behavior: none; }

@@ -32,7 +32,7 @@ export default function Music() {
   const [repeat, setRepeat] = useState(false)
   const [yt, setYt] = useState<NowPlaying | null>(null)
   const [halt, setHalt] = useState(0)
-  // The picture square is a three-page strip: cover (or the YouTube video), Join room, YouTube link.
+  // The picture square is a four-page strip: cover (or the YouTube video), Songs, Join room, YouTube link.
   const slot = useRef<HTMLDivElement>(null)
   const [slide, setSlide] = useState(0)
   const goSlide = (i: number) => { const el = slot.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }) }
@@ -103,7 +103,7 @@ export default function Music() {
   const pct = duration ? (time / duration) * 100 : 0
 
   return (
-    <div className="flex min-h-[calc(100dvh-12rem)] flex-col justify-center gap-4">
+    <div className="flex max-h-[calc(100dvh-13rem)] min-h-[calc(100dvh-13rem)] flex-col justify-center gap-4 overflow-hidden">
       <audio ref={audioRef} onPlay={() => { setPlaying(true); setHalt((h) => h + 1) }} onPause={() => setPlaying(false)} onEnded={onEnded}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 
@@ -133,20 +133,52 @@ export default function Music() {
           </div>
         )}
           </div>
-          {/* Page 2: Listen together (host / join a room). Stays mounted so a room you host keeps going. */}
+          {/* Page 2: your songs (add from the phone, pick one). */}
           <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 1} data-no-swipe>
+            <div className="space-y-3 pb-1">
+      <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
+        + Add songs from your phone
+        <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
+      </label>
+
+      {tracks.length > 0 && (
+        <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
+          {tracks.map((t, i) => {
+            const on = i === index
+            return (
+              <li key={t.id} className={`flex items-center border-b border-line last:border-b-0 ${on ? 'bg-[var(--accent-soft)]' : ''}`}>
+                <button onClick={() => (on ? toggle() : setIndex(i))} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center text-xs tabular-nums text-muted">
+                    {on && playing ? (
+                      <span className="flex h-4 items-end gap-[2px]" aria-hidden="true">
+                        {[0, 1, 2].map((b) => <span key={b} className="w-[3px] animate-pulse rounded-sm bg-[var(--accent)]" style={{ height: `${55 + b * 22}%`, animationDelay: `${b * 140}ms` }} />)}
+                      </span>
+                    ) : i + 1}
+                  </span>
+                  <span className={`truncate ${on ? 'font-semibold text-[var(--accent-text)]' : ''}`}>{t.name}</span>
+                </button>
+                <button aria-label={`Remove ${t.name}`} onClick={() => remove(i)} className="px-4 py-3 text-lg leading-none text-muted">×</button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+            </div>
+          </div>
+          {/* Page 3: Listen together (host / join a room). Stays mounted so a room you host keeps going. */}
+          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 2} data-no-swipe>
             <div className="pb-1"><ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} /></div>
           </div>
-          {/* Page 3: the YouTube link. */}
-          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 2} data-no-swipe>
+          {/* Page 4: the YouTube link. */}
+          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 3} data-no-swipe>
             <div className="space-y-2 pb-1">
               <p className="px-1 text-sm font-bold">YouTube link <span className="font-normal text-muted">· {yt ? yt.title : 'Paste a link to play'}</span></p>
               <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={pickYt} halt={halt} />
             </div>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-center gap-1" role="tablist" aria-label="Cover, Join room or YouTube link">
-          {(['Cover', 'Join room', 'YouTube link'] as const).map((label, i) => (
+        <div className="mt-3 flex items-center justify-center gap-1" role="tablist" aria-label="Cover, Songs, Join room or YouTube link">
+          {(['Cover', 'Songs', 'Join room', 'YouTube link'] as const).map((label, i) => (
             <button key={label} type="button" role="tab" aria-selected={slide === i} aria-label={label} onClick={() => goSlide(i)} className="grid h-7 w-7 place-items-center">
               <span className={`h-2 rounded-full transition-all ${slide === i ? 'w-5 bg-[var(--accent)]' : 'w-2 bg-[var(--line)]'}`} />
             </button>
@@ -180,35 +212,6 @@ export default function Music() {
         </div>
       </div>
 
-      <div className="space-y-3">
-      <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
-        + Add songs from your phone
-        <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
-      </label>
-
-      {tracks.length > 0 && (
-        <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
-          {tracks.map((t, i) => {
-            const on = i === index
-            return (
-              <li key={t.id} className={`flex items-center border-b border-line last:border-b-0 ${on ? 'bg-[var(--accent-soft)]' : ''}`}>
-                <button onClick={() => (on ? toggle() : setIndex(i))} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center text-xs tabular-nums text-muted">
-                    {on && playing ? (
-                      <span className="flex h-4 items-end gap-[2px]" aria-hidden="true">
-                        {[0, 1, 2].map((b) => <span key={b} className="w-[3px] animate-pulse rounded-sm bg-[var(--accent)]" style={{ height: `${55 + b * 22}%`, animationDelay: `${b * 140}ms` }} />)}
-                      </span>
-                    ) : i + 1}
-                  </span>
-                  <span className={`truncate ${on ? 'font-semibold text-[var(--accent-text)]' : ''}`}>{t.name}</span>
-                </button>
-                <button aria-label={`Remove ${t.name}`} onClick={() => remove(i)} className="px-4 py-3 text-lg leading-none text-muted">×</button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-      </div>
     </div>
   )
 }

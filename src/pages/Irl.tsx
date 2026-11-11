@@ -26,6 +26,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   const [busy, setBusy] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [groupSheet, setGroupSheet] = useState(false)
+  const [pointsOpen, setPointsOpen] = useState(false)
   const [groupTitle, setGroupTitle] = useState('')
   const [groupError, setGroupError] = useState('')
   const noticeTimer = useRef<number | undefined>(undefined)
@@ -101,6 +102,9 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   const needsMe = active.filter((m) => m.people.some((p) => p.user_id === userId && !p.confirmed) && m.status !== 'open')
   const rest = active.filter((m) => !needsMe.includes(m))
   const finished = meetups.filter((m) => !active.includes(m))
+  // The page is one screen that does not scroll, so only the meetup that matters most is shown:
+  // one waiting for your confirmation, else one in progress, else the one that just finished.
+  const focus = needsMe[0] ?? rest[0] ?? finished[0] ?? null
 
   async function submitGroup() {
     setBusy(true)
@@ -118,9 +122,13 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <p className="text-sm text-muted">Link up with cousins in person and earn points.</p>
+    // One fixed screen: it never scrolls (the document is locked while Convoy is open).
+    <div className="flex max-h-[calc(100dvh-13rem)] flex-col gap-3 overflow-hidden">
+      <header>
+        <p className="text-sm text-muted">
+          Link up with cousins in person and earn points.{' '}
+          <button type="button" className="font-semibold underline underline-offset-4" onClick={() => setPointsOpen(true)}>How points work</button>
+        </p>
       </header>
 
       {notice && (
@@ -142,11 +150,9 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
       {!error && (
         <>
-          {needsMe.map((m) => (
-            <IrlMeetupCard key={m.id} meetup={m} userId={userId} busy={busy} run={run} actions={actions} />
-          ))}
+          {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className="card flex flex-col gap-4" aria-label="Your link code">
+          <section className="card flex flex-col gap-3" aria-label="Your link code">
             <h2 className="eyebrow">Your link code</h2>
             <IrlMyCode familyId={family.id} />
             <div className="flex items-center justify-center gap-3">
@@ -160,39 +166,19 @@ export default function Irl({ family, userId }: { family: Family; userId: string
           </section>
 
           <IrlGatherings familyId={family.id} userId={userId} />
-
-          {rest.length > 0 && (
-            <section className="flex flex-col gap-3" aria-label="In progress">
-              <h2 className="eyebrow">In progress</h2>
-              {rest.map((m) => (
-                <IrlMeetupCard key={m.id} meetup={m} userId={userId} busy={busy} run={run} actions={actions} />
-              ))}
-            </section>
-          )}
-
-          {finished.length > 0 && (
-            <section className="flex flex-col gap-3" aria-label="Just finished">
-              <h2 className="eyebrow">Just finished</h2>
-              {finished.map((m) => (
-                <IrlMeetupCard key={m.id} meetup={m} userId={userId} busy={busy} run={run} actions={actions} />
-              ))}
-            </section>
-          )}
-
-          <details className="card expander" aria-label="How points work">
-            <summary>
-              <span className="font-display text-base font-bold">How points work</span>
-              <span aria-hidden="true" className="expander-chevron"><Icon name="chevronDown" size={20} /></span>
-            </summary>
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
-              <li>Two cousins meet: scan each other, both confirm, 10 points each.</li>
-              <li>Group of 3 or more: 10 points plus 5 for each cousin beyond two, up to 40 each.</li>
-              <li>The same two cousins earn together once every 24 hours.</li>
-              <li>You can earn from up to 3 meetups in 24 hours.</li>
-              <li>Points are decided by the server, so they cannot be edited on a phone.</li>
-            </ul>
-          </details>
         </>
+      )}
+
+      {pointsOpen && (
+        <Sheet title="How points work" onClose={() => setPointsOpen(false)}>
+          <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
+            <li>Two cousins meet: scan each other, both confirm, 10 points each.</li>
+            <li>Group of 3 or more: 10 points plus 5 for each cousin beyond two, up to 40 each.</li>
+            <li>The same two cousins earn together once every 24 hours.</li>
+            <li>You can earn from up to 3 meetups in 24 hours.</li>
+            <li>Points are decided by the server, so they cannot be edited on a phone.</li>
+          </ul>
+        </Sheet>
       )}
 
       {scanning && (

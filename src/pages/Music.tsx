@@ -37,7 +37,27 @@ export default function Music() {
   const [halt, setHalt] = useState(0)
   const [libOpen, setLibOpen] = useState(false)
   useBackClose(() => setLibOpen(false), libOpen)
-  const swipe = useRef<{ y: number; x: number } | null>(null)
+  const swipe = useRef<{ y: number; x: number; onControl: boolean } | null>(null)
+  // The player box flips like a page: front = player, back = Listen together (host / join a room).
+  const [side, setSide] = useState<'player' | 'room'>('player')
+  const [turn, setTurn] = useState(0)
+  const [turning, setTurning] = useState(false)
+  const sideRef = useRef<'player' | 'room'>('player')
+  const busy = useRef(false)
+  const flipTo = (to: 'player' | 'room') => {
+    if (to === sideRef.current || busy.current) return
+    busy.current = true
+    // First half: the current face turns edge-on. Second half: the other face turns in from the far side.
+    setTurning(true); setTurn(to === 'room' ? -90 : 90)
+    window.setTimeout(() => {
+      sideRef.current = to
+      setTurning(false); setSide(to); setTurn(to === 'room' ? 90 : -90)
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        setTurning(true); setTurn(0)
+        window.setTimeout(() => { setTurning(false); busy.current = false }, 160)
+      }))
+    }, 150)
+  }
   const audioRef = useRef<HTMLAudioElement>(null)
   const tracksRef = useRef<Track[]>([])
   tracksRef.current = tracks
@@ -104,7 +124,7 @@ export default function Music() {
   const pct = duration ? (time / duration) * 100 : 0
 
   // Swiping up on the player (or tapping the bar under it) opens the library panel; swiping down on its handle closes it.
-  const onDown = (e: React.PointerEvent) => { swipe.current = { y: e.clientY, x: e.clientX } }
+  const onDown = (e: React.PointerEvent) => { swipe.current = { y: e.clientY, x: e.clientX, onControl: !!(e.target as HTMLElement).closest('input,button,a') } }
   const onUp = (e: React.PointerEvent, dir: 'up' | 'down') => {
     const g = swipe.current
     swipe.current = null
@@ -114,6 +134,9 @@ export default function Music() {
     if (Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx) * 1.5) {
       if (dir === 'up' && dy < 0) setLibOpen(true)
       if (dir === 'down' && dy > 0) setLibOpen(false)
+    } else if (dir === 'up' && !g.onControl && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      // Sideways swipe on the player (not on the seek bar or buttons) flips the box.
+      flipTo(dx < 0 ? 'room' : 'player')
     }
   }
 
@@ -122,6 +145,8 @@ export default function Music() {
       <audio ref={audioRef} onPlay={() => { setPlaying(true); setHalt((h) => h + 1) }} onPause={() => setPlaying(false)} onEnded={onEnded}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 
+      <div className="grid" style={{ transform: turn ? `perspective(900px) rotateY(${turn}deg)` : undefined, transition: turning ? 'transform 150ms ease-in-out' : 'none' }}>
+      <div className={`[grid-area:1/1] ${side === 'player' ? '' : 'pointer-events-none opacity-0'}`} aria-hidden={side !== 'player'}>
       <div className="touch-none rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]" onPointerDown={onDown} onPointerUp={(e) => onUp(e, 'up')}>
         {yt ? (
           // A YouTube link plays right here, in the big player picture's place.
@@ -169,10 +194,26 @@ export default function Music() {
           <button aria-label="Repeat" aria-pressed={repeat} onClick={() => setRepeat((r) => !r)} className={`${ctl} ${repeat ? 'text-[var(--accent-text)]' : 'opacity-50'}`}><RepeatI /></button>
         </div>
       </div>
+      </div>
+
+      {/* Back of the box: the Listen together room. Stays mounted so a room you host keeps going while you look at the player. */}
+      <div className={`self-center [grid-area:1/1] ${side === 'room' ? '' : 'pointer-events-none opacity-0'}`} aria-hidden={side !== 'room'}>
+        <button type="button" onClick={() => flipTo('player')} className="mb-2 flex items-center gap-1 px-1 text-sm font-semibold text-muted"><Icon name="back" size={18} />Player</button>
+        <ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} />
+      </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-1" role="tablist" aria-label="Player or Listen together">
+        {([['player', 'Player'], ['room', 'Listen together']] as const).map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={side === id} aria-label={label} onClick={() => flipTo(id)} className="grid h-8 w-8 place-items-center">
+            <span className={`h-2 rounded-full transition-all ${side === id ? 'w-5 bg-[var(--accent)]' : 'w-2 bg-[var(--line)]'}`} />
+          </button>
+        ))}
+      </div>
 
       <button type="button" onClick={() => setLibOpen(true)} aria-haspopup="dialog" className="mx-auto flex flex-col items-center gap-1 px-6 py-2 text-sm font-semibold text-muted">
         <span aria-hidden="true" className="h-1 w-10 rounded-full bg-[var(--line)]" />
-        Songs, YouTube and Listen together
+        Songs and YouTube
         <span aria-hidden="true" className="rotate-180"><Icon name="chevronDown" size={22} /></span>
       </button>
 
@@ -218,8 +259,6 @@ export default function Music() {
       <Fold title="YouTube link" status={yt ? yt.title : 'Paste a link to play'}>
         <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={setYt} halt={halt} />
       </Fold>
-
-      <ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} />
 
           </div>
         </div>

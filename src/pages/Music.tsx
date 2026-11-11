@@ -35,6 +35,23 @@ export default function Music() {
   // The picture square is a four-page strip: cover (or the YouTube video), Songs, Join room, YouTube link.
   const slot = useRef<HTMLDivElement>(null)
   const [slide, setSlide] = useState(0)
+  // Songs are shown a page at a time (Previous / Next) so the Songs page never scrolls. How many fit is measured.
+  const songsBox = useRef<HTMLDivElement>(null)
+  const [perPage, setPerPage] = useState(5)
+  const [songPage, setSongPage] = useState(0)
+  useEffect(() => {
+    const el = songsBox.current
+    if (!el) return
+    const measure = () => {
+      // Page height minus the add button (44px), the Previous/Next row (36px) and the gaps (24px); each row is 40px.
+      const rows = Math.floor((el.clientHeight - 44 - 36 - 24) / 40)
+      setPerPage(Math.max(1, Math.min(12, rows)))
+    }
+    measure()
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    ro?.observe(el)
+    return () => ro?.disconnect()
+  }, [])
   const goSlide = (i: number) => { const el = slot.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }) }
   const audioRef = useRef<HTMLAudioElement>(null)
   const tracksRef = useRef<Track[]>([])
@@ -54,6 +71,9 @@ export default function Music() {
   }
 
   const current = index !== null ? tracks[index] : undefined
+  const pageCount = Math.max(1, Math.ceil(tracks.length / perPage))
+  const shownPage = Math.min(songPage, pageCount - 1)
+  useEffect(() => { if (index !== null) setSongPage(Math.floor(index / perPage)) }, [index, perPage])
   const pickYt = (n: NowPlaying | null) => { setYt(n); if (n) goSlide(0) }
 
   useEffect(() => {
@@ -133,36 +153,45 @@ export default function Music() {
           </div>
         )}
           </div>
-          {/* Page 2: your songs (add from the phone, pick one). */}
-          <div className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 1} data-no-swipe>
-            <div className="space-y-3 pb-1">
-      <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-2.5 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
-        + Add songs from your phone
-        <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
-      </label>
+          {/* Page 2: your songs, a page at a time. */}
+          <div ref={songsBox} className="w-full shrink-0 snap-start snap-always overflow-hidden" aria-hidden={slide !== 1} data-no-swipe>
+            <div className="flex h-full flex-col gap-3">
+              <label className="block shrink-0 cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-2.5 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
+                + Add songs from your phone
+                <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
+              </label>
 
-      {tracks.length > 0 && (
-        <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
-          {tracks.map((t, i) => {
-            const on = i === index
-            return (
-              <li key={t.id} className={`flex items-center border-b border-line last:border-b-0 ${on ? 'bg-[var(--accent-soft)]' : ''}`}>
-                <button onClick={() => (on ? toggle() : setIndex(i))} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center text-xs tabular-nums text-muted">
-                    {on && playing ? (
-                      <span className="flex h-4 items-end gap-[2px]" aria-hidden="true">
-                        {[0, 1, 2].map((b) => <span key={b} className="w-[3px] animate-pulse rounded-sm bg-[var(--accent)]" style={{ height: `${55 + b * 22}%`, animationDelay: `${b * 140}ms` }} />)}
-                      </span>
-                    ) : i + 1}
-                  </span>
-                  <span className={`truncate ${on ? 'font-semibold text-[var(--accent-text)]' : ''}`}>{t.name}</span>
-                </button>
-                <button aria-label={`Remove ${t.name}`} onClick={() => remove(i)} className="px-3 py-2 text-lg leading-none text-muted">×</button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+              {tracks.length > 0 && (
+                <ul className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-line bg-surface">
+                  {tracks.slice(shownPage * perPage, shownPage * perPage + perPage).map((t, k) => {
+                    const i = shownPage * perPage + k
+                    const on = i === index
+                    return (
+                      <li key={t.id} className={`flex h-10 items-center border-b border-line last:border-b-0 ${on ? 'bg-[var(--accent-soft)]' : ''}`}>
+                        <button onClick={() => (on ? toggle() : setIndex(i))} className="flex h-full min-w-0 flex-1 items-center gap-3 px-3 text-left">
+                          <span className="grid h-6 w-6 shrink-0 place-items-center text-xs tabular-nums text-muted">
+                            {on && playing ? (
+                              <span className="flex h-4 items-end gap-[2px]" aria-hidden="true">
+                                {[0, 1, 2].map((b) => <span key={b} className="w-[3px] animate-pulse rounded-sm bg-[var(--accent)]" style={{ height: `${55 + b * 22}%`, animationDelay: `${b * 140}ms` }} />)}
+                              </span>
+                            ) : i + 1}
+                          </span>
+                          <span className={`truncate ${on ? 'font-semibold text-[var(--accent-text)]' : ''}`}>{t.name}</span>
+                        </button>
+                        <button aria-label={`Remove ${t.name}`} onClick={() => remove(i)} className="h-full px-3 text-lg leading-none text-muted">×</button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+
+              {pageCount > 1 && (
+                <div className="flex h-9 shrink-0 items-center justify-between">
+                  <button type="button" className="btn btn-plain !min-h-9 !px-4 !text-sm" disabled={shownPage === 0} onClick={() => setSongPage(shownPage - 1)}>Previous</button>
+                  <span className="text-xs tabular-nums text-muted">{shownPage + 1} / {pageCount}</span>
+                  <button type="button" className="btn btn-plain !min-h-9 !px-4 !text-sm" disabled={shownPage >= pageCount - 1} onClick={() => setSongPage(shownPage + 1)}>Next</button>
+                </div>
+              )}
             </div>
           </div>
           {/* Page 3: Listen together (host / join a room). Stays mounted so a room you host keeps going. */}

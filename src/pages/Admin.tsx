@@ -13,6 +13,7 @@ import Avatar from '../components/Avatar'
 import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
 import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNativeApp, thisBuild, useAppSettings } from '../lib/appSettings'
+import { parseBuildFromNotes } from '../lib/updateGate'
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 
@@ -143,7 +144,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [maintMessage, setMaintMessage] = useState('')
   const [announceText, setAnnounceText] = useState('')
   const [minBuildInput, setMinBuildInput] = useState('')
-  const [latestBuild, setLatestBuild] = useState<number | null>(null)
+  const [publicBuild, setPublicBuild] = useState<number | null>(null)
+  const [publicTried, setPublicTried] = useState(false)
   const [members, setMembers] = useState<AdminMember[]>([])
   const [users, setUsers] = useState<AppUser[] | null>(null)
   const [usersError, setUsersError] = useState('')
@@ -180,6 +182,13 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   useBackClose(() => setPreview(null), preview !== null)
   const myBuild = thisBuild()
   const apk = useApkDownload()
+  // The newest published build. GitHub's public release note is asked first, but it is rate limited per network and
+  // can fail silently, which left Install saying "Latest build unknown". So the same number is also taken from the
+  // builds list the owner's server function returns (what Announce a build uses), which does not have that problem.
+  const latestBuild: number | null =
+    publicBuild
+    ?? parseBuildFromNotes(buildRelease?.body)
+    ?? buildRuns.filter((r) => /apk/i.test(r.name) && r.conclusion === 'success').reduce<number | null>((m, r) => (m === null || r.run_number > m ? r.run_number : m), null)
 
   // Fill the editable fields once, from the first load, so polling never overwrites what is being typed.
   useEffect(() => {
@@ -190,17 +199,28 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     setLoadedFields(true)
   }, [settings, loadedFields])
 
-  // The newest published Android build, read from the public release notes ("Build 85 (abc1234)...").
+  // The newest published Android build, read from the public release notes ("Build 85 (abc1234)..."). Tried twice.
   useEffect(() => {
     let alive = true
-    fetch(LATEST_RELEASE_API)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: { body?: string } | null) => {
-        const m = /Build\s+(\d+)/.exec(j?.body ?? '')
-        if (alive && m) setLatestBuild(Number(m[1]))
-      })
-      .catch(() => {})
-    return () => { alive = false }
+    let timer = 0
+    const ask = (again: boolean) => {
+      fetch(LATEST_RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { body?: string } | null) => {
+          const n = parseBuildFromNotes(j?.body)
+          if (!alive) return
+          if (n) { setPublicBuild(n); setPublicTried(true) }
+          else if (again) timer = window.setTimeout(() => ask(false), 3000)
+          else setPublicTried(true)
+        })
+        .catch(() => {
+          if (!alive) return
+          if (again) timer = window.setTimeout(() => ask(false), 3000)
+          else setPublicTried(true)
+        })
+    }
+    ask(true)
+    return () => { alive = false; window.clearTimeout(timer) }
   }, [])
 
   const loadMembers = useCallback(async () => {
@@ -309,6 +329,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   }, [])
 
   useEffect(() => { if (section === 'builds' || section === 'pages' || section === 'updates') void loadBuilds() }, [section, loadBuilds])
+  useEffect(() => { if (isOwner && publicTried && publicBuild === null) void loadBuilds() }, [isOwner, publicTried, publicBuild, loadBuilds])
 
   const loadAnnouncements = useCallback(async () => {
     setAnnouncementLoading(true)

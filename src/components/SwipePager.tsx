@@ -9,10 +9,12 @@ import { ScreenVisible } from '../lib/screenVisible'
 // - The tab only changes once the pager has come to rest, so there are no re-renders while you drag.
 // - Tapping a tab in the bottom bar jumps there at once; swiping moves the bar's highlight along with the page.
 // - Only the page on show is un-clipped; the others are cut to one screen so they never stretch the document.
+// - While the pages are still sliding, vertical scrolling is held back (touch-action) so a quick up-swipe cannot scroll
+//   the document under half-moved pages; it is released as soon as the pager has come to rest.
 // - Neighbouring pages are built shortly after load (and the rest a little later) so a swipe never lands on a blank page.
 //   `data-pager` / `data-pager-index` let a fixed element inside a page (the Chat message bar) slide with its page.
 const SETTLE_MS = 90
-const NEAR_MS = 350
+const NEAR_MS = 120
 const REST_MS = 1800
 
 export default function SwipePager<T extends string>({
@@ -117,6 +119,7 @@ function Pager<T extends string>({
     const w = width()
     const i = Math.max(0, Math.min(order.length - 1, Math.round(el.scrollLeft / w)))
     if (Math.abs(el.scrollLeft - i * w) > 2) return // still moving
+    el.style.touchAction = '' // at rest: vertical scrolling is free again
     if (i !== cur.current.idx) cur.current.onChange(order[i])
   }, [order])
 
@@ -137,7 +140,14 @@ function Pager<T extends string>({
         if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current')
       })
     }
-    const later = () => { live(); window.clearTimeout(timer.current); timer.current = window.setTimeout(settle, SETTLE_MS) }
+    const later = () => {
+      live()
+      // Pages mid-slide: hold vertical scrolling (the glitch after a fast swipe followed by an up-swipe) until they rest.
+      const p = el.scrollLeft / width()
+      if (Math.abs(p - Math.round(p)) * width() > 2) el.style.touchAction = 'pan-x'
+      window.clearTimeout(timer.current)
+      timer.current = window.setTimeout(settle, SETTLE_MS)
+    }
     const down = () => { touching.current = true }
     const up = () => { touching.current = false; later() }
     el.addEventListener('scroll', later, { passive: true })
@@ -152,6 +162,7 @@ function Pager<T extends string>({
     ro?.observe(el)
     return () => {
       window.clearTimeout(timer.current)
+      el.style.touchAction = ''
       el.removeEventListener('scroll', later)
       el.removeEventListener('scrollend', settle)
       el.removeEventListener('touchstart', down)

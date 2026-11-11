@@ -103,14 +103,14 @@ export default function Music() {
   const pct = duration ? (time / duration) * 100 : 0
 
   return (
-    <div className="flex max-h-[calc(100dvh-13rem)] min-h-[calc(100dvh-13rem)] flex-col justify-center gap-4 overflow-hidden">
+    <div className="flex h-[calc(100dvh-13rem)] flex-col gap-3 overflow-hidden">
       <audio ref={audioRef} onPlay={() => { setPlaying(true); setHalt((h) => h + 1) }} onPause={() => setPlaying(false)} onEnded={onEnded}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 
-      <div className="rounded-3xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+      <div className="flex min-h-0 flex-1 flex-col rounded-3xl border border-line bg-surface p-4 shadow-[var(--shadow-card)]">
         <div ref={slot} onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / (e.currentTarget.clientWidth || 1)))}
-          className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="grid h-64 w-full shrink-0 snap-start place-items-center snap-always">
+          className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="grid w-full shrink-0 snap-start place-items-center snap-always [container-type:size]">
         {yt ? (
           // A YouTube link plays right here, in the big player picture's place.
           <div className="mx-auto w-full overflow-hidden rounded-2xl bg-black" style={{ boxShadow: '0 12px 32px -12px var(--accent)' }}>
@@ -127,16 +127,16 @@ export default function Music() {
             />
           </div>
         ) : (
-          <div className="mx-auto grid aspect-square w-full max-w-[16rem] place-items-center overflow-hidden rounded-2xl text-[var(--accent-ink)]"
-            style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-text))', boxShadow: '0 12px 32px -12px var(--accent)' }}>
+          <div className="grid place-items-center overflow-hidden rounded-2xl text-[var(--accent-ink)]"
+            style={{ width: 'min(100cqw, 100cqh)', height: 'min(100cqw, 100cqh)', background: 'linear-gradient(135deg, var(--accent), var(--accent-text))', boxShadow: '0 12px 32px -12px var(--accent)' }}>
             <div className={playing ? 'animate-pulse' : ''}><NoteI /></div>
           </div>
         )}
           </div>
           {/* Page 2: your songs (add from the phone, pick one). */}
-          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 1} data-no-swipe>
+          <div className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 1} data-no-swipe>
             <div className="space-y-3 pb-1">
-      <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-3 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
+      <label className="block cursor-pointer rounded-2xl border border-dashed border-line bg-surface px-4 py-2.5 text-center text-sm font-semibold text-[var(--accent-text)] transition active:scale-[0.98]">
         + Add songs from your phone
         <input type="file" accept="audio/*" multiple className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = '' }} />
       </label>
@@ -147,7 +147,7 @@ export default function Music() {
             const on = i === index
             return (
               <li key={t.id} className={`flex items-center border-b border-line last:border-b-0 ${on ? 'bg-[var(--accent-soft)]' : ''}`}>
-                <button onClick={() => (on ? toggle() : setIndex(i))} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left">
+                <button onClick={() => (on ? toggle() : setIndex(i))} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left">
                   <span className="grid h-6 w-6 shrink-0 place-items-center text-xs tabular-nums text-muted">
                     {on && playing ? (
                       <span className="flex h-4 items-end gap-[2px]" aria-hidden="true">
@@ -157,7 +157,7 @@ export default function Music() {
                   </span>
                   <span className={`truncate ${on ? 'font-semibold text-[var(--accent-text)]' : ''}`}>{t.name}</span>
                 </button>
-                <button aria-label={`Remove ${t.name}`} onClick={() => remove(i)} className="px-4 py-3 text-lg leading-none text-muted">×</button>
+                <button aria-label={`Remove ${t.name}`} onClick={() => remove(i)} className="px-3 py-2 text-lg leading-none text-muted">×</button>
               </li>
             )
           })}
@@ -166,11 +166,11 @@ export default function Music() {
             </div>
           </div>
           {/* Page 3: Listen together (host / join a room). Stays mounted so a room you host keeps going. */}
-          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 2} data-no-swipe>
+          <div className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 2} data-no-swipe>
             <div className="pb-1"><ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} /></div>
           </div>
           {/* Page 4: the YouTube link. */}
-          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 3} data-no-swipe>
+          <div className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 3} data-no-swipe>
             <div className="space-y-2 pb-1">
               <p className="px-1 text-sm font-bold">YouTube link <span className="font-normal text-muted">· {yt ? yt.title : 'Paste a link to play'}</span></p>
               <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={pickYt} halt={halt} />

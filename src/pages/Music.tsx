@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icons'
 import { useBackClose } from '../lib/backStack'
 import ListenTogether from '../components/ListenTogether'
-import Fold from '../components/Fold'
 import YouTubeLinks, { type NowPlaying } from '../components/YouTubeLinks'
 
 type Track = { id: string; name: string; url: string }
@@ -38,7 +37,7 @@ export default function Music() {
   const [libOpen, setLibOpen] = useState(false)
   useBackClose(() => setLibOpen(false), libOpen)
   const swipe = useRef<{ y: number; x: number } | null>(null)
-  // The picture square is a two-page strip: page 1 = cover (or the YouTube video), page 2 = Join room + YouTube link.
+  // The picture square is a three-page strip: cover (or the YouTube video), Join room, YouTube link.
   const slot = useRef<HTMLDivElement>(null)
   const [slide, setSlide] = useState(0)
   const goSlide = (i: number) => { const el = slot.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }) }
@@ -153,18 +152,20 @@ export default function Music() {
           </div>
         )}
           </div>
-          {/* Page 2: Listen together (host / join a room) and the YouTube link. Stays mounted so a room you host keeps going. */}
-          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-contain" aria-hidden={slide !== 1} data-no-swipe>
-            <div className="space-y-3 pb-1">
-              <ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} />
-              <Fold title="YouTube link" status={yt ? yt.title : 'Paste a link to play'}>
-                <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={pickYt} halt={halt} />
-              </Fold>
+          {/* Page 2: Listen together (host / join a room). Stays mounted so a room you host keeps going. */}
+          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 1} data-no-swipe>
+            <div className="pb-1"><ListenTogether getAudio={() => audioRef.current} current={current} yt={yt} /></div>
+          </div>
+          {/* Page 3: the YouTube link. */}
+          <div className="h-64 w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain" aria-hidden={slide !== 2} data-no-swipe>
+            <div className="space-y-2 pb-1">
+              <p className="px-1 text-sm font-bold">YouTube link <span className="font-normal text-muted">· {yt ? yt.title : 'Paste a link to play'}</span></p>
+              <YouTubeLinks onStart={() => audioRef.current?.pause()} onNow={pickYt} halt={halt} />
             </div>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-center gap-1" role="tablist" aria-label="Cover or Join room and YouTube link">
-          {(['Cover', 'Join room and YouTube link'] as const).map((label, i) => (
+        <div className="mt-3 flex items-center justify-center gap-1" role="tablist" aria-label="Cover, Join room or YouTube link">
+          {(['Cover', 'Join room', 'YouTube link'] as const).map((label, i) => (
             <button key={label} type="button" role="tab" aria-selected={slide === i} aria-label={label} onClick={() => goSlide(i)} className="grid h-7 w-7 place-items-center">
               <span className={`h-2 rounded-full transition-all ${slide === i ? 'w-5 bg-[var(--accent)]' : 'w-2 bg-[var(--line)]'}`} />
             </button>

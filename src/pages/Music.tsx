@@ -35,6 +35,28 @@ export default function Music() {
   // The picture square is a four-page strip: cover (or the YouTube video), Songs, Join room, YouTube link.
   const slot = useRef<HTMLDivElement>(null)
   const [slide, setSlide] = useState(0)
+  // The player box ends just above the bottom bar: measured from where it starts and where the bar starts, so it
+  // is never hidden underneath it (a fixed guess for the header and bar heights was off on some phones).
+  const root = useRef<HTMLDivElement>(null)
+  const [boxH, setBoxH] = useState<number | null>(null)
+  useEffect(() => {
+    const el = root.current
+    if (!el) return
+    const fit = () => {
+      if (!el.offsetParent) return // the Music page is not on show
+      const nav = document.querySelector('.app-nav')
+      const bottom = nav ? nav.getBoundingClientRect().top : window.innerHeight
+      setBoxH(Math.max(260, Math.floor(bottom - el.getBoundingClientRect().top - 14)))
+    }
+    fit()
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit)
+    ro?.observe(el)
+    ro?.observe(document.body)
+    const nav = document.querySelector('.app-nav')
+    if (nav) ro?.observe(nav)
+    window.addEventListener('resize', fit)
+    return () => { ro?.disconnect(); window.removeEventListener('resize', fit) }
+  }, [])
   // Songs are shown a page at a time (Previous / Next) so the Songs page never scrolls. How many fit is measured.
   const songsBox = useRef<HTMLDivElement>(null)
   const [perPage, setPerPage] = useState(5)
@@ -123,7 +145,7 @@ export default function Music() {
   const pct = duration ? (time / duration) * 100 : 0
 
   return (
-    <div className="flex h-[calc(100dvh-13rem)] flex-col gap-3 overflow-hidden">
+    <div ref={root} className="flex flex-col gap-3 overflow-hidden" style={{ height: boxH ?? 'calc(100dvh - 15rem)' }}>
       <audio ref={audioRef} onPlay={() => { setPlaying(true); setHalt((h) => h + 1) }} onPause={() => setPlaying(false)} onEnded={onEnded}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
 

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import Avatar from './Avatar'
+import AchievementCase from './AchievementCase'
+import PointsGuide from './PointsGuide'
 import { achievements, joinNames, rankRows, timeAgo, type Recent, type Row } from '../lib/irl'
 
 type Period = 'all' | 'month'
@@ -51,6 +53,8 @@ export default function IrlScoreboard({
         </section>
       )}
 
+      <PointsGuide />
+
       <div role="tablist" aria-label="Scoreboard period" className="grid grid-cols-2 gap-2">
         {(['all', 'month'] as const).map((p) => (
           <button
@@ -101,21 +105,7 @@ export default function IrlScoreboard({
         {period === 'month' && month === null && <p className="mt-2 text-sm text-muted">Could not load this month&apos;s points.</p>}
       </section>
 
-      <section aria-label="Your achievements">
-        <h2 className="eyebrow mb-2">Your achievements</h2>
-        <ul className="grid grid-cols-2 gap-2">
-          {badges.map((a) => (
-            <li key={a.id} className={`irl-badge ${a.earned ? 'irl-badge-on' : ''}`}>
-              <span className="block font-display text-sm font-bold">
-                {a.earned ? '✓ ' : ''}
-                {a.title}
-              </span>
-              <span className="block text-xs text-muted">{a.hint}</span>
-              <span className="mt-1 block text-xs font-bold text-accent-text">{a.earned ? 'Earned' : a.progress}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <AchievementCase items={badges} />
 
       <section aria-label="Recent meetups">
         <h2 className="eyebrow mb-2">Recent meetups</h2>

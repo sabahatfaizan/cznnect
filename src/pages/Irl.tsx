@@ -26,7 +26,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   const [busy, setBusy] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [groupSheet, setGroupSheet] = useState(false)
-  const [pointsOpen, setPointsOpen] = useState(false)
   const [groupTitle, setGroupTitle] = useState('')
   const [groupError, setGroupError] = useState('')
   const noticeTimer = useRef<number | undefined>(undefined)
@@ -126,8 +125,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
     <div className="flex max-h-[calc(100dvh-13rem)] flex-col gap-3 overflow-hidden">
       <header>
         <p className="text-sm text-muted">
-          Link up with cousins in person and earn points.{' '}
-          <button type="button" className="font-semibold underline underline-offset-4" onClick={() => setPointsOpen(true)}>How points work</button>
+          Link up with cousins in person and earn points.
         </p>
       </header>
 
@@ -167,18 +165,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           <IrlGatherings familyId={family.id} userId={userId} />
         </>
-      )}
-
-      {pointsOpen && (
-        <Sheet title="How points work" onClose={() => setPointsOpen(false)}>
-          <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
-            <li>Two cousins meet: scan each other, both confirm, 10 points each.</li>
-            <li>Group of 3 or more: 10 points plus 5 for each cousin beyond two, up to 40 each.</li>
-            <li>The same two cousins earn together once every 24 hours.</li>
-            <li>You can earn from up to 3 meetups in 24 hours.</li>
-            <li>Points are decided by the server, so they cannot be edited on a phone.</li>
-          </ul>
-        </Sheet>
       )}
 
       {scanning && (

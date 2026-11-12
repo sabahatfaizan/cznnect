@@ -113,27 +113,36 @@ export function startOfMonthIso(now: Date = new Date()): string {
 
 // ---------- achievements ----------
 
-export type Achievement = { id: string; title: string; hint: string; earned: boolean; progress: string }
+export type Tier = 'bronze' | 'silver' | 'gold' | 'legend'
+export type Achievement = {
+  id: string
+  title: string
+  hint: string
+  earned: boolean
+  progress: string // "3/5", or a short note when it cannot be counted yet
+  have: number
+  need: number
+  glyph: string
+  tier: Tier
+}
 
 export function achievements(me: Row | undefined, familySize: number): Achievement[] {
   const r: Row = me ?? { user_id: '', name: '', points: 0, meetups: 0, cousins_met: 0, biggest_group: 0, hosted_big: false, last_at: null }
   const prog = (have: number, need: number) => `${Math.min(have, need)}/${need}`
   const others = Math.max(0, familySize - 1)
+  const make = (id: string, title: string, hint: string, glyph: string, tier: Tier, have: number, need: number, note?: string): Achievement => ({
+    id, title, hint, glyph, tier, have: Math.min(have, need), need, earned: have >= need, progress: note ?? prog(have, need),
+  })
+  const meetEveryone = others >= 3
   return [
-    { id: 'first', title: 'First hello', hint: 'Verify your first meetup', earned: r.meetups >= 1, progress: prog(r.meetups, 1) },
-    { id: 'regular', title: 'Regular', hint: 'Verify 5 meetups', earned: r.meetups >= 5, progress: prog(r.meetups, 5) },
-    { id: 'veteran', title: 'Family fixture', hint: 'Verify 15 meetups', earned: r.meetups >= 15, progress: prog(r.meetups, 15) },
-    { id: 'connector', title: 'Connector', hint: 'Meet 3 different cousins', earned: r.cousins_met >= 3, progress: prog(r.cousins_met, 3) },
-    {
-      id: 'everyone',
-      title: 'Met everyone',
-      hint: 'Meet every cousin in the family',
-      earned: others >= 3 && r.cousins_met >= others,
-      progress: others >= 3 ? prog(r.cousins_met, others) : 'needs 4+ cousins',
-    },
-    { id: 'crowd', title: 'Full house', hint: 'Be part of a group of 4 or more', earned: r.biggest_group >= 4, progress: prog(r.biggest_group, 4) },
-    { id: 'host', title: 'Host with the most', hint: 'Host a verified group of 4 or more', earned: r.hosted_big, progress: r.hosted_big ? '1/1' : '0/1' },
-    { id: 'century', title: 'Century', hint: 'Reach 100 points', earned: r.points >= 100, progress: prog(r.points, 100) },
+    make('first', 'First hello', 'Verify your first meetup', '👋', 'bronze', r.meetups, 1),
+    make('regular', 'Regular', 'Verify 5 meetups', '🌟', 'silver', r.meetups, 5),
+    make('veteran', 'Family fixture', 'Verify 15 meetups', '🏛️', 'gold', r.meetups, 15),
+    make('connector', 'Connector', 'Meet 3 different cousins', '🔗', 'bronze', r.cousins_met, 3),
+    make('everyone', 'Met everyone', 'Meet every cousin in the family', '🌍', 'gold', meetEveryone ? r.cousins_met : 0, Math.max(3, others), meetEveryone ? undefined : 'needs 4+ cousins'),
+    make('crowd', 'Full house', 'Be part of a group of 4 or more', '🏠', 'silver', r.biggest_group, 4),
+    make('host', 'Host with the most', 'Host a verified group of 4 or more', '👑', 'gold', r.hosted_big ? 1 : 0, 1),
+    make('century', 'Century', 'Reach 100 points', '💯', 'legend', r.points, 100),
   ]
 }
 

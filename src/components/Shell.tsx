@@ -14,6 +14,7 @@ import Tree from '../pages/Tree'
 import Irl from '../pages/Irl'
 import Scoreboard from '../pages/Scoreboard'
 import Birthdays from '../pages/Birthdays'
+import Events from '../pages/Events'
 import Music from '../pages/Music'
 import { rank, useFamilyBirthdays } from '../lib/birthdays'
 import { loadPrefs, runReminders } from '../lib/birthdayReminders'
@@ -30,7 +31,7 @@ import SwipePager from './SwipePager'
 import { setGlassAllowed } from '../theme'
 import { isOwnerEmail } from '../owner'
 
-type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'chat' | 'birthdays' | 'settings' | 'music' | 'admin'
+type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'chat' | 'birthdays' | 'settings' | 'music' | 'admin' | 'events'
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'irl', label: 'Convoy', icon: 'irl' },
@@ -176,6 +177,7 @@ export default function Shell({
         {t === 'explore' && <Explore family={family} userId={userId} />}
         {t === 'plans' && <Plans family={family} userId={userId} />}
         {t === 'me' && <Profile userId={userId} />}
+        {t === 'events' && <Events userId={userId} isOwner={isOwner} />}
         {t === 'settings' && <Settings family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {t === 'admin' && canAdmin && <Admin family={family} userId={userId} isOwner={false} onFamilyChanged={onFamilyChanged} />}
       </>
@@ -270,6 +272,7 @@ export default function Shell({
                 { id: 'tree', label: 'Family Tree', icon: 'tree' },
                 { id: 'plans', label: 'Plans', icon: 'plans' },
                 { id: 'birthdays', label: 'Birthdays', icon: 'cake' },
+                { id: 'events', label: 'Events', icon: 'megaphone' },
               ] as { id: Tab; label: string; icon: IconName }[]).map((item) => (
                 <button
                   key={item.id}

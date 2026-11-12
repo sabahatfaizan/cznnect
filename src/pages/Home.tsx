@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import TitleBadge from '../components/TitleBadge'
 import { supabase } from '../supabase'
 import { appUrl, canShare, shareText } from '../lib/native'
@@ -6,6 +6,7 @@ import Avatar from '../components/Avatar'
 import { shownName } from '../lib/avatars'
 import { Icon } from '../components/Icons'
 import type { Family, Member } from '../types'
+import { useFitAboveNav } from '../lib/useFitAboveNav'
 
 type Contact = { user_id: string; phone: string | null; contact_email: string | null }
 
@@ -17,6 +18,8 @@ type Props = {
 
 export default function Home({ family, userId, onFamilyChanged }: Props) {
   const [members, setMembers] = useState<Member[]>([])
+  const root = useRef<HTMLDivElement>(null)
+  const boxH = useFitAboveNav(root)
   // Only rows people chose to share come back; row-level security hides the rest.
   const [contacts, setContacts] = useState<Map<string, Contact>>(new Map())
   const [error, setError] = useState('')
@@ -79,8 +82,9 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
     run(() => supabase.rpc('regenerate_invite', { fid: family.id }), onFamilyChanged)
 
   return (
-    <div className="flex flex-col gap-5">
-      <header className="flex items-end justify-between gap-3">
+    // One fixed screen: only the members list scrolls, and only when there are more members than fit.
+    <div ref={root} className="flex flex-col gap-4 overflow-hidden" style={{ height: boxH ?? 'calc(100dvh - 15rem)' }}>
+      <header className="flex shrink-0 items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="eyebrow">Your family</p>
           <h1 className="font-display mt-0.5 text-xl font-extrabold leading-tight">{family.name}</h1>
@@ -99,7 +103,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
         )}
       </header>
 
-      <section className="card relative flex flex-col gap-3 overflow-hidden !p-4" aria-label="Invite people">
+      <section className="card relative flex shrink-0 flex-col gap-3 overflow-hidden !p-4" aria-label="Invite people">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-16" style={{ background: 'linear-gradient(180deg, var(--accent-soft), transparent)' }} />
         <div className="relative flex items-center justify-between gap-3">
           <h2 className="font-display text-base font-bold leading-tight">Invite cousins</h2>
@@ -168,8 +172,8 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
         )}
       </section>
 
-      <section className="card flex flex-col gap-2">
-        <h2 className="font-display text-base font-bold">
+      <section className="card flex min-h-0 flex-1 flex-col gap-2">
+        <h2 className="shrink-0 font-display text-base font-bold">
           Members {members.length > 0 && <span className="text-muted">({members.length})</span>}
         </h2>
         {error && (
@@ -177,7 +181,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
             {error}
           </p>
         )}
-        <ul className="divide-y divide-line">
+        <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto overscroll-y-contain">
           {members.map((m) => {
             const name = shownName(m.profiles)
             const real = m.profiles?.display_name
@@ -217,7 +221,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
 
         {me && !isOwner &&
           (confirm === 'leave' ? (
-            <div className="flex flex-col gap-3 rounded-[var(--radius-ctl)] border border-line bg-surface-2 p-3">
+            <div className="flex shrink-0 flex-col gap-3 rounded-[var(--radius-ctl)] border border-line bg-surface-2 p-3">
               <p className="text-sm">
                 Leave {family.name}? You will need the invite code to join again.
               </p>
@@ -231,7 +235,7 @@ export default function Home({ family, userId, onFamilyChanged }: Props) {
               </div>
             </div>
           ) : (
-            <button className="min-h-11 self-start text-sm font-bold text-danger underline underline-offset-2" onClick={() => setConfirm('leave')}>
+            <button className="min-h-11 shrink-0 self-start text-sm font-bold text-danger underline underline-offset-2" onClick={() => setConfirm('leave')}>
               Leave this family
             </button>
           ))}

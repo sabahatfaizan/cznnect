@@ -17,6 +17,7 @@ import { isOwnerEmail } from './owner'
 import { isPasswordRecoveryEvent } from './lib/auth'
 import { isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 import { mustUpdate } from './lib/updateGate'
+import PermissionsSetup from './components/PermissionsSetup'
 
 const SPLASH_MS = 4500
 
@@ -49,6 +50,15 @@ function NetworkStatus() {
 }
 
 export default function App() {
+  return (
+    <>
+      <AppInner />
+      <PermissionsSetup />
+    </>
+  )
+}
+
+function AppInner() {
   const entryMode = useEntryMode()
   const [session, setSession] = useState<Session | null>(null)
   const [recoveryMode, setRecoveryMode] = useState(false)

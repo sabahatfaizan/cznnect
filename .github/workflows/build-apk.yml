@@ -91,6 +91,9 @@ jobs:
           lines = [
               '<uses-permission android:name="android.permission.CAMERA" />',
               '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+              '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
+              '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
+              '<uses-feature android:name="android.hardware.location" android:required="false" />',
               '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />',
               '<uses-feature android:name="android.hardware.camera" android:required="false" />',
               '<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />',
@@ -102,6 +105,7 @@ jobs:
           PY
           grep -n "uses-permission\|uses-feature" android/app/src/main/AndroidManifest.xml
           grep -q "android.permission.CAMERA" android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.ACCESS_FINE_LOCATION" android/app/src/main/AndroidManifest.xml
 
       - name: Add Firebase push to the APK
         # The native plugin's getPushToken uses the Firebase Messaging library, so the library is always added (the

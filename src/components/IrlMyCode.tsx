@@ -105,7 +105,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <button type="button" onClick={() => setBig(true)} aria-label="Enlarge your link code" className="flex flex-col items-center gap-1">
-        <span key={payload} className="qr-swap"><QrCode text={payload} size={200} label="Your personal QR code. Another cousin can scan it." /></span>
+        <span key={payload} className="qr-swap"><QrCode text={payload} size={240} label="Your personal QR code. Another cousin can scan it." /></span>
         <span className="text-xs font-bold uppercase tracking-widest text-muted">Tap to enlarge</span>
       </button>
       <p className="select-all text-center font-mono text-sm font-semibold tracking-wider text-accent-text">{readableCode(payload)}</p>

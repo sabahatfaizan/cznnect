@@ -148,9 +148,13 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
       {!error && (
         <>
+          <div className="max-h-52 shrink-0 overflow-y-auto">
+            <IrlGatherings familyId={family.id} userId={userId} />
+          </div>
+
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className="card flex flex-col gap-3" aria-label="Your link code">
+          <section className="card flex min-h-0 flex-1 flex-col items-center justify-center gap-3" aria-label="Your link code">
             <h2 className="eyebrow">Your link code</h2>
             <IrlMyCode familyId={family.id} />
             <div className="flex items-center justify-center gap-3">
@@ -163,7 +167,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
             </div>
           </section>
 
-          <IrlGatherings familyId={family.id} userId={userId} />
         </>
       )}
 

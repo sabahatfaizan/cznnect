@@ -62,8 +62,7 @@ export default function Events({ userId, isOwner }: { userId: string; isOwner: b
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-extrabold">Events</h1>
+      <div className="flex items-center justify-end gap-3">
         <div className="flex gap-2">
           <button type="button" className="btn btn-plain !min-h-9 !px-3 !text-xs" onClick={() => setJoining(true)}>Join</button>
           <button type="button" className="btn btn-primary !min-h-9 gap-1.5 !px-3 !text-xs" onClick={() => setCreating(true)}><Icon name="plus" size={16} />Host</button>

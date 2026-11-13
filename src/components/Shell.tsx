@@ -46,7 +46,7 @@ const SWIPE_ORDER = TABS.map((t) => t.id)
 // The name flips instantly, about a fifth of the way into a swipe.
 const TITLES: Record<Tab, string> = {
   home: 'Cznnect', irl: 'Convoy', explore: 'Explore', chat: 'Chat', me: 'Profile', plans: 'Plans', tree: 'Family Tree',
-  scoreboard: 'Scoreboard', birthdays: 'Birthdays', settings: 'Settings', music: 'Music', admin: 'Admin',
+  scoreboard: 'Scoreboard', birthdays: 'Birthdays', settings: 'Settings', music: 'Music', admin: 'Admin', events: 'Events',
 }
 
 const SECRET_HOLD_MS = 4000

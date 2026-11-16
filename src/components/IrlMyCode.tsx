@@ -8,7 +8,19 @@ import { useBackClose } from '../lib/backStack'
 
 // Your personal QR code. It holds a random handle and a code that changes every 5 minutes,
 // so it never shows your name, email or account id, and an old screenshot stops working.
+// Room left on the Convoy screen after the header, the gatherings card, the timer and the buttons.
+function fitSize(): number {
+  return Math.max(190, Math.min(300, Math.round(window.innerHeight - 480)))
+}
+
 export default function IrlMyCode({ familyId }: { familyId: string }) {
+  // As big as the screen allows (the Convoy screen does not scroll), never bigger than 300.
+  const [size, setSize] = useState(() => fitSize())
+  useEffect(() => {
+    const on = () => setSize(fitSize())
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
   const [code, setCode] = useState<MyCode | null>(null)
   const [endsAt, setEndsAt] = useState(0)
   const [left, setLeft] = useState(0)
@@ -105,7 +117,7 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <button type="button" onClick={() => setBig(true)} aria-label="Enlarge your link code" title="Tap to enlarge" className="flex flex-col items-center">
-        <span key={payload} className="qr-swap"><QrCode text={payload} size={240} label="Your personal QR code. Another cousin can scan it." /></span>
+        <span key={payload} className="qr-swap"><QrCode text={payload} size={size} label="Your personal QR code. Another cousin can scan it." /></span>
       </button>
       <div className="flex items-center gap-1.5 text-xs text-muted">
         <span>New code in {mm}:{ss}</span>

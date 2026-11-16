@@ -148,15 +148,15 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className="card flex min-h-0 flex-1 flex-col items-center justify-center gap-4" aria-label="Your link code">
+          <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 pb-4" aria-label="Your link code">
             <IrlMyCode familyId={family.id} />
-            <div className="grid w-full max-w-xs grid-cols-2 gap-3">
-              <button className="btn btn-primary !min-h-11 gap-2 !text-sm" onClick={() => setScanning(true)}>
-                <Icon name="camera" size={20} />
+            <div className="grid w-full max-w-[19rem] grid-cols-2 gap-3">
+              <button className="qr-btn" onClick={() => setScanning(true)}>
+                <span className="qr-btn-icon"><Icon name="camera" size={20} /></span>
                 Scan
               </button>
-              <button className="btn btn-plain !min-h-11 gap-2 !text-sm" onClick={() => setGroupSheet(true)}>
-                <Icon name="group" size={20} />
+              <button className="qr-btn" onClick={() => setGroupSheet(true)}>
+                <span className="qr-btn-icon"><Icon name="group" size={20} /></span>
                 Group
               </button>
             </div>

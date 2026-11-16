@@ -944,6 +944,9 @@ input[type="checkbox"] {
   --root-aura: rgb(36 87 214 / 0.14);
   --root-partner: #2457d6;
   --stage-bg: linear-gradient(180deg, #f7f9fc, #e9eef6);
+  --crown-fill: color-mix(in srgb, var(--accent) 13%, transparent);
+  --crown-edge: color-mix(in srgb, var(--accent) 55%, transparent);
+  --trunk-fill: color-mix(in srgb, #7a5a3a 75%, var(--surface));
   position: relative;
   isolation: isolate;
   background: var(--stage-bg);
@@ -1920,3 +1923,10 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .qr-btn:active { transform: scale(0.97); }
 .qr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .qr-btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; }
+
+/* The crown, banner and trunk behind the family tree: they take the app theme's accent colour. */
+.family-tree-stage .tree-leaves { fill: var(--crown-fill); stroke: var(--crown-edge); stroke-width: 1.4; }
+.family-tree-stage .tree-bead { fill: var(--accent); }
+.family-tree-stage .tree-trunk { fill: var(--trunk-fill); stroke: color-mix(in srgb, var(--trunk-fill) 60%, var(--ink)); stroke-width: 1; }
+.family-tree-stage .tree-banner { fill: var(--accent); }
+.family-tree-stage .tree-banner-text { fill: var(--accent-ink); font-family: var(--font-display, inherit); }

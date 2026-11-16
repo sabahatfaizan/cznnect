@@ -278,6 +278,7 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
             meId={mine?.id ?? null}
             focus={focus}
             litId={litId}
+            title={family.name}
             onSelect={(id) => show(id, false, false)}
             onClear={() => setLitId(null)}
           />

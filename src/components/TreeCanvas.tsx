@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
 import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
 import { rootlets, taperPath } from '../lib/roots'
+import { canopyFor } from '../lib/canopy'
 
 type View = { x: number; y: number; k: number }
 const MIN_K = 0.1
@@ -89,6 +90,7 @@ export default function TreeCanvas({
   meId,
   focus,
   litId,
+  title,
   onSelect,
   onClear,
 }: {
@@ -99,10 +101,15 @@ export default function TreeCanvas({
   focus: { id: string; tick: number } | null
   // The person whose line of descent is lit; everyone else is dimmed.
   litId: string | null
+  // Written on the banner above the crown.
+  title?: string
   onSelect: (id: string) => void
   onClear: () => void
 }) {
   const box = useRef<HTMLDivElement>(null)
+  // The crown, banner and trunk around the people, which widens with the widest generation.
+  const deco = useMemo(() => canopyFor(layout), [layout])
+  const frame = deco?.frame ?? { x: 0, y: 0, w: layout.width, h: layout.height }
   const drawing = useRef<SVGSVGElement>(null)
   const settle = useRef<number | undefined>(undefined)
   const [size, setSize] = useState({ w: 0, h: 0 })
@@ -211,21 +218,21 @@ export default function TreeCanvas({
   // The whole tree on screen at once.
   const fit = useCallback(() => {
     if (size.w === 0 || layout.width === 0) return
-    const k = clamp(Math.min(size.w / layout.width, size.h / layout.height), MIN_K, 1)
-    glide({ k, x: (size.w - layout.width * k) / 2, y: Math.max(8, (size.h - layout.height * k) / 2) })
-  }, [size.w, size.h, layout.width, layout.height, glide])
+    const k = clamp(Math.min(size.w / frame.w, size.h / frame.h), MIN_K, 1)
+    glide({ k, x: (size.w - frame.w * k) / 2 - frame.x * k, y: Math.max(8, (size.h - frame.h * k) / 2) - frame.y * k })
+  }, [size.w, size.h, layout.width, frame.x, frame.y, frame.w, frame.h, glide])
 
   // First view: a small tree is shown whole; a bigger one opens on you (or the oldest couple) at a readable size.
   useEffect(() => {
     if (started.current || size.w === 0 || layout.nodes.length === 0) return
     started.current = true
-    const whole = Math.min(size.w / layout.width, size.h / layout.height)
+    const whole = Math.min(size.w / frame.w, size.h / frame.h)
     if (whole >= 0.6) fit()
     else centerOn(((meId && layout.nodes.find((n) => n.id === meId)) || layout.nodes[0]).id, READABLE_K)
     // The opening view appears in place; only later moves glide.
     window.clearTimeout(glideTimer.current)
     setGliding(false)
-  }, [size.w, layout, fit, centerOn, meId])
+  }, [size.w, layout, frame.w, frame.h, fit, centerOn, meId])
 
   // Jump to someone chosen from the search box.
   useEffect(() => {
@@ -345,6 +352,15 @@ export default function TreeCanvas({
   const scene = useMemo(
     () => (
       <>
+    {deco && (
+      <g pointerEvents="none" className="tree-crown">
+        <path d={deco.trunk} className="tree-trunk" />
+        <path d={deco.crown} className="tree-leaves" />
+        {deco.bubbles.map((b, i) => <circle key={i} cx={b.cx} cy={b.cy} r={b.r} className="tree-bead" opacity={b.dim ? 0.55 : 0.95} />)}
+        <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={6} className="tree-banner" />
+        <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={20} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
+      </g>
+    )}
     {(() => {
       const dimmed = (e: (typeof layout.edges)[number]) => {
         if (!kin) return false
@@ -442,7 +458,7 @@ export default function TreeCanvas({
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox],
+    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

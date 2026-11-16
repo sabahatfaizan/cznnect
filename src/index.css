@@ -943,10 +943,11 @@ input[type="checkbox"] {
   --root-core: #bcd0ff;
   --root-aura: rgb(36 87 214 / 0.14);
   --root-partner: #2457d6;
-  --stage-bg: linear-gradient(180deg, #f7f9fc, #e9eef6);
-  --crown-fill: color-mix(in srgb, var(--accent) 13%, transparent);
-  --crown-edge: color-mix(in srgb, var(--accent) 55%, transparent);
-  --trunk-fill: color-mix(in srgb, #7a5a3a 75%, var(--surface));
+  --stage-bg: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--accent) 9%, var(--page)), var(--page) 75%);
+  --crown-fill: color-mix(in srgb, var(--accent) 20%, var(--page));
+  --crown-edge: color-mix(in srgb, var(--accent) 60%, transparent);
+  --trunk-fill: color-mix(in srgb, #7a5a3a 70%, var(--page));
+  --tree-line: color-mix(in srgb, #e0489b 62%, var(--accent));
   position: relative;
   isolation: isolate;
   background: var(--stage-bg);
@@ -1930,3 +1931,22 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-trunk { fill: var(--trunk-fill); stroke: color-mix(in srgb, var(--trunk-fill) 60%, var(--ink)); stroke-width: 1; }
 .family-tree-stage .tree-banner { fill: var(--accent); }
 .family-tree-stage .tree-banner-text { fill: var(--accent-ink); font-family: var(--font-display, inherit); }
+
+/* Family tree: pill chips, connector lines and fold dots, all in the app theme's colours. */
+.family-tree-stage .tnode-rect { stroke: color-mix(in srgb, var(--ink) 38%, transparent); stroke-width: 1.2; }
+.family-tree-stage .tnode-me { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.8; }
+.family-tree-stage .tnode-sel { stroke: var(--accent); stroke-width: 2.8; }
+.family-tree-stage .tchip-name { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 600; }
+.family-tree-stage .tnode { transition: opacity 0.25s, transform 0.15s; }
+.family-tree-stage .tnode:active .tnode-rect { stroke: var(--accent); }
+.family-tree-stage .tree-line { fill: none; stroke: var(--tree-line); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.family-tree-stage .tree-tie { fill: none; stroke: var(--tree-line); stroke-width: 2; stroke-dasharray: 2 5; stroke-linecap: round; }
+.family-tree-stage .tree-dot { fill: var(--tree-line); }
+.family-tree-stage .tree-fold { cursor: pointer; }
+.family-tree-stage .tree-fold-badge { fill: var(--tree-line); }
+.family-tree-stage .tree-fold-text { fill: #fff; }
+.family-tree-stage .tree-dim { opacity: 0.14; }
+.family-tree-stage .tree-lines { transition: opacity 0.25s; }
+.family-tree-stage .tree-gen { fill: color-mix(in srgb, var(--ink) 45%, transparent); font-family: Georgia, serif; font-style: italic; }
+.family-tree-stage .tree-bead { animation: tree-twinkle 4.5s ease-in-out infinite; }
+@keyframes tree-twinkle { 50% { opacity: 0.3; } }

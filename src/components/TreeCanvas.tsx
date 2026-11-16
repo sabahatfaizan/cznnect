@@ -324,6 +324,8 @@ export default function TreeCanvas({
   function onClick(e: MouseEvent<HTMLDivElement>) {
     if (gesture.current.moved) return
     const hit = document.elementFromPoint(e.clientX, e.clientY)
+    const fold = hit?.closest('[data-fold]')?.getAttribute('data-fold')
+    if (fold) { toggleFold(fold); return }
     const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
     if (id) onSelect(id)
     else onClear()
@@ -345,6 +347,49 @@ export default function TreeCanvas({
     e.preventDefault()
   }
 
+  // Branches folded shut: the family's junction dot (or its +N badge) is tapped to fold or open the line below it.
+  const [folded, setFolded] = useState<Set<string>>(new Set())
+  const tree = useMemo(() => {
+    const down = new Map<string, string[]>()
+    const mates = new Map<string, string[]>()
+    const hasParent = new Set<string>()
+    const add = (m: Map<string, string[]>, k: string, v: string) => m.set(k, [...(m.get(k) ?? []), v])
+    for (const e of layout.edges) {
+      if (e.kind === 'parent') for (const p of e.parents ?? []) for (const k of e.kids ?? []) { add(down, p, k); hasParent.add(k) }
+      else if (e.kind === 'partner' && e.parents) { add(mates, e.parents[0], e.parents[1]); add(mates, e.parents[1], e.parents[0]) }
+    }
+    return { down, mates, hasParent }
+  }, [layout])
+  const hidden = useMemo(() => {
+    const out = new Set<string>()
+    const counts = new Map<string, number>()
+    for (const e of layout.edges) {
+      if (e.kind !== 'parent' || !folded.has(e.id)) continue
+      const mine = new Set<string>()
+      const todo = [...(e.kids ?? [])]
+      while (todo.length) {
+        const id = todo.pop() as string
+        if (mine.has(id)) continue
+        mine.add(id)
+        for (const k of tree.down.get(id) ?? []) todo.push(k)
+        // Someone who married in goes with the branch they joined.
+        for (const m of tree.mates.get(id) ?? []) if (!tree.hasParent.has(m)) todo.push(m)
+      }
+      for (const id of mine) out.add(id)
+      counts.set(e.id, mine.size)
+    }
+    return { out, counts }
+  }, [layout, folded, tree])
+  const toggleFold = useCallback((id: string) => setFolded((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n }), [])
+  // Fold every family below the first generation, or open everything again.
+  const foldAll = useCallback(() => {
+    setFolded((f) => {
+      if (f.size > 0) return new Set()
+      const top = new Set(layout.nodes.filter((n) => n.gen === 0).map((n) => n.id))
+      return new Set(layout.edges.filter((e) => e.kind === 'parent' && (e.parents ?? []).some((p) => !top.has(p))).map((e) => e.id))
+    })
+  }, [layout])
+
   // The drawing itself. It is built once per change of people, selection or lit line, not on every drag
   // frame, so panning and pinching only move the picture and stay smooth.
   const selectRef = useRef(onSelect)
@@ -356,7 +401,7 @@ export default function TreeCanvas({
       <g pointerEvents="none" className="tree-crown">
         <path d={deco.trunk} className="tree-trunk" />
         <path d={deco.crown} className="tree-leaves" />
-        {deco.bubbles.map((b, i) => <circle key={i} cx={b.cx} cy={b.cy} r={b.r} className="tree-bead" opacity={b.dim ? 0.55 : 0.95} />)}
+        {deco.bubbles.map((b, i) => <circle key={i} cx={b.cx} cy={b.cy} r={b.r} className="tree-bead" opacity={b.dim ? 0.55 : 0.95} style={{ animationDelay: `${(i % 9) * 0.45}s` }} />)}
         <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={6} className="tree-banner" />
         <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={20} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
       </g>
@@ -364,51 +409,67 @@ export default function TreeCanvas({
     {(() => {
       const dimmed = (e: (typeof layout.edges)[number]) => {
         if (!kin) return false
-        if (e.kind === 'tip') return !kin.has(e.person ?? '')
         if (e.kind === 'partner') return !((e.parents ?? []).every((id) => kin.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
         return !((e.parents ?? []).some((id) => kin.has(id)) && (e.kids ?? []).some((id) => kin.has(id)))
       }
-      const roots = layout.edges
-        .filter((e) => e.segs)
-        .map((e) => ({
-          e,
-          dim: dimmed(e),
-          parts: (e.segs ?? []).map((seg, i) => ({ seg, hairs: e.kind === 'parent' ? rootlets(seg, `${e.id}:${i}`) : [] })),
-        }))
-      const partners = layout.edges.filter((e) => e.kind === 'partner')
+      const at = new Map(layout.nodes.map((n) => [n.id, n]))
+      const TOP = 17 // the pill sits in the middle of its 80-high box
+      const BOTTOM = 63
+      const cx = (id: string) => (at.get(id) as { x: number }).x + NODE_W / 2
       return (
-        <g pointerEvents="none">
-          <g className="root-aura">
-            {roots.map(({ e, dim, parts }) => (
-              <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
-                {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 2.6 + 6, seg.w1 * 2.6 + 4)} />)}
+        <g className="tree-lines">
+          {layout.edges.filter((e) => e.kind === 'partner').map((e) => {
+            const [pa, pb] = e.parents ?? []
+            if (!pa || !pb || hidden.out.has(pa) || hidden.out.has(pb)) return null
+            return <path key={e.id} d={e.d} className={`tree-tie ${dimmed(e) ? 'tree-dim' : ''}`} />
+          })}
+          {layout.edges.filter((e) => e.kind === 'parent').map((e) => {
+            const parents = (e.parents ?? []).filter((id) => at.has(id))
+            const kids = (e.kids ?? []).filter((id) => at.has(id))
+            if (parents.length === 0 || kids.length === 0 || parents.some((id) => hidden.out.has(id))) return null
+            const py = Math.max(...parents.map((id) => (at.get(id) as { y: number }).y + BOTTOM))
+            const ky = Math.min(...kids.map((id) => (at.get(id) as { y: number }).y + TOP))
+            const jy = py + (ky - py) * 0.5
+            const mx = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
+            const shut = folded.has(e.id)
+            const xs = [...parents.map(cx), ...(shut ? [] : kids.map(cx))]
+            let d = parents.map((id) => `M${cx(id)} ${(at.get(id) as { y: number }).y + BOTTOM}V${jy}`).join('')
+            d += `M${Math.min(...xs)} ${jy}H${Math.max(...xs)}`
+            if (!shut) d += kids.map((id) => `M${cx(id)} ${jy}V${(at.get(id) as { y: number }).y + TOP}`).join('')
+            const n = hidden.counts.get(e.id) ?? 0
+            return (
+              <g key={e.id} className={dimmed(e) ? 'tree-dim' : ''}>
+                <path d={d} className="tree-line" />
+                <g data-fold={e.id} className="tree-fold" role="button" aria-label={shut ? `Show ${n} people below` : 'Fold this branch'}>
+                  <circle cx={mx} cy={jy} r={22} fill="transparent" />
+                  {shut ? (
+                    <>
+                      <rect x={mx - 22} y={jy - 11} width={44} height={22} rx={11} className="tree-fold-badge" />
+                      <text x={mx} y={jy + 4.5} textAnchor="middle" fontSize={12} fontWeight={700} className="tree-fold-text">+{n}</text>
+                    </>
+                  ) : (
+                    <circle cx={mx} cy={jy} r={5} className="tree-dot" />
+                  )}
+                </g>
               </g>
-            ))}
-          </g>
-          <g className="root-body">
-            {roots.map(({ e, dim, parts }) => (
-              <g key={e.id} className={`${e.kind === 'tip' ? 'root-tip ' : ''}${dim ? 'root-dim' : 'root-lit'}`}>
-                {parts.map(({ seg, hairs }, i) => (
-                  <g key={i}>
-                    <path d={taperPath(seg.d, seg.w0, seg.w1)} />
-                    {hairs.map((h, j) => <path key={j} d={taperPath(h.d, h.w0, h.w1)} />)}
-                  </g>
-                ))}
-              </g>
-            ))}
-          </g>
-          <g className="root-core">
-            {roots.map(({ e, dim, parts }) => (
-              <g key={e.id} className={dim ? 'root-dim' : 'root-lit'}>
-                {parts.map(({ seg }, i) => <path key={i} d={taperPath(seg.d, seg.w0 * 0.3, Math.max(0.5, seg.w1 * 0.3))} />)}
-              </g>
-            ))}
-          </g>
-          {partners.map((e) => <path key={e.id} d={e.d} className={`root-partner ${dimmed(e) ? 'root-dim' : ''}`} />)}
+            )
+          })}
         </g>
       )
     })()}
-    {layout.nodes.map((n) => {
+    {(() => {
+      // Faint generation labels down the left edge of the crown.
+      const gens = new Map<number, number>()
+      for (const n of layout.nodes) if (!gens.has(n.gen)) gens.set(n.gen, n.y + 44)
+      if (gens.size < 2) return null
+      const left = Math.min(...layout.nodes.map((n) => n.x)) - 18
+      return (
+        <g pointerEvents="none" className="tree-gens">
+          {[...gens.entries()].map(([g, y]) => <text key={g} x={left} y={y} textAnchor="end" fontSize={12} className="tree-gen">Gen {g + 1}</text>)}
+        </g>
+      )
+    })()}
+    {layout.nodes.filter((n) => !hidden.out.has(n.id)).map((n) => {
       const p = people.get(n.id)
       if (!p) return null
       const year = p.birth_date ? p.birth_date.slice(0, 4) : ''
@@ -417,18 +478,13 @@ export default function TreeCanvas({
       if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
       if (p.is_deceased) classes.push('tnode-gone')
       const dim = kin ? !kin.has(n.id) : false
-      // Name, nickname and year share an 80-high box: a two-line name moves everything up and shrinks the year.
-      const nameFit = fitName(measure, p.full_name, nameBox.w, nameBox.base, nameBox.min)
-      const nick = p.nickname ? fitLine(measure, `“${p.nickname}”`, nameBox.w, 13, 10.5) : null
+      const nameFit = fitName(measure, p.full_name, nameBox.w - 14, 15, 11.5)
       const two = nameFit.lines.length > 1
-      const names = {
-        lines: nameFit.lines,
-        size: nameFit.size,
-        y: two ? (nick ? [24, 39] : [28, 44]) : [nick ? 30 : 36],
-        nickY: two ? 55 : 50,
-        yearY: two ? (nick ? 71 : 66) : nick ? 69 : 60,
-        yearSize: two ? 11.5 : 12.5,
-      }
+      const sub = [p.nickname ? `“${p.nickname}”` : '', n.id === meId ? (year ? `you · ${year}` : 'you') : year ? `b. ${year}` : ''].filter(Boolean).join(' · ')
+      const subFit = sub ? fitLine(measure, sub, nameBox.w - 14, 11, 9) : null
+      const h = (two ? 54 : 46) + (subFit && two ? 0 : 0)
+      const top = (NODE_H - h) / 2
+      const nameY = two ? [top + 19, top + 33] : [top + (subFit ? 20 : 28)]
       return (
         <g
           key={n.id}
@@ -445,20 +501,17 @@ export default function TreeCanvas({
             }
           }}
         >
-          <rect className={classes.join(' ')} width={NODE_W} height={NODE_H} />
-          {names.lines.map((line, i) => (
-            <text key={i} x={NODE_W / 2} y={names.y[i]} textAnchor="middle" className="fill-ink" fontSize={names.size} fontWeight="700">{line}</text>
+          <rect className={classes.join(' ')} x={0} y={top} width={NODE_W} height={h} rx={h / 2} ry={h / 2} />
+          {nameFit.lines.map((line, i) => (
+            <text key={i} x={NODE_W / 2} y={nameY[i]} textAnchor="middle" className="tchip-name fill-ink" fontSize={nameFit.size}>{line}</text>
           ))}
-          {nick && <text x={NODE_W / 2} y={names.nickY} textAnchor="middle" className="fill-muted" fontSize={nick.size}>{nick.text}</text>}
-          <text x={NODE_W / 2} y={names.yearY} textAnchor="middle" className="fill-muted" fontSize={names.yearSize}>
-            {n.id === meId ? (year ? `You · ${year}` : 'You') : p.is_deceased ? (year ? `b. ${year}` : '') : year ? `b. ${year}` : ''}
-          </text>
+          {subFit && <text x={NODE_W / 2} y={top + h - (two ? 9 : 10)} textAnchor="middle" className="fill-muted" fontSize={subFit.size}>{subFit.text}</text>}
         </g>
       )
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title],
+    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded],
   )
 
   const centerButton = (label: string, onClick: () => void) => (
@@ -506,6 +559,7 @@ export default function TreeCanvas({
         {centerButton('+', () => zoomAt(size.w / 2, size.h / 2, 1.25))}
         {centerButton('−', () => zoomAt(size.w / 2, size.h / 2, 1 / 1.25))}
         {centerButton('Fit', fit)}
+        {layout.edges.some((e) => e.kind === 'parent') && centerButton(folded.size > 0 ? 'Open' : 'Fold', foldAll)}
         {meId && centerButton('Me', () => centerOn(meId, Math.max(view.k, READABLE_K)))}
       </div>
     </div>

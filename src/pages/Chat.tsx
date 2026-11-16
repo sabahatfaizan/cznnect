@@ -3,12 +3,32 @@ import { supabase } from '../supabase'
 import type { Family } from '../types'
 import Avatar from '../components/Avatar'
 import { Icon } from '../components/Icons'
-import { friendlyError } from '../lib/offline'
+import { friendlyError, isNetworkError, isOffline, onBackOnline } from '../lib/offline'
+import { readLocalCopy, saveLocalCopy } from '../lib/savedData'
 import Sheet from '../components/Sheet'
 import { markChatRead } from '../lib/pulse'
 import { useScreenVisible } from '../lib/screenVisible'
 
 type Msg = { id: number; user_id: string; sender: string; avatar: string | null; body: string; created_at: string; edited_at?: string | null }
+
+type Outgoing = { cid: string; body: string; at: number }
+
+// A failed request because the phone has no internet (as opposed to the server saying no).
+function isOfflineErr(e: unknown): boolean {
+  return (e as { code?: string } | null)?.code === 'offline' || isNetworkError(e) || isOffline()
+}
+
+// Small status marks under your own messages: a tick once the message has reached the server, a clock while it waits.
+function Tick() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Sent" className="inline-block align-[-2px]"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+  )
+}
+function ClockMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="Waiting to send" className="inline-block align-[-2px]"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
+  )
+}
 
 const MAX = 200
 const EDIT_WINDOW_MS = 15 * 60_000
@@ -28,8 +48,11 @@ const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '
 // The family chat: everyone in the family sees the same thread, and every message also goes to the other cousins as a
 // phone notification. It is one shared thread, not private messages.
 export default function Chat({ family, userId, canDelete = false }: { family: Family; userId: string; canDelete?: boolean }) {
-  const [messages, setMessages] = useState<Msg[]>([])
-  const [loaded, setLoaded] = useState(false)
+  // The chat is kept on the phone like WhatsApp, so it opens at once and still reads with no internet.
+  const copyKey = `chat-${family.id}`
+  const outboxKey = `outbox-${family.id}`
+  const [messages, setMessages] = useState<Msg[]>(() => readLocalCopy<Msg[]>(copyKey) ?? [])
+  const [loaded, setLoaded] = useState(() => readLocalCopy<Msg[]>(copyKey) !== null)
   const [error, setError] = useState('')
   // Press and hold a message for its options: edit, delete for me, delete for everyone.
   const [menu, setMenu] = useState<Msg | null>(null)
@@ -38,7 +61,15 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   const [busy, setBusy] = useState(false)
   const press = useRef<{ timer: number; x: number; y: number } | null>(null)
   const [text, setText] = useState('')
-  const [pending, setPending] = useState<string[]>([])
+  // Messages written but not yet delivered (no internet). They stay on the phone and go out by themselves.
+  const [outbox, setOutboxState] = useState<Outgoing[]>(() => readLocalCopy<Outgoing[]>(outboxKey) ?? [])
+  const outboxRef = useRef(outbox)
+  const setOutbox = useCallback((next: Outgoing[]) => {
+    outboxRef.current = next
+    setOutboxState(next)
+    saveLocalCopy(outboxKey, next)
+  }, [outboxKey])
+  const flushing = useRef(false)
   const [navH, setNavH] = useState(72)
   const box = useRef<HTMLTextAreaElement>(null)
   const end = useRef<HTMLDivElement>(null)
@@ -52,28 +83,59 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
       const { data, error: err } = await supabase.rpc('family_messages', { fid: family.id, lim: 100 })
       if (err) {
         const code = (err as { code?: string }).code
-        setError(code === 'PGRST202' || code === '42883' ? 'Chat is not set up yet. In Supabase, run supabase/17_family_chat.sql, then 22_chat_message_options.sql.' : friendlyError(err, 'Could not load the chat.'))
-        return
+        if (code === 'PGRST202' || code === '42883') setError('Chat is not set up yet. In Supabase, run supabase/17_family_chat.sql, then 22_chat_message_options.sql.')
+        else if (!isOfflineErr(err)) setError(friendlyError(err, 'Could not load the chat.'))
+        return // no internet: just keep showing the saved chat
       }
       setError('')
       const rows = (Array.isArray(data) ? data : []) as Msg[]
+      saveLocalCopy(copyKey, rows)
       // Only change state when something is new, so the screen never flickers while polling.
       const sig = (l: Msg[]) => l.map((m) => `${m.id}:${m.edited_at ?? ''}`).join('|')
       setMessages((old) => (sig(old) === sig(rows) ? old : rows))
     } catch (e) {
-      setError(friendlyError(e, 'Could not load the chat.'))
+      if (!isOfflineErr(e)) setError(friendlyError(e, 'Could not load the chat.'))
     } finally {
       setLoaded(true)
     }
-  }, [family.id])
+  }, [family.id, copyKey])
+
+  // Sends the waiting messages one by one, oldest first. With no internet it stops and tries again later.
+  const flush = useCallback(async () => {
+    if (flushing.current) return
+    flushing.current = true
+    try {
+      while (outboxRef.current.length > 0) {
+        const next = outboxRef.current[0]
+        try {
+          const { data, error: err } = await supabase.functions.invoke('send-push', { body: { body: next.body, family_id: family.id } })
+          if (data?.error) throw new Error(data.error)
+          if (err) throw err
+        } catch (e) {
+          if (isOfflineErr(e)) break
+          // The server refused it for real: do not keep retrying. Give the words back so nothing is lost.
+          setOutbox(outboxRef.current.filter((o) => o.cid !== next.cid))
+          setText((t) => (t ? t : next.body))
+          setError(friendlyError(e, 'Could not send the message.'))
+          continue
+        }
+        setOutbox(outboxRef.current.filter((o) => o.cid !== next.cid))
+        await load()
+      }
+    } finally {
+      flushing.current = false
+    }
+  }, [family.id, load, setOutbox])
 
   useEffect(() => {
     void load()
-    const tick = () => { if (document.visibilityState === 'visible') void load() }
+    void flush()
+    const tick = () => { if (document.visibilityState === 'visible') { void load(); void flush() } }
     const id = window.setInterval(tick, POLL_MS)
     document.addEventListener('visibilitychange', tick)
-    return () => { window.clearInterval(id); document.removeEventListener('visibilitychange', tick) }
-  }, [load])
+    const stopOnline = onBackOnline(() => { void flush(); void load() })
+    return () => { window.clearInterval(id); document.removeEventListener('visibilitychange', tick); stopOnline() }
+  }, [load, flush])
 
   // Keep the composer just above the bottom bar, whatever height that bar has on this phone.
   useEffect(() => {
@@ -138,7 +200,7 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
     } else if (stick.current) {
       end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
     }
-  }, [messages, pending, loaded, visible])
+  }, [messages, outbox, loaded, visible])
 
   const clearPress = () => { if (press.current) { window.clearTimeout(press.current.timer); press.current = null } }
   useEffect(() => clearPress, [])
@@ -233,27 +295,16 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
   // Shrink back to one line after sending or cancelling an edit.
   useEffect(() => { resize() }, [text])
 
-  async function send() {
+  function send() {
     if (editing) { void saveEdit(); return }
     const body = text.trim().slice(0, MAX)
     if (!body) return
     setText('')
     setError('')
     stick.current = true
-    setPending((p) => [...p, body])
+    setOutbox([...outboxRef.current, { cid: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, body, at: Date.now() }])
     requestAnimationFrame(resize)
-    try {
-      const { data, error: err } = await supabase.functions.invoke('send-push', { body: { body, family_id: family.id } })
-      if (data?.error) throw new Error(data.error)
-      if (err) throw err
-      await load()
-    } catch (e) {
-      setText((t) => (t ? t : body)) // give the words back so nothing is lost
-      setError(friendlyError(e, 'Could not send the message. Check your connection and try again.'))
-      requestAnimationFrame(resize)
-    } finally {
-      setPending((p) => { const i = p.indexOf(body); return i < 0 ? p : [...p.slice(0, i), ...p.slice(i + 1)] })
-    }
+    void flush()
   }
 
   // Which bubbles are new since the last render, so only they slide in.
@@ -270,9 +321,9 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
         <p className="text-sm text-muted">Visible to the whole family. Hold a message for options.</p>
       </header>
 
-      {error && <p role="alert" className="card text-sm font-bold text-danger">{error}</p>}
+      {error && <p role="alert" className="text-center text-xs font-semibold text-danger">{error}</p>}
       {!loaded && !error && <p role="status" className="py-10 text-center text-sm text-muted">Loading…</p>}
-      {loaded && !error && messages.length === 0 && pending.length === 0 && (
+      {loaded && !error && messages.length === 0 && outbox.length === 0 && (
         <p className="py-10 text-center text-sm text-muted">No messages yet. Say hi to your cousins.</p>
       )}
 
@@ -307,17 +358,17 @@ export default function Chat({ family, userId, canDelete = false }: { family: Fa
                     onContextMenu={(e) => { e.preventDefault(); clearPress(); setConfirmAll(false); setMenu(m) }}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setConfirmAll(false); setMenu(m) } }}
                   >{m.body}</p>
-                  {endsGroup && <p className="mt-0.5 px-1 text-[0.7rem] text-muted">{clock(d)}{m.edited_at ? ' · edited' : ''}</p>}
+                  {endsGroup && <p className="mt-0.5 px-1 text-[0.7rem] text-muted">{clock(d)}{m.edited_at ? ' · edited' : ''}{mine && <> <Tick /></>}</p>}
                 </div>
               </div>
             </li>
           )
         })}
-        {pending.map((body, i) => (
-          <li key={`p${i}`} className="chat-in mt-0.5 flex justify-end">
+        {outbox.map((o) => (
+          <li key={o.cid} className="mt-0.5 flex justify-end">
             <div className="flex max-w-[78%] flex-col items-end">
-              <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-accent px-3.5 py-2 text-[0.95rem] leading-snug text-accent-ink opacity-60">{body}</p>
-              <p className="mt-0.5 px-1 text-[0.7rem] text-muted">Sending…</p>
+              <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-accent px-3.5 py-2 text-[0.95rem] leading-snug text-accent-ink">{o.body}</p>
+              <p className="mt-0.5 px-1 text-[0.7rem] text-muted">{clock(new Date(o.at))} <ClockMark /></p>
             </div>
           </li>
         ))}

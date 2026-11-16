@@ -123,12 +123,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   return (
     // One fixed screen: it never scrolls (the document is locked while Convoy is open).
     <div className="flex max-h-[calc(100dvh-13rem)] flex-col gap-3 overflow-hidden">
-      <header>
-        <p className="text-sm text-muted">
-          Link up with cousins in person and earn points.
-        </p>
-      </header>
-
       {notice && (
         <p role="status" className="rounded-[var(--radius-ctl)] bg-accent-soft px-3 py-2 text-sm font-bold text-accent-text">
           {notice}
@@ -154,15 +148,16 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className="card flex min-h-0 flex-1 flex-col items-center justify-center gap-3" aria-label="Your link code">
-            <h2 className="eyebrow">Your link code</h2>
+          <section className="card flex min-h-0 flex-1 flex-col items-center justify-center gap-4" aria-label="Your link code">
             <IrlMyCode familyId={family.id} />
-            <div className="flex items-center justify-center gap-3">
-              <button className="btn btn-primary !h-12 !w-16 !p-0" onClick={() => setScanning(true)} aria-label="Scan a cousin's code to link" title="Scan to link">
-                <Icon name="camera" size={24} />
+            <div className="grid w-full max-w-xs grid-cols-2 gap-3">
+              <button className="btn btn-primary !min-h-11 gap-2 !text-sm" onClick={() => setScanning(true)}>
+                <Icon name="camera" size={20} />
+                Scan
               </button>
-              <button className="btn btn-plain !h-12 !w-16 !p-0" onClick={() => setGroupSheet(true)} aria-label="Start a group meetup" title="Group meetup">
-                <Icon name="group" size={24} />
+              <button className="btn btn-plain !min-h-11 gap-2 !text-sm" onClick={() => setGroupSheet(true)}>
+                <Icon name="group" size={20} />
+                Group
               </button>
             </div>
           </section>

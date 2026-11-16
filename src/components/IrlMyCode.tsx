@@ -104,12 +104,10 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <button type="button" onClick={() => setBig(true)} aria-label="Enlarge your link code" className="flex flex-col items-center gap-1">
+      <button type="button" onClick={() => setBig(true)} aria-label="Enlarge your link code" title="Tap to enlarge" className="flex flex-col items-center">
         <span key={payload} className="qr-swap"><QrCode text={payload} size={240} label="Your personal QR code. Another cousin can scan it." /></span>
-        <span className="text-xs font-bold uppercase tracking-widest text-muted">Tap to enlarge</span>
       </button>
-      <p className="select-all text-center font-mono text-sm font-semibold tracking-wider text-accent-text">{readableCode(payload)}</p>
-      <div className="flex items-center gap-2 text-sm text-muted">
+      <div className="flex items-center gap-1.5 text-xs text-muted">
         <span>New code in {mm}:{ss}</span>
         <button
           type="button"
@@ -117,9 +115,9 @@ export default function IrlMyCode({ familyId }: { familyId: string }) {
           disabled={refreshing}
           aria-label="Get a new code now"
           title="Get a new code now"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface-2 text-current transition hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-current transition hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-60"
         >
-          <span className={refreshing ? 'animate-spin' : ''}><Icon name="refresh" size={18} /></span>
+          <span className={refreshing ? 'animate-spin' : ''}><Icon name="refresh" size={16} /></span>
         </button>
       </div>
       {error && (

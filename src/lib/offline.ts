@@ -110,7 +110,7 @@ function wantsTimeout(input: RequestInfo | URL, init?: RequestInit): boolean {
   if (init?.signal) return false
   const method = (init?.method ?? (typeof Request !== 'undefined' && input instanceof Request ? input.method : 'GET')).toUpperCase()
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
-  return method === 'GET' || method === 'HEAD' || url.includes('/auth/v1/')
+  return method === 'GET' || method === 'HEAD' || url.includes('/auth/v1/') || url.includes('/functions/v1/send-push')
 }
 
 /** A quick check, at start-up, of whether the server can be reached at all. Any answer at all means yes. */

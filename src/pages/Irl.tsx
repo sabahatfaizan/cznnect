@@ -148,10 +148,9 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 pb-4" aria-label="Your link code">
-            <IrlMyCode familyId={family.id} />
+          <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-7 pb-3 pt-4" aria-label="Your link code">
             <div className="grid w-full max-w-[19rem] grid-cols-2 gap-3">
-              <button className="qr-btn" onClick={() => setScanning(true)}>
+              <button className="qr-btn qr-btn-main" onClick={() => setScanning(true)}>
                 <span className="qr-btn-icon"><Icon name="camera" size={20} /></span>
                 Scan
               </button>
@@ -160,6 +159,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
                 Group
               </button>
             </div>
+            <IrlMyCode familyId={family.id} />
           </section>
 
         </>

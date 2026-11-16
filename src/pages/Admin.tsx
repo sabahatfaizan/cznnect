@@ -289,7 +289,9 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
 
   function saveMinBuild(value: number) {
     if (value > 0 && !window.confirm(`Every Android app older than build ${value} will be blocked until it is updated, including your own phone. The access PIN (tap the logo 5 times) gets past the screen. Continue?`)) return
-    void save({ min_build: value }, value > 0 ? `Apps older than build ${value} must update.` : 'Forced updates are off.')
+    // Requiring a build also announces it, so phones on an older build see the update card straight away.
+    if (value > 0) void save({ min_build: value, announced_build: value }, `Build ${value} is required and announced. Apps older than that must update.`)
+    else void save({ min_build: 0 }, 'Forced updates are off.')
   }
 
   // Live counts for the overview tiles. Owner only; quietly absent until supabase/20_admin_overview.sql has been run.

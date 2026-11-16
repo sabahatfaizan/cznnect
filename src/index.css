@@ -1914,8 +1914,9 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 @keyframes ach-wiggle { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 @keyframes ach-spark { from { transform: rotate(var(--a)) translateY(0) scale(1); opacity: 1; } to { transform: rotate(var(--a)) translateY(-2.9rem) scale(0.4); opacity: 0; } }
 
-/* Convoy's Scan and Group buttons: the same light tile and dark ink as the QR code beside them. */
-.qr-btn { display: flex; align-items: center; justify-content: center; gap: 0.6rem; min-height: 3.5rem; border-radius: 1.5rem; background: #eef0f3; color: #0b1220; font-weight: 800; font-size: 0.95rem; transition: transform 120ms ease; }
+/* Convoy's Scan and Group buttons: the QR tile's rounded shape, in the colours of the chosen theme. */
+.qr-btn { display: flex; align-items: center; justify-content: center; gap: 0.6rem; min-height: 3.5rem; border-radius: 1.5rem; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-weight: 800; font-size: 0.95rem; transition: transform 120ms ease; }
+.qr-btn-main { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .qr-btn:active { transform: scale(0.97); }
 .qr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.qr-btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #0b1220; color: #eef0f3; }
+.qr-btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; }

@@ -16,8 +16,8 @@ function build(text: string) {
   const { size, data } = create(text, { errorCorrectionLevel: 'M' }).modules
   const at = (x: number, y: number) => data[y * size + x] === 1
   const finder = (x: number, y: number) => (x < 7 && y < 7) || (x >= size - 7 && y < 7) || (x < 7 && y >= size - 7)
-  const unit = 60 / size
-  const origin = 20
+  const unit = 76 / size
+  const origin = 12
   const shapes: { k: string; p: Record<string, number> }[] = []
   for (let y = 0; y < size; y++) {
     let x = 0

@@ -1,3 +1,4 @@
+import { appUrl } from '../lib/native'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ShareAppCard from '../components/ShareAppCard'
 import Fold from '../components/Fold'
@@ -141,6 +142,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const { settings, error: settingsError, reload } = useAppSettings(60000)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [resetting, setResetting] = useState<string | null>(null)
   const [maintMessage, setMaintMessage] = useState('')
   const [announceText, setAnnounceText] = useState('')
   const [minBuildInput, setMinBuildInput] = useState('')
@@ -285,6 +287,22 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
     } catch { setNotice('Could not copy. Select the code and copy it by hand.') }
+  }
+
+  // Sends the person Supabase's own "reset your password" email. They choose the new password themselves; the owner never sees it.
+  async function sendReset(u: AppUser) {
+    if (!u.email) { setNotice('That account has no email address.'); return }
+    if (!window.confirm(`Send a password reset email to ${u.email}?`)) return
+    setResetting(u.user_id)
+    setNotice('')
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(u.email, { redirectTo: appUrl() })
+      setNotice(error ? `Could not send the reset email: ${error.message}` : `Password reset email sent to ${u.email}.`)
+    } catch {
+      setNotice('Could not send the reset email. Check the connection and try again.')
+    } finally {
+      setResetting(null)
+    }
   }
 
   function saveMinBuild(value: number) {
@@ -1058,6 +1076,11 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                         {u.last_sign_in_at ? ` · last seen ${new Date(u.last_sign_in_at).toLocaleDateString()}` : ''}
                         {u.families ? ` · ${u.families}` : ' · no family yet'}
                       </p>
+                      {u.email && (
+                        <button type="button" className="mt-1.5 text-xs font-bold underline underline-offset-4 disabled:opacity-60" disabled={resetting === u.user_id} onClick={() => void sendReset(u)}>
+                          {resetting === u.user_id ? 'Sending…' : 'Send password reset email'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )

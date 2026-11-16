@@ -7,17 +7,17 @@ const INK = '#0b1220'
 const TILE = '#eef0f3'
 const SPECK = '#cdd2dc' // the faint dots that fill the gaps, like the Android Wi-Fi share code
 
-// One smooth, blended outline: a lobe in each corner, joined by gently dipped sides (no sharp notches).
+// One smooth, blended outline: a round lobe in each corner, joined by deep, soft dips in the sides (no sharp notches).
 const TILE_PATH =
-  'M50 5 C62 5 66 0 80 0 C94 0 100 6 100 20 C100 34 95 38 95 50 C95 62 100 66 100 80 C100 94 94 100 80 100 ' +
-  'C66 100 62 95 50 95 C38 95 34 100 20 100 C6 100 0 94 0 80 C0 66 5 62 5 50 C5 38 0 34 0 20 C0 6 6 0 20 0 C34 0 38 5 50 5 Z'
+  'M50 10 C60 10 62 0 73 0 C88 0 100 12 100 27 C100 38 90 38 90 50 C90 62 100 62 100 73 C100 88 88 100 73 100 ' +
+  'C62 100 60 90 50 90 C40 90 38 100 27 100 C12 100 0 88 0 73 C0 62 10 62 10 50 C10 38 0 38 0 27 C0 12 12 0 27 0 C38 0 40 10 50 10 Z'
 
 function build(text: string) {
   const { size, data } = create(text, { errorCorrectionLevel: 'M' }).modules
   const at = (x: number, y: number) => data[y * size + x] === 1
   const finder = (x: number, y: number) => (x < 7 && y < 7) || (x >= size - 7 && y < 7) || (x < 7 && y >= size - 7)
-  const unit = 76 / size
-  const origin = 12
+  const unit = 70 / size
+  const origin = 15
   const shapes: { k: string; p: Record<string, number> }[] = []
   for (let y = 0; y < size; y++) {
     let x = 0

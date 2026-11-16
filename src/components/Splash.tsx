@@ -9,8 +9,8 @@ export function prefersReducedMotion(): boolean {
   }
 }
 
-// Just the logo, dead centre. It turns twice: each turn slows to a rest, the diagonal connects, and the
-// spin carries on; after the second turn the app opens (App.tsx holds this screen for those two turns).
+// Just the logo, dead centre. It keeps turning (each turn slows to a rest, the diagonal connects, and the spin
+// carries on) for as long as the app is still loading, like a real loading screen.
 // With reduced motion it is a still, connected logo.
 export default function Splash() {
   const calm = prefersReducedMotion()

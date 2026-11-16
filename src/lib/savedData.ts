@@ -13,7 +13,38 @@ function store(): CacheStorage | null {
   return typeof caches === 'undefined' ? null : caches
 }
 
+// Small answers that are not plain database reads (the scoreboard comes from a database function) are kept the same way:
+// on this phone, for the signed-in person only, and removed on sign-out.
+const LOCAL = 'cznnect-local-'
+
+function purgeLocal(keep: string | null) {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i)
+      if (k && k.startsWith(LOCAL) && (keep === null || !k.startsWith(LOCAL + keep + ':'))) localStorage.removeItem(k)
+    }
+  } catch {
+    /* nothing to clear */
+  }
+}
+
+export function saveLocalCopy(name: string, value: unknown) {
+  if (!owner) return
+  try { localStorage.setItem(LOCAL + owner + ':' + name, JSON.stringify(value)) } catch { /* full or blocked: just no copy */ }
+}
+
+export function readLocalCopy<T>(name: string): T | null {
+  if (!owner) return null
+  try {
+    const raw = localStorage.getItem(LOCAL + owner + ':' + name)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    return null
+  }
+}
+
 async function purge(keep: string | null) {
+  purgeLocal(keep)
   try {
     const c = store()
     if (!c) return

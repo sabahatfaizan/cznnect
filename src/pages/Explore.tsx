@@ -19,6 +19,10 @@ import {
 import { addPlace, type Found } from '../lib/placesApi'
 import { withTimeout } from '../lib/net'
 import PlaceMap from '../components/PlaceMap'
+import OfflineMapPicture from '../components/OfflineMapPicture'
+import { useOffline } from '../lib/offline'
+
+const NEEDS_INTERNET = 'You need an internet connection to view this.'
 import PlaceSheet from '../components/PlaceSheet'
 import PlaceFinder from '../components/PlaceFinder'
 import PlaceForm from '../components/PlaceForm'
@@ -48,6 +52,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('map')
   const [mapOpen, setMapOpen] = useState(false)
+  const offline = useOffline()
   const [state, setState] = useState<StatusFilter>('all')
   const [visitedBy, setVisitedBy] = useState('all')
   const [query, setQuery] = useState('')
@@ -119,6 +124,7 @@ export default function Explore({ family, userId }: { family: Family; userId: st
   }, [status, selectedId, places])
 
   function show(p: Place) {
+    if (offline) { say(NEEDS_INTERNET); return }
     setView('map')
     setMapOpen(true)
     setSelectedId(p.id)
@@ -290,7 +296,8 @@ export default function Explore({ family, userId }: { family: Family; userId: st
       {(view === 'map' || picking || places.length === 0) && (
         <>
           {/* On the page the map is a still picture, so scrolling and swiping never fight it. Tap it for the full map. */}
-          {!fullMap && (
+          {!fullMap && offline && <OfflineMapPicture places={shown} />}
+          {!fullMap && !offline && (
           <div className="relative">
             <PlaceMap mode="preview" places={shown} selectedId={selectedId} onSelect={() => {}} picking={false} onPick={() => {}} pin={pin} focus={focus} />
             <button type="button" className="absolute inset-0 z-10 rounded-[var(--radius-card)]" aria-label="Enlarge the map" onClick={() => setMapOpen(true)} />

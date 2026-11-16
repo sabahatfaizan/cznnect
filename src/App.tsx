@@ -1,4 +1,4 @@
-import { useOffline, isOffline, onBackOnline, whenOffline } from './lib/offline'
+import { useOffline, isOffline, onBackOnline, whenOffline, probeConnection } from './lib/offline'
 import { clearFamilies, readStoredUser, type StoredUser } from './lib/offlineSession'
 import { clearSavedData, setSavedDataOwner } from './lib/savedData'
 import { useEffect, useState } from 'react'
@@ -43,8 +43,8 @@ function NetworkStatus() {
   const offline = useOffline()
   if (!offline) return null
   return (
-    <div role="status" className="pointer-events-none fixed inset-x-3 top-[max(.75rem,env(safe-area-inset-top))] z-[100] mx-auto max-w-md rounded-xl border border-amber-500/40 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white shadow-xl">
-      You're offline. Most features won't work until you're back online.
+    <div role="status" className="pointer-events-none fixed left-1/2 top-[max(.5rem,env(safe-area-inset-top))] z-[100] -translate-x-1/2 rounded-full border border-line bg-surface/90 px-3 py-0.5 text-xs font-semibold text-muted">
+      Offline
     </div>
   )
 }
@@ -116,6 +116,8 @@ function AppInner() {
       const saved = readStoredUser(localStorage, SUPABASE_URL)
       if (saved) applySession(offlineSession(saved))
     }
+    // Do not wait for a slow login refresh to find out there is no internet: ask the server straight away.
+    void probeConnection(`${SUPABASE_URL}/auth/v1/health`)
     Promise.race([
       withTimeout(supabase.auth.getSession(), 12000),
       whenOffline().then(() => 'offline' as const),

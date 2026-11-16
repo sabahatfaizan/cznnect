@@ -1020,10 +1020,10 @@ input[type="checkbox"] {
 }
 /* The mark: the diagonal is drawn with a dash so it can slide in and out.
    Each turn (2.2s): the square spins and slows to rest; as it rests the diagonal connects; then it slides
-   out through the far corner as the next spin starts. The loading screen plays exactly two turns. */
+   out through the far corner as the next spin starts. The loading screen keeps turning until the app opens. */
 .mark-bar { stroke-dasharray: 1; stroke-dashoffset: 0; }
-.mark-loop { animation: mark-loop-spin 2.2s 2 forwards; }
-.mark-loop .mark-bar { animation: mark-loop-bar 2.2s 2 forwards; }
+.mark-loop { animation: mark-loop-spin 2.2s infinite; }
+.mark-loop .mark-bar { animation: mark-loop-bar 2.2s infinite; }
 @keyframes mark-loop-spin {
   0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(.5, 0, .15, 1); }
   62% { transform: rotate(360deg); }

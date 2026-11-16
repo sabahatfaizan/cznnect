@@ -101,6 +101,34 @@ export function offlineResponse(): Response {
   })
 }
 
+// Reading data and refreshing the login must not wait forever when the signal is bad: after this long the request
+// counts as "no internet" and the saved copy is used instead. A request already known to fail gets a much shorter wait.
+const READ_TIMEOUT_MS = 9000
+const KNOWN_OFFLINE_TIMEOUT_MS = 3000
+
+function wantsTimeout(input: RequestInfo | URL, init?: RequestInit): boolean {
+  if (init?.signal) return false
+  const method = (init?.method ?? (typeof Request !== 'undefined' && input instanceof Request ? input.method : 'GET')).toUpperCase()
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+  return method === 'GET' || method === 'HEAD' || url.includes('/auth/v1/')
+}
+
+/** A quick check, at start-up, of whether the server can be reached at all. Any answer at all means yes. */
+export async function probeConnection(url: string): Promise<boolean> {
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), KNOWN_OFFLINE_TIMEOUT_MS)
+  try {
+    await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ac.signal })
+    reportNetwork(true)
+    return true
+  } catch {
+    reportNetwork(false)
+    return false
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Used instead of fetch for every Supabase request. */
 export async function offlineAwareFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   // With no internet: the saved copy of what the person last looked at, or a readable "you're offline" error.
@@ -114,13 +142,23 @@ export async function offlineAwareFetch(input: RequestInfo | URL, init?: Request
     return offlineResponse()
   }
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return unreachable()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let timedOut = false
+  let options = init
+  if (wantsTimeout(input, init)) {
+    const ac = new AbortController()
+    timer = setTimeout(() => { timedOut = true; ac.abort() }, failing ? KNOWN_OFFLINE_TIMEOUT_MS : READ_TIMEOUT_MS)
+    options = { ...init, signal: ac.signal }
+  }
   try {
-    const res = await fetch(input, init)
+    const res = await fetch(input, options)
     reportNetwork(true)
     void saveResponse(input, init, res)
     return res
   } catch (e) {
-    if (isNetworkError(e)) return unreachable()
+    if (timedOut || isNetworkError(e)) return unreachable()
     throw e
+  } finally {
+    if (timer) clearTimeout(timer)
   }
 }

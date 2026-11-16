@@ -1,15 +1,14 @@
 import { useOffline, useShowingSaved } from '../lib/offline'
 
-// Shown at the top of the app while the phone has no internet.
+// A small, quiet note at the top of the app while the phone has no internet. It reconnects by itself.
 export default function OfflineBanner() {
   const offline = useOffline()
   const saved = useShowingSaved()
   if (!offline) return null
   return (
-    <p role="status" className="card mb-4 text-sm font-semibold">
-      {saved
-        ? "You're offline. You're seeing the last saved copy, and changes won't work until you're back online. We'll reconnect by ourselves."
-        : "You're offline. Most features won't work until you're back online. We'll reconnect by ourselves."}
+    <p role="status" className="mb-3 flex items-center justify-center gap-1.5 text-xs text-muted">
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+      {saved ? 'Offline · showing your last saved copy' : 'Offline'}
     </p>
   )
 }

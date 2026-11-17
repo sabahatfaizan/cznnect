@@ -82,6 +82,9 @@ function useThemeId(): string {
   return id
 }
 
+type Orient = { lock?: (o: string) => Promise<void>; unlock?: () => void }
+const orient = () => (typeof screen !== 'undefined' ? (screen.orientation as unknown as Orient | undefined) : undefined)
+
 // The drawn tree. Drag to move, pinch or use the buttons to zoom, tap a person to open them.
 export default function TreeCanvas({
   layout,
@@ -107,6 +110,7 @@ export default function TreeCanvas({
   onClear: () => void
 }) {
   const box = useRef<HTMLDivElement>(null)
+  const shell = useRef<HTMLDivElement>(null)
   // The crown, banner and trunk around the people, which widens with the widest generation.
   const deco = useMemo(() => canopyFor(layout), [layout])
   const frame = deco?.frame ?? { x: 0, y: 0, w: layout.width, h: layout.height }
@@ -221,6 +225,29 @@ export default function TreeCanvas({
     const k = clamp(Math.min(size.w / frame.w, size.h / frame.h), MIN_K, 1)
     glide({ k, x: (size.w - frame.w * k) / 2 - frame.x * k, y: Math.max(8, (size.h - frame.h * k) / 2) - frame.y * k })
   }, [size.w, size.h, layout.width, frame.x, frame.y, frame.w, frame.h, glide])
+
+  // Landscape: the tree alone goes fullscreen and the phone is turned sideways (where the browser or app allows it).
+  const canFlip = typeof document !== 'undefined' && typeof document.documentElement.requestFullscreen === 'function'
+  const [landscape, setLandscape] = useState(false)
+  const flip = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) { await document.exitFullscreen(); return }
+      await shell.current?.requestFullscreen()
+      try { await orient()?.lock?.('landscape') } catch { /* needs the installed app on some browsers */ }
+    } catch { /* fullscreen not allowed */ }
+  }, [])
+  useEffect(() => {
+    let timer: number | undefined
+    const onChange = () => {
+      const on = document.fullscreenElement === shell.current
+      setLandscape(on)
+      if (!on) { try { orient()?.unlock?.() } catch { /* nothing locked */ } }
+      window.clearTimeout(timer)
+      timer = window.setTimeout(fit, 400)
+    }
+    document.addEventListener('fullscreenchange', onChange)
+    return () => { document.removeEventListener('fullscreenchange', onChange); window.clearTimeout(timer) }
+  }, [fit])
 
   // First view: a small tree is shown whole; a bigger one opens on you (or the oldest couple) at a readable size.
   useEffect(() => {
@@ -462,10 +489,11 @@ export default function TreeCanvas({
       const gens = new Map<number, number>()
       for (const n of layout.nodes) if (!gens.has(n.gen)) gens.set(n.gen, n.y + 44)
       if (gens.size < 2) return null
+      const lastGen = Math.max(...gens.keys())
       const left = Math.min(...layout.nodes.map((n) => n.x)) - 18
       return (
         <g pointerEvents="none" className="tree-gens">
-          {[...gens.entries()].map(([g, y]) => <text key={g} x={left} y={y} textAnchor="end" fontSize={12} className="tree-gen">Gen {g + 1}</text>)}
+          {[...gens.entries()].map(([g, y]) => <text key={g} x={left} y={y} textAnchor="end" fontSize={12} className="tree-gen">Gen {lastGen - g + 1}</text>)}
         </g>
       )
     })()}
@@ -525,7 +553,7 @@ export default function TreeCanvas({
   )
 
   return (
-    <div className="relative h-full w-full">
+    <div ref={shell} className="relative h-full w-full">
       <div
         ref={box}
         tabIndex={0}
@@ -556,8 +584,19 @@ export default function TreeCanvas({
       </div>
 
       <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 flex flex-col gap-2">
-        {centerButton('+', () => zoomAt(size.w / 2, size.h / 2, 1.25))}
-        {centerButton('−', () => zoomAt(size.w / 2, size.h / 2, 1 / 1.25))}
+        {canFlip && (
+          <button
+            type="button"
+            onClick={() => void flip()}
+            aria-pressed={landscape}
+            aria-label={landscape ? 'Leave landscape view' : 'Landscape view'}
+            className="btn btn-plain tree-ctl !min-h-11 !min-w-11 !px-3 shadow-[var(--shadow-card)]"
+          >
+            <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {landscape ? <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <><rect x={3} y={7} width={18} height={11} rx={2} /><path d="M12 3v2M7 3.5l1 1.5M17 3.5l-1 1.5" /></>}
+            </svg>
+          </button>
+        )}
         {centerButton('Fit', fit)}
         {layout.edges.some((e) => e.kind === 'parent') && centerButton(folded.size > 0 ? 'Open' : 'Fold', foldAll)}
         {meId && centerButton('Me', () => centerOn(meId, Math.max(view.k, READABLE_K)))}

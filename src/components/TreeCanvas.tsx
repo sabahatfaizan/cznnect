@@ -427,14 +427,34 @@ export default function TreeCanvas({
     {deco && (
       <g pointerEvents="none" className="tree-crown">
         {deco.stars.map((st, i) => <circle key={`s${i}`} cx={st.x} cy={st.y} r={st.r} className="tree-star" style={{ animationDelay: `${st.delay}s` }} />)}
-        <path d={deco.trunk} className="tree-trunk" />
+        <path d={deco.moon.path} className="tree-moon" />
+        <path d={deco.trunk.ground} className="tree-ground" />
+        {deco.trunk.roots.map((d, i) => <path key={`r${i}`} d={d} className="tree-root" />)}
+        <path d={deco.trunk.body} className="tree-trunk" />
+        {deco.trunk.bark.map((d, i) => <path key={`b${i}`} d={d} className="tree-bark" />)}
         <path d={deco.crown} className="tree-leaves" />
-        {deco.bubbles.map((b, i) => <circle key={i} cx={b.cx} cy={b.cy} r={b.r} className="tree-bead" opacity={b.dim ? 0.55 : 0.95} style={{ animationDelay: `${(i % 9) * 0.45}s` }} />)}
+        {deco.branches.map((br, i) => <path key={`br${i}`} d={br.d} className="tree-branch" strokeWidth={br.w} />)}
+        {deco.leaves.map((l, i) => (
+          <path key={`l${i}`} d="M0 0C4 -7 15 -7 22 0C15 7 4 7 0 0Z" className="tree-leaf" opacity={l.dim ? 0.5 : 0.9} transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.s})`} />
+        ))}
+        {deco.blossoms.map((f, i) => (
+          <g key={`f${i}`} transform={`translate(${f.x} ${f.y}) scale(${f.s})`} className="tree-blossom">
+            {[0, 72, 144, 216, 288].map((r) => <circle key={r} cx={0} cy={-5} r={4} transform={`rotate(${r})`} />)}
+            <circle r={2.6} className="tree-blossom-eye" />
+          </g>
+        ))}
         {deco.flies.map((f, i) => (
           <circle key={`f${i}`} cx={f.x} cy={f.y} r={3} className="tree-fly" style={{ ['--dx' as string]: `${f.dx}px`, ['--dy' as string]: `${f.dy}px`, animationDelay: `${f.delay}s`, animationDuration: `${f.dur}s` }} />
         ))}
-        <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={6} className="tree-banner" />
-        <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={20} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
+        {deco.butterflies.map((bf, i) => (
+          <g key={`bf${i}`} transform={`translate(${bf.x} ${bf.y}) scale(${bf.s})`}>
+            <g className="tree-butterfly" style={{ animationDelay: `${bf.delay}s` }}>
+              <path d="M0 0C-12 -16 -28 -8 -20 6C-15 14 -5 8 0 0Z M0 0C12 -16 28 -8 20 6C15 14 5 8 0 0Z" />
+            </g>
+          </g>
+        ))}
+        <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={8} className="tree-banner" />
+        <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={22} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
       </g>
     )}
     {(() => {

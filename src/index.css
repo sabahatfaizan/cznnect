@@ -1964,3 +1964,16 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 @keyframes tree-pop { from { opacity: 0; transform: translateY(14px) scale(0.85); } to { opacity: 1; transform: none; } }
 .family-tree-stage .tree-lines { animation: tree-fade 0.8s ease 0.5s both; }
 @keyframes tree-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* The living tree: leaves, branches, blossoms, trunk, ground, moon and butterflies, in the app theme's colours. */
+.family-tree-stage .tree-leaf { fill: color-mix(in srgb, var(--accent) 80%, var(--page)); }
+.family-tree-stage .tree-branch { fill: none; stroke: color-mix(in srgb, var(--trunk-fill) 85%, var(--accent)); stroke-linecap: round; opacity: 0.55; }
+.family-tree-stage .tree-bark { fill: none; stroke: color-mix(in srgb, var(--trunk-fill) 55%, #000); stroke-width: 2.5; stroke-linecap: round; opacity: 0.5; }
+.family-tree-stage .tree-root { fill: none; stroke: var(--trunk-fill); stroke-width: 7; stroke-linecap: round; }
+.family-tree-stage .tree-ground { fill: color-mix(in srgb, var(--accent) 16%, var(--page)); stroke: color-mix(in srgb, var(--accent) 40%, transparent); stroke-width: 1.2; }
+.family-tree-stage .tree-moon { fill: color-mix(in srgb, #ffe9a8 85%, var(--page)); filter: drop-shadow(0 0 10px rgb(255 233 168 / 0.55)); }
+.family-tree-stage .tree-blossom circle { fill: #ffb3d1; }
+.family-tree-stage .tree-blossom .tree-blossom-eye { fill: #ffe27a; }
+.family-tree-stage .tree-butterfly { fill: color-mix(in srgb, #ff7ab8 70%, var(--accent)); opacity: 0.9; transform-box: fill-box; transform-origin: center; animation: tree-flap 0.9s ease-in-out infinite alternate, tree-float 7s ease-in-out infinite; }
+@keyframes tree-flap { from { transform: scaleX(1); } to { transform: scaleX(0.35); } }
+@keyframes tree-float { 0%, 100% { translate: 0 0; } 50% { translate: 10px -14px; } }

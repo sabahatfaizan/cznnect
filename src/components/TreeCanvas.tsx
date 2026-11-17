@@ -376,7 +376,6 @@ export default function TreeCanvas({
 
   // Branches folded shut: the family's junction dot (or its +N badge) is tapped to fold or open the line below it.
   const [folded, setFolded] = useState<Set<string>>(new Set())
-  const maxGen = useMemo(() => Math.max(0, ...layout.nodes.map((n) => n.gen)), [layout])
   const tree = useMemo(() => {
     const down = new Map<string, string[]>()
     const mates = new Map<string, string[]>()
@@ -459,20 +458,21 @@ export default function TreeCanvas({
             const parents = (e.parents ?? []).filter((id) => at.has(id))
             const kids = (e.kids ?? []).filter((id) => at.has(id))
             if (parents.length === 0 || kids.length === 0 || parents.some((id) => hidden.out.has(id))) return null
-            const py = Math.max(...parents.map((id) => (at.get(id) as { y: number }).y + BOTTOM))
-            const ky = Math.min(...kids.map((id) => (at.get(id) as { y: number }).y + TOP))
-            const jy = py + (ky - py) * 0.5
+            // The tree rises: parents stand below their children, so lines leave the top of a parent and reach the bottom of a child.
+            const py = Math.min(...parents.map((id) => (at.get(id) as { y: number }).y + TOP))
+            const ky = Math.max(...kids.map((id) => (at.get(id) as { y: number }).y + BOTTOM))
+            const jy = ky + (py - ky) * 0.5
             const mx = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
             const shut = folded.has(e.id)
             const xs = [...parents.map(cx), ...(shut ? [] : kids.map(cx))]
-            let d = parents.map((id) => `M${cx(id)} ${(at.get(id) as { y: number }).y + BOTTOM}V${jy}`).join('')
+            let d = parents.map((id) => `M${cx(id)} ${(at.get(id) as { y: number }).y + TOP}V${jy}`).join('')
             d += `M${Math.min(...xs)} ${jy}H${Math.max(...xs)}`
-            if (!shut) d += kids.map((id) => `M${cx(id)} ${jy}V${(at.get(id) as { y: number }).y + TOP}`).join('')
+            if (!shut) d += kids.map((id) => `M${cx(id)} ${jy}V${(at.get(id) as { y: number }).y + BOTTOM}`).join('')
             const n = hidden.counts.get(e.id) ?? 0
             return (
               <g key={e.id} className={dimmed(e) ? 'tree-dim' : ''}>
                 <path d={d} className="tree-line" />
-                <g data-fold={e.id} className="tree-fold" role="button" aria-label={shut ? `Show ${n} people below` : 'Fold this branch'}>
+                <g data-fold={e.id} className="tree-fold" role="button" aria-label={shut ? `Show ${n} people above` : 'Fold this branch'}>
                   <circle cx={mx} cy={jy} r={22} fill="transparent" />
                   {shut ? (
                     <>
@@ -498,8 +498,8 @@ export default function TreeCanvas({
       if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
       if (p.is_deceased) classes.push('tnode-gone')
       const dim = kin ? !kin.has(n.id) : false
-      // The tree grows upward: the bottom row appears first, then each row above it.
-      const order = (maxGen - n.gen) * 130 + (n.x % 97) * 1.2
+      // The tree grows upward: the oldest row (at the trunk) appears first, then each younger row above it.
+      const order = n.gen * 130 + (n.x % 97) * 1.2
       const nameFit = fitName(measure, p.full_name, nameBox.w - 14, 15, 11.5)
       const two = nameFit.lines.length > 1
       const sub = [p.nickname ? `“${p.nickname}”` : '', n.id === meId ? (year ? `you · ${year}` : 'you') : year ? `b. ${year}` : ''].filter(Boolean).join(' · ')
@@ -535,7 +535,7 @@ export default function TreeCanvas({
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded, maxGen],
+    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

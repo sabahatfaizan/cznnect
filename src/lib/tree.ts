@@ -353,7 +353,7 @@ export function initials(name: string): string {
 export const NODE_W = 132
 export const NODE_H = 80
 const SLOT = 192 // a little wider than a card, so a couple has room between them
-const ROW_H = 310 // tall rows: roots grow straight down and have room to thin out
+const ROW_H = 175 // room between rows for the connector lines
 const PAD = 28
 
 export type TreeNode = { id: string; x: number; y: number; gen: number }
@@ -592,7 +592,7 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
           id,
           gen: c.gen,
           x: c.start + shift + i * SLOT + (SLOT - NODE_W) / 2,
-          y: PAD + c.gen * ROW_H,
+          y: PAD + (rows.length - 1 - c.gen) * ROW_H, // the oldest generation stands at the trunk (bottom); younger ones rise above
         }
         nodes.push(node)
         at.set(id, node)
@@ -745,6 +745,6 @@ export function layoutTree(people: Person[], links: Link[]): TreeLayout {
     nodes,
     edges,
     width: maxX - minX + PAD * 2,
-    height: PAD * 2 + (rows.length - 1) * ROW_H + NODE_H + 70, // room for the fine roots under the last row
+    height: PAD * 2 + (rows.length - 1) * ROW_H + NODE_H,
   }
 }

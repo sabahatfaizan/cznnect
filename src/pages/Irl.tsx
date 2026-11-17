@@ -159,7 +159,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
                 Group
               </button>
             </div>
-            <IrlMyCode familyId={family.id} />
+            {!(focus && focus.kind === 'group' && (focus.status === 'open' || focus.status === 'locked')) && <IrlMyCode familyId={family.id} />}
           </section>
 
         </>

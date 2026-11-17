@@ -9,6 +9,19 @@ export type Canopy = {
   bubbles: { cx: number; cy: number; r: number; dim: boolean }[]
   trunk: string
   banner: { x: number; y: number; w: number; h: number; tx: number; ty: number }
+  stars: { x: number; y: number; r: number; delay: number }[]
+  flies: { x: number; y: number; dx: number; dy: number; delay: number; dur: number }[]
+}
+
+// A tiny seeded random generator, so the sky looks the same every time for the same tree.
+function seeded(seed: number) {
+  let t = seed >>> 0
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0
+    let r = Math.imul(t ^ (t >>> 15), 1 | t)
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+  }
 }
 
 const sgn = (v: number) => (v < 0 ? -1 : 1)
@@ -55,9 +68,29 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const base = bottom + 150
   const trunk = `M${r1(cx - 34)} ${r1(trunkTop)} L${r1(cx + 34)} ${r1(trunkTop)} L${r1(cx + 38)} ${r1(base - 70)} L${r1(cx + 110)} ${r1(base)} L${r1(cx - 110)} ${r1(base)} L${r1(cx - 38)} ${r1(base - 70)}Z`
 
-  const fx0 = cx - a - 14
-  const fx1 = cx + a + 14
-  const fy0 = banner.y - 6
+  const fx0 = cx - a - 90
+  const fx1 = cx + a + 90
+  const fy0 = banner.y - 50
   const fy1 = base + 8
-  return { frame: { x: r1(fx0), y: r1(fy0), w: r1(fx1 - fx0), h: r1(fy1 - fy0) }, crown, bubbles, trunk, banner }
+
+  // Stars in the sky around the crown, and fireflies drifting inside it.
+  const rand = seeded(layout.nodes.length * 7919 + Math.round(layout.width))
+  const inside = (x: number, y: number, k: number) => Math.abs((x - cx) / a) ** 2.8 + Math.abs((y - cy) / b) ** 2.8 < k
+  const stars: Canopy['stars'] = []
+  const wanted = Math.min(90, Math.max(24, Math.round(((fx1 - fx0) * (fy1 - fy0)) / 14000)))
+  for (let tries = 0; tries < 600 && stars.length < wanted; tries++) {
+    const x = fx0 + rand() * (fx1 - fx0)
+    const y = fy0 + rand() * (base - fy0 - 40)
+    if (inside(x, y, 1.12)) continue
+    stars.push({ x: r1(x), y: r1(y), r: r1(1.2 + rand() * 2.2), delay: r1(rand() * 5) })
+  }
+  const flies: Canopy['flies'] = []
+  const swarm = Math.min(14, Math.max(6, Math.round(layout.nodes.length / 3)))
+  for (let tries = 0; tries < 300 && flies.length < swarm; tries++) {
+    const x = cx + (rand() * 2 - 1) * a
+    const y = cy + (rand() * 2 - 1) * b
+    if (!inside(x, y, 0.8)) continue
+    flies.push({ x: r1(x), y: r1(y), dx: r1((rand() * 2 - 1) * 55), dy: r1((rand() * 2 - 1) * 45), delay: r1(rand() * 6), dur: r1(7 + rand() * 6) })
+  }
+  return { frame: { x: r1(fx0), y: r1(fy0), w: r1(fx1 - fx0), h: r1(fy1 - fy0) }, crown, bubbles, trunk, banner, stars, flies }
 }

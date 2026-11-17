@@ -1950,3 +1950,17 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-gen { fill: color-mix(in srgb, var(--ink) 45%, transparent); font-family: Georgia, serif; font-style: italic; }
 .family-tree-stage .tree-bead { animation: tree-twinkle 4.5s ease-in-out infinite; }
 @keyframes tree-twinkle { 50% { opacity: 0.3; } }
+
+/* Sky and life around the tree: twinkling stars, drifting fireflies, and the tree growing in from its first generation. */
+.family-tree-stage .tree-star { fill: color-mix(in srgb, var(--ink) 55%, var(--accent)); opacity: 0.2; animation: tree-twinkle 3.6s ease-in-out infinite; }
+.family-tree-stage .tree-fly { fill: color-mix(in srgb, #ffe27a 80%, var(--accent)); filter: drop-shadow(0 0 4px #ffd75e); opacity: 0.3; animation: tree-fly 9s ease-in-out infinite; }
+@keyframes tree-fly {
+  0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+  25% { opacity: 1; }
+  50% { transform: translate(var(--dx), var(--dy)); opacity: 0.3; }
+  75% { opacity: 1; }
+}
+.family-tree-stage .tnode-in { transform-box: fill-box; transform-origin: center; animation: tree-pop 0.5s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes tree-pop { from { opacity: 0; transform: translateY(14px) scale(0.85); } to { opacity: 1; transform: none; } }
+.family-tree-stage .tree-lines { animation: tree-fade 0.8s ease 0.5s both; }
+@keyframes tree-fade { from { opacity: 0; } to { opacity: 1; } }

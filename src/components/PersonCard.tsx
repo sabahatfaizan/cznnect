@@ -88,6 +88,8 @@ export default function PersonCard({
         {line('Parents', rel.parents)}
         {line('Partner', rel.partners)}
         {line('Children', rel.children)}
+        {line('Siblings', rel.siblings)}
+        {line('Cousins', rel.cousins)}
         <button className="btn btn-primary" onClick={onMore}>
           Full details
         </button>

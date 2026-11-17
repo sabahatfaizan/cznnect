@@ -154,6 +154,21 @@ export function siblingsOf(index: TreeIndex, id: string): Person[] {
   return [...found.values()].sort(byAgeThenName)
 }
 
+// First cousins: the children of a parent's brothers and sisters.
+export function cousinsOf(index: TreeIndex, id: string): Person[] {
+  const mine = new Set([id, ...siblingsOf(index, id).map((p) => p.id)])
+  const found = new Map<string, Person>()
+  for (const parent of get(index.parentsOf, id)) {
+    for (const aunt of siblingsOf(index, parent)) {
+      for (const child of get(index.childrenOf, aunt.id)) {
+        const person = index.byId.get(child)
+        if (person && !mine.has(child)) found.set(child, person)
+      }
+    }
+  }
+  return [...found.values()].sort(byAgeThenName)
+}
+
 export function relativesOf(index: TreeIndex, id: string) {
   const pick = (ids: string[]) =>
     ids
@@ -165,6 +180,7 @@ export function relativesOf(index: TreeIndex, id: string) {
     partners: pick(get(index.partnersOf, id)),
     children: pick(get(index.childrenOf, id)),
     siblings: siblingsOf(index, id),
+    cousins: cousinsOf(index, id),
   }
 }
 

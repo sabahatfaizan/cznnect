@@ -376,6 +376,7 @@ export default function TreeCanvas({
 
   // Branches folded shut: the family's junction dot (or its +N badge) is tapped to fold or open the line below it.
   const [folded, setFolded] = useState<Set<string>>(new Set())
+  const maxGen = useMemo(() => Math.max(0, ...layout.nodes.map((n) => n.gen)), [layout])
   const tree = useMemo(() => {
     const down = new Map<string, string[]>()
     const mates = new Map<string, string[]>()
@@ -426,9 +427,13 @@ export default function TreeCanvas({
       <>
     {deco && (
       <g pointerEvents="none" className="tree-crown">
+        {deco.stars.map((st, i) => <circle key={`s${i}`} cx={st.x} cy={st.y} r={st.r} className="tree-star" style={{ animationDelay: `${st.delay}s` }} />)}
         <path d={deco.trunk} className="tree-trunk" />
         <path d={deco.crown} className="tree-leaves" />
         {deco.bubbles.map((b, i) => <circle key={i} cx={b.cx} cy={b.cy} r={b.r} className="tree-bead" opacity={b.dim ? 0.55 : 0.95} style={{ animationDelay: `${(i % 9) * 0.45}s` }} />)}
+        {deco.flies.map((f, i) => (
+          <circle key={`f${i}`} cx={f.x} cy={f.y} r={3} className="tree-fly" style={{ ['--dx' as string]: `${f.dx}px`, ['--dy' as string]: `${f.dy}px`, animationDelay: `${f.delay}s`, animationDuration: `${f.dur}s` }} />
+        ))}
         <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={6} className="tree-banner" />
         <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={20} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
       </g>
@@ -484,19 +489,6 @@ export default function TreeCanvas({
         </g>
       )
     })()}
-    {(() => {
-      // Faint generation labels down the left edge of the crown.
-      const gens = new Map<number, number>()
-      for (const n of layout.nodes) if (!gens.has(n.gen)) gens.set(n.gen, n.y + 44)
-      if (gens.size < 2) return null
-      const lastGen = Math.max(...gens.keys())
-      const left = Math.min(...layout.nodes.map((n) => n.x)) - 18
-      return (
-        <g pointerEvents="none" className="tree-gens">
-          {[...gens.entries()].map(([g, y]) => <text key={g} x={left} y={y} textAnchor="end" fontSize={12} className="tree-gen">Gen {lastGen - g + 1}</text>)}
-        </g>
-      )
-    })()}
     {layout.nodes.filter((n) => !hidden.out.has(n.id)).map((n) => {
       const p = people.get(n.id)
       if (!p) return null
@@ -506,6 +498,8 @@ export default function TreeCanvas({
       if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
       if (p.is_deceased) classes.push('tnode-gone')
       const dim = kin ? !kin.has(n.id) : false
+      // The tree grows upward: the bottom row appears first, then each row above it.
+      const order = (maxGen - n.gen) * 130 + (n.x % 97) * 1.2
       const nameFit = fitName(measure, p.full_name, nameBox.w - 14, 15, 11.5)
       const two = nameFit.lines.length > 1
       const sub = [p.nickname ? `“${p.nickname}”` : '', n.id === meId ? (year ? `you · ${year}` : 'you') : year ? `b. ${year}` : ''].filter(Boolean).join(' · ')
@@ -529,17 +523,19 @@ export default function TreeCanvas({
             }
           }}
         >
+          <g className="tnode-in" style={{ animationDelay: `${Math.round(order)}ms` }}>
           <rect className={classes.join(' ')} x={0} y={top} width={NODE_W} height={h} rx={h / 2} ry={h / 2} />
           {nameFit.lines.map((line, i) => (
             <text key={i} x={NODE_W / 2} y={nameY[i]} textAnchor="middle" className="tchip-name fill-ink" fontSize={nameFit.size}>{line}</text>
           ))}
           {subFit && <text x={NODE_W / 2} y={top + h - (two ? 9 : 10)} textAnchor="middle" className="fill-muted" fontSize={subFit.size}>{subFit.text}</text>}
+          </g>
         </g>
       )
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded],
+    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded, maxGen],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

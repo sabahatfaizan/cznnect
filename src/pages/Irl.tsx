@@ -121,8 +121,8 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   }
 
   return (
-    // One fixed screen: it never scrolls (the document is locked while Convoy is open).
-    <div className="flex max-h-[calc(100dvh-13rem)] flex-col gap-3 overflow-hidden">
+    // One fixed screen (the document is locked while Convoy is open). With a meetup open, this box scrolls on its own so nothing overlaps.
+    <div className={`flex flex-col gap-3 max-h-[calc(100dvh-13rem)] ${focus ? 'overflow-y-auto pb-4' : 'overflow-hidden'}`}>
       {notice && (
         <p role="status" className="rounded-[var(--radius-ctl)] bg-accent-soft px-3 py-2 text-sm font-bold text-accent-text">
           {notice}
@@ -148,7 +148,7 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-7 pb-3 pt-4" aria-label="Your link code">
+          <section className={`flex flex-col items-center gap-7 pb-3 pt-4 ${focus ? 'shrink-0' : 'min-h-0 flex-1 justify-center'}`} aria-label="Your link code">
             <div className="grid w-full max-w-[19rem] grid-cols-2 gap-3">
               <button className="qr-btn qr-btn-main" onClick={() => setScanning(true)}>
                 <span className="qr-btn-icon"><Icon name="camera" size={20} /></span>

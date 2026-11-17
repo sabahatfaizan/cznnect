@@ -8,13 +8,11 @@ import {
   lockGroup,
   mine,
   removePerson,
-  startGroup,
 } from '../lib/irlApi'
 import IrlMyCode from '../components/IrlMyCode'
 import IrlMeetupCard from '../components/IrlMeetupCard'
 import IrlScanSheet from '../components/IrlScanSheet'
 import IrlGatherings from '../components/IrlGatherings'
-import Sheet from '../components/Sheet'
 import { Icon } from '../components/Icons'
 
 // Convoy: your personal code, scanning a cousin, and confirming meetups. The scoreboard lives in the menu.
@@ -25,9 +23,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [scanning, setScanning] = useState(false)
-  const [groupSheet, setGroupSheet] = useState(false)
-  const [groupTitle, setGroupTitle] = useState('')
-  const [groupError, setGroupError] = useState('')
   const noticeTimer = useRef<number | undefined>(undefined)
   const seen = useRef<Map<string, string> | null>(null)
 
@@ -105,21 +100,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
   // one waiting for your confirmation, else one in progress, else the one that just finished.
   const focus = needsMe[0] ?? rest[0] ?? finished[0] ?? null
 
-  async function submitGroup() {
-    setBusy(true)
-    setGroupError('')
-    const r = await startGroup(family.id, groupTitle)
-    setBusy(false)
-    if (!r.ok) {
-      setGroupError(r.message)
-      return
-    }
-    setGroupSheet(false)
-    setGroupTitle('')
-    say('Group meetup started. Cousins can scan the code.')
-    await loadMeet()
-  }
-
   return (
     // One fixed screen (the document is locked while Convoy is open). With a meetup open, this box scrolls on its own so nothing overlaps.
     <div className={`flex flex-col gap-3 max-h-[calc(100dvh-13rem)] ${focus ? 'overflow-y-auto pb-4' : 'overflow-hidden'}`}>
@@ -143,20 +123,16 @@ export default function Irl({ family, userId }: { family: Family; userId: string
       {!error && (
         <>
           <div className="max-h-52 shrink-0 overflow-y-auto">
-            <IrlGatherings familyId={family.id} userId={userId} />
+            <IrlGatherings familyId={family.id} userId={userId} onGroupStarted={loadMeet} />
           </div>
 
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
           <section className={`flex flex-col items-center gap-7 pb-3 pt-4 ${focus ? 'shrink-0' : 'min-h-0 flex-1 justify-center'}`} aria-label="Your link code">
-            <div className="grid w-full max-w-[19rem] grid-cols-2 gap-3">
+            <div className="grid w-full max-w-[19rem] grid-cols-1 gap-3">
               <button className="qr-btn qr-btn-main" onClick={() => setScanning(true)}>
                 <span className="qr-btn-icon"><Icon name="camera" size={20} /></span>
                 Scan
-              </button>
-              <button className="qr-btn" onClick={() => setGroupSheet(true)}>
-                <span className="qr-btn-icon"><Icon name="group" size={20} /></span>
-                Group
               </button>
             </div>
             {!(focus && focus.kind === 'group' && (focus.status === 'open' || focus.status === 'locked')) && <IrlMyCode familyId={family.id} />}
@@ -175,43 +151,6 @@ export default function Irl({ family, userId }: { family: Family; userId: string
             loadMeet()
           }}
         />
-      )}
-
-      {groupSheet && (
-        <Sheet title="Group meetup" onClose={() => setGroupSheet(false)}>
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted">
-              Start a group when three or more cousins are together. You show a code, they scan it to join, then everyone confirms.
-            </p>
-            <div>
-              <label className="label" htmlFor="irl-group-title">
-                Name (optional)
-              </label>
-              <input
-                id="irl-group-title"
-                className="input"
-                value={groupTitle}
-                maxLength={60}
-                placeholder="e.g. Eid lunch"
-                autoComplete="off"
-                onChange={(e) => setGroupTitle(e.target.value)}
-              />
-            </div>
-            {groupError && (
-              <p role="alert" className="text-sm font-bold text-danger">
-                {groupError}
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <button className="btn btn-plain" onClick={() => setGroupSheet(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" disabled={busy} onClick={submitGroup}>
-                {busy ? 'Starting...' : 'Start group'}
-              </button>
-            </div>
-          </div>
-        </Sheet>
       )}
     </div>
   )

@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import Sheet from './Sheet'
 import { Icon } from './Icons'
 import { addGathering, announceGathering, removeGathering, upcomingGatherings, whenText, type Gathering } from '../lib/gatherings'
+import { startGroup } from '../lib/irlApi'
 import { familyProfiles, type ProfileLite } from '../lib/profiles'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const dateInput = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
 // Planned events in Convoy. Anyone in the family can add one; everyone else gets a notification.
-export default function IrlGatherings({ familyId, userId }: { familyId: string; userId: string }) {
+export default function IrlGatherings({ familyId, userId, onGroupStarted }: { familyId: string; userId: string; onGroupStarted?: () => void }) {
   const [list, setList] = useState<Gathering[]>([])
   const [names, setNames] = useState<Map<string, ProfileLite>>(new Map())
   const [error, setError] = useState('')
@@ -20,6 +21,7 @@ export default function IrlGatherings({ familyId, userId }: { familyId: string; 
   const [time, setTime] = useState('18:00')
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [withGroup, setWithGroup] = useState(false)
 
   const load = useCallback(async () => {
     const [r, pm] = await Promise.all([upcomingGatherings(familyId), familyProfiles(familyId)])
@@ -40,11 +42,18 @@ export default function IrlGatherings({ familyId, userId }: { familyId: string; 
     const r = await addGathering(familyId, userId, g)
     if (!r.ok) { setFormError(r.message); setBusy(false); return }
     const n = await announceGathering(familyId, g)
+    let groupNote = ''
+    if (withGroup) {
+      const gr = await startGroup(familyId, title.trim())
+      groupNote = gr.ok ? ' Group code is ready for cousins to scan.' : ` The group code could not start: ${gr.message}`
+      if (gr.ok) onGroupStarted?.()
+    }
     setBusy(false)
     setOpen(false)
     setTitle('')
     setPlace('')
-    setNotice(n.ok ? 'Gathering added. Everyone has been notified.' : `Gathering added, but nobody was notified: ${n.message ?? 'try again later.'}`)
+    setWithGroup(false)
+    setNotice((n.ok ? 'Gathering added. Everyone has been notified.' : `Gathering added, but nobody was notified: ${n.message ?? 'try again later.'}`) + groupNote)
     window.setTimeout(() => setNotice(''), 5000)
     void load()
   }
@@ -103,6 +112,10 @@ export default function IrlGatherings({ familyId, userId }: { familyId: string; 
             </div>
             <label className="label" htmlFor="gath-place">Where? (optional)</label>
             <input id="gath-place" className="input" maxLength={120} value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Grandma's house" />
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+              <input type="checkbox" className="size-5 accent-[var(--accent)]" checked={withGroup} onChange={(e) => setWithGroup(e.target.checked)} />
+              Start the group code now (cousins scan to join)
+            </label>
             {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
             <p className="text-xs text-muted">Everyone in the family gets a notification, and it also shows in the family chat.</p>
             <button type="submit" className="btn btn-primary !min-h-11 !text-sm" disabled={busy}>{busy ? 'Adding…' : 'Add and notify'}</button>

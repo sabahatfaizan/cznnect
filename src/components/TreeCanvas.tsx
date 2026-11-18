@@ -148,12 +148,20 @@ export default function TreeCanvas({
   // True only while the view glides to a new place (Me, Fit, search). Dragging and pinching stay instant.
   const [gliding, setGliding] = useState(false)
   const glideTimer = useRef<number | undefined>(undefined)
+  // The twinkling stars and drifting fireflies are paused while the picture moves, so panning and zooming stay smooth.
+  const stillTimer = useRef<number | undefined>(undefined)
+  const pauseMotion = useCallback((ms: number) => {
+    box.current?.classList.add('tree-moving')
+    window.clearTimeout(stillTimer.current)
+    if (ms > 0) stillTimer.current = window.setTimeout(() => box.current?.classList.remove('tree-moving'), ms)
+  }, [])
   const glide = useCallback((next: View) => {
+    pauseMotion(700)
     setGliding(true)
     setView(next)
     window.clearTimeout(glideTimer.current)
     glideTimer.current = window.setTimeout(() => setGliding(false), 520)
-  }, [])
+  }, [pauseMotion])
   // The family branch the camera was last pointed at; the other branches are quieted while it is set.
   const [focusFam, setFocusFam] = useState<string | null>(null)
   const started = useRef(false)
@@ -310,12 +318,13 @@ export default function TreeCanvas({
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      pauseMotion(250)
       const r = el.getBoundingClientRect()
       zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 1 / 1.12)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [zoomAt])
+  }, [zoomAt, pauseMotion])
 
   const pinchDistance = () => {
     const [a, b] = [...pointers.current.values()]
@@ -325,6 +334,7 @@ export default function TreeCanvas({
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     window.clearTimeout(glideTimer.current)
     setGliding(false)
+    pauseMotion(0)
     e.currentTarget.setPointerCapture(e.pointerId)
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (pointers.current.size === 1) {
@@ -359,6 +369,7 @@ export default function TreeCanvas({
   function onPointerUp(e: PointerEvent<HTMLDivElement>) {
     pointers.current.delete(e.pointerId)
     if (pointers.current.size < 2) gesture.current.dist = 0
+    if (pointers.current.size === 0) pauseMotion(250)
   }
 
   // A tap is handled on the click, not on pointerup. Opening the card on pointerup put its backdrop under the
@@ -444,7 +455,7 @@ export default function TreeCanvas({
       <>
     {deco && (
       <g pointerEvents="none" className="tree-crown">
-        {deco.stars.map((st, i) => <circle key={`s${i}`} cx={st.x} cy={st.y} r={st.r} className="tree-star" style={{ animationDelay: `${st.delay}s` }} />)}
+        {deco.stars.map((st, i) => <circle key={`s${i}`} cx={st.x} cy={st.y} r={st.r} className={i < 24 ? 'tree-star' : 'tree-star tree-still'} style={{ animationDelay: `${st.delay}s` }} />)}
         <path d={deco.moon.path} className="tree-moon" />
         <path d={deco.trunk.ground} className="tree-ground" />
         {deco.trunk.roots.map((d, i) => <path key={`r${i}`} d={d} className="tree-root" />)}
@@ -627,7 +638,7 @@ export default function TreeCanvas({
         onPointerCancel={onPointerUp}
         onClick={onClick}
         onKeyDown={onKeyDown}
-        className="family-tree-stage h-full w-full touch-none select-none overflow-hidden"
+        className={`family-tree-stage h-full w-full touch-none select-none overflow-hidden ${layout.nodes.length > 60 ? 'tree-big' : ''}`}
       >
         <svg
           ref={drawing}

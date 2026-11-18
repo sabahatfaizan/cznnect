@@ -1953,7 +1953,7 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 
 /* Sky and life around the tree: twinkling stars, drifting fireflies, and the tree growing in from its first generation. */
 .family-tree-stage .tree-star { fill: color-mix(in srgb, var(--ink) 55%, var(--accent)); opacity: 0.2; animation: tree-twinkle 3.6s ease-in-out infinite; }
-.family-tree-stage .tree-fly { fill: color-mix(in srgb, #ffe27a 80%, var(--accent)); filter: drop-shadow(0 0 4px #ffd75e); opacity: 0.3; animation: tree-fly 9s ease-in-out infinite; }
+.family-tree-stage .tree-fly { fill: color-mix(in srgb, #ffe27a 80%, var(--accent)); stroke: rgb(255 215 94 / 0.35); stroke-width: 5; opacity: 0.35; animation: tree-fly 9s ease-in-out infinite; }
 @keyframes tree-fly {
   0%, 100% { transform: translate(0, 0); opacity: 0.15; }
   25% { opacity: 1; }
@@ -1986,8 +1986,13 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-fam[data-tone="1"] { --fam-c: #2f9c8f; }
 .family-tree-stage .tree-fam[data-tone="2"] { --fam-c: #8aa83a; }
 .family-tree-stage .tree-fam[data-tone="3"] { --fam-c: #c9a13a; }
-.family-tree-stage .tree-fam-base { fill: color-mix(in srgb, color-mix(in srgb, var(--fam-c) 82%, var(--accent)) 52%, var(--page)); stroke: color-mix(in srgb, var(--fam-c) 70%, transparent); stroke-width: 1.2; }
+.family-tree-stage .tree-fam-base { fill: color-mix(in srgb, color-mix(in srgb, var(--fam-c) 82%, var(--accent)) 52%, var(--page)); }
 .family-tree-stage .tree-fam-mid { fill: color-mix(in srgb, var(--fam-c) 80%, var(--page)); }
-.family-tree-stage .tree-fam-hi { fill: color-mix(in srgb, var(--fam-c) 70%, #fff); opacity: 0.7; }
-.family-tree-stage .tree-fam-leaf { fill: color-mix(in srgb, var(--fam-c) 85%, #fff); opacity: 0.85; }
+.family-tree-stage .tree-fam-hi { fill: color-mix(in srgb, var(--fam-c) 60%, #fff); }
+.family-tree-stage .tree-fam-leaf { fill: color-mix(in srgb, var(--fam-c) 78%, #fff); }
 .family-tree-stage .tree-fam-quiet { opacity: 0.22; }
+
+/* Smooth motion: while the tree is being dragged or zoomed (and always on a big tree) the sky and fireflies hold still. */
+.family-tree-stage.tree-moving .tree-star, .family-tree-stage.tree-moving .tree-fly, .family-tree-stage.tree-moving .tree-butterfly,
+.family-tree-stage.tree-big .tree-star, .family-tree-stage.tree-big .tree-fly, .family-tree-stage.tree-big .tree-butterfly { animation-play-state: paused; }
+.family-tree-stage .tree-still { animation: none; }

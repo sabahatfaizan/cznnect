@@ -113,9 +113,11 @@ function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: numbe
   return out
 }
 
-function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<string, { x: number; y: number }>, total: number): Family | null {
+type Bridge = { x: number; y: number; r: number }
+const RING = 5
+function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<string, { x: number; y: number }>, total: number, bridges: Map<string, Bridge[]>): Family | null {
   const rand = seeded(Math.floor(hash(g.head) * 4294967295))
-  const big = total > 120
+  const big = total > 40 // a bigger tree gets fewer, simpler leaves so it stays smooth to move
   const parts: Family['parts'] = []
   const blossoms: Family['blossoms'] = []
   let x0 = Infinity
@@ -127,28 +129,32 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
     if (!n) continue
     const cx = n.x + NODE_W / 2
     const cy = n.y + NODE_H / 2
-    // A clump of six round bunches around the pill, plus one behind it. Wide enough to hold the pill, narrow
+    // A clump of round bunches around the pill, plus one behind it. Wide enough to hold the pill, narrow
     // enough that unrelated branches (about 96 apart) still have clear air between them.
     const bunches: { x: number; y: number; r: number; a: number }[] = []
-    for (let k = 0; k < 6; k++) {
-      const a = (k / 6) * Math.PI * 2 + (rand() - 0.5) * 0.5
+    for (let k = 0; k < RING; k++) {
+      const a = (k / RING) * Math.PI * 2 + (rand() - 0.5) * 0.5
       const j = 0.9 + rand() * 0.2
-      bunches.push({ x: cx + Math.cos(a) * NODE_W * 0.42 * j, y: cy + Math.sin(a) * NODE_H * 0.55 * j, r: 30 + rand() * 8, a })
+      bunches.push({ x: cx + Math.cos(a) * NODE_W * 0.42 * j, y: cy + Math.sin(a) * NODE_H * 0.55 * j, r: 31 + rand() * 8, a })
     }
     bunches.push({ x: cx, y: cy, r: 40, a: 0 })
+    // Extra bunches along the wood between this person and their family, so the gaps inside a family are leafy.
+    for (const b of bridges.get(id) ?? []) bunches.push({ x: b.x, y: b.y, r: b.r + rand() * 6, a: 0 })
     let leaves = ''
-    for (const b of bunches.slice(0, 6)) {
+    for (const b of bunches.slice(0, RING)) {
       for (let j = 0; j < (big ? 1 : 2); j++) {
         const ang = b.a + (rand() - 0.5) * 0.9
         leaves += leaf(b.x + Math.cos(ang) * b.r * 0.92, b.y + Math.sin(ang) * b.r * 0.92, ang, 0.8 + rand() * 0.6)
       }
+    }
+    for (const b of bunches) {
       x0 = Math.min(x0, b.x - b.r - 18)
       x1 = Math.max(x1, b.x + b.r + 18)
       y0 = Math.min(y0, b.y - b.r - 18)
       y1 = Math.max(y1, b.y + b.r + 18)
     }
     if (rand() < 0.4) {
-      const b = bunches[Math.floor(rand() * 6)]
+      const b = bunches[Math.floor(rand() * RING)]
       const ang = b.a + (rand() - 0.5) * 0.8
       blossoms.push({ id, x: r1(b.x + Math.cos(ang) * b.r * 0.85), y: r1(b.y + Math.sin(ang) * b.r * 0.85), s: r1(0.8 + rand() * 0.6) })
     }
@@ -156,7 +162,7 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
       id,
       base: bunches.map((b) => circle(b.x, b.y, b.r)).join(''),
       mid: bunches.map((b) => circle(b.x - b.r * 0.12, b.y - b.r * 0.18, b.r * 0.7)).join(''),
-      hi: bunches.slice(0, 6).filter((_, i) => i % 2 === 0).map((b) => circle(b.x - b.r * 0.3, b.y - b.r * 0.38, b.r * 0.3)).join(''),
+      hi: bunches.slice(0, 2).map((b) => circle(b.x - b.r * 0.3, b.y - b.r * 0.38, b.r * 0.3)).join(''),
       leaves,
     })
   }
@@ -291,10 +297,45 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   // Families and wood come from the real parent and child links, not from screen positions.
   const rel = relations(layout)
   const at = new Map(layout.nodes.map((n) => [n.id, n]))
-  const families = branches(layout, rel, at)
-    .map((g, i) => makeFamily(g, i, at, layout.nodes.length))
-    .filter((f): f is Family => f !== null)
+  const groups = branches(layout, rel, at)
   const wood = woodFor(layout, rel, at)
+  // Leafy bridges: along each stem inside one family, and between partners, so there are no bare gaps inside a
+  // family (different families still keep their gap).
+  const famOf = new Map<string, number>()
+  groups.forEach((g, i) => g.ids.forEach((id) => famOf.set(id, i)))
+  const bridges = new Map<string, Bridge[]>()
+  const bridge = (id: string, x: number, y: number, r: number) => {
+    const list = bridges.get(id)
+    const b = { x, y, r }
+    if (list) list.push(b)
+    else bridges.set(id, [b])
+  }
+  const pos = (id: string) => at.get(id) as { x: number; y: number }
+  for (const w of wood) {
+    const f = famOf.get(w.parents[0])
+    if (f === undefined || !w.parents.every((p) => famOf.get(p) === f)) continue
+    bridge(w.parents[0], w.fork.x, w.fork.y, 32)
+    for (const p of w.parents) {
+      const px = pos(p).x + NODE_W / 2
+      if (Math.abs(px - w.fork.x) < 240) bridge(p, (px + w.fork.x) / 2, (pos(p).y + TOP + w.fork.y) / 2, 26)
+    }
+    for (const k of w.kids) {
+      if (famOf.get(k) !== f) continue
+      const kx = pos(k).x + NODE_W / 2
+      const ky = pos(k).y + BOTTOM
+      // A short limb is leafy along its length; a long, sweeping one only near the child, so no lone bunches float on bare wood.
+      const reach = Math.hypot(kx - w.fork.x, ky - w.fork.y)
+      for (const t of reach < 240 ? [0.34, 0.68] : [0.86]) bridge(k, w.fork.x + (kx - w.fork.x) * t, w.fork.y + (ky - w.fork.y) * t, 28)
+    }
+  }
+  for (const e of layout.edges) {
+    const [a, b] = e.parents ?? []
+    if (e.kind !== 'partner' || !a || !b || !at.has(a) || !at.has(b) || famOf.get(a) === undefined || famOf.get(a) !== famOf.get(b)) continue
+    bridge(a, (pos(a).x + pos(b).x) / 2 + NODE_W / 2, pos(a).y + NODE_H / 2, 30)
+  }
+  const families = groups
+    .map((g, i) => makeFamily(g, i, at, layout.nodes.length, bridges))
+    .filter((f): f is Family => f !== null)
 
   // Stars keep clear of the people and their leaves, so they show in the gaps between family canopies.
   const near = (x: number, y: number) => layout.nodes.some((n) => x > n.x - 30 && x < n.x + NODE_W + 30 && y > n.y - 70 && y < n.y + NODE_H + 70)

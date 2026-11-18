@@ -1977,3 +1977,17 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-butterfly { fill: color-mix(in srgb, #ff7ab8 70%, var(--accent)); opacity: 0.9; transform-box: fill-box; transform-origin: center; animation: tree-flap 0.9s ease-in-out infinite alternate, tree-float 7s ease-in-out infinite; }
 @keyframes tree-flap { from { transform: scaleX(1); } to { transform: scaleX(0.35); } }
 @keyframes tree-float { 0%, 100% { translate: 0 0; } 50% { translate: 10px -14px; } }
+
+/* Family canopies and wooden branches: every family branch has its own leaves and its own tone, drawn in the colours of the chosen theme. */
+.family-tree-stage .tree-wood-body { fill: color-mix(in srgb, var(--trunk-fill) 88%, var(--accent)); stroke: color-mix(in srgb, var(--trunk-fill) 55%, #000); stroke-width: 0.8; stroke-linejoin: round; }
+.family-tree-stage .tree-wood-shine { fill: color-mix(in srgb, var(--trunk-fill) 55%, #fff); opacity: 0.4; }
+.family-tree-stage .tree-wood > g { transition: opacity 0.25s; }
+.family-tree-stage .tree-fam { --fam-c: #3f9b4a; cursor: pointer; transition: opacity 0.25s; }
+.family-tree-stage .tree-fam[data-tone="1"] { --fam-c: #2f9c8f; }
+.family-tree-stage .tree-fam[data-tone="2"] { --fam-c: #8aa83a; }
+.family-tree-stage .tree-fam[data-tone="3"] { --fam-c: #c9a13a; }
+.family-tree-stage .tree-fam-base { fill: color-mix(in srgb, color-mix(in srgb, var(--fam-c) 82%, var(--accent)) 52%, var(--page)); stroke: color-mix(in srgb, var(--fam-c) 70%, transparent); stroke-width: 1.2; }
+.family-tree-stage .tree-fam-mid { fill: color-mix(in srgb, var(--fam-c) 80%, var(--page)); }
+.family-tree-stage .tree-fam-hi { fill: color-mix(in srgb, var(--fam-c) 70%, #fff); opacity: 0.7; }
+.family-tree-stage .tree-fam-leaf { fill: color-mix(in srgb, var(--fam-c) 85%, #fff); opacity: 0.85; }
+.family-tree-stage .tree-fam-quiet { opacity: 0.22; }

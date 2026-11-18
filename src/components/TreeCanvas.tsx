@@ -154,7 +154,9 @@ export default function TreeCanvas({
     window.clearTimeout(glideTimer.current)
     glideTimer.current = window.setTimeout(() => setGliding(false), 520)
   }, [])
-    const started = useRef(false)
+  // The family branch the camera was last pointed at; the other branches are quieted while it is set.
+  const [focusFam, setFocusFam] = useState<string | null>(null)
+  const started = useRef(false)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gesture = useRef({ moved: false, startX: 0, startY: 0, dist: 0 })
 
@@ -225,6 +227,19 @@ export default function TreeCanvas({
     const k = clamp(Math.min(size.w / frame.w, size.h / frame.h), MIN_K, 1)
     glide({ k, x: (size.w - frame.w * k) / 2 - frame.x * k, y: Math.max(8, (size.h - frame.h * k) / 2) - frame.y * k })
   }, [size.w, size.h, layout.width, frame.x, frame.y, frame.w, frame.h, glide])
+
+  // Tapping a family's leaves glides the camera to that whole branch, instead of picking one person.
+  const focusFamily = useCallback(
+    (famId: string) => {
+      const f = deco?.families.find((x) => x.id === famId)
+      if (!f || size.w === 0) return
+      setFocusFam(famId)
+      const pad = 28
+      const k = clamp(Math.min((size.w - pad * 2) / f.box.w, (size.h - pad * 2) / f.box.h), MIN_K, 1.1)
+      glide({ k, x: size.w / 2 - (f.box.x + f.box.w / 2) * k, y: size.h / 2 - (f.box.y + f.box.h / 2) * k })
+    },
+    [deco, size.w, size.h, glide],
+  )
 
   // Landscape: the tree alone goes fullscreen and the phone is turned sideways (where the browser or app allows it).
   const canFlip = typeof document !== 'undefined' && typeof document.documentElement.requestFullscreen === 'function'
@@ -354,8 +369,11 @@ export default function TreeCanvas({
     const fold = hit?.closest('[data-fold]')?.getAttribute('data-fold')
     if (fold) { toggleFold(fold); return }
     const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
-    if (id) onSelect(id)
-    else onClear()
+    if (id) { setFocusFam(null); onSelect(id); return }
+    const fam = hit?.closest('[data-fam]')?.getAttribute('data-fam')
+    if (fam) { focusFamily(fam); return }
+    setFocusFam(null)
+    onClear()
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -432,29 +450,6 @@ export default function TreeCanvas({
         {deco.trunk.roots.map((d, i) => <path key={`r${i}`} d={d} className="tree-root" />)}
         <path d={deco.trunk.body} className="tree-trunk" />
         {deco.trunk.bark.map((d, i) => <path key={`b${i}`} d={d} className="tree-bark" />)}
-        <path d={deco.crown} className="tree-leaves" />
-        {deco.branches.map((br, i) => <path key={`br${i}`} d={br.d} className="tree-branch" strokeWidth={br.w} />)}
-        {deco.leaves.map((l, i) => (
-          <path key={`l${i}`} d="M0 0C4 -7 15 -7 22 0C15 7 4 7 0 0Z" className="tree-leaf" opacity={l.dim ? 0.5 : 0.9} transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.s})`} />
-        ))}
-        {deco.blossoms.map((f, i) => (
-          <g key={`f${i}`} transform={`translate(${f.x} ${f.y}) scale(${f.s})`} className="tree-blossom">
-            {[0, 72, 144, 216, 288].map((r) => <circle key={r} cx={0} cy={-5} r={4} transform={`rotate(${r})`} />)}
-            <circle r={2.6} className="tree-blossom-eye" />
-          </g>
-        ))}
-        {deco.flies.map((f, i) => (
-          <circle key={`f${i}`} cx={f.x} cy={f.y} r={3} className="tree-fly" style={{ ['--dx' as string]: `${f.dx}px`, ['--dy' as string]: `${f.dy}px`, animationDelay: `${f.delay}s`, animationDuration: `${f.dur}s` }} />
-        ))}
-        {deco.butterflies.map((bf, i) => (
-          <g key={`bf${i}`} transform={`translate(${bf.x} ${bf.y}) scale(${bf.s})`}>
-            <g className="tree-butterfly" style={{ animationDelay: `${bf.delay}s` }}>
-              <path d="M0 0C-12 -16 -28 -8 -20 6C-15 14 -5 8 0 0Z M0 0C12 -16 28 -8 20 6C15 14 5 8 0 0Z" />
-            </g>
-          </g>
-        ))}
-        <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={8} className="tree-banner" />
-        <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={22} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
       </g>
     )}
     {(() => {
@@ -468,6 +463,61 @@ export default function TreeCanvas({
       const BOTTOM = 63
       const cx = (id: string) => (at.get(id) as { x: number }).x + NODE_W / 2
       return (
+        <>
+        {deco && (
+          <g className="tree-wood">
+            {deco.wood.map((w) => {
+              const e = layout.edges.find((x) => x.id === w.id)
+              if (!e || w.parents.some((id) => hidden.out.has(id))) return null
+              const shut = folded.has(w.id)
+              return (
+                <g key={w.id} className={e && dimmed(e) ? 'tree-dim' : ''}>
+                  <path d={w.legs + (shut ? '' : w.limbs)} className="tree-wood-body" />
+                  <path d={w.shine} className="tree-wood-shine" />
+                </g>
+              )
+            })}
+          </g>
+        )}
+        {deco && (
+          <g className="tree-families">
+            {deco.families.map((f) => {
+              const parts = f.parts.filter((pt) => !hidden.out.has(pt.id))
+              if (parts.length === 0) return null
+              const quiet = (focusFam !== null && focusFam !== f.id) || (kin !== null && !f.ids.some((id) => kin.has(id)))
+              return (
+                <g key={f.id} data-fam={f.id} data-tone={f.tone % 4} className={`tree-fam ${quiet ? 'tree-fam-quiet' : ''}`}>
+                  <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-base" />
+                  <path d={parts.map((pt) => pt.mid).join('')} className="tree-fam-mid" />
+                  <path d={parts.map((pt) => pt.hi).join('')} className="tree-fam-hi" />
+                  <path d={parts.map((pt) => pt.leaves).join('')} className="tree-fam-leaf" />
+                  {f.blossoms.filter((bl) => !hidden.out.has(bl.id)).map((bl, i) => (
+                    <g key={i} transform={`translate(${bl.x} ${bl.y}) scale(${bl.s})`} className="tree-blossom">
+                      {[0, 72, 144, 216, 288].map((r) => <circle key={r} cx={0} cy={-5} r={4} transform={`rotate(${r})`} />)}
+                      <circle r={2.6} className="tree-blossom-eye" />
+                    </g>
+                  ))}
+                </g>
+              )
+            })}
+          </g>
+        )}
+        {deco && (
+          <g pointerEvents="none" className="tree-crown">
+          {deco.flies.map((f, i) => (
+    <circle key={`f${i}`} cx={f.x} cy={f.y} r={3} className="tree-fly" style={{ ['--dx' as string]: `${f.dx}px`, ['--dy' as string]: `${f.dy}px`, animationDelay: `${f.delay}s`, animationDuration: `${f.dur}s` }} />
+  ))}
+  {deco.butterflies.map((bf, i) => (
+    <g key={`bf${i}`} transform={`translate(${bf.x} ${bf.y}) scale(${bf.s})`}>
+      <g className="tree-butterfly" style={{ animationDelay: `${bf.delay}s` }}>
+        <path d="M0 0C-12 -16 -28 -8 -20 6C-15 14 -5 8 0 0Z M0 0C12 -16 28 -8 20 6C15 14 5 8 0 0Z" />
+      </g>
+    </g>
+  ))}
+  <rect x={deco.banner.x} y={deco.banner.y} width={deco.banner.w} height={deco.banner.h} rx={8} className="tree-banner" />
+  <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={22} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
+          </g>
+        )}
         <g className="tree-lines">
           {layout.edges.filter((e) => e.kind === 'partner').map((e) => {
             const [pa, pb] = e.parents ?? []
@@ -478,20 +528,15 @@ export default function TreeCanvas({
             const parents = (e.parents ?? []).filter((id) => at.has(id))
             const kids = (e.kids ?? []).filter((id) => at.has(id))
             if (parents.length === 0 || kids.length === 0 || parents.some((id) => hidden.out.has(id))) return null
-            // The tree rises: parents stand below their children, so lines leave the top of a parent and reach the bottom of a child.
+            // The tree rises: parents stand below their children. The wood forks at this same spot, so the fold dot sits on the fork.
             const py = Math.min(...parents.map((id) => (at.get(id) as { y: number }).y + TOP))
             const ky = Math.max(...kids.map((id) => (at.get(id) as { y: number }).y + BOTTOM))
             const jy = ky + (py - ky) * 0.5
             const mx = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
             const shut = folded.has(e.id)
-            const xs = [...parents.map(cx), ...(shut ? [] : kids.map(cx))]
-            let d = parents.map((id) => `M${cx(id)} ${(at.get(id) as { y: number }).y + TOP}V${jy}`).join('')
-            d += `M${Math.min(...xs)} ${jy}H${Math.max(...xs)}`
-            if (!shut) d += kids.map((id) => `M${cx(id)} ${jy}V${(at.get(id) as { y: number }).y + BOTTOM}`).join('')
             const n = hidden.counts.get(e.id) ?? 0
             return (
               <g key={e.id} className={dimmed(e) ? 'tree-dim' : ''}>
-                <path d={d} className="tree-line" />
                 <g data-fold={e.id} className="tree-fold" role="button" aria-label={shut ? `Show ${n} people above` : 'Fold this branch'}>
                   <circle cx={mx} cy={jy} r={22} fill="transparent" />
                   {shut ? (
@@ -507,6 +552,7 @@ export default function TreeCanvas({
             )
           })}
         </g>
+        </>
       )
     })()}
     {layout.nodes.filter((n) => !hidden.out.has(n.id)).map((n) => {
@@ -555,7 +601,7 @@ export default function TreeCanvas({
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded],
+    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded, focusFam],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

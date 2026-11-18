@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Logo from './Logo'
 import { nextAuthMode, type AuthMode } from '../lib/auth'
+import { WEB_APP_URL, isNative } from '../lib/native'
 
 // Gives up after 20 seconds so the button never stays stuck.
 function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
@@ -68,12 +69,14 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
         else if (!data.session)
           setMsg({ kind: 'info', text: 'Account created. Check your email to confirm it, then sign in.' })
       } else if (mode === 'reset') {
-        const redirectTo = new URL('.', window.location.href).toString()
+        // Inside the installed app the page address is https://localhost, which Supabase cannot send anyone back to
+        // (it falls back to the website's Site URL). So the app asks for the live web app, where the new password is chosen.
+        const redirectTo = isNative() ? WEB_APP_URL : new URL('.', window.location.href).toString()
         const { error } = await withTimeout(
           supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo }),
         )
         if (error) setMsg({ kind: 'error', text: error.message })
-        else setMsg({ kind: 'info', text: 'Password reset email sent. Open the newest email on this device to choose a new password.' })
+        else setMsg({ kind: 'info', text: isNative() ? 'Password reset email sent. Open the newest email, choose a new password on the page that opens, then come back here and sign in.' : 'Password reset email sent. Open the newest email on this device to choose a new password.' })
       } else {
         const { error } = await withTimeout(
           supabase.auth.signInWithPassword({ email: email.trim(), password }),

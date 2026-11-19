@@ -2141,12 +2141,11 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
   stroke-width: 1.35;
   filter: drop-shadow(0 2px 3px var(--tree-shadow));
 }
-.family-tree-stage .tnode-me .tnode-rect,
-.family-tree-stage .tnode-me {
+.family-tree-stage .tnode-rect.tnode-me {
   fill: color-mix(in srgb, var(--accent-soft) 78%, #173b2b);
   stroke: var(--tree-gold);
 }
-.family-tree-stage .tnode-sel .tnode-rect { stroke: var(--accent); stroke-width: 2.8; }
+.family-tree-stage .tnode-rect.tnode-sel { stroke: var(--accent); stroke-width: 2.8; }
 .family-tree-stage .tree-tie {
   stroke: color-mix(in srgb, var(--tree-gold) 72%, var(--trunk-fill));
   stroke-width: 2.2;

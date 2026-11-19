@@ -2046,3 +2046,115 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-fam-edge { fill: var(--trunk-fill); stroke: color-mix(in srgb, var(--trunk-fill) 88%, #241307); stroke-width: 9; stroke-linejoin: round; }
 .family-tree-stage .tree-fam-base { fill: color-mix(in srgb, var(--fam-c) 76%, var(--cloud-fill)); }
 .family-tree-stage .tree-vein { stroke: color-mix(in srgb, var(--trunk-fill) 40%, var(--page)); }
+
+/* Cznnect botanical heirloom treatment: foliage has depth, wood has warmth, and lineage colours stay distinct. */
+.family-tree-stage {
+  --trunk-fill: #81502f;
+  --cloud-fill: #173b2b;
+  --tree-gold: #c5a36c;
+  --tree-shadow: rgb(0 0 0 / 0.34);
+  background:
+    radial-gradient(ellipse at 50% 42%, rgb(34 67 48 / 0.18), transparent 62%),
+    var(--page);
+}
+:root[data-theme="dark"] .family-tree-stage,
+:root[data-theme="midnight"] .family-tree-stage,
+:root[data-theme="dusk"] .family-tree-stage,
+:root[data-theme="glass"] .family-tree-stage {
+  --trunk-fill: #a87549;
+  --cloud-fill: #153a2a;
+  --tree-gold: #c3a16b;
+  --tree-shadow: rgb(0 0 0 / 0.48);
+}
+.family-tree-stage .tree-star,
+.family-tree-stage .tree-moon,
+.family-tree-stage .tree-fly,
+.family-tree-stage .tree-butterfly { display: none; }
+.family-tree-stage .tree-trunk {
+  fill: var(--trunk-fill);
+  stroke: color-mix(in srgb, var(--trunk-fill) 62%, #241308);
+  stroke-width: 2;
+  filter: drop-shadow(0 8px 10px var(--tree-shadow));
+}
+.family-tree-stage .tree-wood-body {
+  fill: color-mix(in srgb, var(--trunk-fill) 90%, #4b2c19);
+  stroke: color-mix(in srgb, var(--trunk-fill) 54%, #241308);
+  stroke-width: 1.15;
+  stroke-linejoin: round;
+}
+.family-tree-stage .tree-wood-shine {
+  fill: color-mix(in srgb, var(--tree-gold) 62%, #fff);
+  opacity: .24;
+}
+.family-tree-stage .tree-bark {
+  stroke: color-mix(in srgb, var(--trunk-fill) 48%, #28170d);
+  stroke-width: 2.2;
+  opacity: .58;
+}
+.family-tree-stage .tree-root {
+  stroke: color-mix(in srgb, var(--trunk-fill) 82%, #241308);
+  stroke-width: 8;
+  opacity: .96;
+}
+.family-tree-stage .tree-ground {
+  fill: color-mix(in srgb, #244b32 42%, var(--page));
+  stroke: color-mix(in srgb, #78945b 44%, transparent);
+  stroke-width: 1.4;
+  opacity: .92;
+}
+.family-tree-stage .tree-fam {
+  filter: drop-shadow(0 5px 7px var(--tree-shadow));
+}
+.family-tree-stage .tree-fam-edge {
+  fill: color-mix(in srgb, var(--fam-c) 62%, #10291e);
+  stroke: color-mix(in srgb, var(--tree-gold) 82%, var(--fam-c));
+  stroke-width: 7;
+  stroke-linejoin: round;
+}
+.family-tree-stage .tree-fam-base {
+  fill: color-mix(in srgb, var(--fam-c) 70%, #173b2b);
+  stroke: color-mix(in srgb, var(--fam-c) 78%, #0d241a);
+  stroke-width: 1.1;
+}
+.family-tree-stage .tree-fam[data-tone="1"] { --fam-c: #3e9b82; }
+.family-tree-stage .tree-fam[data-tone="2"] { --fam-c: #829c4b; }
+.family-tree-stage .tree-fam[data-tone="3"] { --fam-c: #bd9953; }
+.family-tree-stage .tree-fam-quiet { opacity: .18; }
+.family-tree-stage .tree-vein {
+  stroke: color-mix(in srgb, var(--tree-gold) 38%, var(--trunk-fill));
+  stroke-width: 1.5;
+  opacity: .55;
+}
+.family-tree-stage .tree-banner {
+  fill: color-mix(in srgb, var(--trunk-fill) 76%, #24170e);
+  stroke: var(--tree-gold);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 3px 6px var(--tree-shadow));
+}
+.family-tree-stage .tree-banner-text {
+  fill: #f4e7cc;
+  letter-spacing: .04em;
+}
+.family-tree-stage .tnode-rect {
+  fill: color-mix(in srgb, var(--surface) 88%, #14241b);
+  stroke: color-mix(in srgb, var(--tree-gold) 72%, var(--line));
+  stroke-width: 1.35;
+  filter: drop-shadow(0 2px 3px var(--tree-shadow));
+}
+.family-tree-stage .tnode-me .tnode-rect,
+.family-tree-stage .tnode-me {
+  fill: color-mix(in srgb, var(--accent-soft) 78%, #173b2b);
+  stroke: var(--tree-gold);
+}
+.family-tree-stage .tnode-sel .tnode-rect { stroke: var(--accent); stroke-width: 2.8; }
+.family-tree-stage .tree-tie {
+  stroke: color-mix(in srgb, var(--tree-gold) 72%, var(--trunk-fill));
+  stroke-width: 2.2;
+  stroke-dasharray: none;
+}
+.family-tree-stage .tree-dot { fill: var(--tree-gold); stroke: #2b1c11; stroke-width: 1.5; }
+.family-tree-stage .tree-fold-badge { fill: #80532f; stroke: var(--tree-gold); stroke-width: 1.2; }
+.family-tree-stage .tree-fold-text { fill: #fff3dc; }
+.family-tree-stage .tnode-gone .tnode-rect { stroke-dasharray: 4 3; }
+.family-tree-stage .tree-fam-quiet,
+.family-tree-stage .tree-dim { transition: opacity .25s ease; }

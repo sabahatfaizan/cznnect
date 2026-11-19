@@ -264,10 +264,9 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
 
   const rand = seeded(layout.nodes.length * 7919 + Math.round(layout.width))
 
-  // One trunk holds the oldest generations (up to four rows) and is as wide as the widest of them; it flares into
-  // roots at the bottom and stands on the ground. The family branches leave from its top.
-  // Always leave at least two generations above the trunk, so there is a branching tree and not just a stump.
-  const trunkGens = clamp(Math.max(...layout.nodes.map((n) => n.gen)) - 1, 1, 4)
+  // The trunk represents the oldest generation only. Every child of that generation
+  // starts a distinct family limb, so the canopy reads as a tree rather than stacked rows.
+  const trunkGens = 1
   type Row = { l: number; r: number; yTop: number; yBot: number }
   const rows: Row[] = []
   // The trunk stays slim, like a real one: it holds only as many people of each generation as fit in its width.

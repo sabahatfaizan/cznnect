@@ -369,7 +369,8 @@ export type TreeEdge = {
   kids?: string[]
   person?: string
 }
-export type TreeLayout = { nodes: TreeNode[]; edges: TreeEdge[]; width: number; height: number }
+// origin: where the oldest couple's trunk stands, when the layout lifts the tree (see rise.ts); otherwise the middle.
+export type TreeLayout = { nodes: TreeNode[]; edges: TreeEdge[]; width: number; height: number; origin?: number }
 
 type Cluster = { members: string[]; gen: number; start: number }
 

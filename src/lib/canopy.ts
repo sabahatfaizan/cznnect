@@ -235,13 +235,13 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const x1 = Math.max(...layout.nodes.map((n) => n.x + NODE_W))
   const y0 = Math.min(...layout.nodes.map((n) => n.y))
   const y1 = Math.max(...layout.nodes.map((n) => n.y + NODE_H))
-  const cx = (x0 + x1) / 2
+  const cx = layout.origin ?? (x0 + x1) / 2
 
   // Taller than the people need: lots of room above the youngest row, so the tree reaches up.
   const bottom = y1 + 36
   const top = y0 - 70
   const cy = (top + bottom) / 2
-  let a = ((x1 - x0) / 2) * 1.18 + 80
+  let a = Math.max(cx - x0, x1 - cx) * 1.18 + 80
   let b = (bottom - top) / 2
   const fits = (k: number) =>
     layout.nodes.every((n) =>

@@ -11,6 +11,7 @@ import {
   type Link,
   type Person,
 } from '../lib/tree'
+import { riseLayout } from '../lib/rise'
 import { addMeToTree, addPerson, claimPerson, type PersonValues } from '../lib/treeApi'
 import { withTimeout } from '../lib/net'
 import TreeCanvas from '../components/TreeCanvas'
@@ -91,7 +92,8 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
 
   const index = useMemo(() => buildIndex(people, links), [people, links])
   const generations = useMemo(() => computeGenerations(index), [index])
-  const layout = useMemo(() => layoutTree(people, links), [people, links])
+  // The tree is laid out row by row, then lifted so each generation curves up above the last instead of spreading sideways.
+  const layout = useMemo(() => riseLayout(layoutTree(people, links)), [people, links])
   const mine = useMemo(() => people.find((p) => p.claimed_by === userId) ?? null, [people, userId])
   const selected = selectedId ? (index.byId.get(selectedId) ?? null) : null
 

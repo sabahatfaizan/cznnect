@@ -23,32 +23,49 @@ export function organicFor(layout: TreeLayout, aspect = 1.1): Organic | null {
 
   const positions = new Map<string, { x: number; y: number }>()
   const safeAspect = clamp(aspect || 1.1, 0.65, 2.1)
+  // Keep one shared horizontal coordinate system for every generation. This is the
+  // important bit: a grandchild stays above their own family limb instead of being
+  // independently stretched across the entire crown on their generation's row.
   const fan = clamp(0.48 + safeAspect * 0.36, 0.72, 1.18)
-  const radii: number[] = [0]
+  const allCentres = layout.nodes.map((n) => n.x + NODE_W / 2)
+  const minCentre = Math.min(...allCentres)
+  const maxCentre = Math.max(...allCentres)
+  const sourceSpan = Math.max(1, maxCentre - minCentre)
 
-  // The oldest generation stays grounded in the trunk. Each younger generation
-  // occupies a wider arc, keeping the original left-to-right family order.
   for (const n of roots) {
     positions.set(n.id, { x: round(n.x + NODE_W / 2 - rootMid), y: 0 })
   }
 
+  let previousRadius = 0
   for (let gen = 1; gen <= generations; gen++) {
     const row = [...(byGeneration.get(gen) ?? [])].sort((a, b) => a.x - b.x)
-    if (!row.length) { radii[gen] = (radii[gen - 1] ?? 0) + 175; continue }
-    const previous = radii[gen - 1] ?? 0
-    const radius = Math.max(previous + 178, 245 + (gen - 1) * 172, row.length * (NODE_W + 54) / (2 * fan))
-    radii[gen] = radius
-    const originalMin = Math.min(...row.map((n) => n.x + NODE_W / 2))
-    const originalMax = Math.max(...row.map((n) => n.x + NODE_W / 2))
-    const span = Math.max(1, originalMax - originalMin)
+    if (!row.length) continue
+
+    // A wider ring is used when a generation has many people. The angular gap is
+    // calculated from the actual chip width, so names do not collide at the edges.
+    let radius = Math.max(previousRadius + 178, 245 + (gen - 1) * 172)
+    let angles: number[] = []
+    for (let attempt = 0; attempt < 80; attempt++) {
+      const minGap = 2 * Math.asin(clamp((NODE_W + 38) / (2 * radius), 0, 0.95))
+      angles = []
+      for (const n of row) {
+        const raw = ((n.x + NODE_W / 2 - minCentre) / sourceSpan) * 2 - 1
+        const desired = clamp(raw * fan, -fan, fan)
+        const prior = angles[angles.length - 1]
+        angles.push(prior === undefined ? desired : Math.max(desired, prior + minGap))
+      }
+      if (angles[angles.length - 1] <= fan + 1e-5) break
+      radius *= 1.12
+    }
+
     row.forEach((n, i) => {
-      const t = row.length === 1 ? 0 : ((n.x + NODE_W / 2 - originalMin) / span) * 2 - 1
-      const angle = clamp(t * fan, -fan, fan)
+      const angle = clamp(angles[i] ?? 0, -fan, fan)
       positions.set(n.id, {
         x: round(Math.sin(angle) * radius),
         y: round(-168 - Math.cos(angle) * radius * 0.84),
       })
     })
+    previousRadius = radius
   }
 
   const nodes = layout.nodes.map((n) => {

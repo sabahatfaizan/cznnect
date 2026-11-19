@@ -194,48 +194,78 @@ function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number
   for (const e of layout.edges) {
     if (e.kind !== 'parent') continue
     const parents = (e.parents ?? []).filter((id) => at.has(id))
-    const kids = (e.kids ?? []).filter((id) => at.has(id))
-    if (parents.length === 0 || kids.length === 0) continue
-    const py = Math.min(...parents.map((id) => node(id).y + TOP))
-    const ky = Math.max(...kids.map((id) => node(id).y + BOTTOM))
-    const fork: P = { x: parents.reduce((s, id) => s + cx(id), 0) / parents.length, y: ky + (py - ky) * 0.5 }
+    const kids = (e.kids ?? []).filter((id) => at.has(id)).sort((a, b) => cx(a) - cx(b))
+    if (!parents.length || !kids.length) continue
+
     const everyone = new Set<string>(kids)
     for (const k of kids) for (const d of below(k)) everyone.add(d)
-    // Main limbs become visibly stronger as their descendant family grows.
-    const w = clamp(10 + 5.2 * Math.sqrt(everyone.size), 11, 56)
+    const w = clamp(12 + 5.8 * Math.sqrt(everyone.size), 13, 62)
     let legs = ''
     let limbs = ''
     let shine = ''
-    // Each stroke is a filled, tapered Bézier ribbon rather than a line: broad at
-    // the junction, narrowing naturally as it reaches a family member.
     const piece = (a: P, b: P, c: P, d: P, w0: number, w1: number, into: 'legs' | 'limbs') => {
       const t = taperPath(cub(a, b, c, d), w0, w1)
       if (into === 'legs') legs += t
       else limbs += t
-      const offset = -w0 * 0.18
+      const offset = -w0 * 0.16
       const sh = (q: P): P => ({ x: q.x + offset, y: q.y })
-      shine += taperPath(cub(sh(a), sh(b), sh(c), sh(d)), w0 * 0.22, w1 * 0.22)
+      shine += taperPath(cub(sh(a), sh(b), sh(c), sh(d)), w0 * 0.2, w1 * 0.2)
     }
-    for (const id of parents) {
-      const p: P = { x: cx(id), y: node(id).y + TOP }
-      piece(fork, { x: fork.x, y: fork.y + (p.y - fork.y) * 0.4 }, { x: p.x, y: p.y - (p.y - fork.y) * 0.45 }, p, w * 0.9, w * 0.5, 'legs')
+
+    const rootLine = parents.every((id) => onTrunk.has(id))
+    const trunkX = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
+    const parentTop = Math.min(...parents.map((id) => node(id).y + TOP))
+    const childBottom = Math.max(...kids.map((id) => node(id).y + BOTTOM))
+    const sharedFork: P = { x: trunkX, y: childBottom + (parentTop - childBottom) * 0.5 }
+
+    if (rootLine) {
+      // The first generation does not fan out from one horizontal bar. Each family
+      // grows from its own point on the rising trunk, at a different height.
+      const rootJunction: P = { x: trunkX, y: parentTop - 12 }
+      for (const id of parents) {
+        const p = { x: cx(id), y: node(id).y + TOP }
+        piece(rootJunction, { x: rootJunction.x, y: rootJunction.y + 18 }, { x: p.x, y: p.y - 22 }, p, w * 0.72, w * 0.46, 'legs')
+      }
+      const middle = (kids.length - 1) / 2
+      kids.forEach((id, i) => {
+        const target: P = { x: cx(id), y: node(id).y + BOTTOM }
+        const dx = target.x - trunkX
+        const rank = Math.abs(i - middle)
+        const attach: P = {
+          x: trunkX + clamp(dx * 0.1, -34, 34),
+          y: rootJunction.y - 22 - rank * 18,
+        }
+        const rise = Math.max(55, attach.y - target.y)
+        const side = Math.sign(dx || (i % 2 ? 1 : -1))
+        const sweep = side * Math.min(92, Math.abs(dx) * 0.3 + 24)
+        const c1: P = { x: attach.x + dx * 0.28 + sweep, y: attach.y - rise * 0.22 }
+        const c2: P = { x: target.x - dx * 0.12 + sweep * 0.18, y: target.y + rise * 0.34 }
+        const tip = clamp(5 + 2.8 * Math.sqrt(below(id).size + 1), 5, w * 0.72)
+        piece(attach, c1, c2, target, w * 0.86, tip, 'limbs')
+      })
+    } else {
+      for (const id of parents) {
+        const p: P = { x: cx(id), y: node(id).y + TOP }
+        piece(sharedFork, { x: sharedFork.x, y: sharedFork.y + (p.y - sharedFork.y) * 0.4 }, { x: p.x, y: p.y - (p.y - sharedFork.y) * 0.45 }, p, w * 0.86, w * 0.48, 'legs')
+      }
+      for (const id of kids) {
+        const t: P = { x: cx(id), y: node(id).y + BOTTOM }
+        const dx = t.x - sharedFork.x
+        const rise = Math.max(50, sharedFork.y - t.y)
+        const end = clamp(4.5 + 2.9 * Math.sqrt(below(id).size + 1), 4.5, w * 0.76)
+        const bend = Math.sign(dx || (hash(id) - 0.5)) * Math.min(78, Math.abs(dx) * 0.24 + 18)
+        const c1: P = { x: sharedFork.x + dx * 0.32 + bend, y: sharedFork.y - rise * 0.25 }
+        const c2: P = { x: t.x - dx * 0.14 + bend * 0.22, y: t.y + rise * 0.32 }
+        piece(sharedFork, c1, c2, t, w * 0.92, end, 'limbs')
+      }
     }
-    for (const id of kids) {
-      const t: P = { x: cx(id), y: node(id).y + BOTTOM }
-      const dx = t.x - fork.x
-      const rise = Math.max(50, fork.y - t.y)
-      const end = clamp(4.5 + 2.9 * Math.sqrt(below(id).size + 1), 4.5, w * 0.76)
-      // The first control point pushes the limb outward; the second sweeps back
-      // toward the child. Siblings therefore read as separate arms from one fork.
-      const bend = Math.sign(dx || (hash(id) - 0.5)) * Math.min(72, Math.abs(dx) * 0.22 + 16)
-      const c1: P = { x: fork.x + dx * 0.34 + bend, y: fork.y - rise * 0.24 }
-      const c2: P = { x: t.x - dx * 0.16 + bend * 0.24, y: t.y + rise * 0.3 }
-      piece(fork, c1, c2, t, w * 0.96, end, 'limbs')
-    }
+
     const inside = kids.every((id) => onTrunk.has(id))
+    const fork = rootLine
+      ? { x: trunkX, y: parentTop - 24 }
+      : sharedFork
     let vein = ''
     if (inside) {
-      // Inside the trunk the link is a fine carved line: up from each parent, across, and up to each child.
       const xs = [...parents.map(cx), ...kids.map(cx)]
       vein = parents.map((id) => `M${r1(cx(id))} ${r1(node(id).y + TOP)}L${r1(cx(id))} ${r1(fork.y)}`).join('') +
         `M${r1(Math.min(...xs))} ${r1(fork.y)}H${r1(Math.max(...xs))}` +
@@ -314,9 +344,19 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   left.push([bottomRow.l - flare * 0.2, B - 44], [bottomRow.l - flare * 0.7, B - 14], [bottomRow.l - flare * 1.3, B + 2])
   const rightUp = [...wall('r'), [bottomRow.r + flare * 0.2, B - 44], [bottomRow.r + flare * 0.7, B - 14], [bottomRow.r + flare * 1.3, B + 2]].reverse() as [number, number][]
   const tc = (topRow.l + topRow.r) / 2
+  // A single sculpted trunk rises above the oldest couple so the first limbs
+  // visibly emerge from its sides instead of floating above a short stump.
+  const trunkTop = T - 132
+  const trunkHeight = B - trunkTop
+  const crownHalf = Math.max(112, w0 * 0.56)
+  const rootHalf = Math.max(crownHalf + 52, w0 * 0.76)
   const body =
-    `M${r1(topRow.l + 14)} ${r1(T + 6)}${through(left)}L${r1(rightUp[0][0])} ${r1(rightUp[0][1])}${through(rightUp)}` +
-    `Q${r1(tc)} ${r1(T - 26)} ${r1(topRow.l + 14)} ${r1(T + 6)}Z`
+    `M${r1(tc - crownHalf)} ${r1(trunkTop + 8)}` +
+    `C${r1(tc - crownHalf * 1.12)} ${r1(trunkTop + trunkHeight * 0.28)} ${r1(tc - rootHalf * 0.62)} ${r1(B - trunkHeight * 0.22)} ${r1(tc - rootHalf)} ${r1(B)}` +
+    `C${r1(tc - rootHalf * 0.92)} ${r1(B + 22)} ${r1(tc - rootHalf * 0.35)} ${r1(B + 28)} ${r1(tc)} ${r1(B + 14)}` +
+    `C${r1(tc + rootHalf * 0.35)} ${r1(B + 28)} ${r1(tc + rootHalf * 0.92)} ${r1(B + 22)} ${r1(tc + rootHalf)} ${r1(B)}` +
+    `C${r1(tc + rootHalf * 0.62)} ${r1(B - trunkHeight * 0.22)} ${r1(tc + crownHalf * 1.12)} ${r1(trunkTop + trunkHeight * 0.28)} ${r1(tc + crownHalf)} ${r1(trunkTop + 8)}` +
+    `Q${r1(tc)} ${r1(trunkTop - 18)} ${r1(tc - crownHalf)} ${r1(trunkTop + 8)}Z`
   const brand = seeded(Math.round(w0) + trunkGens)
   const strands = clamp(Math.round(w0 / 70), 4, 18)
   const bark = Array.from({ length: strands }, (_, i) => {

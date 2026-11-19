@@ -2113,8 +2113,7 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 }
 .family-tree-stage .tree-fam-base {
   fill: color-mix(in srgb, var(--fam-c) 70%, #173b2b);
-  stroke: color-mix(in srgb, var(--fam-c) 78%, #0d241a);
-  stroke-width: 1.1;
+  stroke: none;
 }
 .family-tree-stage .tree-fam[data-tone="1"] { --fam-c: #3e9b82; }
 .family-tree-stage .tree-fam[data-tone="2"] { --fam-c: #829c4b; }

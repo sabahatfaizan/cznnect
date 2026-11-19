@@ -14,6 +14,7 @@ import {
 import { addMeToTree, addPerson, claimPerson, type PersonValues } from '../lib/treeApi'
 import { withTimeout } from '../lib/net'
 import TreeCanvas from '../components/TreeCanvas'
+import { isIconSymbol, parseAvatar } from '../lib/avatars'
 import PersonRow from '../components/PersonRow'
 import PersonSheet from '../components/PersonSheet'
 import PersonCard from '../components/PersonCard'
@@ -92,6 +93,29 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
   const index = useMemo(() => buildIndex(people, links), [people, links])
   const generations = useMemo(() => computeGenerations(index), [index])
   const layout = useMemo(() => layoutTree(people, links), [people, links])
+  // Emoji avatars of people who have joined, shown as their round portrait on the tree.
+  const [portraits, setPortraits] = useState<Map<string, string>>(new Map())
+  const claimedKey = people.filter((p) => p.claimed_by).map((p) => p.claimed_by).join(',')
+  useEffect(() => {
+    const ids = claimedKey ? claimedKey.split(',') : []
+    if (ids.length === 0) return
+    let live = true
+    void supabase.from('profiles').select('id, avatar').in('id', ids).then(({ data }) => {
+      if (!live || !data) return
+      const byUser = new Map<string, string>()
+      for (const row of data as { id: string; avatar: string | null }[]) {
+        const spec = parseAvatar(row.avatar)
+        if (spec && !isIconSymbol(spec.symbol)) byUser.set(row.id, spec.symbol)
+      }
+      const next = new Map<string, string>()
+      for (const p of people) if (p.claimed_by && byUser.has(p.claimed_by)) next.set(p.id, byUser.get(p.claimed_by) as string)
+      setPortraits(next)
+    })
+    return () => { live = false }
+    // people only matters through who has joined (claimedKey).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claimedKey])
+
   const mine = useMemo(() => people.find((p) => p.claimed_by === userId) ?? null, [people, userId])
   const selected = selectedId ? (index.byId.get(selectedId) ?? null) : null
 
@@ -279,6 +303,7 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
             focus={focus}
             litId={litId}
             title={family.name}
+            portraits={portraits}
             onSelect={(id) => show(id, false, false)}
             onClear={() => setLitId(null)}
           />

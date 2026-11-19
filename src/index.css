@@ -1977,3 +1977,26 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-butterfly { fill: color-mix(in srgb, #ff7ab8 70%, var(--accent)); opacity: 0.9; transform-box: fill-box; transform-origin: center; animation: tree-flap 0.9s ease-in-out infinite alternate, tree-float 7s ease-in-out infinite; }
 @keyframes tree-flap { from { transform: scaleX(1); } to { transform: scaleX(0.35); } }
 @keyframes tree-float { 0%, 100% { translate: 0 0; } 50% { translate: 10px -14px; } }
+
+/* Organic tree: a canopy for every family, wooden limbs and twigs, one trunk holding the oldest generations. */
+.family-tree-stage .tree-canopy { fill: var(--crown-fill); stroke: var(--crown-edge); stroke-width: 1.4; transition: stroke 0.25s, stroke-width 0.25s; }
+.family-tree-stage .tree-leaf-back { fill: color-mix(in srgb, var(--accent) 58%, var(--page)); opacity: 0.8; }
+.family-tree-stage .tree-leaf-front { fill: color-mix(in srgb, var(--accent) 82%, var(--page)); opacity: 0.92; }
+.family-tree-stage .tree-tone-1 .tree-leaf-back { fill: color-mix(in srgb, var(--accent) 48%, #2fa86a 30%); }
+.family-tree-stage .tree-tone-1 .tree-leaf-front { fill: color-mix(in srgb, var(--accent) 60%, #6fcf7a 40%); }
+.family-tree-stage .tree-tone-2 .tree-leaf-back { fill: color-mix(in srgb, var(--accent) 50%, #c9a23a 22%); }
+.family-tree-stage .tree-tone-2 .tree-leaf-front { fill: color-mix(in srgb, var(--accent) 62%, #e4c35a 34%); }
+.family-tree-stage .tree-canopy-on .tree-canopy { stroke: var(--accent); stroke-width: 3.2; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 70%, transparent)); }
+.family-tree-stage .tree-limb { fill: color-mix(in srgb, var(--trunk-fill) 90%, var(--accent)); stroke: color-mix(in srgb, var(--trunk-fill) 55%, #000); stroke-width: 0.8; }
+.family-tree-stage .tree-limb-light { fill: color-mix(in srgb, var(--trunk-fill) 60%, #fff); opacity: 0.5; }
+.family-tree-stage .tree-trunk { stroke: color-mix(in srgb, var(--trunk-fill) 50%, #000); stroke-width: 1.5; }
+.family-tree-stage .tree-trunk-light { fill: color-mix(in srgb, var(--trunk-fill) 55%, #fff); opacity: 0.22; }
+.family-tree-stage .tree-vein { fill: none; stroke: color-mix(in srgb, var(--trunk-fill) 35%, #fff); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: 0.7; }
+.family-tree-stage .tree-blossom { fill: #ffb3d1; }
+.family-tree-stage .tree-branch-in { animation: tree-fade 0.7s ease both; }
+.family-tree-stage .tree-canopies > g { transition: opacity 0.25s; }
+.family-tree-stage [data-branch] { cursor: pointer; }
+.family-tree-stage .tnode-portrait { stroke: color-mix(in srgb, var(--ink) 40%, transparent); stroke-width: 1.4; }
+.family-tree-stage .tnode-portrait-me { stroke: var(--accent); stroke-width: 2.4; }
+.family-tree-stage .tnode-portrait-on { stroke: var(--accent); stroke-width: 3; }
+.family-tree-stage .tnode-initials { fill: #fff; font-family: system-ui, sans-serif; }

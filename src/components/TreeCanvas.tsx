@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
-import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
-import { rootlets, taperPath } from '../lib/roots'
-import { canopyFor } from '../lib/canopy'
+import { NODE_H, NODE_W, initials, type Person, type TreeLayout } from '../lib/tree'
+import { hash } from '../lib/roots'
+import { ATTACH_BOTTOM, ATTACH_TOP, canopyFor, type Branch } from '../lib/canopy'
 
 type View = { x: number; y: number; k: number }
 const MIN_K = 0.1
@@ -94,6 +94,7 @@ export default function TreeCanvas({
   focus,
   litId,
   title,
+  portraits,
   onSelect,
   onClear,
 }: {
@@ -106,6 +107,8 @@ export default function TreeCanvas({
   litId: string | null
   // Written on the banner above the crown.
   title?: string
+  // A small picture for people who have one (an emoji avatar); everyone else shows their initials.
+  portraits?: Map<string, string>
   onSelect: (id: string) => void
   onClear: () => void
 }) {
@@ -201,6 +204,25 @@ export default function TreeCanvas({
     return out
   }, [layout, litId])
 
+  // A family branch the camera is pointed at: its people (and everyone who grows from them) stay lit, the rest fade.
+  const [branchId, setBranchId] = useState<string | null>(null)
+  const branches = deco?.branches ?? []
+  const order = useMemo(() => [...branches].sort((a, b) => a.gen - b.gen || a.center.x - b.center.x), [branches])
+  const branchSet = useMemo(() => {
+    const b = branchId ? branches.find((x) => x.id === branchId) : null
+    if (!b) return null
+    const down = new Map<string, string[]>()
+    for (const e of layout.edges) if (e.kind === 'parent') for (const p of e.parents ?? []) down.set(p, [...(down.get(p) ?? []), ...(e.kids ?? [])])
+    const out = new Set<string>([...b.parents, ...b.members])
+    const todo = [...b.members]
+    while (todo.length) {
+      const id = todo.pop() as string
+      for (const k of down.get(id) ?? []) if (!out.has(k)) { out.add(k); todo.push(k) }
+    }
+    return out
+  }, [branchId, branches, layout])
+  const lens = branchSet ?? kin
+
   const nodeCenter = useCallback(
     (id: string) => {
       const n = layout.nodes.find((x) => x.id === id)
@@ -223,8 +245,28 @@ export default function TreeCanvas({
   const fit = useCallback(() => {
     if (size.w === 0 || layout.width === 0) return
     const k = clamp(Math.min(size.w / frame.w, size.h / frame.h), MIN_K, 1)
+    setBranchId(null)
     glide({ k, x: (size.w - frame.w * k) / 2 - frame.x * k, y: Math.max(8, (size.h - frame.h * k) / 2) - frame.y * k })
   }, [size.w, size.h, layout.width, frame.x, frame.y, frame.w, frame.h, glide])
+
+  // Glide the camera to a family's canopy and light that branch up. Tapping the same branch again lets it go.
+  const focusBranch = useCallback(
+    (id: string | null) => {
+      setBranchId(id)
+      const b = id ? branches.find((x) => x.id === id) : null
+      if (!b || size.w === 0) return
+      const w = b.box.x1 - b.box.x0 + 90
+      const h = b.box.y1 - b.box.y0 + 90
+      const k = clamp(Math.min(size.w / w, size.h / h), 0.35, 1.25)
+      glide({ k, x: size.w / 2 - ((b.box.x0 + b.box.x1) / 2) * k, y: size.h / 2 - ((b.box.y0 + b.box.y1) / 2) * k })
+    },
+    [branches, size.w, size.h, glide],
+  )
+  const stepBranch = (dir: number) => {
+    if (order.length === 0) return
+    const at = order.findIndex((x) => x.id === branchId)
+    focusBranch(order[(at + dir + order.length) % order.length].id)
+  }
 
   // Landscape: the tree alone goes fullscreen and the phone is turned sideways (where the browser or app allows it).
   const canFlip = typeof document !== 'undefined' && typeof document.documentElement.requestFullscreen === 'function'
@@ -354,8 +396,11 @@ export default function TreeCanvas({
     const fold = hit?.closest('[data-fold]')?.getAttribute('data-fold')
     if (fold) { toggleFold(fold); return }
     const id = hit?.closest('[data-pid]')?.getAttribute('data-pid')
-    if (id) onSelect(id)
-    else onClear()
+    if (id) { onSelect(id); return }
+    const family = hit?.closest('[data-branch]')?.getAttribute('data-branch')
+    if (family) { focusBranch(family === branchId ? null : family); return }
+    setBranchId(null)
+    onClear()
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -422,25 +467,36 @@ export default function TreeCanvas({
   const selectRef = useRef(onSelect)
   selectRef.current = onSelect
   const scene = useMemo(
-    () => (
+    () => {
+      const at = new Map(layout.nodes.map((n) => [n.id, n]))
+      const cx = (id: string) => (at.get(id) as { x: number }).x + NODE_W / 2
+      const dimmedEdge = (e: (typeof layout.edges)[number]) => {
+        if (!lens) return false
+        if (e.kind === 'partner') return !((e.parents ?? []).every((id) => lens.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
+        return !((e.parents ?? []).some((id) => lens.has(id)) && (e.kids ?? []).some((id) => lens.has(id)))
+      }
+      const dimmedBranch = (b: Branch) => (lens ? !(b.parents.some((id) => lens.has(id)) && b.kids.some((id) => lens.has(id))) : false)
+      const shown = branches.filter((b) => !b.parents.some((id) => hidden.out.has(id)))
+      return (
       <>
+    <defs>
+      <linearGradient id="tree-wood" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" style={{ stopColor: 'color-mix(in srgb, var(--trunk-fill) 70%, #000)' }} />
+        <stop offset="0.38" style={{ stopColor: 'color-mix(in srgb, var(--trunk-fill) 82%, #fff)' }} />
+        <stop offset="1" style={{ stopColor: 'color-mix(in srgb, var(--trunk-fill) 62%, #000)' }} />
+      </linearGradient>
+    </defs>
     {deco && (
       <g pointerEvents="none" className="tree-crown">
         {deco.stars.map((st, i) => <circle key={`s${i}`} cx={st.x} cy={st.y} r={st.r} className="tree-star" style={{ animationDelay: `${st.delay}s` }} />)}
         <path d={deco.moon.path} className="tree-moon" />
-        <path d={deco.trunk.ground} className="tree-ground" />
-        {deco.trunk.roots.map((d, i) => <path key={`r${i}`} d={d} className="tree-root" />)}
-        <path d={deco.trunk.body} className="tree-trunk" />
-        {deco.trunk.bark.map((d, i) => <path key={`b${i}`} d={d} className="tree-bark" />)}
-        <path d={deco.crown} className="tree-leaves" />
-        {deco.branches.map((br, i) => <path key={`br${i}`} d={br.d} className="tree-branch" strokeWidth={br.w} />)}
-        {deco.leaves.map((l, i) => (
-          <path key={`l${i}`} d="M0 0C4 -7 15 -7 22 0C15 7 4 7 0 0Z" className="tree-leaf" opacity={l.dim ? 0.5 : 0.9} transform={`translate(${l.x} ${l.y}) rotate(${l.rot}) scale(${l.s})`} />
-        ))}
-        {deco.blossoms.map((f, i) => (
-          <g key={`f${i}`} transform={`translate(${f.x} ${f.y}) scale(${f.s})`} className="tree-blossom">
-            {[0, 72, 144, 216, 288].map((r) => <circle key={r} cx={0} cy={-5} r={4} transform={`rotate(${r})`} />)}
-            <circle r={2.6} className="tree-blossom-eye" />
+        <path d={deco.ground} className="tree-ground" />
+        {deco.trunks.map((t) => (
+          <g key={t.id}>
+            <path d={t.roots} className="tree-root" />
+            <path d={t.body} className="tree-trunk" fill="url(#tree-wood)" />
+            <path d={t.light} className="tree-trunk-light" />
+            <path d={t.bark} className="tree-bark" />
           </g>
         ))}
         {deco.flies.map((f, i) => (
@@ -457,58 +513,87 @@ export default function TreeCanvas({
         <text x={deco.banner.tx} y={deco.banner.ty} textAnchor="middle" fontSize={22} fontWeight={700} className="tree-banner-text">{title || 'Family tree'}</text>
       </g>
     )}
-    {(() => {
-      const dimmed = (e: (typeof layout.edges)[number]) => {
-        if (!kin) return false
-        if (e.kind === 'partner') return !((e.parents ?? []).every((id) => kin.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
-        return !((e.parents ?? []).some((id) => kin.has(id)) && (e.kids ?? []).some((id) => kin.has(id)))
-      }
-      const at = new Map(layout.nodes.map((n) => [n.id, n]))
-      const TOP = 17 // the pill sits in the middle of its 80-high box
-      const BOTTOM = 63
-      const cx = (id: string) => (at.get(id) as { x: number }).x + NODE_W / 2
-      return (
-        <g className="tree-lines">
-          {layout.edges.filter((e) => e.kind === 'partner').map((e) => {
-            const [pa, pb] = e.parents ?? []
-            if (!pa || !pb || hidden.out.has(pa) || hidden.out.has(pb)) return null
-            return <path key={e.id} d={e.d} className={`tree-tie ${dimmed(e) ? 'tree-dim' : ''}`} />
-          })}
-          {layout.edges.filter((e) => e.kind === 'parent').map((e) => {
-            const parents = (e.parents ?? []).filter((id) => at.has(id))
-            const kids = (e.kids ?? []).filter((id) => at.has(id))
-            if (parents.length === 0 || kids.length === 0 || parents.some((id) => hidden.out.has(id))) return null
-            // The tree rises: parents stand below their children, so lines leave the top of a parent and reach the bottom of a child.
-            const py = Math.min(...parents.map((id) => (at.get(id) as { y: number }).y + TOP))
-            const ky = Math.max(...kids.map((id) => (at.get(id) as { y: number }).y + BOTTOM))
-            const jy = ky + (py - ky) * 0.5
-            const mx = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
-            const shut = folded.has(e.id)
-            const xs = [...parents.map(cx), ...(shut ? [] : kids.map(cx))]
-            let d = parents.map((id) => `M${cx(id)} ${(at.get(id) as { y: number }).y + TOP}V${jy}`).join('')
-            d += `M${Math.min(...xs)} ${jy}H${Math.max(...xs)}`
-            if (!shut) d += kids.map((id) => `M${cx(id)} ${jy}V${(at.get(id) as { y: number }).y + BOTTOM}`).join('')
-            const n = hidden.counts.get(e.id) ?? 0
-            return (
-              <g key={e.id} className={dimmed(e) ? 'tree-dim' : ''}>
-                <path d={d} className="tree-line" />
-                <g data-fold={e.id} className="tree-fold" role="button" aria-label={shut ? `Show ${n} people above` : 'Fold this branch'}>
-                  <circle cx={mx} cy={jy} r={22} fill="transparent" />
-                  {shut ? (
-                    <>
-                      <rect x={mx - 22} y={jy - 11} width={44} height={22} rx={11} className="tree-fold-badge" />
-                      <text x={mx} y={jy + 4.5} textAnchor="middle" fontSize={12} fontWeight={700} className="tree-fold-text">+{n}</text>
-                    </>
-                  ) : (
-                    <circle cx={mx} cy={jy} r={5} className="tree-dot" />
-                  )}
-                </g>
-              </g>
-            )
-          })}
+    {/* Each family's own canopy: foliage first, then the wood growing up into it, then the rim leaves over the wood. */}
+    <g className="tree-canopies">
+      {shown.map((b) => {
+        const shut = folded.has(b.id)
+        return (
+          <g key={`c${b.id}`} data-branch={b.id} className={`tree-branch-in tree-tone-${b.tone} ${dimmedBranch(b) ? 'tree-dim' : ''} ${branchId === b.id ? 'tree-canopy-on' : ''}`} style={{ animationDelay: `${b.gen * 110}ms`, display: shut ? 'none' : undefined }}>
+            <path d={b.canopy} className="tree-canopy" />
+            <path d={b.back} className="tree-leaf-back" />
+          </g>
+        )
+      })}
+      {shown.map((b) => (
+        <g key={`w${b.id}`} data-branch={b.id} className={`tree-branch-in ${dimmedBranch(b) ? 'tree-dim' : ''}`} style={{ animationDelay: `${b.gen * 110}ms` }}>
+          <path d={folded.has(b.id) ? b.stub : b.limb} className="tree-limb" />
+          <path d={b.light} className="tree-limb-light" />
+          {!folded.has(b.id) && <path d={b.twigs} className="tree-limb" />}
         </g>
-      )
-    })()}
+      ))}
+      {shown.filter((b) => !folded.has(b.id)).map((b) => (
+        <g key={`f${b.id}`} data-branch={b.id} className={`tree-branch-in tree-tone-${b.tone} ${dimmedBranch(b) ? 'tree-dim' : ''}`} style={{ animationDelay: `${b.gen * 110}ms` }}>
+          <path d={b.front} className="tree-leaf-front" />
+          <path d={b.blossoms} className="tree-blossom" />
+        </g>
+      ))}
+      {shown.map((b) => {
+        const shut = folded.has(b.id)
+        const n = hidden.counts.get(b.id) ?? 0
+        return (
+          <g key={`h${b.id}`} data-fold={b.id} className={`tree-fold ${dimmedBranch(b) ? 'tree-dim' : ''}`} role="button" aria-label={shut ? `Show ${n} people above` : 'Fold this branch'}>
+            <circle cx={b.fork.x} cy={b.fork.y} r={22} fill="transparent" />
+            {shut ? (
+              <>
+                <rect x={b.fork.x - 22} y={b.fork.y - 11} width={44} height={22} rx={11} className="tree-fold-badge" />
+                <text x={b.fork.x} y={b.fork.y + 4.5} textAnchor="middle" fontSize={12} fontWeight={700} className="tree-fold-text">+{n}</text>
+              </>
+            ) : (
+              <circle cx={b.fork.x} cy={b.fork.y} r={5} className="tree-dot" />
+            )}
+          </g>
+        )
+      })}
+    </g>
+    {/* Inside the trunk the oldest families are joined by fine carved lines. */}
+    <g className="tree-lines">
+      {layout.edges.filter((e) => e.kind === 'partner').map((e) => {
+        const [pa, pb] = e.parents ?? []
+        if (!pa || !pb || hidden.out.has(pa) || hidden.out.has(pb)) return null
+        return <path key={e.id} d={e.d} className={`tree-tie ${dimmedEdge(e) ? 'tree-dim' : ''}`} />
+      })}
+      {layout.edges.filter((e) => e.kind === 'parent' && deco?.inTrunk.has(e.id)).map((e) => {
+        const parents = (e.parents ?? []).filter((id) => at.has(id))
+        const kids = (e.kids ?? []).filter((id) => at.has(id))
+        if (parents.length === 0 || kids.length === 0 || parents.some((id) => hidden.out.has(id))) return null
+        const py = Math.min(...parents.map((id) => (at.get(id) as { y: number }).y + ATTACH_TOP))
+        const ky = Math.max(...kids.map((id) => (at.get(id) as { y: number }).y + ATTACH_BOTTOM))
+        const jy = ky + (py - ky) * 0.5
+        const mx = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
+        const shut = folded.has(e.id)
+        const xs = [...parents.map(cx), ...(shut ? [] : kids.map(cx))]
+        let d = parents.map((id) => `M${cx(id)} ${(at.get(id) as { y: number }).y + ATTACH_TOP}V${jy}`).join('')
+        d += `M${Math.min(...xs)} ${jy}H${Math.max(...xs)}`
+        if (!shut) d += kids.map((id) => `M${cx(id)} ${jy}V${(at.get(id) as { y: number }).y + ATTACH_BOTTOM}`).join('')
+        const n = hidden.counts.get(e.id) ?? 0
+        return (
+          <g key={e.id} className={dimmedEdge(e) ? 'tree-dim' : ''}>
+            <path d={d} className="tree-vein" />
+            <g data-fold={e.id} className="tree-fold" role="button" aria-label={shut ? `Show ${n} people above` : 'Fold this branch'}>
+              <circle cx={mx} cy={jy} r={22} fill="transparent" />
+              {shut ? (
+                <>
+                  <rect x={mx - 22} y={jy - 11} width={44} height={22} rx={11} className="tree-fold-badge" />
+                  <text x={mx} y={jy + 4.5} textAnchor="middle" fontSize={12} fontWeight={700} className="tree-fold-text">+{n}</text>
+                </>
+              ) : (
+                <circle cx={mx} cy={jy} r={4} className="tree-dot" />
+              )}
+            </g>
+          </g>
+        )
+      })}
+    </g>
     {layout.nodes.filter((n) => !hidden.out.has(n.id)).map((n) => {
       const p = people.get(n.id)
       if (!p) return null
@@ -517,16 +602,21 @@ export default function TreeCanvas({
       if (n.id === meId) classes.push('tnode-me')
       if (n.id === selectedId || n.id === litId) classes.push('tnode-sel')
       if (p.is_deceased) classes.push('tnode-gone')
-      const dim = kin ? !kin.has(n.id) : false
+      const on = n.id === selectedId || n.id === litId
+      const dim = lens ? !lens.has(n.id) : false
       // The tree grows upward: the oldest row (at the trunk) appears first, then each younger row above it.
       const order = n.gen * 130 + (n.x % 97) * 1.2
       const nameFit = fitName(measure, p.full_name, nameBox.w - 14, 15, 11.5)
       const two = nameFit.lines.length > 1
       const sub = [p.nickname ? `“${p.nickname}”` : '', n.id === meId ? (year ? `you · ${year}` : 'you') : year ? `b. ${year}` : ''].filter(Boolean).join(' · ')
-      const subFit = sub ? fitLine(measure, sub, nameBox.w - 14, 11, 9) : null
-      const h = (two ? 54 : 46) + (subFit && two ? 0 : 0)
-      const top = (NODE_H - h) / 2
-      const nameY = two ? [top + 19, top + 33] : [top + (subFit ? 20 : 28)]
+      const subFit = sub && !two ? fitLine(measure, sub, nameBox.w - 14, 11, 9) : null
+      // A round portrait sits on the top of a name pill: the name is under the picture, the birth year under the name.
+      const h = two ? 58 : 46
+      const top = 76 - h
+      const portraitY = top + 1
+      const nameY = two ? [top + 36, top + 50] : [top + (subFit ? 35 : 39)]
+      const pic = portraits?.get(n.id)
+      const hue = Math.round(hash(n.id) * 360)
       return (
         <g
           key={n.id}
@@ -544,18 +634,21 @@ export default function TreeCanvas({
           }}
         >
           <g className="tnode-in" style={{ animationDelay: `${Math.round(order)}ms` }}>
-          <rect className={classes.join(' ')} x={0} y={top} width={NODE_W} height={h} rx={h / 2} ry={h / 2} />
+          <rect className={classes.join(' ')} x={0} y={top} width={NODE_W} height={h} rx={16} ry={16} />
+          <circle cx={NODE_W / 2} cy={portraitY} r={17} className={`tnode-portrait ${on ? 'tnode-portrait-on' : ''} ${n.id === meId ? 'tnode-portrait-me' : ''}`} style={{ fill: `hsl(${hue} 45% 38%)` }} />
+          <text x={NODE_W / 2} y={portraitY + 5.5} textAnchor="middle" fontSize={pic ? 17 : 13} fontWeight={700} className="tnode-initials" pointerEvents="none">{pic ?? initials(p.full_name)}</text>
           {nameFit.lines.map((line, i) => (
             <text key={i} x={NODE_W / 2} y={nameY[i]} textAnchor="middle" className="tchip-name fill-ink" fontSize={nameFit.size}>{line}</text>
           ))}
-          {subFit && <text x={NODE_W / 2} y={top + h - (two ? 9 : 10)} textAnchor="middle" className="fill-muted" fontSize={subFit.size}>{subFit.text}</text>}
+          {subFit && <text x={NODE_W / 2} y={top + h - 6} textAnchor="middle" className="fill-muted" fontSize={subFit.size}>{subFit.text}</text>}
           </g>
         </g>
       )
     })}
       </>
-    ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded],
+      )
+    },
+    [layout, people, lens, litId, branchId, selectedId, meId, measure, nameBox, deco, branches, title, hidden, folded, portraits],
   )
 
   const centerButton = (label: string, onClick: () => void) => (
@@ -598,6 +691,15 @@ export default function TreeCanvas({
           {scene}
         </svg>
       </div>
+
+      {branchId && (
+        <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-line bg-surface px-1 py-1 shadow-[var(--shadow-card)]" role="group" aria-label="Family branches">
+          <button type="button" className="tree-icon-btn !min-h-9 !min-w-9" onClick={() => stepBranch(-1)} aria-label="Previous branch">‹</button>
+          <span className="px-1 text-xs font-semibold text-muted">Branch</span>
+          <button type="button" className="tree-icon-btn !min-h-9 !min-w-9" onClick={() => stepBranch(1)} aria-label="Next branch">›</button>
+          <button type="button" className="tree-icon-btn !min-h-9 !min-w-9" onClick={() => { setBranchId(null); fit() }} aria-label="Show the whole tree">✕</button>
+        </div>
+      )}
 
       <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 flex flex-col gap-2">
         {canFlip && (

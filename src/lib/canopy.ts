@@ -201,19 +201,20 @@ function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number
     const fork: P = { x: parents.reduce((s, id) => s + cx(id), 0) / parents.length, y: ky + (py - ky) * 0.5 }
     const everyone = new Set<string>(kids)
     for (const k of kids) for (const d of below(k)) everyone.add(d)
-    const w = clamp(8 + 4.2 * Math.sqrt(everyone.size), 9, 44)
+    // Main limbs become visibly stronger as their descendant family grows.
+    const w = clamp(10 + 5.2 * Math.sqrt(everyone.size), 11, 56)
     let legs = ''
     let limbs = ''
     let shine = ''
-    // A tapered piece of wood from a to d, w0 wide at the start and w1 at the end, with a narrow light streak
-    // along it (a little to one side) so it reads as bark catching the light.
+    // Each stroke is a filled, tapered Bézier ribbon rather than a line: broad at
+    // the junction, narrowing naturally as it reaches a family member.
     const piece = (a: P, b: P, c: P, d: P, w0: number, w1: number, into: 'legs' | 'limbs') => {
       const t = taperPath(cub(a, b, c, d), w0, w1)
       if (into === 'legs') legs += t
       else limbs += t
-      const s = -w0 * 0.16
-      const sh = (q: P): P => ({ x: q.x + s, y: q.y })
-      shine += taperPath(cub(sh(a), sh(b), sh(c), sh(d)), w0 * 0.28, w1 * 0.28)
+      const offset = -w0 * 0.18
+      const sh = (q: P): P => ({ x: q.x + offset, y: q.y })
+      shine += taperPath(cub(sh(a), sh(b), sh(c), sh(d)), w0 * 0.22, w1 * 0.22)
     }
     for (const id of parents) {
       const p: P = { x: cx(id), y: node(id).y + TOP }
@@ -221,8 +222,15 @@ function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number
     }
     for (const id of kids) {
       const t: P = { x: cx(id), y: node(id).y + BOTTOM }
-      const end = clamp(4 + 2.6 * Math.sqrt(below(id).size + 1), 4, w * 0.8)
-      piece(fork, { x: fork.x + (t.x - fork.x) * 0.12, y: fork.y - (fork.y - t.y) * 0.55 }, { x: t.x, y: t.y + (fork.y - t.y) * 0.38 }, t, w * 0.9, end, 'limbs')
+      const dx = t.x - fork.x
+      const rise = Math.max(50, fork.y - t.y)
+      const end = clamp(4.5 + 2.9 * Math.sqrt(below(id).size + 1), 4.5, w * 0.76)
+      // The first control point pushes the limb outward; the second sweeps back
+      // toward the child. Siblings therefore read as separate arms from one fork.
+      const bend = Math.sign(dx || (hash(id) - 0.5)) * Math.min(72, Math.abs(dx) * 0.22 + 16)
+      const c1: P = { x: fork.x + dx * 0.34 + bend, y: fork.y - rise * 0.24 }
+      const c2: P = { x: t.x - dx * 0.16 + bend * 0.24, y: t.y + rise * 0.3 }
+      piece(fork, c1, c2, t, w * 0.96, end, 'limbs')
     }
     const inside = kids.every((id) => onTrunk.has(id))
     let vein = ''

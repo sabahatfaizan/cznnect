@@ -496,6 +496,9 @@ export default function TreeCanvas({
                   {/* Cloud canopy: the same circles drawn twice. First fat and brown (the outline), then plain on top (the fill), which leaves a scalloped brown edge around the whole branch. */}
                   <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-edge" />
                   <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-base" />
+                  <path d={parts.map((pt) => pt.mid).join('')} className="tree-fam-mid" />
+                  <path d={parts.map((pt) => pt.hi).join('')} className="tree-fam-hi" />
+                  <path d={parts.map((pt) => pt.leaves).join('')} className="tree-fam-leaf" />
                 </g>
               )
             })}

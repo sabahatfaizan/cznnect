@@ -111,7 +111,7 @@ export default function TreeCanvas({
   // Organic geometry is derived from the real family graph; the family records themselves are never changed.
   const deco = useMemo(() => organicFor(layout, size.h > 0 ? size.w / size.h : 1.1), [layout, size.w, size.h])
   const visualNodes = deco?.nodes ?? layout.nodes
-  const visualEdges = layout.edges.map((edge) => edge.kind === 'partner'
+  const visualEdges = useMemo(() => layout.edges.map((edge) => edge.kind === 'partner'
     ? (() => {
         const [aId, bId] = edge.parents ?? []
         const a = visualNodes.find((n) => n.id === aId)
@@ -124,7 +124,7 @@ export default function TreeCanvas({
         const bend = Math.max(22, Math.min(52, (x2 - x1) * 0.28))
         return { ...edge, d: `M${x1} ${y1}C${x1 + bend} ${y1 - 20},${x2 - bend} ${y2 - 20},${x2} ${y2}` }
       })()
-    : edge)
+    : edge), [layout.edges, visualNodes])
   const frame = deco?.frame ?? { x: 0, y: 0, w: layout.width, h: layout.height }
   const drawing = useRef<SVGSVGElement>(null)
   const settle = useRef<number | undefined>(undefined)

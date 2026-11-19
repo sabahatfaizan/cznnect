@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
 import { NODE_H, NODE_W, type Person, type TreeLayout } from '../lib/tree'
 import { rootlets, taperPath } from '../lib/roots'
-import { canopyFor } from '../lib/canopy'
+import { organicFor } from '../lib/organic'
 
 type View = { x: number; y: number; k: number }
 const MIN_K = 0.1
@@ -107,12 +107,27 @@ export default function TreeCanvas({
   onClear: () => void
 }) {
   const box = useRef<HTMLDivElement>(null)
-  // The crown, banner and trunk around the people, which widens with the widest generation.
-  const deco = useMemo(() => canopyFor(layout), [layout])
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  // Organic geometry is derived from the real family graph; the family records themselves are never changed.
+  const deco = useMemo(() => organicFor(layout, size.h > 0 ? size.w / size.h : 1.1), [layout, size.w, size.h])
+  const visualNodes = deco?.nodes ?? layout.nodes
+  const visualEdges = useMemo(() => layout.edges.map((edge) => edge.kind === 'partner'
+    ? (() => {
+        const [aId, bId] = edge.parents ?? []
+        const a = visualNodes.find((n) => n.id === aId)
+        const b = visualNodes.find((n) => n.id === bId)
+        if (!a || !b) return edge
+        const left = a.x <= b.x ? a : b
+        const right = a.x <= b.x ? b : a
+        const x1 = left.x + NODE_W, y1 = left.y + NODE_H / 2
+        const x2 = right.x, y2 = right.y + NODE_H / 2
+        const bend = Math.max(22, Math.min(52, (x2 - x1) * 0.28))
+        return { ...edge, d: `M${x1} ${y1}C${x1 + bend} ${y1 - 20},${x2 - bend} ${y2 - 20},${x2} ${y2}` }
+      })()
+    : edge), [layout.edges, visualNodes])
   const frame = deco?.frame ?? { x: 0, y: 0, w: layout.width, h: layout.height }
   const drawing = useRef<SVGSVGElement>(null)
   const settle = useRef<number | undefined>(undefined)
-  const [size, setSize] = useState({ w: 0, h: 0 })
   const theme = useThemeId()
   const [fontTick, setFontTick] = useState(0)
   // Names are measured with the font the theme really draws them in; refit once web fonts have loaded.
@@ -209,10 +224,10 @@ export default function TreeCanvas({
 
   const nodeCenter = useCallback(
     (id: string) => {
-      const n = layout.nodes.find((x) => x.id === id)
+      const n = visualNodes.find((x) => x.id === id)
       return n ? { x: n.x + NODE_W / 2, y: n.y + NODE_H / 2 } : null
     },
-    [layout],
+    [visualNodes],
   )
 
   const centerOn = useCallback(
@@ -450,7 +465,7 @@ export default function TreeCanvas({
         if (e.kind === 'partner') return !((e.parents ?? []).every((id) => kin.has(id)) && (litId ? (e.parents ?? []).includes(litId) : false))
         return !((e.parents ?? []).some((id) => kin.has(id)) && (e.kids ?? []).some((id) => kin.has(id)))
       }
-      const at = new Map(layout.nodes.map((n) => [n.id, n]))
+      const at = new Map(visualNodes.map((n) => [n.id, n]))
       const TOP = 17 // the pill sits in the middle of its 80-high box
       const BOTTOM = 63
       const cx = (id: string) => (at.get(id) as { x: number }).x + NODE_W / 2
@@ -481,6 +496,9 @@ export default function TreeCanvas({
                   {/* Cloud canopy: the same circles drawn twice. First fat and brown (the outline), then plain on top (the fill), which leaves a scalloped brown edge around the whole branch. */}
                   <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-edge" />
                   <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-base" />
+                  <path d={parts.map((pt) => pt.mid).join('')} className="tree-fam-mid" />
+                  <path d={parts.map((pt) => pt.hi).join('')} className="tree-fam-hi" />
+                  <path d={parts.map((pt) => pt.leaves).join('')} className="tree-fam-leaf" />
                 </g>
               )
             })}
@@ -503,7 +521,7 @@ export default function TreeCanvas({
           </g>
         )}
         <g className="tree-lines">
-          {layout.edges.filter((e) => e.kind === 'partner').map((e) => {
+          {visualEdges.filter((e) => e.kind === 'partner').map((e) => {
             const [pa, pb] = e.parents ?? []
             if (!pa || !pb || hidden.out.has(pa) || hidden.out.has(pb)) return null
             return <path key={e.id} d={e.d} className={`tree-tie ${dimmed(e) ? 'tree-dim' : ''}`} />
@@ -515,8 +533,9 @@ export default function TreeCanvas({
             // The tree rises: parents stand below their children. The wood forks at this same spot, so the fold dot sits on the fork.
             const py = Math.min(...parents.map((id) => (at.get(id) as { y: number }).y + TOP))
             const ky = Math.max(...kids.map((id) => (at.get(id) as { y: number }).y + BOTTOM))
-            const jy = ky + (py - ky) * 0.5
-            const mx = parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
+            const fork = deco?.wood.find((w) => w.id === e.id)?.fork
+            const jy = fork?.y ?? ky + (py - ky) * 0.5
+            const mx = fork?.x ?? parents.reduce((sum, id) => sum + cx(id), 0) / parents.length
             const shut = folded.has(e.id)
             const n = hidden.counts.get(e.id) ?? 0
             return (
@@ -539,7 +558,7 @@ export default function TreeCanvas({
         </>
       )
     })()}
-    {layout.nodes.filter((n) => !hidden.out.has(n.id)).map((n) => {
+    {visualNodes.filter((n) => !hidden.out.has(n.id)).map((n) => {
       const p = people.get(n.id)
       if (!p) return null
       const year = p.birth_date ? p.birth_date.slice(0, 4) : ''
@@ -585,7 +604,7 @@ export default function TreeCanvas({
     })}
       </>
     ),
-    [layout, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded, focusFam],
+    [layout, visualNodes, visualEdges, people, kin, litId, selectedId, meId, measure, nameBox, deco, title, hidden, folded, focusFam],
   )
 
   const centerButton = (label: string, onClick: () => void) => (

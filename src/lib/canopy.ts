@@ -80,10 +80,9 @@ function relations(layout: TreeLayout): Relations {
 
 // The primary family branches: each child of the oldest couple starts one, with their partner and everyone below
 // them (and the people who married into that line). Anyone left over starts a branch of their own.
-function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>, trunkGens: number) {
+function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>, top: Set<string>) {
   const { down, mates, hasParent } = rel
-  // The oldest generations (up to four) stand inside the trunk; the family branches start above them.
-  const top = new Set(layout.nodes.filter((n) => n.gen < trunkGens).map((n) => n.id))
+  // `top` is everyone standing on the trunk (the oldest generations, as far as the trunk is wide); the family branches start above them.
   const claimed = new Set<string>()
   const out: { head: string; ids: string[] }[] = []
   const claim = (head: string) => {
@@ -173,7 +172,7 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
 
 // The wood of every stem: two legs climb from the parents to a fork (thickest there), and a limb curves up from the
 // fork to each child. A line of descent with many people below it is a thick limb; the tips are fine twigs.
-function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>, trunkGens: number): Wood[] {
+function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>, onTrunk: Set<string>): Wood[] {
   const memo = new Map<string, Set<string>>()
   const below = (id: string, trail = new Set<string>()): Set<string> => {
     const hit = memo.get(id)
@@ -225,7 +224,7 @@ function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number
       const end = clamp(4 + 2.6 * Math.sqrt(below(id).size + 1), 4, w * 0.8)
       piece(fork, { x: fork.x + (t.x - fork.x) * 0.12, y: fork.y - (fork.y - t.y) * 0.55 }, { x: t.x, y: t.y + (fork.y - t.y) * 0.38 }, t, w * 0.9, end, 'limbs')
     }
-    const inside = kids.every((id) => node(id).gen < trunkGens)
+    const inside = kids.every((id) => onTrunk.has(id))
     let vein = ''
     if (inside) {
       // Inside the trunk the link is a fine carved line: up from each parent, across, and up to each child.
@@ -271,9 +270,15 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const trunkGens = clamp(Math.max(...layout.nodes.map((n) => n.gen)) - 1, 1, 4)
   type Row = { l: number; r: number; yTop: number; yBot: number }
   const rows: Row[] = []
+  // The trunk stays slim, like a real one: it holds only as many people of each generation as fit in its width.
+  // Anyone further out (a big generation of cousins) grows on a limb from the top of the trunk instead.
+  const onTrunk = new Set<string>()
+  const oldestRow = layout.nodes.filter((n) => n.gen === 0)
+  const cap = Math.max(215, ...oldestRow.map((n) => Math.abs(n.x + NODE_W / 2 - cx) + NODE_W / 2 + 36))
   for (let g = 0; g < trunkGens; g++) {
-    const ns = layout.nodes.filter((n) => n.gen === g)
-    if (ns.length === 0) continue
+    const ns = layout.nodes.filter((n) => n.gen === g && (g === 0 || (n.x >= cx - cap && n.x + NODE_W <= cx + cap)))
+    if (ns.length === 0) break
+    for (const n of ns) onTrunk.add(n.id)
     let l = Math.min(...ns.map((n) => n.x)) - 36
     let r = Math.max(...ns.map((n) => n.x + NODE_W)) + 36
     if (r - l < 220) { const c = (l + r) / 2; l = c - 110; r = c + 110 }
@@ -339,8 +344,8 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   // Families and wood come from the real parent and child links, not from screen positions.
   const rel = relations(layout)
   const at = new Map(layout.nodes.map((n) => [n.id, n]))
-  const groups = branches(layout, rel, at, trunkGens)
-  const wood = woodFor(layout, rel, at, trunkGens)
+  const groups = branches(layout, rel, at, onTrunk)
+  const wood = woodFor(layout, rel, at, onTrunk)
   // Leafy bridges: along each stem inside one family, and between partners, so there are no bare gaps inside a
   // family (different families still keep their gap).
   const famOf = new Map<string, number>()

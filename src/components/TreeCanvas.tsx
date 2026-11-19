@@ -478,16 +478,9 @@ export default function TreeCanvas({
               const quiet = (focusFam !== null && focusFam !== f.id) || (kin !== null && !f.ids.some((id) => kin.has(id)))
               return (
                 <g key={f.id} data-fam={f.id} data-tone={f.tone % 4} className={`tree-fam ${quiet ? 'tree-fam-quiet' : ''}`}>
+                  {/* Cloud canopy: the same circles drawn twice. First fat and brown (the outline), then plain on top (the fill), which leaves a scalloped brown edge around the whole branch. */}
+                  <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-edge" />
                   <path d={parts.map((pt) => pt.base).join('')} className="tree-fam-base" />
-                  <path d={parts.map((pt) => pt.mid).join('')} className="tree-fam-mid" />
-                  <path d={parts.map((pt) => pt.hi).join('')} className="tree-fam-hi" />
-                  <path d={parts.map((pt) => pt.leaves).join('')} className="tree-fam-leaf" />
-                  {f.blossoms.filter((bl) => !hidden.out.has(bl.id)).map((bl, i) => (
-                    <g key={i} transform={`translate(${bl.x} ${bl.y}) scale(${bl.s})`} className="tree-blossom">
-                      {[0, 72, 144, 216, 288].map((r) => <circle key={r} cx={0} cy={-5} r={4} transform={`rotate(${r})`} />)}
-                      <circle r={2.6} className="tree-blossom-eye" />
-                    </g>
-                  ))}
                 </g>
               )
             })}

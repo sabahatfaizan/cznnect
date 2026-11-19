@@ -74,7 +74,7 @@ export function organicFor(layout: TreeLayout, aspect = 1.1): Organic | null {
     const bend = Math.max(22, Math.min(52, (x2 - x1) * 0.28))
     return { ...edge, d: `M${round(x1)} ${round(y1)}C${round(x1 + bend)} ${round(y1 - 20)},${round(x2 - bend)} ${round(y2 - 20)},${round(x2)} ${round(y2)}` }
   })
-  const visual: TreeLayout = { ...layout, nodes, edges }
+  const visual: TreeLayout = { ...layout, nodes, edges, origin: 0 }
   const canopy = canopyFor(visual)
   if (!canopy) return null
 

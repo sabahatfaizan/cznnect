@@ -113,7 +113,7 @@ function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: numbe
   return out
 }
 
-type Bridge = { x: number; y: number; r: number }
+type Bridge = { x: number; y: number; r: number; far?: boolean } // far: leaves along a long limb, not counted in the family's own area
 const RING = 5
 function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<string, { x: number; y: number }>, total: number, bridges: Map<string, Bridge[]>): Family | null {
   const rand = seeded(Math.floor(hash(g.head) * 4294967295))
@@ -131,7 +131,7 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
     const cy = n.y + NODE_H / 2
     // A clump of round bunches around the pill, plus one behind it. Wide enough to hold the pill, narrow
     // enough that unrelated branches (about 96 apart) still have clear air between them.
-    const bunches: { x: number; y: number; r: number; a: number }[] = []
+    const bunches: { x: number; y: number; r: number; a: number; far?: boolean }[] = []
     for (let k = 0; k < RING; k++) {
       const a = (k / RING) * Math.PI * 2 + (rand() - 0.5) * 0.5
       const j = 0.9 + rand() * 0.2
@@ -139,7 +139,7 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
     }
     bunches.push({ x: cx, y: cy, r: 40, a: 0 })
     // Extra bunches along the wood between this person and their family, so the gaps inside a family are leafy.
-    for (const b of bridges.get(id) ?? []) bunches.push({ x: b.x, y: b.y, r: b.r + rand() * 6, a: 0 })
+    for (const b of bridges.get(id) ?? []) bunches.push({ x: b.x, y: b.y, r: b.r + rand() * 6, a: 0, far: b.far })
     let leaves = ''
     for (const b of bunches.slice(0, RING)) {
       for (let j = 0; j < (big ? 1 : 2); j++) {
@@ -147,7 +147,7 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
         leaves += leaf(b.x + Math.cos(ang) * b.r * 0.92, b.y + Math.sin(ang) * b.r * 0.92, ang, 0.8 + rand() * 0.6)
       }
     }
-    for (const b of bunches) {
+    for (const b of bunches.filter((q) => !q.far)) {
       x0 = Math.min(x0, b.x - b.r - 18)
       x1 = Math.max(x1, b.x + b.r + 18)
       y0 = Math.min(y0, b.y - b.r - 18)
@@ -304,16 +304,42 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const famOf = new Map<string, number>()
   groups.forEach((g, i) => g.ids.forEach((id) => famOf.set(id, i)))
   const bridges = new Map<string, Bridge[]>()
-  const bridge = (id: string, x: number, y: number, r: number) => {
+  const bridge = (id: string, x: number, y: number, r: number, far = false) => {
     const list = bridges.get(id)
-    const b = { x, y, r }
+    const b = { x, y, r, far }
     if (list) list.push(b)
     else bridges.set(id, [b])
   }
   const pos = (id: string) => at.get(id) as { x: number; y: number }
+  // A point a fraction t of the way along the limb from a fork to a child (the same curve the wood is drawn on).
+  const onLimb = (fork: { x: number; y: number }, kx: number, ky: number, t: number) => {
+    const u = 1 - t
+    const p1 = { x: fork.x + (kx - fork.x) * 0.12, y: fork.y - (fork.y - ky) * 0.55 }
+    const p2 = { x: kx, y: ky + (fork.y - ky) * 0.38 }
+    return {
+      x: u * u * u * fork.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * kx,
+      y: u * u * u * fork.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * ky,
+    }
+  }
   for (const w of wood) {
     const f = famOf.get(w.parents[0])
-    if (f === undefined || !w.parents.every((p) => famOf.get(p) === f)) continue
+    if (f === undefined) {
+      // The oldest couple's limbs sweep out from the trunk to each branch: hedge them with leaves all along.
+      if (w.parents.some((p) => famOf.get(p) !== undefined)) continue
+      for (const k of w.kids) {
+        if (famOf.get(k) === undefined) continue
+        const kx = pos(k).x + NODE_W / 2
+        const ky = pos(k).y + BOTTOM
+        const n = Math.max(2, Math.round(Math.hypot(kx - w.fork.x, ky - w.fork.y) / 58))
+        for (let i = 0; i <= n; i++) {
+          const q = onLimb(w.fork, kx, ky, 0.1 + (0.86 * i) / n)
+          // Alternate sides and sizes a little, so the hedge looks grown rather than like a string of beads.
+          bridge(k, q.x, q.y + (i % 2 ? 8 : -8), 21 + ((i * 5) % 8), true)
+        }
+      }
+      continue
+    }
+    if (!w.parents.every((p) => famOf.get(p) === f)) continue
     bridge(w.parents[0], w.fork.x, w.fork.y, 32)
     for (const p of w.parents) {
       const px = pos(p).x + NODE_W / 2
@@ -323,9 +349,13 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
       if (famOf.get(k) !== f) continue
       const kx = pos(k).x + NODE_W / 2
       const ky = pos(k).y + BOTTOM
-      // A short limb is leafy along its length; a long, sweeping one only near the child, so no lone bunches float on bare wood.
+      // Leaves all along the limb to each child, at a steady spacing, so no stretch of it is left bare.
       const reach = Math.hypot(kx - w.fork.x, ky - w.fork.y)
-      for (const t of reach < 240 ? [0.34, 0.68] : [0.86]) bridge(k, w.fork.x + (kx - w.fork.x) * t, w.fork.y + (ky - w.fork.y) * t, 28)
+      const n = Math.max(1, Math.round(reach / 62))
+      for (let i = 1; i <= n; i++) {
+        const q = onLimb(w.fork, kx, ky, i / (n + 1) + 0.04)
+        bridge(k, q.x, q.y + (i % 2 ? 6 : -6), 24 + ((i * 3) % 7))
+      }
     }
   }
   for (const e of layout.edges) {

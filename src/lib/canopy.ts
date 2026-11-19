@@ -344,9 +344,18 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   left.push([bottomRow.l - flare * 0.2, B - 44], [bottomRow.l - flare * 0.7, B - 14], [bottomRow.l - flare * 1.3, B + 2])
   const rightUp = [...wall('r'), [bottomRow.r + flare * 0.2, B - 44], [bottomRow.r + flare * 0.7, B - 14], [bottomRow.r + flare * 1.3, B + 2]].reverse() as [number, number][]
   const tc = (topRow.l + topRow.r) / 2
+  // A single sculpted trunk: narrow where the first limbs emerge, broad and
+  // deeply flared at the roots. Its curved sides replace the old row-shaped column.
+  const trunkHeight = B - T
+  const crownHalf = Math.max(112, w0 * 0.56)
+  const rootHalf = Math.max(crownHalf + 52, w0 * 0.76)
   const body =
-    `M${r1(topRow.l + 14)} ${r1(T + 6)}${through(left)}L${r1(rightUp[0][0])} ${r1(rightUp[0][1])}${through(rightUp)}` +
-    `Q${r1(tc)} ${r1(T - 26)} ${r1(topRow.l + 14)} ${r1(T + 6)}Z`
+    `M${r1(tc - crownHalf)} ${r1(T + 8)}` +
+    `C${r1(tc - crownHalf * 1.12)} ${r1(T + trunkHeight * 0.28)} ${r1(tc - rootHalf * 0.62)} ${r1(B - trunkHeight * 0.22)} ${r1(tc - rootHalf)} ${r1(B)}` +
+    `C${r1(tc - rootHalf * 0.92)} ${r1(B + 22)} ${r1(tc - rootHalf * 0.35)} ${r1(B + 28)} ${r1(tc)} ${r1(B + 14)}` +
+    `C${r1(tc + rootHalf * 0.35)} ${r1(B + 28)} ${r1(tc + rootHalf * 0.92)} ${r1(B + 22)} ${r1(tc + rootHalf)} ${r1(B)}` +
+    `C${r1(tc + rootHalf * 0.62)} ${r1(B - trunkHeight * 0.22)} ${r1(tc + crownHalf * 1.12)} ${r1(T + trunkHeight * 0.28)} ${r1(tc + crownHalf)} ${r1(T + 8)}` +
+    `Q${r1(tc)} ${r1(T - 18)} ${r1(tc - crownHalf)} ${r1(T + 8)}Z`
   const brand = seeded(Math.round(w0) + trunkGens)
   const strands = clamp(Math.round(w0 / 70), 4, 18)
   const bark = Array.from({ length: strands }, (_, i) => {

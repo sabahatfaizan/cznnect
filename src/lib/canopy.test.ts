@@ -49,3 +49,25 @@ describe('canopyFor', () => {
     expect(canopyFor(layoutTree([], []))).toBeNull()
   })
 })
+
+describe('canopyFor with many generations', () => {
+  it('puts the four oldest generations inside the trunk and starts canopies above them', () => {
+    const people: Person[] = [person('Root', 1900)]
+    const links: Link[] = []
+    let row = [people[0]]
+    for (let g = 1; g <= 6; g++) {
+      const next: Person[] = []
+      for (const parent of row) {
+        const kid = person(`Gen${g}-${next.length}`, 1900 + g * 25)
+        people.push(kid); next.push(kid); links.push(link('parent', parent, kid))
+      }
+      row = next
+    }
+    const layout = layoutTree(people, links)
+    const deco = canopyFor(layout)
+    const gen = new Map(layout.nodes.map((x) => [x.id, x.gen]))
+    expect(deco?.wood.filter((w) => w.inside)).toHaveLength(3) // links among generations 0 to 3
+    expect(deco?.families.every((x) => x.ids.every((id) => (gen.get(id) ?? 0) >= 4))).toBe(true)
+    expect(deco?.families.length).toBeGreaterThan(0)
+  })
+})

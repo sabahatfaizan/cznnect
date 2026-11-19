@@ -16,7 +16,7 @@ export type Family = {
   blossoms: { id: string; x: number; y: number; s: number }[]
 }
 // One stem: wood from a couple (or one parent) up to where it forks, and from there out to each child.
-export type Wood = { id: string; parents: string[]; kids: string[]; legs: string; limbs: string; shine: string; fork: { x: number; y: number } }
+export type Wood = { id: string; parents: string[]; kids: string[]; legs: string; limbs: string; shine: string; fork: { x: number; y: number }; inside: boolean; vein: string } // inside: the children stand inside the trunk, so the link is a fine carved line, not a limb
 export type Canopy = {
   frame: { x: number; y: number; w: number; h: number } // everything that is drawn, for fitting it on screen
   families: Family[]
@@ -80,9 +80,10 @@ function relations(layout: TreeLayout): Relations {
 
 // The primary family branches: each child of the oldest couple starts one, with their partner and everyone below
 // them (and the people who married into that line). Anyone left over starts a branch of their own.
-function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>) {
+function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>, trunkGens: number) {
   const { down, mates, hasParent } = rel
-  const top = new Set(layout.nodes.filter((n) => !hasParent.has(n.id) && n.gen === 0).map((n) => n.id))
+  // The oldest generations (up to four) stand inside the trunk; the family branches start above them.
+  const top = new Set(layout.nodes.filter((n) => n.gen < trunkGens).map((n) => n.id))
   const claimed = new Set<string>()
   const out: { head: string; ids: string[] }[] = []
   const claim = (head: string) => {
@@ -103,7 +104,7 @@ function branches(layout: TreeLayout, rel: Relations, at: Map<string, { x: numbe
   const heads = new Set<string>()
   for (const e of layout.edges) {
     const parents = e.parents ?? []
-    if (e.kind === 'parent' && parents.length > 0 && parents.every((p) => top.has(p))) for (const k of e.kids ?? []) heads.add(k)
+    if (e.kind === 'parent' && parents.length > 0 && parents.every((p) => top.has(p))) for (const k of e.kids ?? []) if (!top.has(k)) heads.add(k)
   }
   for (const h of [...heads].sort((a, b) => x(a) - x(b))) claim(h)
   const rest = layout.nodes.filter((n) => !claimed.has(n.id) && !top.has(n.id)).sort((a, b) => a.gen - b.gen || a.x - b.x)
@@ -172,7 +173,7 @@ function makeFamily(g: { head: string; ids: string[] }, tone: number, at: Map<st
 
 // The wood of every stem: two legs climb from the parents to a fork (thickest there), and a limb curves up from the
 // fork to each child. A line of descent with many people below it is a thick limb; the tips are fine twigs.
-function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number }>): Wood[] {
+function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number; y: number; gen: number }>, trunkGens: number): Wood[] {
   const memo = new Map<string, Set<string>>()
   const below = (id: string, trail = new Set<string>()): Set<string> => {
     const hit = memo.get(id)
@@ -188,7 +189,7 @@ function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number
     memo.set(id, out)
     return out
   }
-  const node = (id: string) => at.get(id) as { x: number; y: number }
+  const node = (id: string) => at.get(id) as { x: number; y: number; gen: number }
   const cx = (id: string) => node(id).x + NODE_W / 2
   const wood: Wood[] = []
   for (const e of layout.edges) {
@@ -224,7 +225,16 @@ function woodFor(layout: TreeLayout, rel: Relations, at: Map<string, { x: number
       const end = clamp(4 + 2.6 * Math.sqrt(below(id).size + 1), 4, w * 0.8)
       piece(fork, { x: fork.x + (t.x - fork.x) * 0.12, y: fork.y - (fork.y - t.y) * 0.55 }, { x: t.x, y: t.y + (fork.y - t.y) * 0.38 }, t, w * 0.9, end, 'limbs')
     }
-    wood.push({ id: e.id, parents, kids, legs, limbs, shine, fork: { x: r1(fork.x), y: r1(fork.y) } })
+    const inside = kids.every((id) => node(id).gen < trunkGens)
+    let vein = ''
+    if (inside) {
+      // Inside the trunk the link is a fine carved line: up from each parent, across, and up to each child.
+      const xs = [...parents.map(cx), ...kids.map(cx)]
+      vein = parents.map((id) => `M${r1(cx(id))} ${r1(node(id).y + TOP)}L${r1(cx(id))} ${r1(fork.y)}`).join('') +
+        `M${r1(Math.min(...xs))} ${r1(fork.y)}H${r1(Math.max(...xs))}` +
+        kids.map((id) => `M${r1(cx(id))} ${r1(fork.y)}L${r1(cx(id))} ${r1(node(id).y + BOTTOM)}`).join('')
+    }
+    wood.push({ id: e.id, parents, kids, legs: inside ? '' : legs, limbs: inside ? '' : limbs, shine: inside ? '' : shine, fork: { x: r1(fork.x), y: r1(fork.y) }, inside, vein })
   }
   return wood
 }
@@ -255,28 +265,60 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
 
   const rand = seeded(layout.nodes.length * 7919 + Math.round(layout.width))
 
-  // Trunk: it thickens and lengthens as the tree widens, flares into roots, and stands on a patch of ground.
-  const tw = clamp(26 + a * 0.07, 30, 120)
-  const fh = 60 + tw * 0.6
-  // The trunk rises to just behind the oldest row, so the oldest people stand on it and the first branches leave from there.
-  const T = Math.max(...layout.nodes.filter((n) => n.gen === 0).map((n) => n.y)) - 24
-  const B = bottomY + 50 + a * 0.1
-  const mid = T + (B - T) * 0.4
-  const L = (k: number) => r1(cx - tw * k)
-  const R = (k: number) => r1(cx + tw * k)
+  // One trunk holds the oldest generations (up to four rows) and is as wide as the widest of them; it flares into
+  // roots at the bottom and stands on the ground. The family branches leave from its top.
+  // Always leave at least two generations above the trunk, so there is a branching tree and not just a stump.
+  const trunkGens = clamp(Math.max(...layout.nodes.map((n) => n.gen)) - 1, 1, 4)
+  type Row = { l: number; r: number; yTop: number; yBot: number }
+  const rows: Row[] = []
+  for (let g = 0; g < trunkGens; g++) {
+    const ns = layout.nodes.filter((n) => n.gen === g)
+    if (ns.length === 0) continue
+    let l = Math.min(...ns.map((n) => n.x)) - 36
+    let r = Math.max(...ns.map((n) => n.x + NODE_W)) + 36
+    if (r - l < 220) { const c = (l + r) / 2; l = c - 110; r = c + 110 }
+    rows.push({ l, r, yTop: Math.min(...ns.map((n) => n.y)), yBot: Math.max(...ns.map((n) => n.y + NODE_H)) })
+  }
+  const through = (pts: [number, number][]): string => {
+    let d = ''
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)]
+      const p1 = pts[i]
+      const p2 = pts[i + 1]
+      const p3 = pts[Math.min(pts.length - 1, i + 2)]
+      d += `C${r1(p1[0] + (p2[0] - p0[0]) / 6)} ${r1(p1[1] + (p2[1] - p0[1]) / 6)} ${r1(p2[0] - (p3[0] - p1[0]) / 6)} ${r1(p2[1] - (p3[1] - p1[1]) / 6)} ${r1(p2[0])} ${r1(p2[1])}`
+    }
+    return d
+  }
+  const bottomRow = rows[0]
+  const topRow = rows[rows.length - 1]
+  const B = Math.max(bottomY + 50 + a * 0.1, bottomRow.yBot + 56)
+  const T = topRow.yTop - 6
+  const w0 = bottomRow.r - bottomRow.l
+  const flare = clamp(w0 * 0.22, 60, 240)
+  const wall = (side: 'l' | 'r'): [number, number][] =>
+    [...rows].reverse().flatMap((r) => [[r[side], r.yTop + 2], [r[side], r.yBot - 2]] as [number, number][])
+  const left = wall('l')
+  left.push([bottomRow.l - flare * 0.2, B - 44], [bottomRow.l - flare * 0.7, B - 14], [bottomRow.l - flare * 1.3, B + 2])
+  const rightUp = [...wall('r'), [bottomRow.r + flare * 0.2, B - 44], [bottomRow.r + flare * 0.7, B - 14], [bottomRow.r + flare * 1.3, B + 2]].reverse() as [number, number][]
+  const tc = (topRow.l + topRow.r) / 2
   const body =
-    `M${L(1)} ${r1(T)} C${L(0.92)} ${r1(mid)} ${L(0.88)} ${r1(B - fh - 10)} ${L(1.05)} ${r1(B - fh)} ` +
-    `C${L(1.3)} ${r1(B - fh * 0.4)} ${L(2)} ${r1(B - fh * 0.1)} ${L(2.8)} ${r1(B)} L${R(2.8)} ${r1(B)} ` +
-    `C${R(2)} ${r1(B - fh * 0.1)} ${R(1.3)} ${r1(B - fh * 0.4)} ${R(1.05)} ${r1(B - fh)} ` +
-    `C${R(0.88)} ${r1(B - fh - 10)} ${R(0.92)} ${r1(mid)} ${R(1)} ${r1(T)}Q${r1(cx)} ${r1(T - 22)} ${L(1)} ${r1(T)}Z`
-  const bark = [-0.55, -0.18, 0.2, 0.58].map((f, i) => {
-    const x = cx + tw * f
-    return `M${r1(x)} ${r1(T + 24 + i * 6)} C${r1(x + 7)} ${r1(T + (B - T) * 0.3)} ${r1(x - 7)} ${r1(T + (B - T) * 0.6)} ${r1(x + 2 + f * 18)} ${r1(B - fh * 0.5)}`
+    `M${r1(topRow.l + 14)} ${r1(T + 6)}${through(left)}L${r1(rightUp[0][0])} ${r1(rightUp[0][1])}${through(rightUp)}` +
+    `Q${r1(tc)} ${r1(T - 26)} ${r1(topRow.l + 14)} ${r1(T + 6)}Z`
+  const brand = seeded(Math.round(w0) + trunkGens)
+  const strands = clamp(Math.round(w0 / 70), 4, 18)
+  const bark = Array.from({ length: strands }, (_, i) => {
+    const x = bottomRow.l + ((i + 0.5) / strands) * w0 + (brand() - 0.5) * 16
+    const y0b = T + 30 + brand() * Math.max(10, B - T - 220)
+    const len = 110 + brand() * 130
+    return `M${r1(x)} ${r1(y0b)} C${r1(x + 8)} ${r1(y0b + len * 0.3)} ${r1(x - 8)} ${r1(y0b + len * 0.65)} ${r1(x + (brand() - 0.5) * 10)} ${r1(y0b + len)}`
   })
+  const perSide = clamp(2 + Math.round(w0 / 500), 2, 5)
   const roots = [-1, 1].flatMap((side) =>
-    [0, 1, 2].map((i) => {
-      const sx = cx + side * tw * (1.9 + i * 0.35)
-      return `M${r1(sx)} ${r1(B - 6)} C${r1(sx + side * tw * 0.7)} ${r1(B + 6 + i * 3)} ${r1(sx + side * tw * 1.2)} ${r1(B + 12 + i * 4)} ${r1(sx + side * tw * (1.8 + i * 0.3))} ${r1(B + 8 + i * 5)}`
+    Array.from({ length: perSide }, (_, i) => {
+      const sx = (side < 0 ? bottomRow.l - flare * 0.5 : bottomRow.r + flare * 0.5) + side * i * flare * 0.5
+      const reach = 70 + i * 34 + brand() * 30
+      return `M${r1(sx)} ${r1(B - 6)} C${r1(sx + side * reach * 0.3)} ${r1(B + 6 + i * 3)} ${r1(sx + side * reach * 0.65)} ${r1(B + 12 + i * 4)} ${r1(sx + side * reach)} ${r1(B + 8 + i * 5)}`
     }),
   )
   const ground = `M${r1(cx - a * 0.95)} ${r1(B + 2)} C${r1(cx - a * 0.5)} ${r1(B - 26)} ${r1(cx + a * 0.5)} ${r1(B - 26)} ${r1(cx + a * 0.95)} ${r1(B + 2)} C${r1(cx + a * 0.5)} ${r1(B + 30)} ${r1(cx - a * 0.5)} ${r1(B + 30)} ${r1(cx - a * 0.95)} ${r1(B + 2)}Z`
@@ -297,8 +339,8 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   // Families and wood come from the real parent and child links, not from screen positions.
   const rel = relations(layout)
   const at = new Map(layout.nodes.map((n) => [n.id, n]))
-  const groups = branches(layout, rel, at)
-  const wood = woodFor(layout, rel, at)
+  const groups = branches(layout, rel, at, trunkGens)
+  const wood = woodFor(layout, rel, at, trunkGens)
   // Leafy bridges: along each stem inside one family, and between partners, so there are no bare gaps inside a
   // family (different families still keep their gap).
   const famOf = new Map<string, number>()

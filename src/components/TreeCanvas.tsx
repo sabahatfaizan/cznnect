@@ -464,8 +464,7 @@ export default function TreeCanvas({
               const shut = folded.has(w.id)
               return (
                 <g key={w.id} className={e && dimmed(e) ? 'tree-dim' : ''}>
-                  <path d={w.legs + (shut ? '' : w.limbs)} className="tree-wood-body" />
-                  <path d={w.shine} className="tree-wood-shine" />
+                  {w.inside ? <path d={w.vein} className="tree-vein" /> : <><path d={w.legs + (shut ? '' : w.limbs)} className="tree-wood-body" /><path d={w.shine} className="tree-wood-shine" /></>}
                 </g>
               )
             })}

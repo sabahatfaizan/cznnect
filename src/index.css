@@ -2156,3 +2156,37 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tnode-gone .tnode-rect { stroke-dasharray: 4 3; }
 .family-tree-stage .tree-fam-quiet,
 .family-tree-stage .tree-dim { transition: opacity .25s ease; }
+
+/* Layered canopy: remove the bead-like gold outlines and let overlapping foliage read as one crown. */
+.family-tree-stage .tree-fam-edge {
+  fill: #10291d;
+  stroke: none;
+  opacity: .68;
+}
+.family-tree-stage .tree-fam-base {
+  fill: color-mix(in srgb, var(--fam-c) 72%, #173b27);
+  stroke: none;
+}
+.family-tree-stage .tree-fam-mid {
+  fill: color-mix(in srgb, var(--fam-c) 76%, #8eaa68);
+  opacity: .48;
+}
+.family-tree-stage .tree-fam-hi {
+  fill: color-mix(in srgb, var(--fam-c) 34%, #f1e6b9);
+  opacity: .52;
+}
+.family-tree-stage .tree-fam-leaf {
+  fill: color-mix(in srgb, var(--fam-c) 66%, #b9c987);
+  stroke: color-mix(in srgb, var(--fam-c) 70%, #183421);
+  stroke-width: .65;
+  stroke-linejoin: round;
+  opacity: .94;
+}
+.family-tree-stage .tree-fam[data-tone="0"] { --fam-c: #477c43; }
+.family-tree-stage .tree-fam[data-tone="1"] { --fam-c: #397f70; }
+.family-tree-stage .tree-fam[data-tone="2"] { --fam-c: #78934b; }
+.family-tree-stage .tree-fam[data-tone="3"] { --fam-c: #a58a4c; }
+.family-tree-stage .tree-fam { filter: drop-shadow(0 7px 8px rgb(0 0 0 / .28)); }
+.family-tree-stage .tree-wood-body { stroke-width: 1.5; }
+.family-tree-stage .tree-wood-shine { opacity: .3; }
+.family-tree-stage .tree-banner { rx: 10px; }

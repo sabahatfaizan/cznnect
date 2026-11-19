@@ -247,7 +247,7 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
     return (
       <div className="tree-full fixed inset-0 z-40 flex flex-col bg-page">
         <div className="tree-bar border-b border-line bg-surface px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
+          <div className="tree-bar-top grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
             <button className="btn btn-plain tree-icon-btn" onClick={onExit} aria-label="Back to Home">
               <Icon name="back" size={22} />
             </button>
@@ -257,7 +257,7 @@ export default function Tree({ family, userId, onExit }: { family: Family; userI
             </div>
             <span aria-hidden="true" />
           </div>
-          <div className="mt-2 flex items-center justify-center gap-2">
+          <div className="tree-bar-actions mt-2 flex items-center justify-center gap-2">
             <button className="btn btn-plain tree-icon-btn" onClick={() => setSearching((v) => !v)} aria-label="Find someone" aria-pressed={searching}>
               <Icon name="search" size={20} />
             </button>

@@ -1996,3 +1996,34 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage.tree-moving .tree-star, .family-tree-stage.tree-moving .tree-fly, .family-tree-stage.tree-moving .tree-butterfly,
 .family-tree-stage.tree-big .tree-star, .family-tree-stage.tree-big .tree-fly, .family-tree-stage.tree-big .tree-butterfly { animation-play-state: paused; }
 .family-tree-stage .tree-still { animation: none; }
+
+
+/* Landscape on a phone: the tree page gets every spare pixel. The top bar becomes one slim row, panels open at the
+   side instead of covering the screen, and nothing sits under a notch or the rounded corners. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .tree-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem max(0.75rem, env(safe-area-inset-right)) 0.25rem max(0.75rem, env(safe-area-inset-left)) !important;
+  }
+  .tree-bar-top { display: flex; flex: 1; min-width: 0; align-items: center; gap: 0.5rem; }
+  .tree-bar-top > span { display: none; }
+  .tree-bar-top > div { display: flex; min-width: 0; align-items: baseline; gap: 0.5rem; text-align: left; }
+  .tree-bar-top .tree-title { font-size: 1rem; }
+  .tree-bar-actions { margin-top: 0 !important; flex: none; }
+  .tree-icon-btn { width: 2.5rem; min-height: 2.5rem !important; }
+
+  .sheet-scrim { align-items: stretch; justify-content: flex-end; }
+  .sheet-panel {
+    height: 100dvh;
+    max-height: none !important;
+    width: min(26rem, 50vw);
+    max-width: none !important;
+    border-radius: var(--radius-card) 0 0 var(--radius-card) !important;
+    border-top: 0 !important;
+    border-left: 1px solid var(--line);
+    padding-right: max(1rem, env(safe-area-inset-right)) !important;
+    padding-top: max(1rem, env(safe-area-inset-top)) !important;
+  }
+}

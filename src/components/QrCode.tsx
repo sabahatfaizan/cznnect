@@ -64,7 +64,40 @@ function build(text: string) {
   return { shapes, corners, specks, unit }
 }
 
-export default function QrCode({ text, size = 232, label }: { text: string; size?: number; label: string }) {
+// The plain code: square black modules on white with the standard 4-module quiet zone. Any camera app, Google Lens
+// or QR reader opens this one, which the styled code above cannot promise. Used for codes that go to people outside the app.
+function PlainQr({ text, size, label }: { text: string; size: number; label: string }) {
+  const art = useMemo(() => {
+    try {
+      const { size: n, data } = create(text, { errorCorrectionLevel: 'M' }).modules
+      let d = ''
+      for (let y = 0; y < n; y++) {
+        let x = 0
+        while (x < n) {
+          if (data[y * n + x] === 1) {
+            const start = x
+            while (x < n && data[y * n + x] === 1) x++
+            d += `M${start + 4} ${y + 4}h${x - start}v1h-${x - start}z`
+          } else x++
+        }
+      }
+      return { n, d }
+    } catch {
+      return null
+    }
+  }, [text])
+  if (!art) return <p className="p-6 text-center text-sm font-bold text-danger">Could not draw the code. Use the typed code below.</p>
+  const box = art.n + 8
+  return (
+    <svg viewBox={`0 0 ${box} ${box}`} width={size} height={size} role="img" aria-label={label} shapeRendering="crispEdges" style={{ maxWidth: '100%', height: 'auto', borderRadius: 12 }}>
+      <rect width={box} height={box} fill="#ffffff" />
+      <path d={art.d} fill="#000000" />
+    </svg>
+  )
+}
+
+export default function QrCode({ text, size = 232, label, plain = false }: { text: string; size?: number; label: string; plain?: boolean }) {
+  if (plain) return <PlainQr text={text} size={size} label={label} />
   const art = useMemo(() => {
     try {
       return build(text)

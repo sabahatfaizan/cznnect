@@ -18,6 +18,8 @@ import { isPasswordRecoveryEvent } from './lib/auth'
 import { isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 import { mustUpdate } from './lib/updateGate'
 import PermissionsSetup from './components/PermissionsSetup'
+import PublicEvent from './components/PublicEvent'
+import { readPublicLink } from './lib/publicEvent'
 
 const SPLASH_MS = 4500
 
@@ -50,6 +52,8 @@ function NetworkStatus() {
 }
 
 export default function App() {
+  // An invite QR scanned with a plain camera app opens ?join=CODE. That page works with no account, no app and no sign-in.
+  if (readPublicLink() && !isNativeApp()) return <PublicEvent />
   return (
     <>
       <AppInner />

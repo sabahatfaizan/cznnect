@@ -5,8 +5,9 @@ import { Icon } from '../components/Icons'
 import QrCode from '../components/QrCode'
 import QrScanner from '../components/QrScanner'
 import { whenText } from '../lib/gatherings'
+import { takePendingJoin } from '../lib/publicEvent'
 import {
-  checkIn, createEvent, deleteEvent, inviteText, joinEvent, leaveEvent, loadEvents, loadGuests, readInvite, readTicket, ticketText,
+  checkInGuest, createEvent, deleteEvent, inviteText, joinEvent, leaveEvent, loadEvents, loadGuests, readInvite, readTicket, ticketText,
   type EventRow, type Guest,
 } from '../lib/events'
 
@@ -31,6 +32,17 @@ export default function Events({ userId, isOwner }: { userId: string; isOwner: b
     setLoaded(true)
   }, [])
   useEffect(() => { void load() }, [load])
+  // Someone who scanned an invite and chose "I already have an account" is joined as soon as they are in.
+  useEffect(() => {
+    const code = takePendingJoin()
+    if (!code) return
+    void joinEvent(code).then(async (r) => {
+      await load()
+      if (r.ok) { setOpenId(r.data); flash('You joined the event.') } else flash(r.message)
+    })
+    // Only once, when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   useEffect(() => {
     void supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle().then((r: { data: { display_name?: string } | null }) => setMyName(r.data?.display_name ?? ''))
   }, [userId])
@@ -186,8 +198,8 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
   const present = guests.filter((g) => g.checked_in_at).length
   const mine = guests.find((g) => g.user_id === userId)
 
-  async function mark(uid: string, on: boolean) {
-    const r = await checkIn(event.id, uid, on)
+  async function mark(guestId: string, on: boolean) {
+    const r = await checkInGuest(guestId, on)
     if (!r.ok) { setMsg(r.message); return false }
     await refresh()
     return true
@@ -197,9 +209,10 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
     if (!t || lastScan.current === text) return
     lastScan.current = text
     window.setTimeout(() => { lastScan.current = '' }, 3000)
-    if (t.eventId !== event.id) { setMsg('That ticket is for a different event.'); return }
-    const who = guests.find((g) => g.user_id === t.userId)?.guest_name || 'Guest'
-    if (await mark(t.userId, true)) setMsg(`${who} is present.`)
+    if (t.kind === 'user' && t.eventId !== event.id) { setMsg('That ticket is for a different event.'); return }
+    const guest = guests.find((g) => (t.kind === 'user' ? g.user_id === t.userId : g.id === t.guestId))
+    if (!guest) { setMsg('That ticket is not on this event\'s guest list.'); return }
+    if (await mark(guest.id, true)) setMsg(`${guest.guest_name || 'Guest'} is present.`)
   }
   async function remove() {
     if (!window.confirm('Delete this event and its guest list?')) return
@@ -237,7 +250,8 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
           <>
             <div className="flex flex-col items-center gap-2">
               <p className="eyebrow">Invite guests</p>
-              <QrCode text={inviteText(event.code)} label={`Invite to ${event.title}`} size={200} />
+              <QrCode plain text={inviteText(event.code)} label={`Invite to ${event.title}`} size={220} />
+              <p className="text-center text-sm text-muted">Anyone can scan this with their phone camera or Google Lens. No app or account needed.</p>
               <p className="text-sm text-muted">Or share the code <span className="font-bold tracking-widest text-current">{event.code}</span></p>
             </div>
             <button type="button" className="btn btn-primary !min-h-11 gap-2 !text-sm" onClick={() => setScan((s) => !s)}>
@@ -249,10 +263,14 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
               {guests.length === 0 ? <p className="text-sm text-muted">No one has joined yet.</p> : (
                 <ul className="flex flex-col divide-y divide-[var(--line)]">
                   {guests.map((g) => (
-                    <li key={g.user_id} className="flex items-center gap-3 py-2">
-                      <span className="min-w-0 flex-1 truncate font-semibold">{g.guest_name || 'Guest'}</span>
+                    <li key={g.id} className="flex items-center gap-3 py-2">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold">{g.guest_name || 'Guest'}{!g.user_id && <span className="ml-1.5 text-xs font-bold text-muted">no account</span>}</span>
+                        {(g.guest_phone || g.guest_email) && <span className="block truncate text-xs text-muted">{[g.guest_phone, g.guest_email].filter(Boolean).join(' · ')}</span>}
+                        {g.guest_note && <span className="block truncate text-xs text-muted">{g.guest_note}</span>}
+                      </span>
                       <span className={`text-xs font-bold ${g.checked_in_at ? '' : 'text-muted'}`}>{g.checked_in_at ? 'Present' : 'Absent'}</span>
-                      <button type="button" className="rounded-lg px-2 py-1 text-xs font-bold underline underline-offset-4" onClick={() => void mark(g.user_id, !g.checked_in_at)}>
+                      <button type="button" className="rounded-lg px-2 py-1 text-xs font-bold underline underline-offset-4" onClick={() => void mark(g.id, !g.checked_in_at)}>
                         {g.checked_in_at ? 'Undo' : 'Mark present'}
                       </button>
                     </li>

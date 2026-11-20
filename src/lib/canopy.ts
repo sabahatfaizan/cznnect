@@ -345,7 +345,7 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const body =
     `M${r1(topRow.l + 14)} ${r1(T + 6)}${through(left)}L${r1(rightUp[0][0])} ${r1(rightUp[0][1])}${through(rightUp)}` +
     `Q${r1(tc)} ${r1(T - 26)} ${r1(topRow.l + 14)} ${r1(T + 6)}Z`
-  const brand = seeded(Math.round(w0) + trunkGens)
+  const brand = seeded(Math.round(w0) + rows.length)
   const strands = clamp(Math.round(w0 / 70), 4, 18)
   const bark = Array.from({ length: strands }, (_, i) => {
     const x = bottomRow.l + ((i + 0.5) / strands) * w0 + (brand() - 0.5) * 16

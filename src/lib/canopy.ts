@@ -298,16 +298,18 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   // One trunk holds the oldest generations (up to four rows) and is as wide as the widest of them; it flares into
   // roots at the bottom and stands on the ground. The family branches leave from its top.
   // Always leave at least two generations above the trunk, so there is a branching tree and not just a stump.
-  const trunkGens = clamp(Math.max(...layout.nodes.map((n) => n.gen)) - 1, 1, 4)
+  const maxGen = Math.max(...layout.nodes.map((n) => n.gen))
+  // Generations 1–2 (indices 0–1) belong to the roots; generations 3–4 (2–3) form the trunk.
+  // Keep this structural boundary fixed: adding descendants must never lengthen the trunk.
+  const trunkStartGen = Math.min(2, Math.max(0, maxGen - 1))
+  const trunkEndGen = Math.min(3, maxGen)
   type Row = { l: number; r: number; yTop: number; yBot: number }
   const rows: Row[] = []
-  // The trunk stays slim, like a real one: it holds only as many people of each generation as fit in its width.
-  // Anyone further out (a big generation of cousins) grows on a limb from the top of the trunk instead.
   const onTrunk = new Set<string>()
-  const oldestRow = layout.nodes.filter((n) => n.gen === 0)
+  const oldestRow = layout.nodes.filter((n) => n.gen === trunkStartGen)
   const cap = Math.max(215, ...oldestRow.map((n) => Math.abs(n.x + NODE_W / 2 - cx) + NODE_W / 2 + 36))
-  for (let g = 0; g < trunkGens; g++) {
-    const ns = layout.nodes.filter((n) => n.gen === g && (g === 0 || (n.x >= cx - cap && n.x + NODE_W <= cx + cap)))
+  for (let g = trunkStartGen; g <= trunkEndGen; g++) {
+    const ns = layout.nodes.filter((n) => n.gen === g && (g === trunkStartGen || (n.x >= cx - cap && n.x + NODE_W <= cx + cap)))
     if (ns.length === 0) break
     for (const n of ns) onTrunk.add(n.id)
     let l = Math.min(...ns.map((n) => n.x)) - 36

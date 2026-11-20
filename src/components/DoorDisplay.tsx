@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import QrCode from './QrCode'
 import { useBackClose } from '../lib/backStack'
 import { inviteUrl } from '../lib/events'
@@ -31,12 +32,14 @@ export default function DoorDisplay({ code, onClose }: { code: string; onClose: 
     }
   }, [])
 
-  return (
+  // Drawn straight on the page, outside the sheet it was opened from: a sliding sheet would otherwise hold it inside
+  // its own box and the app's bars would stay visible around it.
+  return createPortal(
     <div
       role="dialog"
       aria-label="Door display"
-      className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-[3vmin] p-[4vmin]"
-      style={{ background: '#ffffff', color: '#000000' }}
+      className="fixed left-0 top-0 z-[100] flex flex-col items-center justify-center gap-[3vmin] p-[4vmin]"
+      style={{ background: '#ffffff', color: '#000000', width: '100vw', height: '100dvh' }}
     >
       <button
         type="button"
@@ -51,6 +54,7 @@ export default function DoorDisplay({ code, onClose }: { code: string; onClose: 
         <QrCode plain text={inviteUrl(code)} size={1000} label="Scan to join the event" />
       </div>
       <p className="font-bold tracking-[0.3em]" style={{ fontSize: 'min(9vw, 6vh)' }}>{code}</p>
-    </div>
+    </div>,
+    document.body,
   )
 }

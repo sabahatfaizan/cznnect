@@ -34,9 +34,11 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<string | null>(null)
+  const [isFamilyCreator, setIsFamilyCreator] = useState(false)
   const isFamilyOwner = role === 'owner'
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [confirm, setConfirm] = useState<'newcode' | 'leave' | null>(null)
+  const [deleteName, setDeleteName] = useState('')
   const [copied, setCopied] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [familyName, setFamilyName] = useState(family.name)
@@ -66,6 +68,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   useEffect(() => {
     supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle()
       .then(({ data }) => setRole((data as { role?: string } | null)?.role ?? null))
+    supabase.from('families').select('created_by').eq('id', family.id).maybeSingle()
+      .then(({ data }) => setIsFamilyCreator((data as { created_by?: string | null } | null)?.created_by === userId))
     supabase.from('family_members').select('user_id', { count: 'exact', head: true }).eq('family_id', family.id)
       .then(({ count }) => setMemberCount(count ?? null))
   }, [family.id, userId])
@@ -87,6 +91,20 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
     setBusy(false); setConfirm(null)
     if (error) setError(error.message)
     else onFamilyChanged()
+  }
+
+  async function deleteFamily() {
+    if (deleteName.trim() !== family.name) {
+      setError('Enter the exact family name to confirm deletion.')
+      return
+    }
+    setBusy(true)
+    setError('')
+    const { error } = await supabase.rpc('delete_family', { fid: family.id, confirmation_name: deleteName.trim() })
+    setBusy(false)
+    if (error) { setError(error.message); return }
+    setPanel(null)
+    onFamilyChanged()
   }
 
   async function saveName() {
@@ -218,6 +236,24 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
             ) : (
               <button className="min-h-11 self-start text-sm font-bold text-danger underline underline-offset-2" type="button" onClick={() => setConfirm('leave')}>Leave this family</button>
             ))}
+            {isFamilyCreator && (
+              <section className="mt-2 flex flex-col gap-2 border-t border-line pt-4" aria-label="Delete family">
+                <h3 className="eyebrow text-danger">Danger zone</h3>
+                {confirm === 'delete' ? (
+                  <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); void deleteFamily() }}>
+                    <p className="text-sm">Permanently delete <strong>{family.name}</strong> and its family-specific content for every member? This cannot be undone. Your Cznnect account will not be deleted.</p>
+                    <label className="label" htmlFor="delete-family-name">Type the family name to confirm</label>
+                    <input id="delete-family-name" className="input" value={deleteName} onChange={(e) => setDeleteName(e.target.value)} autoComplete="off" required />
+                    <div className="flex gap-2">
+                      <button className="btn btn-danger" type="submit" disabled={busy || deleteName.trim() !== family.name}>{busy ? 'Deleting…' : 'Permanently delete family'}</button>
+                      <button className="btn btn-plain" type="button" disabled={busy} onClick={() => { setConfirm(null); setDeleteName(''); setError('') }}>Cancel</button>
+                    </div>
+                  </form>
+                ) : (
+                  <button className="min-h-11 self-start text-sm font-bold text-danger underline underline-offset-2" type="button" onClick={() => { setConfirm('delete'); setDeleteName(''); setError('') }}>Delete this family</button>
+                )}
+              </section>
+            )}
             {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}
           </div>
         </Sheet>

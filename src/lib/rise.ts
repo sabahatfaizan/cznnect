@@ -7,7 +7,7 @@ import { NODE_H, NODE_W, type TreeLayout, type TreeNode } from './tree'
 // highest. Positions only: people, links and generations are not changed, and nothing is random.
 export const RISE_SPAN = (70 * Math.PI) / 180 // how far the fan opens, from the far left branch to the far right
 const SLOT = 192 // the width of one person in a couple, the same as the row layout uses
-const STEP = 262 // the least height between one generation and the next
+const STEP = 190 // compact vertical spacing; generations should not create an oversized trunk
 const STAGGER = 84 // in a crowded generation, every other person sits this much higher so they can stand closer
 const GAP = 40 // clear space between two people on the same level
 const PAD = 60

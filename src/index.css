@@ -2190,3 +2190,9 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-wood-body { stroke-width: 1.5; }
 .family-tree-stage .tree-wood-shine { opacity: .3; }
 .family-tree-stage .tree-banner { rx: 10px; }
+/* Clouds like a drawing: a round-bumped leafy cloud with a brown outline at the end of every limb. */
+.family-tree-stage .tree-fam-base { stroke: color-mix(in srgb, var(--trunk-fill) 75%, #000); stroke-width: 3.2; stroke-linejoin: round; }
+.family-tree-stage .tree-fam-mid { opacity: 0.55; }
+.family-tree-stage .tree-fam-hi { opacity: 0.32; }
+.family-tree-stage .tree-grass { fill: color-mix(in srgb, #4caf50 70%, var(--page)); opacity: 0.75; }
+.family-tree-stage .tree-fam-leaf { stroke: color-mix(in srgb, var(--fam-c) 45%, #000); stroke-width: 0.8; }

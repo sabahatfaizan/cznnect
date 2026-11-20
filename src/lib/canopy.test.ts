@@ -24,14 +24,15 @@ function family() {
 }
 
 describe('canopyFor', () => {
-  it('gives each child of the oldest couple its own family canopy, following the real links', () => {
+  it('gives each group of brothers and sisters its own cloud, following the real links', () => {
     const f = family()
     const deco = canopyFor(layoutTree(f.people, f.links))
     expect(deco?.families).toHaveLength(2)
-    const byHead = new Map(deco?.families.map((x) => [x.id, x.ids]))
-    expect(new Set(byHead.get(f.ids.a))).toEqual(new Set([f.ids.a, f.ids.aa, f.ids.c]))
-    expect(new Set(byHead.get(f.ids.b))).toEqual(new Set([f.ids.b, f.ids.bb]))
-    // The oldest couple stand on the trunk, in no canopy.
+    const sets = (deco?.families ?? []).map((x) => new Set(x.ids))
+    // Faizan and Sara are siblings (with the partners who joined them); Rafi is the next generation, in a cloud above.
+    expect(sets.some((x) => x.size === 4 && [f.ids.a, f.ids.aa, f.ids.b, f.ids.bb].every((id) => x.has(id)))).toBe(true)
+    expect(sets.some((x) => x.size === 1 && x.has(f.ids.c))).toBe(true)
+    // The oldest couple stand on the trunk, in no cloud.
     expect(deco?.families.some((x) => x.ids.includes(f.ids.g1))).toBe(false)
   })
 

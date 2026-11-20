@@ -454,6 +454,7 @@ export default function TreeCanvas({
         {deco.stars.map((st, i) => <circle key={`s${i}`} cx={st.x} cy={st.y} r={st.r} className={i < 24 ? 'tree-star' : 'tree-star tree-still'} style={{ animationDelay: `${st.delay}s` }} />)}
         <path d={deco.moon.path} className="tree-moon" />
         <path d={deco.trunk.ground} className="tree-ground" />
+        <path d={deco.trunk.grass} className="tree-grass" />
         {deco.trunk.roots.map((d, i) => <path key={`r${i}`} d={d} className="tree-root" />)}
         <path d={deco.trunk.body} className="tree-trunk" />
         {deco.trunk.bark.map((d, i) => <path key={`b${i}`} d={d} className="tree-bark" />)}

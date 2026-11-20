@@ -14,6 +14,7 @@ import { pushEnabled, setPushEnabled } from '../lib/push'
 import { getPresenceVisible, setPresenceVisible } from '../lib/pulse'
 
 type Panel = 'family' | 'theme' | 'icon' | 'password'
+type FamilyConfirm = 'newcode' | 'leave' | 'delete' | null
 
 // Picking a theme also picks a matching home-screen/browser icon. Exclusive themes
 // choose one of their own unlocked icon variants; the user can still change it manually.
@@ -37,7 +38,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [isFamilyCreator, setIsFamilyCreator] = useState(false)
   const isFamilyOwner = role === 'owner'
   const [memberCount, setMemberCount] = useState<number | null>(null)
-  const [confirm, setConfirm] = useState<'newcode' | 'leave' | null>(null)
+  const [confirm, setConfirm] = useState<FamilyConfirm>(null)
   const [deleteName, setDeleteName] = useState('')
   const [copied, setCopied] = useState(false)
   const [editingName, setEditingName] = useState(false)

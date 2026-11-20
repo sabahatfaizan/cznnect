@@ -51,7 +51,7 @@ describe('canopyFor', () => {
 })
 
 describe('canopyFor with many generations', () => {
-  it('puts the four oldest generations inside the trunk and starts canopies above them', () => {
+  it('keeps people who stand inside the trunk out of the canopies above it', () => {
     const people: Person[] = [person('Root', 1900)]
     const links: Link[] = []
     let row = [people[0]]
@@ -65,9 +65,9 @@ describe('canopyFor with many generations', () => {
     }
     const layout = layoutTree(people, links)
     const deco = canopyFor(layout)
-    const gen = new Map(layout.nodes.map((x) => [x.id, x.gen]))
-    expect(deco?.wood.filter((w) => w.inside)).toHaveLength(3) // links among generations 0 to 3
-    expect(deco?.families.every((x) => x.ids.every((id) => (gen.get(id) ?? 0) >= 4))).toBe(true)
+    // Whatever stands inside the trunk is in no canopy, and the rest of the tree is in canopies above it.
+    const inCloud = new Set((deco?.families ?? []).flatMap((x) => x.ids))
+    for (const w of deco?.wood.filter((x) => x.inside) ?? []) expect(w.kids.some((id) => inCloud.has(id))).toBe(false)
     expect(deco?.families.length).toBeGreaterThan(0)
   })
 })

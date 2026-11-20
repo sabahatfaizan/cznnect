@@ -4,6 +4,7 @@ import Sheet from '../components/Sheet'
 import { Icon } from '../components/Icons'
 import QrCode from '../components/QrCode'
 import QrScanner from '../components/QrScanner'
+import DoorDisplay from '../components/DoorDisplay'
 import { whenText } from '../lib/gatherings'
 import { takePendingJoin } from '../lib/publicEvent'
 import {
@@ -187,6 +188,7 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
   const [err, setErr] = useState('')
   const [scan, setScan] = useState(false)
   const [msg, setMsg] = useState('')
+  const [door, setDoor] = useState(false)
   const lastScan = useRef('')
 
   const refresh = useCallback(async () => {
@@ -254,6 +256,9 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
               <p className="text-center text-sm text-muted">Anyone can scan this with their phone camera or Google Lens. No app or account needed.</p>
               <p className="text-sm text-muted">Or share the code <span className="font-bold tracking-widest text-current">{event.code}</span></p>
             </div>
+            <button type="button" className="btn btn-plain !min-h-11 gap-2 !text-sm" onClick={() => setDoor(true)}>
+              <Icon name="phone" size={18} />Door display (full screen)
+            </button>
             <button type="button" className="btn btn-primary !min-h-11 gap-2 !text-sm" onClick={() => setScan((s) => !s)}>
               <Icon name="camera" size={18} />{scan ? 'Close scanner' : 'Scan tickets at the door'}
             </button>
@@ -283,6 +288,7 @@ function EventSheet({ event, userId, isOwner, onClose, onGone }: { event: EventR
         )}
         {!manage && mine && <button type="button" className="btn btn-plain !min-h-11 !text-sm" onClick={() => void leave()}>Leave event</button>}
       </div>
+      {door && <DoorDisplay code={event.code} onClose={() => setDoor(false)} />}
     </Sheet>
   )
 }

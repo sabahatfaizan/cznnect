@@ -298,16 +298,18 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   // One trunk holds the oldest generations (up to four rows) and is as wide as the widest of them; it flares into
   // roots at the bottom and stands on the ground. The family branches leave from its top.
   // Always leave at least two generations above the trunk, so there is a branching tree and not just a stump.
-  const trunkGens = clamp(Math.max(...layout.nodes.map((n) => n.gen)) - 1, 1, 4)
+  const maxGen = Math.max(...layout.nodes.map((n) => n.gen))
+  // Generations 1–2 (indices 0–1) belong to the roots; generations 3–4 (2–3) form the trunk.
+  // Keep this structural boundary fixed: adding descendants must never lengthen the trunk.
+  const trunkStartGen = Math.min(2, Math.max(0, maxGen - 1))
+  const trunkEndGen = Math.min(3, maxGen)
   type Row = { l: number; r: number; yTop: number; yBot: number }
   const rows: Row[] = []
-  // The trunk stays slim, like a real one: it holds only as many people of each generation as fit in its width.
-  // Anyone further out (a big generation of cousins) grows on a limb from the top of the trunk instead.
   const onTrunk = new Set<string>()
-  const oldestRow = layout.nodes.filter((n) => n.gen === 0)
+  const oldestRow = layout.nodes.filter((n) => n.gen === trunkStartGen)
   const cap = Math.max(215, ...oldestRow.map((n) => Math.abs(n.x + NODE_W / 2 - cx) + NODE_W / 2 + 36))
-  for (let g = 0; g < trunkGens; g++) {
-    const ns = layout.nodes.filter((n) => n.gen === g && (g === 0 || (n.x >= cx - cap && n.x + NODE_W <= cx + cap)))
+  for (let g = trunkStartGen; g <= trunkEndGen; g++) {
+    const ns = layout.nodes.filter((n) => n.gen === g && (g === trunkStartGen || (n.x >= cx - cap && n.x + NODE_W <= cx + cap)))
     if (ns.length === 0) break
     for (const n of ns) onTrunk.add(n.id)
     let l = Math.min(...ns.map((n) => n.x)) - 36
@@ -328,7 +330,8 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   }
   const bottomRow = rows[0]
   const topRow = rows[rows.length - 1]
-  const B = Math.max(bottomY + 50 + a * 0.1, bottomRow.yBot + 56)
+  const trunkBase = bottomRow.yBot + 56
+  const B = Math.max(bottomY + 50 + a * 0.1, trunkBase + 120)
   const T = topRow.yTop - 6
   const w0 = bottomRow.r - bottomRow.l
   const flare = clamp(w0 * 0.5, 90, 320)
@@ -336,8 +339,8 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const wall = (side: 'l' | 'r'): [number, number][] =>
     [...rows].reverse().flatMap((r) => [[r[side] + (wob() - 0.5) * 14, r.yTop + 2], [r[side] + (wob() - 0.5) * 14, r.yBot - 2]] as [number, number][])
   const left = wall('l')
-  left.push([bottomRow.l - flare * 0.2, B - 44], [bottomRow.l - flare * 0.7, B - 14], [bottomRow.l - flare * 1.3, B + 2])
-  const rightUp = [...wall('r'), [bottomRow.r + flare * 0.2, B - 44], [bottomRow.r + flare * 0.7, B - 14], [bottomRow.r + flare * 1.3, B + 2]].reverse() as [number, number][]
+  left.push([bottomRow.l - flare * 0.2, trunkBase - 44], [bottomRow.l - flare * 0.7, trunkBase - 14], [bottomRow.l - flare * 1.3, trunkBase + 2])
+  const rightUp = [...wall('r'), [bottomRow.r + flare * 0.2, trunkBase - 44], [bottomRow.r + flare * 0.7, trunkBase - 14], [bottomRow.r + flare * 1.3, trunkBase + 2]].reverse() as [number, number][]
   const tc = (topRow.l + topRow.r) / 2
   const body =
     `M${r1(topRow.l + 14)} ${r1(T + 6)}${through(left)}L${r1(rightUp[0][0])} ${r1(rightUp[0][1])}${through(rightUp)}` +
@@ -346,7 +349,7 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
   const strands = clamp(Math.round(w0 / 70), 4, 18)
   const bark = Array.from({ length: strands }, (_, i) => {
     const x = bottomRow.l + ((i + 0.5) / strands) * w0 + (brand() - 0.5) * 16
-    const y0b = T + 30 + brand() * Math.max(10, B - T - 220)
+    const y0b = T + 30 + brand() * Math.max(10, trunkBase - T - 220)
     const len = 110 + brand() * 130
     return `M${r1(x)} ${r1(y0b)} C${r1(x + 8)} ${r1(y0b + len * 0.3)} ${r1(x - 8)} ${r1(y0b + len * 0.65)} ${r1(x + (brand() - 0.5) * 10)} ${r1(y0b + len)}`
   })
@@ -355,7 +358,7 @@ export function canopyFor(layout: TreeLayout): Canopy | null {
     Array.from({ length: perSide }, (_, i) => {
       const sx = (side < 0 ? bottomRow.l - flare * 0.5 : bottomRow.r + flare * 0.5) + side * i * flare * 0.5
       const reach = 70 + i * 34 + brand() * 30
-      return `M${r1(sx)} ${r1(B - 6)} C${r1(sx + side * reach * 0.3)} ${r1(B + 6 + i * 3)} ${r1(sx + side * reach * 0.65)} ${r1(B + 12 + i * 4)} ${r1(sx + side * reach)} ${r1(B + 8 + i * 5)}`
+      return `M${r1(sx)} ${r1(trunkBase - 6)} C${r1(sx + side * reach * 0.3)} ${r1(trunkBase + (B - trunkBase) * 0.35 + i * 3)} ${r1(sx + side * reach * 0.65)} ${r1(B - 10 + i * 4)} ${r1(sx + side * reach)} ${r1(B + 8 + i * 5)}`
     }),
   )
   let grass = ''

@@ -4,6 +4,8 @@ import Avatar from '../components/Avatar'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
 import ColorWheel from '../components/ColorWheel'
+import { usePlus } from '../lib/usePlus'
+import { PLUS_NAME } from '../lib/plus'
 import { AVATAR_ICONS, DEFAULT_AVATAR_COLOR, EMOJI_GROUPS, TYPO_AVATARS, TYPO_PACKS, encodeAvatar, encodeTypoAvatar, parseAvatar, parseTypoAvatar } from '../lib/avatars'
 import { signOut } from '../lib/push'
 
@@ -18,6 +20,7 @@ export default function Profile({ userId }: { userId: string }) {
   const [color, setColor] = useState(DEFAULT_AVATAR_COLOR)
   const [typo, setTypo] = useState('')
   const [tab, setTab] = useState<'emoji' | 'letters'>('emoji')
+  const plus = usePlus()
   const [typoBg, setTypoBg] = useState('') // wheel colour for a lettering avatar; '' keeps its themed background
   const [colorTouched, setColorTouched] = useState(false)
   // Retired packs are only listed for someone already using one.
@@ -179,7 +182,7 @@ export default function Profile({ userId }: { userId: string }) {
                 className={`seg !min-h-10 items-center justify-center ${tab === id ? 'seg-on' : ''}`}
                 onClick={() => setTab(id)}
               >
-                {label}
+                {id === 'letters' && !plus && <Icon name="lock" size={12} />} {label}
               </button>
             ))}
           </div>
@@ -229,7 +232,10 @@ export default function Profile({ userId }: { userId: string }) {
             </details>
           )}
 
-          {tab === 'letters' && (
+          {tab === 'letters' && !plus && (
+            <p role="status" className="text-sm font-semibold">Letter avatars come with {PLUS_NAME}. Emoji avatars are free.</p>
+          )}
+          {tab === 'letters' && plus && (
             <>
               {TYPO_PACKS.filter((pack) => !pack.retired || inUse === pack.name).map((pack) => (
                 <div key={pack.name} role="radiogroup" aria-label={`${pack.name} avatars`}>

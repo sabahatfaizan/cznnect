@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../supabase'
 import type { Family } from '../types'
-import { getThemePref, setThemePref, type ThemePref } from '../theme'
+import { PLUS_THEMES, getThemePref, setThemePref, type ThemePref } from '../theme'
 import { themeLabel } from '../themes/catalog'
 import { ICONS, ICON_GROUPS, PLUS_GROUP, getIconPref, iconGroupAvailable, isPlusIcon, renderIcon, setIconPref, type IconId } from '../appIcon'
 import { PLUS_NAME, hasPlus } from '../lib/plus'
@@ -37,6 +37,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [email, setEmail] = useState('')
   const [plus, setPlus] = useState<boolean | null>(null)
   const [plusNote, setPlusNote] = useState(false)
+  const [themeNote, setThemeNote] = useState(false)
   const [role, setRole] = useState<string | null>(null)
   const [isFamilyCreator, setIsFamilyCreator] = useState(false)
   const isFamilyOwner = role === 'owner'
@@ -135,6 +136,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   }, [])
 
   function pickTheme(id: ThemePref) {
+    if (PLUS_THEMES.includes(id) && !plusOn) { setThemeNote(true); return }
+    setThemeNote(false)
     setThemePref(id)
     setTheme(id)
     // Light and dark themes switch the free Light and Dark icons. A coloured Cznnect+ icon the person picked stays.
@@ -278,7 +281,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
       {panel === 'theme' && (
         <Sheet title="Theme" onClose={() => setPanel(null)}>
-          <ThemePicker theme={theme} isOwner={isOwnerEmail(email)} onPick={pickTheme} />
+          <ThemePicker theme={theme} isOwner={isOwnerEmail(email)} plus={plusOn} onPick={pickTheme} />
+          {themeNote && <p role="status" className="mt-3 text-sm font-semibold">Midnight and Dusk come with {PLUS_NAME}.</p>}
         </Sheet>
       )}
 

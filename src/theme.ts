@@ -1,4 +1,4 @@
-// Themes: Light, Dark, Midnight (black) and Dusk (dark purple) are open to everyone; Liquid Glass is owner-only.
+// Themes: Light and Dark are open to everyone. Midnight (black) and Dusk (dark purple) are part of Cznnect+; Liquid Glass is owner-only.
 // The choice is saved on this device, so each cousin has their own.
 export type ThemePref = 'light' | 'dark' | 'midnight' | 'dusk' | 'glass'
 const ALL_THEMES: ThemePref[] = ['light', 'dark', 'midnight', 'dusk', 'glass']
@@ -29,6 +29,16 @@ export function setGlassAllowed(allowed: boolean) {
   applyTheme(getThemePref())
 }
 
+// Midnight and Dusk need Cznnect+. Shell tells us once it knows; before that the last known answer is used so a
+// subscriber does not see a flash of Dark. (Cosmetic only, like the owner-only theme.)
+export const PLUS_THEMES: ThemePref[] = ['midnight', 'dusk']
+let plusAllowed = (() => { try { return localStorage.getItem('cznnect-plus-cache') === '1' } catch { return false } })()
+export function setPlusAllowed(allowed: boolean) {
+  if (plusAllowed === allowed) return
+  plusAllowed = allowed
+  applyTheme(getThemePref())
+}
+
 const THEME_COLOR: Record<ThemePref, string> = {
   light: '#ffffff',
   dark: '#111318',
@@ -38,7 +48,7 @@ const THEME_COLOR: Record<ThemePref, string> = {
 }
 
 export function applyTheme(pref: ThemePref) {
-  const theme: ThemePref = pref === 'glass' && !glassAllowed ? 'dark' : pref
+  const theme: ThemePref = (pref === 'glass' && !glassAllowed) || (PLUS_THEMES.includes(pref) && !plusAllowed) ? 'dark' : pref
   document.documentElement.dataset.theme = theme
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[theme])
 }

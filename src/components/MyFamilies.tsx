@@ -3,7 +3,8 @@ import { supabase } from '../supabase'
 import Sheet from './Sheet'
 import { Icon } from './Icons'
 import { useBackClose } from '../lib/backStack'
-import { MAX_FAMILIES } from '../lib/families'
+import { familyLimit } from '../lib/families'
+import { usePlus } from '../lib/usePlus'
 import type { Family } from '../types'
 
 // The "Your families" part of the menu: the families this account is in (up to three), a tap to switch, and a way to
@@ -33,6 +34,7 @@ export function FamiliesModal({
   onClose: () => void
 }) {
   useBackClose(onClose, true)
+  const plus = usePlus()
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -64,7 +66,7 @@ export function FamiliesModal({
           })}
         </ul>
         <button type="button" className="btn btn-plain mt-3 w-full" onClick={onAdd}>
-          + Add a family <span className="ml-1 text-muted">{families.length}/{MAX_FAMILIES}</span>
+          + Add a family <span className="ml-1 text-muted">{families.length}/{familyLimit(plus)}</span>
         </button>
       </div>
     </div>
@@ -77,11 +79,13 @@ export default function AddFamilySheet({ count, onAdded, onClose }: { count: num
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState<'' | 'create' | 'join'>('')
   const [error, setError] = useState('')
-  const full = count >= MAX_FAMILIES
+  const plus = usePlus()
+  const limit = familyLimit(plus)
+  const full = count >= limit
 
   async function run(kind: 'create' | 'join', e: FormEvent) {
     e.preventDefault()
-    if (full) { setError(`You can be in up to ${MAX_FAMILIES} families. Leave one first.`); return }
+    if (full) { setError(`You can be in up to ${limit} families. Leave one first.${plus ? '' : ' Cznnect+ allows more.'}`); return }
     setBusy(kind)
     setError('')
     const { data, error: err } = kind === 'create'
@@ -96,7 +100,7 @@ export default function AddFamilySheet({ count, onAdded, onClose }: { count: num
   return (
     <Sheet title="Add a family" onClose={onClose}>
       {full ? (
-        <p className="text-sm">You are in {MAX_FAMILIES} families, which is the most one account can be in. Leave one in its Settings to add another.</p>
+        <p className="text-sm">You are in {limit} families, which is the most this account can be in{plus ? '' : ' without Cznnect+'}. Leave one in its Settings to add another.</p>
       ) : (
         <div className="flex flex-col gap-4">
           {error && <p role="alert" className="text-sm font-bold text-danger">{error}</p>}

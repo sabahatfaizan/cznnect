@@ -28,7 +28,8 @@ import { useAppSettings } from '../lib/appSettings'
 import { Icon, type IconName } from './Icons'
 import { Wordmark } from './Logo'
 import SwipePager from './SwipePager'
-import { setGlassAllowed } from '../theme'
+import { setGlassAllowed, setPlusAllowed } from '../theme'
+import { usePlus } from '../lib/usePlus'
 import { isOwnerEmail } from '../owner'
 
 type Tab = 'home' | 'tree' | 'explore' | 'plans' | 'me' | 'irl' | 'scoreboard' | 'chat' | 'birthdays' | 'settings' | 'music' | 'admin' | 'events'
@@ -152,6 +153,10 @@ export default function Shell({
     setGlassAllowed(isOwner)
     return () => setGlassAllowed(false)
   }, [isOwner])
+
+  // Midnight and Dusk are Cznnect+ themes: without it they show as Dark.
+  const plus = usePlus()
+  useEffect(() => { setPlusAllowed(plus) }, [plus])
 
   useEffect(() => {
     if (!menuOpen) return

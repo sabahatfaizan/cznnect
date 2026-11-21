@@ -2,7 +2,7 @@ import type { ThemePref } from '../theme'
 
 // What each theme is called, how it is described, and the colours of its little preview in Settings.
 export type ThemePreview = { page: string; surface: string; ink: string; muted: string; accent: string; soft: string; border: string }
-export type ThemeMeta = { id: ThemePref; label: string; hint: string; badge?: 'Exclusive' | 'Owner'; preview: ThemePreview }
+export type ThemeMeta = { id: ThemePref; label: string; hint: string; badge?: 'Exclusive' | 'Owner' | 'Cznnect+'; preview: ThemePreview }
 
 export const THEMES: ThemeMeta[] = [
   {
@@ -14,11 +14,11 @@ export const THEMES: ThemeMeta[] = [
     preview: { page: '#111318', surface: '#1b1e25', ink: '#edf0f5', muted: '#a0a7b4', accent: '#7ea7ff', soft: '#26334d', border: '#343945' },
   },
   {
-    id: 'midnight', label: 'Midnight', hint: 'Pure black, easy on the eyes',
+    id: 'midnight', label: 'Midnight', hint: 'Pure black, easy on the eyes', badge: 'Cznnect+',
     preview: { page: '#000000', surface: '#0c0c0e', ink: '#f2f2f4', muted: '#9a9aa3', accent: '#8ab4ff', soft: '#16171c', border: '#26262c' },
   },
   {
-    id: 'dusk', label: 'Dusk', hint: 'Deep, dark purple', 
+    id: 'dusk', label: 'Dusk', hint: 'Deep, dark purple', badge: 'Cznnect+',
     preview: { page: '#15101f', surface: '#1f1830', ink: '#efe9fb', muted: '#a99dc4', accent: '#b794f6', soft: '#2e2347', border: '#3b2f58' },
   },
   {

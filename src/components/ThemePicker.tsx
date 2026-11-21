@@ -5,10 +5,12 @@ import type { ThemePref } from '../theme'
 export default function ThemePicker({
   theme,
   isOwner,
+  plus,
   onPick,
 }: {
   theme: ThemePref
   isOwner: boolean
+  plus: boolean
   onPick: (id: ThemePref) => void
 }) {
   const visible = THEMES.filter((t) => t.id !== 'glass' || isOwner)
@@ -18,6 +20,7 @@ export default function ThemePicker({
       {visible.map((t, i) => {
         const p = t.preview
         const on = theme === t.id
+        const locked = t.badge === 'Cznnect+' && !plus
         return (
           <div key={t.id} style={{ ['--i' as string]: i }} className={`theme-card ${on ? 'theme-card-on' : ''}`}>
             <div className="p-2" style={{ background: p.page, color: p.ink }}>
@@ -43,9 +46,10 @@ export default function ThemePicker({
                 type="button"
                 aria-pressed={on}
                 className={`btn w-full !min-h-0 !px-2 !py-1.5 text-xs ${on ? 'btn-primary' : 'btn-plain'}`}
+                aria-disabled={locked}
                 onClick={() => onPick(t.id)}
               >
-                {on ? 'Selected' : 'Use theme'}
+                {on ? 'Selected' : locked ? 'Cznnect+' : 'Use theme'}
               </button>
             </div>
           </div>

@@ -31,7 +31,8 @@ public class CznnectNativePlugin extends Plugin {
     // Keep in step with android-native/icons.json (and the aliases apply.py adds to the manifest).
     private static final List<String> ICONS = Arrays.asList(
         "ocean", "sunset", "aurora", "orchid", "forest", "graphite",
-        "treasure", "libertalia", "outlaw", "dust", "khonshu", "crescent");
+        "treasure", "libertalia", "outlaw", "dust", "khonshu", "crescent",
+        "ocean_night", "sunset_night", "aurora_night", "orchid_night", "forest_night", "graphite_night");
 
     @PluginMethod
     public void share(PluginCall call) {

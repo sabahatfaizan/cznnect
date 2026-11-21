@@ -1,5 +1,5 @@
-// App icon: the picture on the phone's Home Screen, the browser tab and new shortcuts. Light (white square, blue mark)
-// and Dark (black square, white mark) follow the app's light and dark themes and are free. The coloured icons are part of
+// App icon: the picture on the phone's Home Screen, the browser tab and new shortcuts. Light (pale square, blue mark)
+// and Dark (blue square, white mark) follow the app's light and dark themes and are free. The coloured icons are part of
 // Cznnect+ (the paid tier). The logo inside the app is not affected.
 // An icon that is already on a phone's Home Screen keeps its look until the app is removed and added again.
 import { setLauncherIcon } from './lib/native'
@@ -37,36 +37,10 @@ function find(id: IconId) {
   return ICONS.find((i) => i.id === id) ?? ICONS[0]
 }
 
-// Light and Dark use the same picture as the logo inside the app (a gradient with a dark edge, a light rim and a recessed
-// channel). A canvas can't draw that edge, so they are ready-made pictures in public/icons, made by
-// android-native/gen-icons.mjs. The coloured icons are still drawn flat below.
-const READY: Partial<Record<IconId, { small: string; big: string }>> = {
-  light: { small: 'icons/apple-touch-icon.png', big: 'icons/icon-192.png' },
-  dark: { small: 'icons/dark-180.png', big: 'icons/dark-192.png' },
-}
-
-// The flat artwork, kept as plain as it can be: a flat square and the mark in one colour (the O is the frame, the Z is
-// the diagonal). android-native/gen-icons.mjs draws the same thing for the phone's launcher icons.
-export function renderIcon(id: IconId, size: number, scale = 0.6): string {
-  const ready = READY[id]
-  if (ready) return import.meta.env.BASE_URL + (size <= 180 ? ready.small : ready.big)
-  const v = find(id)
-  const c = document.createElement('canvas')
-  c.width = c.height = size
-  const g = c.getContext('2d')
-  if (!g) return ''
-  g.fillStyle = v.bg
-  g.fillRect(0, 0, size, size)
-  const u = (size * scale) / 52
-  g.translate(size / 2 - 32 * u, size / 2 - 32 * u)
-  g.scale(u, u)
-  g.fillStyle = v.mark
-  g.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
-  g.beginPath()
-  g.rect(6, 6, 52, 52)
-  g.clip()
-  g.fill(new Path2D('M3.54 67.54L67.54 3.54L60.46 -3.54L-3.54 60.46Z'))
-  return c.toDataURL('image/png')
+// The pictures are ready-made files in public/icons (app-<id>-192.png and -180.png), made by android-native/gen-icons.mjs,
+// because the soft blends in them are not something a canvas can draw.
+export function renderIcon(id: IconId, size: number): string {
+  return import.meta.env.BASE_URL + 'icons/app-' + find(id).id + '-' + (size <= 180 ? 180 : 192) + '.png'
 }
 
 function setLink(rel: string, href: string | null) {

@@ -1,5 +1,4 @@
-// Renders the Android launcher icons and the website icons, using the same artwork as renderIcon() in
-// src/appIcon.ts. Needs: npm i @napi-rs/canvas (not a project dependency). Run from the repo root:
+// Renders the Android launcher icons and the website icons. Needs: npm i @napi-rs/canvas (not a project dependency). Run from the repo root:
 //   NODE_PATH=<folder with node_modules> node android-native/gen-icons.mjs
 import { createRequire } from 'node:module'
 import fs from 'node:fs'
@@ -15,41 +14,52 @@ if (ICONS.length !== 7) throw new Error('could not read the icon list')
 const LEGACY = ['ocean', 'treasure', 'libertalia', 'outlaw', 'dust', 'khonshu', 'crescent',
   'ocean_night', 'sunset_night', 'aurora_night', 'orchid_night', 'forest_night', 'graphite_night']
 
-// Light and Dark use the same picture as the logo inside the app (src/components/Logo.tsx): a gradient with a dark edge, a
-// light rim and a recessed channel. The canvas can't do that edge, so it is drawn as an SVG and placed like the flat mark.
-// The coloured icons stay flat.
-const SHADED = {
-  light: { hi: '#9fd0ff', a: '#5aa9ff', b: '#1f3fd0', edge: '#0b1a5c' },
-  dark: { hi: '#ffffff', a: '#dcdcdc', b: '#8c8c8c', edge: '#303030' },
+// Every icon has the same look, inspired by the Docs and Drive icons: the mark (frame and slash as one piece, very slightly
+// rounded) filled with one soft gradient, a lighter highlight at the top-right and a second soft glow at the bottom, on a
+// pale tinted square. Dark swaps it round: a white mark on a blue-to-violet square. The canvas can't blend like this, so the
+// mark is drawn as an SVG and placed like a flat one. Each row is [top, middle, bottom, glow, square from, square to].
+const TILE = {
+  light: ['#5b97ff', '#3f7ff5', '#4a78f0', '#b7a6ff', '#ffffff', '#e6eeff'],
+  sunset: ['#ff6a9a', '#f0286e', '#f2405f', '#ffb36b', '#ffffff', '#ffe9f1'],
+  aurora: ['#3dddbe', '#0fb89a', '#17a9b8', '#7bd7ff', '#ffffff', '#e3faf5'],
+  orchid: ['#a56bff', '#8a3dff', '#7b4bff', '#e59bff', '#ffffff', '#f1e9ff'],
+  forest: ['#4cc27f', '#1d9a55', '#1e9b6b', '#cfe96b', '#ffffff', '#e4f6ea'],
+  graphite: ['#7a8596', '#4b5563', '#5a6272', '#a3b1c9', '#ffffff', '#eaedf1'],
 }
-const markSvg = (c) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024" fill="none">
-<defs>
-<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="58" y2="58"><stop offset="0" stop-color="${c.hi}"/><stop offset="0.38" stop-color="${c.a}"/><stop offset="1" stop-color="${c.b}"/></linearGradient>
-<clipPath id="c"><rect x="6" y="6" width="52" height="52"/></clipPath>
-<filter id="f" filterUnits="userSpaceOnUse" x="0" y="0" width="64" height="64" color-interpolation-filters="sRGB">
-<feMorphology in="SourceAlpha" operator="dilate" radius="1.5" result="grow"/>
-<feFlood flood-color="${c.edge}" result="edge"/>
-<feComposite in="edge" in2="grow" operator="in" result="outline"/>
-<feMorphology in="SourceAlpha" operator="erode" radius="1.4" result="shrunk"/>
-<feComposite in="SourceAlpha" in2="shrunk" operator="out" result="band"/>
-<feFlood flood-color="#ffffff" flood-opacity="0.6" result="white"/>
-<feComposite in="white" in2="band" operator="in" result="rim"/>
-<feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/><feMergeNode in="rim"/></feMerge>
-</filter>
-</defs>
-<g filter="url(#f)">
-<path d="M6 6H58V58H6Z M16 16V48H48V16Z" fill-rule="evenodd" fill="url(#g)"/>
-<path d="M9 9H55V55H9Z M13 13V51H51V13Z" fill-rule="evenodd" fill="#000" fill-opacity="0.2" stroke="#fff" stroke-opacity="0.35" stroke-width="0.5"/>
-<g clip-path="url(#c)"><path d="M0 64L64 0" stroke="url(#g)" stroke-width="10" stroke-linecap="butt"/></g>
-</g>
-</svg>`
+const DARK_SQUARE = [[0, '#6fa6ff'], [0.6, '#3e7bf2'], [1, '#8e86f5']] // runs from (20%, 0) to (80%, 100%) of the square
+const OUTER = 'M9.0 6H55.0A3.0 3.0 0 0 1 58 9.0V55.0A3.0 3.0 0 0 1 55.0 58H9.0A3.0 3.0 0 0 1 6 55.0V9.0A3.0 3.0 0 0 1 9.0 6Z'
+const RING = 'M9.0 6H55.0A3.0 3.0 0 0 1 58 9.0V55.0A3.0 3.0 0 0 1 55.0 58H9.0A3.0 3.0 0 0 1 6 55.0V9.0A3.0 3.0 0 0 1 9.0 6ZM17.5 16A1.5 1.5 0 0 0 16 17.5V46.5A1.5 1.5 0 0 0 17.5 48H46.5A1.5 1.5 0 0 0 48 46.5V17.5A1.5 1.5 0 0 0 46.5 16Z'
+const markSvg = (body, defs) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024">
+<defs>${defs}<clipPath id="outer"><path d="${OUTER}"/></clipPath>
+<clipPath id="union"><path d="${RING}"/><path d="M6 50.92L50.92 6H58V13.08L13.08 58H6Z"/></clipPath></defs>
+<g clip-path="url(#outer)"><g clip-path="url(#union)">${body}</g></g></svg>`
+const rect = (f) => `<rect x="6" y="6" width="52" height="52" fill="url(#${f})"/>`
+const radial = (id, cx, cy, r, col, a) => `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${r}"><stop offset="0" stop-color="${col}" stop-opacity="${a}"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></radialGradient>`
+const tileMark = ([top, mid, bot, glow]) => markSvg(rect('b') + rect('lav') + rect('hi'),
+  `<linearGradient id="b" gradientUnits="userSpaceOnUse" x1="0" y1="6" x2="0" y2="58"><stop offset="0" stop-color="${top}"/><stop offset="0.55" stop-color="${mid}"/><stop offset="1" stop-color="${bot}"/></linearGradient>` +
+  radial('lav', 34, 62, 30, glow, 0.95) + radial('hi', 54, 10, 26, '#ffffff', 0.5))
+const darkMark = () => markSvg(rect('w') + rect('lav'),
+  '<linearGradient id="w" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="58" y2="58"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dce6ff"/></linearGradient>' +
+  radial('lav', 30, 60, 30, '#b7a6ff', 0.55))
 const MARKS = {}
-for (const [id, c] of Object.entries(SHADED)) MARKS[id] = await loadImage(Buffer.from(markSvg(c)))
+for (const id of Object.keys(TILE)) MARKS[id] = await loadImage(Buffer.from(tileMark(TILE[id])))
+MARKS.dark = await loadImage(Buffer.from(darkMark()))
 
 const canvas0 = (size) => createCanvas(size, size)
 const canvas = (size) => { const c = canvas0(size); return [c, c.getContext('2d')] }
 const png = (c) => c.toBuffer('image/png')
-function drawBackground(g, size, v) { g.fillStyle = v.bg; g.fillRect(0, 0, size, size) }
+function drawBackground(g, size, v) {
+  if (v.id === 'dark') {
+    const grad = g.createLinearGradient(size * 0.2, 0, size * 0.8, size)
+    for (const [o, c] of DARK_SQUARE) grad.addColorStop(o, c)
+    g.fillStyle = grad
+  } else if (TILE[v.id]) {
+    const grad = g.createLinearGradient(0, 0, size, size)
+    grad.addColorStop(0, TILE[v.id][4]); grad.addColorStop(1, TILE[v.id][5])
+    g.fillStyle = grad
+  } else g.fillStyle = v.bg
+  g.fillRect(0, 0, size, size)
+}
 function drawMark(g, size, v, scale) {
   const u = (size * scale) / 52
   if (MARKS[v.id]) { g.drawImage(MARKS[v.id], size / 2 - 32 * u, size / 2 - 32 * u, 64 * u, 64 * u); return }
@@ -93,19 +103,20 @@ for (const v of ICONS) {
   fs.writeFileSync(`${root}/mipmap-anydpi-v26/ic_cz_${v.id}.xml`, adaptive(v.id))
   if (v.id === 'light') for (const n of ['ic_launcher', 'ic_launcher_round']) fs.writeFileSync(`${root}/mipmap-anydpi-v26/${n}.xml`, adaptive('light'))
 }
-// The website's own icons (browser tab, Home Screen shortcut, install prompt) use the Light look.
+// The website's own icons (browser tab, Home Screen shortcut, install prompt) use the Light look. The browser has no way to
+// draw the icons itself, so every icon also gets a ready-made picture (app-<id>-192 and -180) that appIcon.ts points to.
 {
-  const v = ICONS.find((i) => i.id === 'light')
-  const web = (size, scale) => { const [c, g] = canvas(size); drawBackground(g, size, v); drawMark(g, size, v, scale); return png(c) }
+  const pic = (v, size, scale) => { const [c, g] = canvas(size); drawBackground(g, size, v); drawMark(g, size, v, scale); return png(c) }
   fs.mkdirSync('public/icons', { recursive: true })
-  fs.writeFileSync('public/icons/icon-512.png', web(512, 0.6))
-  fs.writeFileSync('public/icons/icon-192.png', web(192, 0.6))
-  fs.writeFileSync('public/icons/apple-touch-icon.png', web(180, 0.58))
-  fs.writeFileSync('public/icons/icon-maskable-512.png', web(512, 0.48))
-  const d = ICONS.find((i) => i.id === 'dark')
-  const webDark = (size, scale) => { const [c, g] = canvas(size); drawBackground(g, size, d); drawMark(g, size, d, scale); return png(c) }
-  fs.writeFileSync('public/icons/dark-192.png', webDark(192, 0.6))
-  fs.writeFileSync('public/icons/dark-180.png', webDark(180, 0.58))
+  const v = ICONS.find((i) => i.id === 'light')
+  fs.writeFileSync('public/icons/icon-512.png', pic(v, 512, 0.6))
+  fs.writeFileSync('public/icons/icon-192.png', pic(v, 192, 0.6))
+  fs.writeFileSync('public/icons/apple-touch-icon.png', pic(v, 180, 0.58))
+  fs.writeFileSync('public/icons/icon-maskable-512.png', pic(v, 512, 0.48))
+  for (const i of ICONS) {
+    fs.writeFileSync(`public/icons/app-${i.id}-192.png`, pic(i, 192, 0.6))
+    fs.writeFileSync(`public/icons/app-${i.id}-180.png`, pic(i, 180, 0.58))
+  }
 }
 fs.writeFileSync('android-native/icons.json', JSON.stringify({ active: ICONS.map((v) => v.id), legacy: LEGACY }))
 console.log('icons:', ICONS.map((v) => v.id).join(' '), '+', LEGACY.length, 'old entries')

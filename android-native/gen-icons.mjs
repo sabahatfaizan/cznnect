@@ -14,7 +14,7 @@ if (ICONS.length !== 7) throw new Error('could not read the icon list')
 const LEGACY = ['ocean', 'treasure', 'libertalia', 'outlaw', 'dust', 'khonshu', 'crescent',
   'ocean_night', 'sunset_night', 'aurora_night', 'orchid_night', 'forest_night', 'graphite_night']
 
-// Every icon has the same look, inspired by the Docs and Drive icons: the mark (frame and slash as one piece, very slightly
+// Every icon has the same look, inspired by the Docs and Drive icons: the mark (frame and slash as one piece, softly
 // rounded) filled with one soft gradient, a lighter highlight at the top-right and a second soft glow at the bottom, on a
 // pale tinted square. Dark swaps it round: a white mark on a blue-to-violet square. The canvas can't blend like this, so the
 // mark is drawn as an SVG and placed like a flat one. Each row is [top, middle, bottom, glow, square from, square to].
@@ -27,8 +27,8 @@ const TILE = {
   graphite: ['#7a8596', '#4b5563', '#5a6272', '#a3b1c9', '#ffffff', '#eaedf1'],
 }
 const DARK_SQUARE = [[0, '#6fa6ff'], [0.6, '#3e7bf2'], [1, '#8e86f5']] // runs from (20%, 0) to (80%, 100%) of the square
-const OUTER = 'M9.0 6H55.0A3.0 3.0 0 0 1 58 9.0V55.0A3.0 3.0 0 0 1 55.0 58H9.0A3.0 3.0 0 0 1 6 55.0V9.0A3.0 3.0 0 0 1 9.0 6Z'
-const RING = 'M9.0 6H55.0A3.0 3.0 0 0 1 58 9.0V55.0A3.0 3.0 0 0 1 55.0 58H9.0A3.0 3.0 0 0 1 6 55.0V9.0A3.0 3.0 0 0 1 9.0 6ZM17.5 16A1.5 1.5 0 0 0 16 17.5V46.5A1.5 1.5 0 0 0 17.5 48H46.5A1.5 1.5 0 0 0 48 46.5V17.5A1.5 1.5 0 0 0 46.5 16Z'
+const OUTER = 'M12 6H52A6 6 0 0 1 58 12V52A6 6 0 0 1 52 58H12A6 6 0 0 1 6 52V12A6 6 0 0 1 12 6Z'
+const RING = 'M12 6H52A6 6 0 0 1 58 12V52A6 6 0 0 1 52 58H12A6 6 0 0 1 6 52V12A6 6 0 0 1 12 6ZM19 16A3 3 0 0 0 16 19V45A3 3 0 0 0 19 48H45A3 3 0 0 0 48 45V19A3 3 0 0 0 45 16Z'
 const markSvg = (body, defs) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024">
 <defs>${defs}<clipPath id="outer"><path d="${OUTER}"/></clipPath>
 <clipPath id="union"><path d="${RING}"/><path d="M6 50.92L50.92 6H58V13.08L13.08 58H6Z"/></clipPath></defs>

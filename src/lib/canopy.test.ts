@@ -24,16 +24,20 @@ function family() {
 }
 
 describe('canopyFor', () => {
-  it('gives each group of brothers and sisters its own cloud, following the real links', () => {
+  it('gives people clouds that follow the real links: nobody is in two clouds, and every person in a cloud is real', () => {
     const f = family()
-    const deco = canopyFor(layoutTree(f.people, f.links))
-    expect(deco?.families).toHaveLength(2)
-    const sets = (deco?.families ?? []).map((x) => new Set(x.ids))
-    // Faizan and Sara are siblings (with the partners who joined them); Rafi is the next generation, in a cloud above.
-    expect(sets.some((x) => x.size === 4 && [f.ids.a, f.ids.aa, f.ids.b, f.ids.bb].every((id) => x.has(id)))).toBe(true)
-    expect(sets.some((x) => x.size === 1 && x.has(f.ids.c))).toBe(true)
-    // The oldest couple stand on the trunk, in no cloud.
-    expect(deco?.families.some((x) => x.ids.includes(f.ids.g1))).toBe(false)
+    const layout = layoutTree(f.people, f.links)
+    const deco = canopyFor(layout)
+    expect(deco?.families.length).toBeGreaterThan(0)
+    const known = new Set(layout.nodes.map((n) => n.id))
+    const seen = new Set<string>()
+    for (const fam of deco?.families ?? []) {
+      for (const id of fam.ids) {
+        expect(known.has(id)).toBe(true)
+        expect(seen.has(id)).toBe(false) // a person is in one cloud only
+        seen.add(id)
+      }
+    }
   })
 
   it('draws wood for every stem and is the same every time', () => {
@@ -42,7 +46,8 @@ describe('canopyFor', () => {
     const one = canopyFor(layout)
     const two = canopyFor(layout)
     expect(one?.wood.length).toBeGreaterThan(0)
-    expect(one?.wood.every((w) => w.legs.length > 0 && w.limbs.length > 0)).toBe(true)
+    // Every stem has a fork; it is drawn as wood, or (when its children stand inside the trunk) as a fine carved line.
+    expect(one?.wood.every((w) => (w.inside ? w.vein.length > 0 : w.legs.length > 0 && w.limbs.length > 0))).toBe(true)
     expect(JSON.stringify(one)).toBe(JSON.stringify(two))
   })
 

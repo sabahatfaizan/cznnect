@@ -4,7 +4,7 @@
 import { createRequire } from 'node:module'
 import fs from 'node:fs'
 const require = createRequire(import.meta.url)
-const { createCanvas, Path2D } = require('@napi-rs/canvas')
+const { createCanvas, Path2D, loadImage } = require('@napi-rs/canvas')
 
 const src = fs.readFileSync('src/appIcon.ts', 'utf8')
 const ICONS = [...src.matchAll(/\{ id: '(\w+)', label: '[^']*', group: '[^']*', mark: '(#[0-9a-fA-F]{6})', bg: '(#[0-9a-fA-F]{6})' \}/g)]
@@ -15,54 +15,44 @@ if (ICONS.length !== 7) throw new Error('could not read the icon list')
 const LEGACY = ['ocean', 'treasure', 'libertalia', 'outlaw', 'dust', 'khonshu', 'crescent',
   'ocean_night', 'sunset_night', 'aurora_night', 'orchid_night', 'forest_night', 'graphite_night']
 
+// Light and Dark use the same picture as the logo inside the app (src/components/Logo.tsx): a gradient with a dark edge, a
+// light rim and a recessed channel. The canvas can't do that edge, so it is drawn as an SVG and placed like the flat mark.
+// The coloured icons stay flat.
+const SHADED = {
+  light: { hi: '#9fd0ff', a: '#5aa9ff', b: '#1f3fd0', edge: '#0b1a5c' },
+  dark: { hi: '#ffffff', a: '#dcdcdc', b: '#8c8c8c', edge: '#303030' },
+}
+const markSvg = (c) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024" fill="none">
+<defs>
+<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="6" y1="6" x2="58" y2="58"><stop offset="0" stop-color="${c.hi}"/><stop offset="0.38" stop-color="${c.a}"/><stop offset="1" stop-color="${c.b}"/></linearGradient>
+<clipPath id="c"><rect x="6" y="6" width="52" height="52"/></clipPath>
+<filter id="f" filterUnits="userSpaceOnUse" x="0" y="0" width="64" height="64" color-interpolation-filters="sRGB">
+<feMorphology in="SourceAlpha" operator="dilate" radius="1.5" result="grow"/>
+<feFlood flood-color="${c.edge}" result="edge"/>
+<feComposite in="edge" in2="grow" operator="in" result="outline"/>
+<feMorphology in="SourceAlpha" operator="erode" radius="1.4" result="shrunk"/>
+<feComposite in="SourceAlpha" in2="shrunk" operator="out" result="band"/>
+<feFlood flood-color="#ffffff" flood-opacity="0.6" result="white"/>
+<feComposite in="white" in2="band" operator="in" result="rim"/>
+<feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/><feMergeNode in="rim"/></feMerge>
+</filter>
+</defs>
+<g filter="url(#f)">
+<path d="M6 6H58V58H6Z M16 16V48H48V16Z" fill-rule="evenodd" fill="url(#g)"/>
+<path d="M9 9H55V55H9Z M13 13V51H51V13Z" fill-rule="evenodd" fill="#000" fill-opacity="0.2" stroke="#fff" stroke-opacity="0.35" stroke-width="0.5"/>
+<g clip-path="url(#c)"><path d="M0 64L64 0" stroke="url(#g)" stroke-width="10" stroke-linecap="butt"/></g>
+</g>
+</svg>`
+const MARKS = {}
+for (const [id, c] of Object.entries(SHADED)) MARKS[id] = await loadImage(Buffer.from(markSvg(c)))
+
 const canvas0 = (size) => createCanvas(size, size)
 const canvas = (size) => { const c = canvas0(size); return [c, c.getContext('2d')] }
 const png = (c) => c.toBuffer('image/png')
-// Light and Dark are shaded with one soft gradient across the whole mark; the coloured icons stay flat.
-// Keep SHADES in step with SHADES in src/appIcon.ts.
-const SHADES = {
-  light: { bg: ['#ffffff', '#edf2ff'], stops: ['#6c9dff', '#2a5ceb', '#0d2c9e'], glow: ['#ffffff', 0.38], deep: ['#06185f', 0.35] },
-  dark: { bg: ['#17191f', '#000000'], stops: ['#ffffff', '#dde3f0', '#8f9ab5'], glow: ['#ffffff', 0.45], deep: ['#4a556f', 0.35] },
-}
-const rgba = (hex, a) => {
-  const n = parseInt(hex.slice(1), 16)
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
-}
-function drawBackground(g, size, v) {
-  const s = SHADES[v.id]
-  if (s) {
-    const grad = g.createLinearGradient(0, 0, size, size)
-    grad.addColorStop(0, s.bg[0]); grad.addColorStop(1, s.bg[1])
-    g.fillStyle = grad
-  } else g.fillStyle = v.bg
-  g.fillRect(0, 0, size, size)
-}
-// Shaded marks are drawn on their own layer first, so the gradients only land on the mark.
-function drawShadedMark(g, size, s, scale) {
-  const [layer, l] = canvas(size)
-  const u = (size * scale) / 52
-  l.translate(size / 2 - 32 * u, size / 2 - 32 * u); l.scale(u, u)
-  l.fillStyle = '#000000'
-  l.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
-  l.save(); l.beginPath(); l.rect(6, 6, 52, 52); l.clip()
-  l.fill(new Path2D('M3.54 67.54L67.54 3.54L60.46 -3.54L-3.54 60.46Z'))
-  l.restore()
-  l.globalCompositeOperation = 'source-in'
-  const base = l.createLinearGradient(10, 6, 54, 58)
-  base.addColorStop(0, s.stops[0]); base.addColorStop(0.5, s.stops[1]); base.addColorStop(1, s.stops[2])
-  l.fillStyle = base; l.fillRect(6, 6, 52, 52)
-  l.globalCompositeOperation = 'source-atop'
-  const glow = l.createRadialGradient(20, 14, 0, 20, 14, 34)
-  glow.addColorStop(0, rgba(s.glow[0], s.glow[1])); glow.addColorStop(1, rgba(s.glow[0], 0))
-  l.fillStyle = glow; l.fillRect(6, 6, 52, 52)
-  const deep = l.createRadialGradient(56, 58, 0, 56, 58, 30)
-  deep.addColorStop(0, rgba(s.deep[0], s.deep[1])); deep.addColorStop(1, rgba(s.deep[0], 0))
-  l.fillStyle = deep; l.fillRect(6, 6, 52, 52)
-  g.drawImage(layer, 0, 0)
-}
+function drawBackground(g, size, v) { g.fillStyle = v.bg; g.fillRect(0, 0, size, size) }
 function drawMark(g, size, v, scale) {
-  if (SHADES[v.id]) return drawShadedMark(g, size, SHADES[v.id], scale)
   const u = (size * scale) / 52
+  if (MARKS[v.id]) { g.drawImage(MARKS[v.id], size / 2 - 32 * u, size / 2 - 32 * u, 64 * u, 64 * u); return }
   g.save(); g.translate(size / 2 - 32 * u, size / 2 - 32 * u); g.scale(u, u)
   g.fillStyle = v.mark
   g.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
@@ -112,6 +102,10 @@ for (const v of ICONS) {
   fs.writeFileSync('public/icons/icon-192.png', web(192, 0.6))
   fs.writeFileSync('public/icons/apple-touch-icon.png', web(180, 0.58))
   fs.writeFileSync('public/icons/icon-maskable-512.png', web(512, 0.48))
+  const d = ICONS.find((i) => i.id === 'dark')
+  const webDark = (size, scale) => { const [c, g] = canvas(size); drawBackground(g, size, d); drawMark(g, size, d, scale); return png(c) }
+  fs.writeFileSync('public/icons/dark-192.png', webDark(192, 0.6))
+  fs.writeFileSync('public/icons/dark-180.png', webDark(180, 0.58))
 }
 fs.writeFileSync('android-native/icons.json', JSON.stringify({ active: ICONS.map((v) => v.id), legacy: LEGACY }))
 console.log('icons:', ICONS.map((v) => v.id).join(' '), '+', LEGACY.length, 'old entries')

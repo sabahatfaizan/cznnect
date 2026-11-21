@@ -34,6 +34,8 @@ export function Mark({ className = '', loop = false }: { className?: string; loo
       <path d={OUTER + HOLE} fill={`url(#h${id})`} />
       <g clipPath={`url(#c${id})`}>
         <path d="M0 64L64 0" pathLength={1} className="mark-bar" stroke={`url(#g${id})`} strokeWidth="10" strokeLinecap="butt" />
+        <path d="M0 64L64 0" pathLength={1} className="mark-bar" stroke={`url(#l${id})`} strokeWidth="10" strokeLinecap="butt" />
+        <path d="M0 64L64 0" pathLength={1} className="mark-bar" stroke={`url(#h${id})`} strokeWidth="10" strokeLinecap="butt" />
       </g>
       {/* Theme extras. Hidden unless the matching theme is active (see index.css). */}
       <g className="mk-deco mk-rdr2">

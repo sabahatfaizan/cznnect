@@ -7,6 +7,7 @@ import { ICONS, ICON_GROUPS, PLUS_GROUP, getIconPref, iconGroupAvailable, isPlus
 import { PLUS_NAME, hasPlus } from '../lib/plus'
 import { isOwnerEmail } from '../owner'
 import ThemePicker from '../components/ThemePicker'
+import EmailPrefs from '../components/EmailPrefs'
 import ChangePassword from '../components/ChangePassword'
 import Sheet from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icons'
@@ -14,7 +15,7 @@ import { appUrl, canShare, isNative, shareText } from '../lib/native'
 import { pushEnabled, setPushEnabled } from '../lib/push'
 import { getPresenceVisible, setPresenceVisible } from '../lib/pulse'
 
-type Panel = 'family' | 'theme' | 'icon' | 'password'
+type Panel = 'family' | 'theme' | 'icon' | 'password' | 'emails'
 type FamilyConfirm = 'newcode' | 'leave' | 'delete' | null
 
 // Picking a theme also picks a matching home-screen/browser icon. Exclusive themes
@@ -197,6 +198,12 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         <span aria-hidden="true" className="expander-chevron"><Icon name="chevronDown" size={20} /></span>
       </button>
 
+      <button type="button" className="set-redeem !mt-0" onClick={() => setPanel('emails')} aria-haspopup="dialog">
+        <span className="set-tile-icon" aria-hidden="true"><Icon name="send" size={22} /></span>
+        <span className="set-tile-label flex-1 text-left">Emails</span>
+        <span aria-hidden="true" className="expander-chevron"><Icon name="chevronDown" size={20} /></span>
+      </button>
+
       <p className="text-center text-xs text-muted" aria-label="App build version">Build {buildNumber}{buildCommit ? ` · ${buildCommit}` : ''}</p>
 
       {panel === 'family' && (
@@ -283,6 +290,12 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
         <Sheet title="Theme" onClose={() => setPanel(null)}>
           <ThemePicker theme={theme} isOwner={isOwnerEmail(email)} plus={plusOn} onPick={pickTheme} />
           {themeNote && <p role="status" className="mt-3 text-sm font-semibold">Midnight and Dusk come with {PLUS_NAME}.</p>}
+        </Sheet>
+      )}
+
+      {panel === 'emails' && (
+        <Sheet title="Emails" onClose={() => setPanel(null)}>
+          <EmailPrefs userId={userId} />
         </Sheet>
       )}
 

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@mipmap/cz_bg_forest_night" />
-    <foreground android:drawable="@mipmap/cz_fg_forest_night" />
-</adaptive-icon>

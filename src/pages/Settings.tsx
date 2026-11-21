@@ -20,13 +20,13 @@ type FamilyConfirm = 'newcode' | 'leave' | 'delete' | null
 // choose one of their own unlocked icon variants; the user can still change it manually.
 function iconForTheme(theme: ThemePref): IconId {
   const matching: Record<ThemePref, IconId> = {
-    light: 'ocean',
-    dark: 'graphite',
-    midnight: 'graphite',
-    dusk: 'orchid',
-    glass: 'aurora',
+    light: 'light',
+    dark: 'dark',
+    midnight: 'dark',
+    dusk: 'dark',
+    glass: 'dark',
   }
-  return matching[theme] ?? 'ocean'
+  return matching[theme] ?? 'light'
 }
 
 export default function Settings({ family, userId, onFamilyChanged }: { family: Family; userId: string; onFamilyChanged: () => void }) {
@@ -61,8 +61,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
   useEffect(() => {
     if (!isIconAvailable(icon)) {
-      setIconPref('ocean')
-      setIcon('ocean')
+      setIconPref('light')
+      setIcon('light')
     }
   }, [icon])
 
@@ -128,7 +128,7 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
     setIcon(nextIcon)
   }
 
-  const currentIcon = previews.find((p) => p.id === (isIconAvailable(icon) ? icon : 'ocean'))
+  const currentIcon = previews.find((p) => p.id === (isIconAvailable(icon) ? icon : 'light'))
   const tile = (id: Panel, label: string, name: IconName, hint: string) => (
     <button key={id} type="button" className="set-tile" onClick={() => setPanel(id)} aria-haspopup="dialog">
       <span className="set-tile-icon" aria-hidden="true">
@@ -268,11 +268,11 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
 
       {panel === 'icon' && (
         <Sheet title="App icon" onClose={() => setPanel(null)}>
-          <div className="flex flex-col gap-4" role="radiogroup" aria-label="App icon colour">
+          <div className="flex flex-col gap-4" role="radiogroup" aria-label="App icon">
             {availableIconGroups.map((group) => (
               <div key={group} className="flex flex-col gap-2">
-                <h3 className="eyebrow">{group}</h3>
-                <div className="grid grid-cols-3 gap-3">
+                
+                <div className="grid grid-cols-2 gap-3">
                   {previews.filter((v) => v.group === group).map((v) => (
                     <button
                       key={v.id}

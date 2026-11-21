@@ -10,6 +10,7 @@ import { remindersAreScheduled, sendTestReminder } from '../lib/birthdayReminder
 import type { Family, FamilyRole } from '../types'
 import MemberSheet from '../components/MemberSheet'
 import { supabase } from '../supabase'
+import { PLUS_NAME, plusMemberIds, setPlus } from '../lib/plus'
 import Avatar from '../components/Avatar'
 import { Icon, type IconName } from '../components/Icons'
 import { shownName } from '../lib/avatars'
@@ -151,6 +152,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [members, setMembers] = useState<AdminMember[]>([])
   const [users, setUsers] = useState<AppUser[] | null>(null)
   const [usersError, setUsersError] = useState('')
+  const [plusIds, setPlusIds] = useState<Set<string> | null>(null)
   const [viewing, setViewing] = useState<AdminMember | null>(null)
   const [copied, setCopied] = useState(false)
   const [loadedFields, setLoadedFields] = useState(false)
@@ -244,7 +246,17 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     if (error) { setUsersError('Could not load all users. Run supabase/24_admin_all_users.sql in Supabase first.'); return }
     setUsersError('')
     setUsers((data ?? []) as AppUser[])
+    const ids = await plusMemberIds()
+    setPlusIds(ids ? new Set(ids) : null)
   }, [isOwner])
+
+  async function togglePlus(u: AppUser) {
+    const on = !(plusIds?.has(u.user_id) ?? false)
+    const err = await setPlus(u.user_id, on)
+    if (err) { setUsersError(err); return }
+    setUsersError('')
+    setPlusIds((prev) => { const next = new Set(prev ?? []); if (on) next.add(u.user_id); else next.delete(u.user_id); return next })
+  }
 
   useEffect(() => { void loadUsers() }, [loadUsers])
 
@@ -1076,6 +1088,11 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
                         {u.last_sign_in_at ? ` · last seen ${new Date(u.last_sign_in_at).toLocaleDateString()}` : ''}
                         {u.families ? ` · ${u.families}` : ' · no family yet'}
                       </p>
+                      {plusIds && (
+                        <button type="button" className="mr-4 mt-1.5 text-xs font-bold underline underline-offset-4" onClick={() => void togglePlus(u)}>
+                          {plusIds.has(u.user_id) ? `Remove ${PLUS_NAME}` : `Give ${PLUS_NAME}`}
+                        </button>
+                      )}
                       {u.email && (
                         <button type="button" className="mt-1.5 text-xs font-bold underline underline-offset-4 disabled:opacity-60" disabled={resetting === u.user_id} onClick={() => void sendReset(u)}>
                           {resetting === u.user_id ? 'Sending…' : 'Send password reset email'}

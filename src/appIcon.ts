@@ -1,20 +1,28 @@
-// App icon: the picture on the phone's Home Screen, the browser tab and new shortcuts. Only two to choose from,
-// Light (white square, blue mark) and Dark (black square, white mark). The logo inside the app is not affected.
+// App icon: the picture on the phone's Home Screen, the browser tab and new shortcuts. Light (white square, blue mark)
+// and Dark (black square, white mark) follow the app's light and dark themes and are free. The coloured icons are part of
+// Cznnect+ (the paid tier). The logo inside the app is not affected.
 // An icon that is already on a phone's Home Screen keeps its look until the app is removed and added again.
 import { setLauncherIcon } from './lib/native'
 
-export type IconId = 'light' | 'dark'
+export type IconId = 'light' | 'dark' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
 
 export const ICONS: { id: IconId; label: string; group: string; mark: string; bg: string }[] = [
   { id: 'light', label: 'Light', group: 'Style', mark: '#1f4fe0', bg: '#ffffff' },
   { id: 'dark', label: 'Dark', group: 'Style', mark: '#ffffff', bg: '#000000' },
+  { id: 'sunset', label: 'Sunset', group: 'Cznnect+', mark: '#f0286e', bg: '#ffffff' },
+  { id: 'aurora', label: 'Aurora', group: 'Cznnect+', mark: '#0fb89a', bg: '#ffffff' },
+  { id: 'orchid', label: 'Orchid', group: 'Cznnect+', mark: '#8a3dff', bg: '#ffffff' },
+  { id: 'forest', label: 'Forest', group: 'Cznnect+', mark: '#1d9a55', bg: '#ffffff' },
+  { id: 'graphite', label: 'Graphite', group: 'Cznnect+', mark: '#4b5563', bg: '#ffffff' },
 ]
-export const ICON_GROUPS = ['Style']
+export const ICON_GROUPS = ['Style', 'Cznnect+']
+export const PLUS_GROUP = 'Cznnect+'
+export const isPlusIcon = (id: IconId): boolean => ICONS.find((i) => i.id === id)?.group === PLUS_GROUP
 export const iconGroupAvailable = (group: string): boolean => ICON_GROUPS.includes(group)
 
 const KEY = 'cznnect-icon'
 
-// A phone that had one of the old colours chosen goes back to Light.
+// A phone that had an icon that no longer exists chosen goes back to Light.
 export function getIconPref(): IconId {
   try {
     const v = localStorage.getItem(KEY)

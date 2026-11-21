@@ -3,7 +3,8 @@ import { supabase } from '../supabase'
 import type { Family } from '../types'
 import { getThemePref, setThemePref, type ThemePref } from '../theme'
 import { themeLabel } from '../themes/catalog'
-import { ICONS, ICON_GROUPS, getIconPref, iconGroupAvailable, renderIcon, setIconPref, type IconId } from '../appIcon'
+import { ICONS, ICON_GROUPS, PLUS_GROUP, getIconPref, iconGroupAvailable, isPlusIcon, renderIcon, setIconPref, type IconId } from '../appIcon'
+import { PLUS_NAME, hasPlus } from '../lib/plus'
 import { isOwnerEmail } from '../owner'
 import ThemePicker from '../components/ThemePicker'
 import ChangePassword from '../components/ChangePassword'
@@ -34,6 +35,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   const [icon, setIcon] = useState<IconId>(getIconPref())
   const previews = useMemo(() => ICONS.map((i) => ({ ...i, src: renderIcon(i.id, 120) })), [])
   const [email, setEmail] = useState('')
+  const [plus, setPlus] = useState<boolean | null>(null)
+  const [plusNote, setPlusNote] = useState(false)
   const [role, setRole] = useState<string | null>(null)
   const [isFamilyCreator, setIsFamilyCreator] = useState(false)
   const isFamilyOwner = role === 'owner'
@@ -59,12 +62,23 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
     return Boolean(item && availableIconGroups.includes(item.group))
   }
 
+  useEffect(() => { void hasPlus().then(setPlus) }, [])
+  const ownerPlus = isOwnerEmail(email)
+  const plusOn = ownerPlus || plus === true
+
   useEffect(() => {
     if (!isIconAvailable(icon)) {
       setIconPref('light')
       setIcon('light')
+      return
     }
-  }, [icon])
+    // A coloured icon without Cznnect+ (it ran out, or was chosen before the change) goes back to the theme's icon.
+    if (plus !== null && isPlusIcon(icon) && !plusOn) {
+      const back = iconForTheme(theme)
+      setIconPref(back)
+      setIcon(back)
+    }
+  }, [icon, plus, plusOn, theme])
 
   useEffect(() => {
     supabase.from('family_members').select('role').eq('family_id', family.id).eq('user_id', userId).maybeSingle()
@@ -123,6 +137,8 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
   function pickTheme(id: ThemePref) {
     setThemePref(id)
     setTheme(id)
+    // Light and dark themes switch the free Light and Dark icons. A coloured Cznnect+ icon the person picked stays.
+    if (isPlusIcon(icon) && plusOn) return
     const nextIcon = iconForTheme(id)
     setIconPref(nextIcon)
     setIcon(nextIcon)
@@ -267,28 +283,39 @@ export default function Settings({ family, userId, onFamilyChanged }: { family: 
       )}
 
       {panel === 'icon' && (
-        <Sheet title="App icon" onClose={() => setPanel(null)}>
+        <Sheet title="App icon" onClose={() => { setPanel(null); setPlusNote(false) }}>
           <div className="flex flex-col gap-4" role="radiogroup" aria-label="App icon">
-            {availableIconGroups.map((group) => (
-              <div key={group} className="flex flex-col gap-2">
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {previews.filter((v) => v.group === group).map((v) => (
-                    <button
-                      key={v.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={icon === v.id}
-                      className={`icon-tile ${icon === v.id ? 'icon-tile-on' : ''}`}
-                      onClick={() => { setIconPref(v.id); setIcon(v.id) }}
-                    >
-                      <img src={v.src} alt="" width={60} height={60} />
-                      <span>{v.label}</span>
-                    </button>
-                  ))}
+            {availableIconGroups.map((group) => {
+              const locked = group === PLUS_GROUP && !plusOn
+              return (
+                <div key={group} className="flex flex-col gap-2">
+                  {group === PLUS_GROUP
+                    ? <h3 className="eyebrow">{PLUS_NAME}</h3>
+                    : <p className="text-sm text-muted">Light and Dark follow your theme.</p>}
+                  <div className="grid grid-cols-3 gap-3">
+                    {previews.filter((v) => v.group === group).map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={icon === v.id}
+                        aria-disabled={locked}
+                        className={`icon-tile ${icon === v.id ? 'icon-tile-on' : ''} ${locked ? 'opacity-60' : ''}`}
+                        onClick={() => {
+                          if (locked) { setPlusNote(true); return }
+                          setIconPref(v.id)
+                          setIcon(v.id)
+                        }}
+                      >
+                        <img src={v.src} alt="" width={60} height={60} />
+                        <span className="flex items-center gap-1">{locked && <Icon name="lock" size={12} />}{v.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {locked && plusNote && <p role="status" className="text-sm font-semibold">The coloured icons come with {PLUS_NAME}.</p>}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </Sheet>
       )}

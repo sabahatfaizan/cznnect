@@ -4,14 +4,16 @@
 1. Copies the Cznnect launcher icons into the generated Android project.
 2. Adds the native plugin (share sheet + launcher-icon switching) and registers it in MainActivity.
 3. Gives the app one launcher entry (an <activity-alias>) per app icon, so the icon on the phone's home screen
-   can change. Only the "light" entry is on by default. The entries after "light" and "dark" are old colours that
+   can change. Only the "light" entry is on by default. The ones that are not in "active" are old icons that
    are no longer offered; they stay (showing the Light icon) so an update never leaves a phone without a launcher icon.
 """
 import json, pathlib, re, shutil
 
 ANDROID = pathlib.Path('android/app/src/main')
 PKG_DIR = ANDROID / 'java/com/sabahatfaizan/cznnect'
-icons = json.load(open('android-native/icons.json'))
+_icons = json.load(open('android-native/icons.json'))
+active = _icons['active']
+icons = active + _icons['legacy']
 
 shutil.copytree('android-icons/res', ANDROID / 'res', dirs_exist_ok=True)
 PKG_DIR.mkdir(parents=True, exist_ok=True)
@@ -32,8 +34,8 @@ aliases = ''.join(f'''
             android:targetActivity=".MainActivity"
             android:enabled="{'true' if i == 'light' else 'false'}"
             android:exported="true"
-            android:icon="@mipmap/ic_cz_{i if i in ('light', 'dark') else 'light'}"
-            android:roundIcon="@mipmap/ic_cz_{i if i in ('light', 'dark') else 'light'}"
+            android:icon="@mipmap/ic_cz_{i if i in active else 'light'}"
+            android:roundIcon="@mipmap/ic_cz_{i if i in active else 'light'}"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

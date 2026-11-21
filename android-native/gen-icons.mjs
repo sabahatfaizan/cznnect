@@ -9,10 +9,10 @@ const { createCanvas, Path2D } = require('@napi-rs/canvas')
 const src = fs.readFileSync('src/appIcon.ts', 'utf8')
 const ICONS = [...src.matchAll(/\{ id: '(\w+)', label: '[^']*', group: '[^']*', mark: '(#[0-9a-fA-F]{6})', bg: '(#[0-9a-fA-F]{6})' \}/g)]
   .map((m) => ({ id: m[1], mark: m[2], bg: m[3] }))
-if (ICONS.length !== 2) throw new Error('could not read the icon list')
-// Colours that used to be offered. Their launcher entries stay in the app (so a phone that had one on its Home Screen
+if (ICONS.length !== 7) throw new Error('could not read the icon list')
+// Icons that are no longer offered. Their launcher entries stay in the app (so a phone that had one on its Home Screen
 // does not lose its icon after an update) but they show the Light icon, and the app switches the phone back to Light.
-const LEGACY = ['ocean', 'sunset', 'aurora', 'orchid', 'forest', 'graphite', 'treasure', 'libertalia', 'outlaw', 'dust', 'khonshu', 'crescent',
+const LEGACY = ['ocean', 'treasure', 'libertalia', 'outlaw', 'dust', 'khonshu', 'crescent',
   'ocean_night', 'sunset_night', 'aurora_night', 'orchid_night', 'forest_night', 'graphite_night']
 
 const canvas0 = (size) => createCanvas(size, size)
@@ -71,5 +71,5 @@ for (const v of ICONS) {
   fs.writeFileSync('public/icons/apple-touch-icon.png', web(180, 0.58))
   fs.writeFileSync('public/icons/icon-maskable-512.png', web(512, 0.48))
 }
-fs.writeFileSync('android-native/icons.json', JSON.stringify([...ICONS.map((v) => v.id), ...LEGACY]))
+fs.writeFileSync('android-native/icons.json', JSON.stringify({ active: ICONS.map((v) => v.id), legacy: LEGACY }))
 console.log('icons:', ICONS.map((v) => v.id).join(' '), '+', LEGACY.length, 'old entries')

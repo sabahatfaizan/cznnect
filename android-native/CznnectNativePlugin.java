@@ -30,10 +30,9 @@ import java.util.List;
 public class CznnectNativePlugin extends Plugin {
     // Keep in step with android-native/icons.json (and the aliases apply.py adds to the manifest).
     private static final List<String> ICONS = Arrays.asList(
-        "light", "dark",
-        // Old colours, no longer offered. Kept so the app can turn them off and switch a phone back to Light.
-        "ocean", "sunset", "aurora", "orchid", "forest", "graphite",
-        "treasure", "libertalia", "outlaw", "dust", "khonshu", "crescent",
+        "light", "dark", "sunset", "aurora", "orchid", "forest", "graphite",
+        // Old icons, no longer offered. Kept so the app can turn them off and switch a phone back to Light.
+        "ocean", "treasure", "libertalia", "outlaw", "dust", "khonshu", "crescent",
         "ocean_night", "sunset_night", "aurora_night", "orchid_night", "forest_night", "graphite_night");
 
     @PluginMethod

@@ -37,16 +37,85 @@ function find(id: IconId) {
   return ICONS.find((i) => i.id === id) ?? ICONS[0]
 }
 
-// The artwork, kept as plain as it can be: a flat square and the mark in one colour (the O is the frame, the Z is
-// the diagonal). android-native/gen-icons.mjs draws the same thing for the phone's launcher icons.
+// Light and Dark are shaded: one soft gradient runs across the whole mark (the frame and the slash are a single piece, so
+// there is no seam), with a light glow at the top-left and a deeper tone at the bottom-right. The coloured icons stay
+// flat. android-native/gen-icons.mjs has a copy of these numbers; keep the two in step.
+export type Shade = { bg: [string, string]; stops: [string, string, string]; glow: [string, number]; deep: [string, number] }
+export const SHADES: Partial<Record<IconId, Shade>> = {
+  light: { bg: ['#ffffff', '#edf2ff'], stops: ['#6c9dff', '#2a5ceb', '#0d2c9e'], glow: ['#ffffff', 0.38], deep: ['#06185f', 0.35] },
+  dark: { bg: ['#17191f', '#000000'], stops: ['#ffffff', '#dde3f0', '#8f9ab5'], glow: ['#ffffff', 0.45], deep: ['#4a556f', 0.35] },
+}
+
+const rgba = (hex: string, a: number): string => {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
+}
+
+function fillBackground(g: CanvasRenderingContext2D, size: number, id: IconId, flat: string) {
+  const s = SHADES[id]
+  if (s) {
+    const grad = g.createLinearGradient(0, 0, size, size)
+    grad.addColorStop(0, s.bg[0])
+    grad.addColorStop(1, s.bg[1])
+    g.fillStyle = grad
+  } else {
+    g.fillStyle = flat
+  }
+  g.fillRect(0, 0, size, size)
+}
+
+// The mark is drawn on its own layer first, so the gradients only land on the mark and never on the background.
+function drawShadedMark(g: CanvasRenderingContext2D, size: number, scale: number, s: Shade) {
+  const layer = document.createElement('canvas')
+  layer.width = layer.height = size
+  const l = layer.getContext('2d')
+  if (!l) return
+  const u = (size * scale) / 52
+  l.translate(size / 2 - 32 * u, size / 2 - 32 * u)
+  l.scale(u, u)
+  l.fillStyle = '#000000'
+  l.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
+  l.save()
+  l.beginPath()
+  l.rect(6, 6, 52, 52)
+  l.clip()
+  l.fill(new Path2D('M3.54 67.54L67.54 3.54L60.46 -3.54L-3.54 60.46Z'))
+  l.restore()
+  l.globalCompositeOperation = 'source-in'
+  const base = l.createLinearGradient(10, 6, 54, 58)
+  base.addColorStop(0, s.stops[0])
+  base.addColorStop(0.5, s.stops[1])
+  base.addColorStop(1, s.stops[2])
+  l.fillStyle = base
+  l.fillRect(6, 6, 52, 52)
+  l.globalCompositeOperation = 'source-atop'
+  const glow = l.createRadialGradient(20, 14, 0, 20, 14, 34)
+  glow.addColorStop(0, rgba(s.glow[0], s.glow[1]))
+  glow.addColorStop(1, rgba(s.glow[0], 0))
+  l.fillStyle = glow
+  l.fillRect(6, 6, 52, 52)
+  const deep = l.createRadialGradient(56, 58, 0, 56, 58, 30)
+  deep.addColorStop(0, rgba(s.deep[0], s.deep[1]))
+  deep.addColorStop(1, rgba(s.deep[0], 0))
+  l.fillStyle = deep
+  l.fillRect(6, 6, 52, 52)
+  g.drawImage(layer, 0, 0)
+}
+
+// The artwork: a square and the mark (the O is the frame, the Z is the diagonal). Light and Dark are shaded (see above);
+// the coloured icons are flat, in one colour. android-native/gen-icons.mjs draws the same thing for the phone's launcher icons.
 export function renderIcon(id: IconId, size: number, scale = 0.6): string {
   const v = find(id)
   const c = document.createElement('canvas')
   c.width = c.height = size
   const g = c.getContext('2d')
   if (!g) return ''
-  g.fillStyle = v.bg
-  g.fillRect(0, 0, size, size)
+  fillBackground(g, size, v.id, v.bg)
+  const shade = SHADES[v.id]
+  if (shade) {
+    drawShadedMark(g, size, scale, shade)
+    return c.toDataURL('image/png')
+  }
   const u = (size * scale) / 52
   g.translate(size / 2 - 32 * u, size / 2 - 32 * u)
   g.scale(u, u)

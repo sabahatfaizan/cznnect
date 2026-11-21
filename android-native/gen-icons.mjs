@@ -1,4 +1,4 @@
-// Renders the Android launcher icons and the website icons, using the same flat artwork as renderIcon() in
+// Renders the Android launcher icons and the website icons, using the same artwork as renderIcon() in
 // src/appIcon.ts. Needs: npm i @napi-rs/canvas (not a project dependency). Run from the repo root:
 //   NODE_PATH=<folder with node_modules> node android-native/gen-icons.mjs
 import { createRequire } from 'node:module'
@@ -18,8 +18,50 @@ const LEGACY = ['ocean', 'treasure', 'libertalia', 'outlaw', 'dust', 'khonshu', 
 const canvas0 = (size) => createCanvas(size, size)
 const canvas = (size) => { const c = canvas0(size); return [c, c.getContext('2d')] }
 const png = (c) => c.toBuffer('image/png')
-function drawBackground(g, size, v) { g.fillStyle = v.bg; g.fillRect(0, 0, size, size) }
+// Light and Dark are shaded with one soft gradient across the whole mark; the coloured icons stay flat.
+// Keep SHADES in step with SHADES in src/appIcon.ts.
+const SHADES = {
+  light: { bg: ['#ffffff', '#edf2ff'], stops: ['#6c9dff', '#2a5ceb', '#0d2c9e'], glow: ['#ffffff', 0.38], deep: ['#06185f', 0.35] },
+  dark: { bg: ['#17191f', '#000000'], stops: ['#ffffff', '#dde3f0', '#8f9ab5'], glow: ['#ffffff', 0.45], deep: ['#4a556f', 0.35] },
+}
+const rgba = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
+}
+function drawBackground(g, size, v) {
+  const s = SHADES[v.id]
+  if (s) {
+    const grad = g.createLinearGradient(0, 0, size, size)
+    grad.addColorStop(0, s.bg[0]); grad.addColorStop(1, s.bg[1])
+    g.fillStyle = grad
+  } else g.fillStyle = v.bg
+  g.fillRect(0, 0, size, size)
+}
+// Shaded marks are drawn on their own layer first, so the gradients only land on the mark.
+function drawShadedMark(g, size, s, scale) {
+  const [layer, l] = canvas(size)
+  const u = (size * scale) / 52
+  l.translate(size / 2 - 32 * u, size / 2 - 32 * u); l.scale(u, u)
+  l.fillStyle = '#000000'
+  l.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
+  l.save(); l.beginPath(); l.rect(6, 6, 52, 52); l.clip()
+  l.fill(new Path2D('M3.54 67.54L67.54 3.54L60.46 -3.54L-3.54 60.46Z'))
+  l.restore()
+  l.globalCompositeOperation = 'source-in'
+  const base = l.createLinearGradient(10, 6, 54, 58)
+  base.addColorStop(0, s.stops[0]); base.addColorStop(0.5, s.stops[1]); base.addColorStop(1, s.stops[2])
+  l.fillStyle = base; l.fillRect(6, 6, 52, 52)
+  l.globalCompositeOperation = 'source-atop'
+  const glow = l.createRadialGradient(20, 14, 0, 20, 14, 34)
+  glow.addColorStop(0, rgba(s.glow[0], s.glow[1])); glow.addColorStop(1, rgba(s.glow[0], 0))
+  l.fillStyle = glow; l.fillRect(6, 6, 52, 52)
+  const deep = l.createRadialGradient(56, 58, 0, 56, 58, 30)
+  deep.addColorStop(0, rgba(s.deep[0], s.deep[1])); deep.addColorStop(1, rgba(s.deep[0], 0))
+  l.fillStyle = deep; l.fillRect(6, 6, 52, 52)
+  g.drawImage(layer, 0, 0)
+}
 function drawMark(g, size, v, scale) {
+  if (SHADES[v.id]) return drawShadedMark(g, size, SHADES[v.id], scale)
   const u = (size * scale) / 52
   g.save(); g.translate(size / 2 - 32 * u, size / 2 - 32 * u); g.scale(u, u)
   g.fillStyle = v.mark

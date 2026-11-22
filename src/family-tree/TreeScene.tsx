@@ -1,6 +1,6 @@
 import { memo, type CSSProperties, type KeyboardEvent } from "react";
 import type { FamilyGraph } from "./graph";
-import { displayName, initials, isDeceased, lifespan } from "./graph";
+import { birthYear, displayName, initials, isDeceased } from "./graph";
 import type { LeafClump, Limb, PlacedPerson, SceneUnit, TreeScene } from "./layout";
 import { LINEAGE_COLORS } from "./layout";
 
@@ -119,7 +119,6 @@ const truncate = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).
 export interface NodeProps {
   placed: PlacedPerson;
   graph: FamilyGraph;
-  role: string;
   selected: boolean;
   lit: boolean;
   dim: boolean;
@@ -127,23 +126,24 @@ export interface NodeProps {
   onSelect: (id: string) => void;
 }
 
-export const PersonNode = memo(function PersonNode({ placed, graph, role, selected, lit, dim, isMe, onSelect }: NodeProps) {
+export const PersonNode = memo(function PersonNode({ placed, graph, selected, lit, dim, isMe, onSelect }: NodeProps) {
   const person = graph.get(placed.id);
   if (!person) return null;
   const { r } = placed;
   const ring = placed.role === "founder" ? 5 : placed.role === "partner" ? 3 : 4;
   const dead = isDeceased(person);
   const name = displayName(person);
-  const span = lifespan(person);
+  const born = birthYear(person);
   const kind = placed.role;
   const mono = kind === "founder" ? "ft-mono-f" : kind === "ancestor" ? "ft-mono-a" : `ft-mono-${lc(placed.lineage)}`;
   const ringFill = lit || selected ? "url(#ft-ring-lit)" : dead ? "url(#ft-ring-dusk)" : "url(#ft-ring)";
   const nameSize = kind === "founder" ? 19 : kind === "partner" ? 12 : kind === "ancestor" ? 13 : 14.5;
   const shownName = truncate(name, kind === "founder" ? 24 : 22);
-  const meta = [role, span].filter(Boolean).join(" · ");
+  // Only the birth year sits under the name; family roles are left to the profile.
+  const meta = born ? String(born) : "";
   const metaSize = kind === "founder" ? 10.5 : 9;
   const plateW = Math.max(shownName.length * nameSize * 0.47, meta.length * metaSize * 0.62) + 18;
-  const plateH = nameSize + metaSize + 13;
+  const plateH = meta ? nameSize + metaSize + 13 : nameSize + 11;
   const partner = kind === "partner";
   const labelX = partner ? r + ring + 6 + plateW / 2 : 0;
   const labelY = partner ? -plateH / 2 : r + ring + 7;
@@ -168,7 +168,7 @@ export const PersonNode = memo(function PersonNode({ placed, graph, role, select
       })}
       role="button"
       tabIndex={0}
-      aria-label={`${name}${meta ? `, ${meta}` : ""}`}
+      aria-label={`${name}${born ? `, born ${born}` : ""}`}
       aria-pressed={selected}
       onClick={(e) => {
         e.stopPropagation();

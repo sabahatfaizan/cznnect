@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import { select } from "d3-selection";
 import { zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from "d3-zoom";
 import "d3-transition";
-import { FamilyGraph, describeRole } from "./graph";
+import { FamilyGraph } from "./graph";
 import { buildFullTree, computeScene, defaultCollapsed, unitsToReveal } from "./layout";
 import type { TreePerson, TreeRelationship } from "./types";
 import { TreeDefs } from "./TreeDefs";
@@ -80,13 +80,6 @@ export default function OrganicTree({
     });
   }, [full]);
 
-  const roles = useMemo(() => {
-    const m = new Map<string, string>();
-    if (!full || !scene) return m;
-    for (const p of scene.placed) m.set(p.id, describeRole(graph, full.foundingIds, p.id));
-    return m;
-  }, [graph, full, scene]);
-
   /* lineage highlight: ancestors + descendants (+ partners) of litId */
   const litSet = useMemo(() => {
     if (!litId || !graph.get(litId)) return null;
@@ -154,21 +147,47 @@ export default function OrganicTree({
     else sel.call(z.transform, t);
   }, []);
 
+  /*
+   * Zoom-out stops at the whole-tree view, and panning stays well inside the painted sky and soil,
+   * so the edges of the ground never come into sight.
+   */
+  const applyLimits = useCallback(() => {
+    const z = zoomRef.current;
+    if (!scene || !z) return 0.02;
+    const { w, h, aw, ah } = viewport();
+    const b = scene.bounds;
+    const bw = Math.max(1, b.maxX - b.minX);
+    const bh = Math.max(1, b.maxY - b.minY);
+    const fitK = (vw: number, vh: number) => Math.min(vw / bw, vh / bh) * 0.95;
+    const minK = Math.min(fitK(w, h), fitK(aw, ah));
+    // The backdrop and soil reach 6000 units past the tree; keep the view's edges inside that.
+    const room = 6000 - 200;
+    const halfW = w / minK / 2;
+    const halfH = h / minK / 2;
+    const padX = Math.max(400, Math.min(room - halfW, 2500));
+    const padY = Math.max(400, Math.min(room - halfH, 2500));
+    z.scaleExtent([minK, 3.5]).translateExtent([
+      [b.minX - padX, b.minY - padY],
+      [b.maxX + padX, b.maxY + padY],
+    ]);
+    return minK;
+  }, [scene, viewport]);
+
   const fit = useCallback(
     (ms = 900) => {
       if (!scene) return;
+      applyLimits();
       const { aw, ah, left, top } = viewport();
       const b = scene.bounds;
       const bw = b.maxX - b.minX;
       const bh = b.maxY - b.minY;
       const k = Math.min(aw / bw, ah / bh) * 0.95;
-      zoomRef.current?.scaleExtent([Math.min(0.02, k * 0.5), 3.5]);
       const t = zoomIdentity
         .translate(left + aw / 2 - ((b.minX + b.maxX) / 2) * k, top + ah / 2 - ((b.minY + b.maxY) / 2) * k)
         .scale(k);
       go(t, ms);
     },
-    [scene, viewport, go],
+    [scene, viewport, go, applyLimits],
   );
 
   const focusOn = useCallback(
@@ -191,13 +210,13 @@ export default function OrganicTree({
     fit(0);
   }, [scene, fit]);
 
+  // Keep the limits in step with the tree's size (folding branches) and the screen (rotation, resizing).
   useEffect(() => {
-    const onResize = () => {
-      if (!fittedRef.current) return;
-    };
+    applyLimits();
+    const onResize = () => applyLimits();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, []);
+  }, [applyLimits]);
 
   // Glide to someone when asked; unfold their branch first if needed.
   useEffect(() => {
@@ -367,7 +386,6 @@ export default function OrganicTree({
                   key={p.id}
                   placed={p}
                   graph={graph}
-                  role={roles.get(p.id) ?? ""}
                   selected={p.id === selectedId}
                   lit={lit}
                   dim={dimAll && !lit}

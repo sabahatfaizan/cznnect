@@ -12,13 +12,21 @@ const CACHE = 'cznnect-plus-cache'
 export function cachedPlus(): boolean {
   try { return localStorage.getItem(CACHE) === '1' } catch { return false }
 }
+// Fired whenever the answer changes, so the app name, the logo and the phone's launcher entry follow at once.
+export const PLUS_EVENT = 'cznnect-plus-changed'
 function remember(on: boolean) {
-  try { localStorage.setItem(CACHE, on ? '1' : '0') } catch { /* ignore */ }
+  let changed = false
+  try {
+    changed = (localStorage.getItem(CACHE) === '1') !== on
+    localStorage.setItem(CACHE, on ? '1' : '0')
+  } catch { /* ignore */ }
+  if (changed && typeof window !== 'undefined') window.dispatchEvent(new Event(PLUS_EVENT))
 }
 
 export async function hasPlus(): Promise<boolean> {
   try {
     const { data: s } = await supabase.auth.getSession()
+    if (!s.session) { remember(false); return false } // nobody is signed in, so nobody has Cznnect+
     if (isOwnerEmail(s.session?.user.email)) { remember(true); return true }
     const r = await withTimeout(supabase.rpc('my_plus'))
     if (r.error) return cachedPlus()
@@ -45,4 +53,11 @@ export async function setPlus(userId: string, on: boolean): Promise<string | nul
   } catch {
     return 'Could not reach the server. Check your connection and try again.'
   }
+}
+
+// The next person to sign in on this phone must not see the last person's name, and opening the app again picks up a
+// grant or a removal made while it was closed.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  supabase.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') remember(false) })
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void hasPlus() })
 }

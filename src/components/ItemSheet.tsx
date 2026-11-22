@@ -4,6 +4,7 @@ import Sheet from './Sheet'
 import ItemForm, { type Who } from './ItemForm'
 import { dueState, dueText, horizonLabel, difficultyPoints, type BucketItem } from '../lib/plans'
 import { deleteItem, setImIn, setItemDone, updateItem } from '../lib/plansApi'
+import { appName } from '../lib/appName'
 
 type Mode = 'view' | 'edit' | 'delete'
 
@@ -44,7 +45,7 @@ export default function ItemSheet({
 
   async function sharePlan() {
     const details = [
-      `Cznnect plan: ${item.title}`,
+      `${appName()} plan: ${item.title}`,
       `List: ${horizonLabel(item.horizon)}`,
       item.due_date ? `Date: ${item.due_date}` : '',
       item.assigned_to ? `Organiser: ${name(item.assigned_to)}` : '',

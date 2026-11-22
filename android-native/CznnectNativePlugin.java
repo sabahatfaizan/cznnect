@@ -1,5 +1,7 @@
 package com.sabahatfaizan.cznnect;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -34,6 +36,9 @@ public class CznnectNativePlugin extends Plugin {
         // Old icons, no longer offered. Kept so the app can turn them off and switch a phone back to Light.
         "ocean", "treasure", "libertalia", "outlaw", "dust", "khonshu", "crescent",
         "ocean_night", "sunset_night", "aurora_night", "orchid_night", "forest_night", "graphite_night");
+
+    // The icons people can pick today. Each also has a switched-off "Plus" entry named "Cznnect+" (see apply.py).
+    private static final List<String> ACTIVE = Arrays.asList("light", "dark", "sunset", "aurora", "orchid", "forest", "graphite");
 
     @PluginMethod
     public void share(PluginCall call) {
@@ -346,15 +351,34 @@ public class CznnectNativePlugin extends Plugin {
             call.reject("Unknown icon");
             return;
         }
+        // plus: a Cznnect+ account gets the entry named "Cznnect+" (only the current icons have one).
+        boolean plus = Boolean.TRUE.equals(call.getBoolean("plus", false));
+        String target = (plus && ACTIVE.contains(id)) ? id + "Plus" : id;
         Context ctx = getContext();
         PackageManager pm = ctx.getPackageManager();
         String pkg = ctx.getPackageName();
-        // Turn the chosen icon's launcher entry on first, then the others off, so one is always available.
-        pm.setComponentEnabledSetting(alias(pkg, id), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        // Turn the chosen launcher entry on first, then the others off, so one is always available.
+        pm.setComponentEnabledSetting(alias(pkg, target), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
         for (String other : ICONS) {
-            if (!other.equals(id)) {
+            if (!other.equals(target)) {
                 pm.setComponentEnabledSetting(alias(pkg, other), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
             }
+        }
+        for (String other : ACTIVE) {
+            String entry = other + "Plus";
+            if (!entry.equals(target)) {
+                pm.setComponentEnabledSetting(alias(pkg, entry), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+            }
+        }
+        // The name shown in the phone's recent apps follows too.
+        try {
+            final Activity activity = getActivity();
+            final String label = plus ? "Cznnect+" : "Cznnect";
+            if (activity != null) {
+                activity.runOnUiThread(() -> activity.setTaskDescription(new ActivityManager.TaskDescription(label)));
+            }
+        } catch (Exception ignored) {
+            // The name under the icon has already changed; the recents label is only a nicety.
         }
         call.resolve();
     }

@@ -7,9 +7,11 @@ import App from './App'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import { applyTheme, getThemePref } from './theme'
 import { applyIcon } from './appIcon'
+import { applyAppName } from './lib/appName'
 
 applyTheme(getThemePref())
 applyIcon()
+applyAppName()
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

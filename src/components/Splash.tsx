@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react'
 import { Mark } from './Logo'
+import { appName } from '../lib/appName'
 
 export function prefersReducedMotion(): boolean {
   try {
@@ -22,7 +23,7 @@ export default function Splash() {
   }, [])
 
   return (
-    <div role="status" aria-label="Loading Cznnect" className="splash flex items-center justify-center px-6">
+    <div role="status" aria-label={`Loading ${appName()}`} className="splash flex items-center justify-center px-6">
       <div className={'splash-mark ' + (calm ? 'splash-mark-still' : '')}>
         <Mark loop={!calm} className="splash-logo h-40 w-40" />
       </div>

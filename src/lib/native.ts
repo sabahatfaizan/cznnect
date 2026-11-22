@@ -72,10 +72,11 @@ export async function shareImage(base64: string, text: string): Promise<boolean>
   return false
 }
 
-// Switches the launcher icon on the phone's home screen to match the chosen app icon.
-export function setLauncherIcon(id: string) {
+// Switches the launcher icon (and its name) on the phone's home screen to match the chosen app icon.
+export function setLauncherIcon(id: string, plus = false) {
   if (!isNative()) return
-  callNative('setIcon', { id }).catch(() => {})
+  // plus: use the launcher entry named "Cznnect+". An older app ignores it and keeps the plain name.
+  callNative('setIcon', { id, plus }).catch(() => {})
 }
 
 // Starts a file download with Android's download manager. Returns false when that is not possible (not the app, or an

@@ -1,4 +1,5 @@
 import { useId, type CSSProperties } from 'react'
+import { appName, useCachedPlus } from '../lib/appName'
 
 // Cznnect's mark: an O and a Z in one square. The softly rounded frame is the O, the diagonal bisector is
 // the Z, and the diagonal joins two opposite corners, so "Czn" and "connect" read as one shape.
@@ -47,11 +48,13 @@ export function Mark({ className = '', loop = false }: { className?: string; loo
 
 // The wordmark reads C_nnect, where the mark stands in for the "z": Cznnect and Connect in one word.
 export function Wordmark({ className = '', style }: { className?: string; style?: CSSProperties }) {
+  const plus = useCachedPlus() // Cznnect+ adds a small + after the name
   return (
-    <span className={'wordmark ' + className} style={style} role="img" aria-label="Cznnect">
+    <span className={'wordmark ' + className} style={style} role="img" aria-label={appName(plus)}>
       <span aria-hidden="true" className="wordmark-c">C</span>
       <Mark className="wordmark-mark" />
       <span aria-hidden="true">nnect</span>
+      {plus && <span aria-hidden="true" className="wordmark-plus">+</span>}
     </span>
   )
 }

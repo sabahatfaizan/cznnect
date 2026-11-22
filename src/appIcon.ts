@@ -3,6 +3,7 @@
 // Cznnect+ (the paid tier). The logo inside the app is not affected.
 // An icon that is already on a phone's Home Screen keeps its look until the app is removed and added again.
 import { setLauncherIcon } from './lib/native'
+import { PLUS_EVENT, cachedPlus } from './lib/plus'
 
 export type IconId = 'light' | 'dark' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
 
@@ -50,7 +51,9 @@ function setLink(rel: string, href: string | null) {
   el.setAttribute('href', href ?? el.dataset.original)
 }
 
-export function applyIcon(id: IconId = getIconPref()) {
+export function applyIcon(wanted: IconId = getIconPref()) {
+  // The coloured icons are for Cznnect+; without it the Light icon is shown.
+  const id: IconId = isPlusIcon(wanted) && !cachedPlus() ? 'light' : wanted
   if (id === 'light') {
     setLink('icon', null)
     setLink('apple-touch-icon', null)
@@ -59,8 +62,10 @@ export function applyIcon(id: IconId = getIconPref()) {
     setLink('apple-touch-icon', renderIcon(id, 180))
   }
   // In the Android app this also switches the launcher icon on the home screen.
-  setLauncherIcon(id)
+  // The home screen label also reads "Cznnect+" for a Cznnect+ account (the app uses a second launcher entry for it).
+  setLauncherIcon(id, cachedPlus())
 }
+if (typeof window !== 'undefined') window.addEventListener(PLUS_EVENT, () => applyIcon())
 
 export function setIconPref(id: IconId) {
   try {

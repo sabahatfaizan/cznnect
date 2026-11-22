@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../supabase'
+import { appName } from '../lib/appName'
 
 type Announcement = {
   id: string
@@ -87,7 +88,7 @@ export default function AnnouncementPopup({ userId, live }: { userId: string; li
       >
         {item.image_url && <img src={item.image_url} alt="" className="block h-auto w-auto max-h-[65vh] max-w-full object-contain" />}
         <div className="flex flex-col gap-3 p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[.18em] text-accent-text">Cznnect announcement</p>
+          <p className="text-[10px] font-bold uppercase tracking-[.18em] text-accent-text">{appName()} announcement</p>
           <h2 id="cznnect-announcement-title" className="font-display text-xl font-bold leading-tight">{item.title}</h2>
           {item.body && <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted">{item.body}</p>}
           {item.action_label && item.action_url && (

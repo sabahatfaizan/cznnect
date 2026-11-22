@@ -2197,5 +2197,5 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 .family-tree-stage .tree-grass { fill: color-mix(in srgb, #4caf50 70%, var(--page)); opacity: 0.75; }
 .family-tree-stage .tree-fam-leaf { stroke: color-mix(in srgb, var(--fam-c) 45%, #000); stroke-width: 0.8; }
 
-/* Cznnect+: a small + after the name in the logo. */
-.wordmark-plus { position: relative; top: -0.5em; margin-left: 0.05em; font-size: 0.6em; }
+/* Cznnect+: the + is as large as the letters and sits on the same line, so the name reads "Cznnect+". */
+.wordmark-plus { margin-left: 0.04em; font-size: 1em; line-height: 1; }

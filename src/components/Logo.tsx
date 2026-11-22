@@ -1,13 +1,14 @@
 import { useId, type CSSProperties } from 'react'
 import { appName, useCachedPlus } from '../lib/appName'
+import { MARK_HOLE, MARK_OUTER } from '../lib/markShape'
 
 // Cznnect's mark: an O and a Z in one square. The softly rounded frame is the O, the diagonal bisector is
 // the Z, and the diagonal joins two opposite corners, so "Czn" and "connect" read as one shape.
 // It matches the app icon: one soft gradient (top to bottom), a lighter highlight at the top right and a
 // gentle glow at the bottom. The colours come from the chosen theme (see index.css).
 // With loop, the square spins and slows to rest; as it rests the diagonal connects, then it spins on.
-const OUTER = 'M12 6H52A6 6 0 0 1 58 12V52A6 6 0 0 1 52 58H12A6 6 0 0 1 6 52V12A6 6 0 0 1 12 6Z'
-const HOLE = 'M19 16A3 3 0 0 0 16 19V45A3 3 0 0 0 19 48H45A3 3 0 0 0 48 45V19A3 3 0 0 0 45 16Z'
+const OUTER = MARK_OUTER
+const HOLE = MARK_HOLE
 export function Mark({ className = '', loop = false }: { className?: string; loop?: boolean }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   return (
@@ -49,8 +50,9 @@ export function Mark({ className = '', loop = false }: { className?: string; loo
 }
 
 // The wordmark reads C_nnect, where the mark stands in for the "z": Cznnect and Connect in one word.
-export function Wordmark({ className = '', style }: { className?: string; style?: CSSProperties }) {
-  const plus = useCachedPlus() // Cznnect+ adds a small + after the name
+// plain: always the plain name, for things that advertise the app to people who do not have Cznnect+ (the share banner).
+export function Wordmark({ className = '', style, plain = false }: { className?: string; style?: CSSProperties; plain?: boolean }) {
+  const plus = useCachedPlus() && !plain // Cznnect+ adds a small + after the name
   return (
     <span className={'wordmark ' + className} style={style} role="img" aria-label={appName(plus)}>
       <span aria-hidden="true" className="wordmark-c">C</span>

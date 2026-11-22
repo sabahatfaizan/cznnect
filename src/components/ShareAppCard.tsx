@@ -1,4 +1,5 @@
 import { Mark, Wordmark } from './Logo'
+import { MARK_HOLE, MARK_OUTER } from '../lib/markShape'
 import { useState, type CSSProperties } from 'react'
 import { WEB_APP_URL, canShare, shareImage, shareText } from '../lib/native'
 
@@ -58,48 +59,41 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
 // The app's own logo is used while the name is "Cznnect" (or empty); typing anything else uses plain text instead.
 const usesLogo = (brand: string) => !brand.trim() || /^cznnect$/i.test(brand.trim())
 
-// The Cznnect mark (an O and a Z in one square) drawn in the banner theme's own colours, with the dark outline.
+// "#rrggbb" as an rgba() string, for the soft glow.
+function hexA(hex: string, a: number): string {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
+}
+
+// The Cznnect mark (an O and a Z in one square), drawn exactly as the app draws it (see Logo.tsx): a softly rounded frame
+// with one soft gradient (light at the top), a glow at the bottom, a highlight at the top right, and the diagonal across.
+// The banner theme's own colours are used for the gradient and the glow.
 function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, p: Logo) {
   ctx.save()
   ctx.translate(x, y)
   ctx.scale(size / 64, size / 64)
-  const g = ctx.createLinearGradient(6, 6, 58, 58)
+  const g = ctx.createLinearGradient(0, 6, 0, 58)
   g.addColorStop(0, p.hi)
-  g.addColorStop(0.38, p.a)
+  g.addColorStop(0.55, p.a)
   g.addColorStop(1, p.b)
-  const frame = new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z')
-  // The outline goes down first; the fills then cover everything but the outside edge.
-  ctx.lineJoin = 'miter'
-  ctx.strokeStyle = p.edge
-  ctx.lineWidth = 3
-  ctx.stroke(frame)
-  ctx.save()
-  ctx.beginPath()
-  ctx.rect(4.5, 4.5, 55, 55)
-  ctx.clip()
-  ctx.lineWidth = 13
-  ctx.beginPath()
-  ctx.moveTo(0, 64)
-  ctx.lineTo(64, 0)
-  ctx.stroke()
-  ctx.restore()
+  const ring = new Path2D(MARK_OUTER + MARK_HOLE)
   ctx.fillStyle = g
-  ctx.fill(frame, 'evenodd')
-  // The thin channel round the frame, and a light rim just inside the edge.
-  ctx.fillStyle = 'rgba(0,0,0,0.2)'
-  ctx.fill(new Path2D('M9 9H55V55H9Z M13 13V51H51V13Z'), 'evenodd')
+  ctx.fill(ring)
+  const glow = ctx.createRadialGradient(34, 62, 0, 34, 62, 30)
+  glow.addColorStop(0, hexA(p.hi, 0.9))
+  glow.addColorStop(1, hexA(p.hi, 0))
+  ctx.fillStyle = glow
+  ctx.fill(ring)
+  const shine = ctx.createRadialGradient(54, 10, 0, 54, 10, 26)
+  shine.addColorStop(0, 'rgba(255,255,255,0.5)')
+  shine.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = shine
+  ctx.fill(ring)
   ctx.save()
-  ctx.clip(frame, 'evenodd')
-  ctx.strokeStyle = 'rgba(255,255,255,0.5)'
-  ctx.lineWidth = 2.8
-  ctx.stroke(frame)
-  ctx.restore()
-  ctx.save()
-  ctx.beginPath()
-  ctx.rect(6, 6, 52, 52)
-  ctx.clip()
+  ctx.clip(new Path2D(MARK_OUTER))
   ctx.strokeStyle = g
   ctx.lineWidth = 10
+  ctx.lineCap = 'butt'
   ctx.beginPath()
   ctx.moveTo(0, 64)
   ctx.lineTo(64, 0)
@@ -108,15 +102,25 @@ function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   ctx.restore()
 }
 
+// The font the app's headings and its wordmark use, read from the page so the picture matches what is on screen.
+function displayFont(): string {
+  try {
+    return getComputedStyle(document.documentElement).getPropertyValue('--font-display').trim() || FONT
+  } catch {
+    return FONT
+  }
+}
+
 // "C", the mark standing in for the z, then "nnect": the same wordmark the app shows. Baseline at y.
 function drawWordmark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, p: Logo) {
-  ctx.font = `800 ${size}px ${FONT}`
+  const face = displayFont()
+  ctx.font = `800 ${size}px ${face}`
   let wC = ctx.measureText('C').width
   let wN = ctx.measureText('nnect').width
   let total = wC + size * 0.98 + wN
   if (total > 900) {
     size = (size * 900) / total
-    ctx.font = `800 ${size}px ${FONT}`
+    ctx.font = `800 ${size}px ${face}`
     wC = ctx.measureText('C').width
     wN = ctx.measureText('nnect').width
   }
@@ -134,7 +138,8 @@ const COPYRIGHT = '© 2026 Sabahat Faizan. All rights reserved.'
 
 // Draws the banner as a 1080x1350 (4:5) picture. That shape shows whole inside a WhatsApp chat or any feed without
 // being cropped or needing a tap to open, which a tall story-sized picture does not. Returns base64 PNG.
-function drawBanner(b: Banner): string | null {
+async function drawBanner(b: Banner): Promise<string | null> {
+  try { await document.fonts.load(`800 130px ${displayFont()}`) } catch { /* the fallback font is used */ }
   const t = THEMES.find((x) => x.id === b.theme) ?? THEMES[0]
   const canvas = document.createElement('canvas')
   canvas.width = 1080
@@ -149,30 +154,17 @@ function drawBanner(b: Banner): string | null {
   // The Cznnect square (an O and a Z in one frame) sits faint in the middle, behind the text.
   ctx.save()
   ctx.globalAlpha = Math.min(100, Math.max(0, b.logo)) / 100
-  ctx.translate(540 - 340, 675 - 340)
-  ctx.scale(680 / 64, 680 / 64)
-  const mark = ctx.createLinearGradient(6, 6, 58, 58)
-  mark.addColorStop(0, '#ffffff')
-  mark.addColorStop(0.4, t.accent)
-  mark.addColorStop(1, '#ffffff')
-  ctx.fillStyle = mark
-  ctx.fill(new Path2D('M6 6H58V58H6Z M16 16V48H48V16Z'), 'evenodd')
-  ctx.strokeStyle = mark
-  ctx.lineWidth = 10
-  ctx.beginPath()
-  ctx.rect(6, 6, 52, 52)
-  ctx.clip()
-  ctx.beginPath()
-  ctx.moveTo(0, 64)
-  ctx.lineTo(64, 0)
-  ctx.stroke()
+  drawMark(ctx, 540 - 340, 675 - 340, 680, t.logo)
   ctx.restore()
   ctx.fillStyle = t.accent
   ctx.fillRect(90, 110, 130, 12)
   ctx.fillStyle = '#ffffff'
   ctx.font = `800 130px ${FONT}`
   if (usesLogo(b.brand)) drawWordmark(ctx, 90, 255, 130, t.logo)
-  else ctx.fillText(b.brand.slice(0, 20), 90, 255, 900)
+  else {
+    ctx.font = `800 130px ${displayFont()}`
+    ctx.fillText(b.brand.slice(0, 20), 90, 255, 900)
+  }
   ctx.font = `700 76px ${FONT}`
   wrap(ctx, b.headline, 900, 3).forEach((l, i) => ctx.fillText(l, 90, 370 + i * 90))
   ctx.fillStyle = '#d3d9e4'
@@ -245,7 +237,7 @@ export default function ShareAppCard() {
 
   async function sharePicture() {
     setNotice('')
-    const data = drawBanner(b)
+    const data = await drawBanner(b)
     if (!data) { setNotice('Could not draw the banner here.'); return }
     if (await shareImage(data, message)) return
     // This phone cannot send a picture directly, so the text goes out instead.
@@ -282,14 +274,15 @@ export default function ShareAppCard() {
         style={{ aspectRatio: '4 / 5', background: `linear-gradient(160deg,${theme.from},${theme.to})` }}
       >
         {/* The faint square in the middle, same as on the picture that gets shared. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center" style={{ opacity: b.logo / 100 }}>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center" style={{ opacity: b.logo / 100, '--logo-hi': theme.logo.hi, '--logo-a': theme.logo.a, '--logo-b': theme.logo.b, '--logo-glow': theme.logo.hi } as CSSProperties}>
           <Mark className="h-3/5 w-3/5" />
         </div>
         <div className="relative mb-[10px] h-[3px] w-[34px] rounded-full" style={{ background: theme.accent }} />
         {usesLogo(b.brand) ? (
           <Wordmark
+            plain
             className="relative font-display text-[34px] font-extrabold"
-            style={{ '--logo-hi': theme.logo.hi, '--logo-a': theme.logo.a, '--logo-b': theme.logo.b, '--logo-edge': theme.logo.edge } as CSSProperties}
+            style={{ '--logo-hi': theme.logo.hi, '--logo-a': theme.logo.a, '--logo-b': theme.logo.b, '--logo-glow': theme.logo.hi } as CSSProperties}
           />
         ) : (
           <p className="relative font-display text-[34px] font-extrabold leading-none">{b.brand}</p>

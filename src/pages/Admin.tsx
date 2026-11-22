@@ -668,7 +668,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             {[
               { title: 'App & website', hint: 'What people see and how they get the app', ids: ['app', 'announcements', 'downloads', 'updates', 'previews', 'share'] as Section[] },
               { title: 'Builds & publishing', hint: 'Android APKs and the website', ids: ['builds', 'pages'] as Section[] },
-              { title: 'Family & messages', hint: 'People, chat, notifications and reminders', ids: ['family', 'messages', 'notify', 'reminders'] as Section[] },
+              { title: 'Family & messages', hint: 'People, chat, notifications and reminders', ids: ['family', 'messages', 'notify', 'emails', 'reminders'] as Section[] },
               { title: 'Data', hint: 'Meetup history and points', ids: ['data'] as Section[] },
             ].map((group) => {
               const ids = group.ids.filter(matchesQuery)

@@ -1,0 +1,34 @@
+name: Deploy email function
+
+# Puts the send-custom-email function on Supabase whenever its code changes on main (or when you press "Run workflow").
+# One-time setup: add a repository secret called SUPABASE_ACCESS_TOKEN (make it at supabase.com/dashboard/account/tokens).
+# The SMTP_* secrets live in Supabase itself (Edge Functions > Secrets), not here.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/send-custom-email/**'
+      - '.github/workflows/deploy-email-function.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-email-function
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: quatnrlyzitmgsvqyzbi
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the access token is set
+        run: test -n "$SUPABASE_ACCESS_TOKEN" || { echo "Add the repository secret SUPABASE_ACCESS_TOKEN first (see the note at the top of this file)."; exit 1; }
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy send-custom-email
+        run: supabase functions deploy send-custom-email --project-ref "$PROJECT_REF" --use-api

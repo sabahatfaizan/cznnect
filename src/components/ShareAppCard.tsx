@@ -156,10 +156,20 @@ async function drawBanner(b: Banner): Promise<string | null> {
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, 1080, 1350)
   // The Cznnect square (an O and a Z in one frame) sits faint in the middle, behind the text.
-  ctx.save()
-  ctx.globalAlpha = Math.min(100, Math.max(0, b.logo)) / 100
-  drawMark(ctx, 540 - 340, 675 - 340, 680, t.logo)
-  ctx.restore()
+  // The big faint mark is drawn whole, at full strength, on its own canvas first, and only then laid on the picture at the
+  // chosen strength. (Drawing its layers one by one at half strength would stack them up wherever they overlap, and the
+  // diagonal would show as a separate band across the frame.)
+  const faint = document.createElement('canvas')
+  faint.width = 680
+  faint.height = 680
+  const fctx = faint.getContext('2d')
+  if (fctx) {
+    drawMark(fctx, 0, 0, 680, t.logo)
+    ctx.save()
+    ctx.globalAlpha = Math.min(100, Math.max(0, b.logo)) / 100
+    ctx.drawImage(faint, 540 - 340, 675 - 340)
+    ctx.restore()
+  }
   ctx.fillStyle = t.accent
   ctx.fillRect(90, 110, 130, 12)
   ctx.fillStyle = '#ffffff'

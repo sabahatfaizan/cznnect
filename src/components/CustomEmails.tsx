@@ -152,11 +152,14 @@ export default function CustomEmails({ users, ownerId }: { users: U[] | null; ow
         <button type="button" className="link self-start" onClick={() => setPreview((p) => !p)}>{preview ? 'Hide preview' : 'Preview'}</button>
         {preview && (
           <div className="rounded-2xl border border-line p-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted">Cznnect</p>
-            <p className="mt-2 text-lg font-bold">{subject.trim() || 'Subject'}</p>
-            <p className="mt-2 text-sm">Hi Name,</p>
+            <p className="inline-block rounded-lg bg-black px-3 py-1.5 text-xs font-extrabold tracking-widest text-white">CZNNECT</p>
+            <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted">{direct ? 'A message for you' : cat.label}</p>
+            <p className="mt-1 text-xl font-extrabold">{subject.trim() || 'Subject'}</p>
+            <p className="mt-3 text-sm">Hi Name,</p>
             <p className="mt-2 whitespace-pre-wrap text-sm">{body.trim() || 'Your message…'}</p>
-            <p className="mt-4 text-xs text-muted">{direct ? 'This message was sent to you personally from Cznnect. You can reply to this email.' : category === 'important' ? 'This is an important notice about your Cznnect account.' : `You get this because you are signed up for “${cat.label}” emails. Turn them off in Settings, then Emails.`}</p>
+            <p className="mt-4 inline-block rounded-xl bg-black px-5 py-2.5 text-sm font-bold text-white">Open Cznnect</p>
+            <p className="mt-4 border-t border-line pt-3 text-sm"><strong>Sabahat Faizan</strong><br /><span className="text-xs text-muted">Creator of Cznnect</span></p>
+            <p className="mt-3 text-xs text-muted">{direct ? 'This message was sent to you personally from Cznnect. You can reply to this email.' : category === 'important' ? 'This is an important notice about your Cznnect account.' : `You get this because you are signed up for “${cat.label}” emails. Turn them off in Settings, then Emails.`}</p>
           </div>
         )}
         {note && <p role="status" className={`text-sm font-semibold ${note.ok ? '' : 'text-danger'}`}>{note.text}</p>}

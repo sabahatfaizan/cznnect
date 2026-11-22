@@ -1,5 +1,7 @@
 import { supabase } from '../supabase'
 import { withTimeout } from './net'
+import { OFFLINE_MESSAGE, probeConnection, reportNetwork } from './offline'
+import { SUPABASE_URL } from '../config'
 import type { EmailCategory, EmailKind } from './emailCategories'
 
 // Custom emails. The owner sends through the send-custom-email function (it holds the SMTP login or email service key and does
@@ -20,16 +22,27 @@ async function readError(error: unknown): Promise<string> {
   return m || 'Could not send. Check your connection and try again.'
 }
 
+// The app turns any request that cannot reach the server into "You're offline". For the email function that is often wrong:
+// the phone is fine, but the function is not deployed (or crashed on start), so its reply never reaches the app. Check whether
+// the server itself answers; if it does, say what is really wrong and clear the false "Offline" label.
+async function explain(message: string): Promise<string> {
+  if (message !== OFFLINE_MESSAGE && !/failed to send a request|failed to fetch|load failed/i.test(message)) return message
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return OFFLINE_MESSAGE
+  if (!(await probeConnection(SUPABASE_URL))) return OFFLINE_MESSAGE
+  reportNetwork(true)
+  return 'You are online, but the email function did not answer. In Supabase, deploy send-custom-email (supabase functions deploy send-custom-email) and check its logs.'
+}
+
 export async function sendCustomEmail(args: { category: EmailKind; subject: string; body: string; userIds: string[]; test?: boolean }): Promise<{ ok: true; data: SendResult } | { ok: false; message: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('send-custom-email', {
       body: { category: args.category, subject: args.subject, body: args.body, user_ids: args.userIds, test: Boolean(args.test) },
     })
-    if (error) return { ok: false, message: await readError(error) }
+    if (error) return { ok: false, message: await explain(await readError(error)) }
     if (data?.error) return { ok: false, message: String(data.error) }
     return { ok: true, data: { sent: data?.sent ?? 0, skipped: data?.skipped ?? 0, failed: data?.failed ?? 0 } }
   } catch (e) {
-    return { ok: false, message: await readError(e) }
+    return { ok: false, message: await explain(await readError(e)) }
   }
 }
 

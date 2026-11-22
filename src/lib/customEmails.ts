@@ -1,9 +1,9 @@
 import { supabase } from '../supabase'
 import { withTimeout } from './net'
-import type { EmailCategory } from './emailCategories'
+import type { EmailCategory, EmailKind } from './emailCategories'
 
-// Custom emails. The owner sends through the send-custom-email function (it holds the email service key and does the
-// skipping of people who turned a category off). People manage their own switches in the email_optouts table.
+// Custom emails. The owner sends through the send-custom-email function (it holds the SMTP login or email service key and does
+// the skipping of people who turned a category off). A "direct" message goes to one person whatever their switches say. People manage their own switches in the email_optouts table.
 export type SendResult = { sent: number; skipped: number; failed: number }
 export type EmailLogRow = { id: string; category: string; subject: string; sent: number; skipped: number; failed: number; created_at: string }
 
@@ -20,7 +20,7 @@ async function readError(error: unknown): Promise<string> {
   return m || 'Could not send. Check your connection and try again.'
 }
 
-export async function sendCustomEmail(args: { category: EmailCategory; subject: string; body: string; userIds: string[]; test?: boolean }): Promise<{ ok: true; data: SendResult } | { ok: false; message: string }> {
+export async function sendCustomEmail(args: { category: EmailKind; subject: string; body: string; userIds: string[]; test?: boolean }): Promise<{ ok: true; data: SendResult } | { ok: false; message: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('send-custom-email', {
       body: { category: args.category, subject: args.subject, body: args.body, user_ids: args.userIds, test: Boolean(args.test) },

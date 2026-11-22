@@ -11,4 +11,9 @@ export const EMAIL_CATEGORIES: { id: EmailCategory; label: string; hint: string;
   { id: 'plus', label: 'Cznnect+', hint: 'News and offers about Cznnect+' },
 ]
 
-export const categoryLabel = (id: string): string => EMAIL_CATEGORIES.find((c) => c.id === id)?.label ?? id
+// A personal message to one person (Admin > Custom emails > Direct message). It is not a category people can switch off, so it
+// is not in the list above and does not show in Settings > Emails.
+export const DIRECT = 'direct'
+export type EmailKind = EmailCategory | typeof DIRECT
+
+export const categoryLabel = (id: string): string => (id === DIRECT ? 'Direct message' : EMAIL_CATEGORIES.find((c) => c.id === id)?.label ?? id)

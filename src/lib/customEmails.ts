@@ -3,6 +3,7 @@ import { withTimeout } from './net'
 import { OFFLINE_MESSAGE, probeConnection, reportNetwork } from './offline'
 import { SUPABASE_URL } from '../config'
 import type { EmailCategory, EmailKind } from './emailCategories'
+import { PROMO_CATEGORIES } from './promoEmails'
 
 // Custom emails. The owner sends through the send-custom-email function (it holds the SMTP login or email service key and does
 // the skipping of people who turned a category off). A "direct" message goes to one person whatever their switches say. People manage their own switches in the email_optouts table.
@@ -80,6 +81,16 @@ export async function setMyOptOut(userId: string, category: EmailCategory, off: 
     const r = off
       ? await withTimeout(supabase.from('email_optouts').upsert({ user_id: userId, category }))
       : await withTimeout(supabase.from('email_optouts').delete().eq('user_id', userId).eq('category', category))
+    return !r.error
+  } catch {
+    return false
+  }
+}
+
+// A new person who unticked "Send me news and updates by email": switch the four promo categories off for them.
+export async function optOutOfPromos(userId: string): Promise<boolean> {
+  try {
+    const r = await withTimeout(supabase.from('email_optouts').upsert(PROMO_CATEGORIES.map((category) => ({ user_id: userId, category }))))
     return !r.error
   } catch {
     return false

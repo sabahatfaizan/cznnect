@@ -18,6 +18,8 @@ import { isPasswordRecoveryEvent } from './lib/auth'
 import { isInstalledWebApp, isNativeApp, parseSettings, thisBuild, type AppSettings } from './lib/appSettings'
 import { mustUpdate } from './lib/updateGate'
 import PermissionsSetup from './components/PermissionsSetup'
+import { applyPromoChoice } from './lib/promoEmails'
+import { optOutOfPromos } from './lib/customEmails'
 import PublicEvent from './components/PublicEvent'
 import { readPublicLink } from './lib/publicEvent'
 
@@ -135,6 +137,14 @@ function AppInner() {
     })
     return () => { clearTimeout(timer); stopOnline(); data.subscription.unsubscribe() }
   }, [])
+
+  // A new account takes the "Send me news and updates by email" choice made before it existed.
+  const userId = session?.user.id
+  const createdAt = session?.user.created_at
+  useEffect(() => {
+    if (!userId || isOffline()) return
+    void applyPromoChoice(userId, createdAt, optOutOfPromos)
+  }, [userId, createdAt])
 
   useEffect(() => {
     if (!configured) return

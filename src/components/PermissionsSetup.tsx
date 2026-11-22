@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { callPlugin, isNative } from '../lib/native'
 import { Icon, type IconName } from './Icons'
+import PromoEmailsCheck from './PromoEmailsCheck'
 
 // Shown once, the first time the Android app is opened: asks for everything the app uses in one go, so nothing
 // pops up unexpectedly later. Each one can still be changed in the phone's settings.
@@ -92,6 +93,7 @@ export default function PermissionsSetup() {
             )
           })}
         </ul>
+        <PromoEmailsCheck />
         {done && <p role="status" className="text-sm text-muted">Done. Anything marked Not allowed can be turned on later in your phone's Settings, under Apps, Cznnect, Permissions.</p>}
         {done ? (
           <button type="button" className="btn btn-primary !min-h-12" onClick={close}>Continue</button>

@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import Logo from './Logo'
 import { nextAuthMode, type AuthMode } from '../lib/auth'
 import { WEB_APP_URL, isNative } from '../lib/native'
+import PromoEmailsCheck from './PromoEmailsCheck'
 
 // Gives up after 20 seconds so the button never stays stuck.
 function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
@@ -66,8 +67,19 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
           }),
         )
         if (error) setMsg({ kind: 'error', text: error.message })
-        else if (!data.session)
-          setMsg({ kind: 'info', text: 'Account created. Check your email to confirm it, then sign in.' })
+        else if (!data.session) {
+          // No confirmation email: with confirmation switched off the sign-up already signs in. If this project still asks
+          // for confirmation, try signing in right away and say plainly what is wrong if it refuses.
+          const again = await withTimeout(supabase.auth.signInWithPassword({ email: email.trim(), password }))
+          if (again.error) {
+            setMsg({
+              kind: 'info',
+              text: /confirm/i.test(again.error.message)
+                ? 'Account created, but this project still asks for email confirmation. The owner can turn it off in Supabase: Authentication, Sign In / Providers, Email, Confirm email.'
+                : 'Account created. Please sign in.',
+            })
+          }
+        }
       } else if (mode === 'reset') {
         // Inside the installed app the page address is https://localhost, which Supabase cannot send anyone back to
         // (it falls back to the website's Site URL). So the app asks for the live web app, where the new password is chosen.
@@ -190,6 +202,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
           </p>
         )}
 
+        {mode === 'up' && !isNative() && <PromoEmailsCheck />}
         <button className="btn btn-primary w-full" disabled={busy}>
           {busy ? 'Please wait...' : mode === 'in' ? 'Sign in' : mode === 'reset' ? 'Send reset link' : 'Get started'}
         </button>

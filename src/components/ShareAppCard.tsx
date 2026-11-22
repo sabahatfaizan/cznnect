@@ -89,15 +89,19 @@ function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   shine.addColorStop(1, 'rgba(255,255,255,0)')
   ctx.fillStyle = shine
   ctx.fill(ring)
+  // The diagonal gets the same three layers as the frame (gradient, glow, highlight). The gradient is solid, so where the
+  // diagonal crosses the frame it resets the paint and the glow and highlight are laid on once: the two join without a seam.
   ctx.save()
   ctx.clip(new Path2D(MARK_OUTER))
-  ctx.strokeStyle = g
   ctx.lineWidth = 10
   ctx.lineCap = 'butt'
-  ctx.beginPath()
-  ctx.moveTo(0, 64)
-  ctx.lineTo(64, 0)
-  ctx.stroke()
+  for (const paint of [g, glow, shine]) {
+    ctx.strokeStyle = paint
+    ctx.beginPath()
+    ctx.moveTo(0, 64)
+    ctx.lineTo(64, 0)
+    ctx.stroke()
+  }
   ctx.restore()
   ctx.restore()
 }

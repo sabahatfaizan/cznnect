@@ -156,6 +156,26 @@ export default function TreeCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, fontTick])
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 })
+  // Zooming out stops once the whole drawing fits the screen, and the picture cannot be dragged past its own edges, so the
+  // empty space around the tree (and the flat ground under it) is never shown. On a side where the drawing is smaller than the
+  // screen it stays centred. The numbers are kept in a ref so the handlers below keep the same identity.
+  const minK = clamp(size.w > 0 && frame.w > 0 ? Math.min(size.w / frame.w, size.h / frame.h) : MIN_K, MIN_K, 1)
+  const limits = useRef({ w: 0, h: 0, fx: 0, fy: 0, fw: 0, fh: 0, minK })
+  limits.current = { w: size.w, h: size.h, fx: frame.x, fy: frame.y, fw: frame.w, fh: frame.h, minK }
+  const keepInside = useCallback((v: View): View => {
+    const { w, h, fx, fy, fw, fh, minK: lo } = limits.current
+    if (w === 0 || h === 0 || fw === 0 || fh === 0) return v
+    const k = clamp(v.k, lo, MAX_K)
+    const axis = (pos: number, room: number, f0: number, len: number) => {
+      const drawn = len * k
+      return drawn <= room ? (room - drawn) / 2 - f0 * k : clamp(pos, room - (f0 + len) * k, -f0 * k)
+    }
+    return { k, x: axis(v.x, w, fx, fw), y: axis(v.y, h, fy, fh) }
+  }, [])
+  // After a resize, a turn of the phone or a new family member, bring the view back inside the new limits.
+  useEffect(() => {
+    if (size.w > 0) setView((v) => keepInside(v))
+  }, [size.w, size.h, frame.x, frame.y, frame.w, frame.h, keepInside])
   // True only while the view glides to a new place (Me, Fit, search). Dragging and pinching stay instant.
   const [gliding, setGliding] = useState(false)
   const glideTimer = useRef<number | undefined>(undefined)
@@ -169,10 +189,10 @@ export default function TreeCanvas({
   const glide = useCallback((next: View) => {
     pauseMotion(700)
     setGliding(true)
-    setView(next)
+    setView(keepInside(next))
     window.clearTimeout(glideTimer.current)
     glideTimer.current = window.setTimeout(() => setGliding(false), 520)
-  }, [pauseMotion])
+  }, [pauseMotion, keepInside])
   // The family branch the camera was last pointed at; the other branches are quieted while it is set.
   const [focusFam, setFocusFam] = useState<string | null>(null)
   const started = useRef(false)
@@ -311,11 +331,11 @@ export default function TreeCanvas({
 
   const zoomAt = useCallback((cx: number, cy: number, factor: number) => {
     setView((v) => {
-      const k = clamp(v.k * factor, MIN_K, MAX_K)
+      const k = clamp(v.k * factor, limits.current.minK, MAX_K)
       const f = k / v.k
-      return { k, x: cx - (cx - v.x) * f, y: cy - (cy - v.y) * f }
+      return keepInside({ k, x: cx - (cx - v.x) * f, y: cy - (cy - v.y) * f })
     })
-  }, [])
+  }, [keepInside])
 
   // Mouse wheel zoom. Added by hand so the page does not scroll at the same time.
   useEffect(() => {
@@ -360,7 +380,7 @@ export default function TreeCanvas({
       if (g.moved) {
         const dx = e.clientX - last.x
         const dy = e.clientY - last.y
-        setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }))
+        setView((v) => keepInside({ ...v, x: v.x + dx, y: v.y + dy }))
       }
     } else if (pointers.current.size === 2 && g.dist > 0) {
       const [a, b] = [...pointers.current.values()]
@@ -398,10 +418,10 @@ export default function TreeCanvas({
     const r = box.current?.getBoundingClientRect()
     const cx = r ? r.width / 2 : 0
     const cy = r ? r.height / 2 : 0
-    if (e.key === 'ArrowLeft') setView((v) => ({ ...v, x: v.x + step }))
-    else if (e.key === 'ArrowRight') setView((v) => ({ ...v, x: v.x - step }))
-    else if (e.key === 'ArrowUp') setView((v) => ({ ...v, y: v.y + step }))
-    else if (e.key === 'ArrowDown') setView((v) => ({ ...v, y: v.y - step }))
+    if (e.key === 'ArrowLeft') setView((v) => keepInside({ ...v, x: v.x + step }))
+    else if (e.key === 'ArrowRight') setView((v) => keepInside({ ...v, x: v.x - step }))
+    else if (e.key === 'ArrowUp') setView((v) => keepInside({ ...v, y: v.y + step }))
+    else if (e.key === 'ArrowDown') setView((v) => keepInside({ ...v, y: v.y - step }))
     else if (e.key === '+' || e.key === '=') zoomAt(cx, cy, 1.2)
     else if (e.key === '-') zoomAt(cx, cy, 1 / 1.2)
     else return

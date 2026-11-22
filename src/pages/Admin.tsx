@@ -18,8 +18,9 @@ import { DEFAULT_MAINTENANCE_MESSAGE, LATEST_APK_URL, LATEST_RELEASE_API, isNati
 import { parseBuildFromNotes } from '../lib/updateGate'
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
+import CustomEmails from '../components/CustomEmails'
 
-type Section = 'app' | 'announcements' | 'downloads' | 'updates' | 'builds' | 'pages' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data'
+type Section = 'app' | 'announcements' | 'downloads' | 'updates' | 'builds' | 'pages' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data' | 'emails'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
@@ -503,6 +504,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'previews', icon: 'search', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'cake', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
     { id: 'share', icon: 'share', title: 'Share the app', hint: 'A banner and pitch to send to anyone' },
+    { id: 'emails', icon: 'send', title: 'Custom emails', hint: 'Send category-based emails to people you choose' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
     { id: 'messages', icon: 'chat', title: 'Messages', hint: overview ? `${overview.messages_total} total · ${overview.messages_today} today` : 'Moderate the family chat' },
     { id: 'data', icon: 'irl', title: 'Meetup data', hint: 'Clear Convoy meetups, check-ins and points' },
@@ -781,6 +783,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           ))}
         </section>
       )}
+
+      {isOwner && current === 'emails' && <CustomEmails users={users} ownerId={userId} />}
 
       {isOwner && current === 'notify' && (
         <section className="card flex flex-col gap-3">

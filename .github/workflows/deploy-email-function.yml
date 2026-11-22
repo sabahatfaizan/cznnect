@@ -1,6 +1,6 @@
-name: Deploy email function
+name: Deploy email functions
 
-# Puts the send-custom-email function on Supabase whenever its code changes on main (or when you press "Run workflow").
+# Puts the email functions (send-custom-email and send-birthday-emails) on Supabase whenever their code changes on main (or when you press "Run workflow").
 # One-time setup: add a repository secret called SUPABASE_ACCESS_TOKEN (make it at supabase.com/dashboard/account/tokens).
 # The SMTP_* secrets live in Supabase itself (Edge Functions > Secrets), not here.
 
@@ -9,11 +9,13 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/send-custom-email/**'
+      - 'supabase/functions/send-birthday-emails/**'
+      - 'supabase/functions/_shared/**'
       - '.github/workflows/deploy-email-function.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-email-function
+  group: deploy-email-functions
   cancel-in-progress: true
 
 jobs:
@@ -32,3 +34,5 @@ jobs:
           version: latest
       - name: Deploy send-custom-email
         run: supabase functions deploy send-custom-email --project-ref "$PROJECT_REF" --use-api
+      - name: Deploy send-birthday-emails (no login check: the daily job has no login, it sends a secret instead)
+        run: supabase functions deploy send-birthday-emails --project-ref "$PROJECT_REF" --use-api --no-verify-jwt

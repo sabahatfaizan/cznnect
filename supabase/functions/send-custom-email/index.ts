@@ -11,8 +11,8 @@
 // Set them with:  supabase secrets set SMTP_HOST=smtp.example.com SMTP_PORT=465 SMTP_USER=... SMTP_PASS=... EMAIL_FROM="Cznnect <hello@example.com>"
 // Deploy: supabase functions deploy send-custom-email
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 import { CATEGORIES, render } from './render.ts'
+import { mailConfig, sendMail, type Mail } from '../_shared/mailer.ts'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com' // same as src/owner.ts
 const MAX_PEOPLE = 200
@@ -23,63 +23,6 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 
-type Mail = { to: string; subject: string; html: string; text: string; replyTo?: string }
-type Outcome = { sent: number; failed: number; firstError: string }
-const why = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 300)
-
-// Your own SMTP server. One connection, one message at a time. Port 465 uses TLS from the start; another port (587) starts
-// plain and the library upgrades it when the server offers STARTTLS.
-async function sendViaSmtp(mails: Mail[], from: string): Promise<Outcome> {
-  const port = Number(Deno.env.get('SMTP_PORT') || 465)
-  const client = new SMTPClient({
-    connection: {
-      hostname: Deno.env.get('SMTP_HOST')!,
-      port,
-      tls: port === 465,
-      auth: { username: Deno.env.get('SMTP_USER')!, password: Deno.env.get('SMTP_PASS')! },
-    },
-  })
-  let sent = 0
-  let failed = 0
-  let firstError = ''
-  let inARow = 0
-  try {
-    for (const [i, m] of mails.entries()) {
-      try {
-        await client.send({ from, to: m.to, subject: m.subject, content: m.text, html: m.html, ...(m.replyTo ? { replyTo: m.replyTo } : {}) })
-        sent++
-        inARow = 0
-      } catch (e) {
-        failed++
-        inARow++
-        if (!firstError) firstError = why(e)
-        // Three in a row with nothing sent means the server or the login is wrong: stop instead of trying everyone.
-        if (sent === 0 && inARow >= 3) { failed += mails.length - i - 1; break }
-      }
-    }
-  } finally {
-    try { await client.close() } catch { /* already closed */ }
-  }
-  return { sent, failed, firstError }
-}
-
-async function sendViaResend(mails: Mail[], from: string, key: string): Promise<Outcome> {
-  let sent = 0
-  let failed = 0
-  let firstError = ''
-  for (let i = 0; i < mails.length; i += 100) {
-    const chunk = mails.slice(i, i + 100)
-    const payload = chunk.map((m) => ({ from, to: [m.to], subject: m.subject, html: m.html, text: m.text, ...(m.replyTo ? { reply_to: m.replyTo } : {}) }))
-    const res = await fetch('https://api.resend.com/emails/batch', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    if (res.ok) sent += chunk.length
-    else { failed += chunk.length; if (!firstError) firstError = (await res.text()).slice(0, 300) }
-  }
-  return { sent, failed, firstError }
-}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -101,11 +44,9 @@ Deno.serve(async (req) => {
     if (!text) return json({ error: 'Write the message.' }, 400)
 
     // How to send: your own SMTP when it is set up, otherwise Resend.
-    const smtp = Boolean(Deno.env.get('SMTP_HOST') && Deno.env.get('SMTP_USER') && Deno.env.get('SMTP_PASS'))
-    const key = Deno.env.get('RESEND_API_KEY')
-    const user = Deno.env.get('SMTP_USER') ?? ''
-    const from = Deno.env.get('EMAIL_FROM') || (smtp && user.includes('@') ? `Cznnect <${user}>` : '')
-    if (!from || (!smtp && !key)) {
+    const cfg = mailConfig()
+    const smtp = cfg.smtp
+    if (!cfg.ready) {
       return json({ error: 'Email sending is not set up yet. Add the secrets SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and EMAIL_FROM for this function (or RESEND_API_KEY and EMAIL_FROM for Resend).' }, 500)
     }
 
@@ -142,7 +83,7 @@ Deno.serve(async (req) => {
     let failed = 0
     let firstError = ''
     if (mails.length) {
-      const out = smtp ? await sendViaSmtp(mails, from) : await sendViaResend(mails, from, key!)
+      const out = await sendMail(mails, cfg)
       sent = out.sent
       failed = out.failed
       firstError = out.firstError

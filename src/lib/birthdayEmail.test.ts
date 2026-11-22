@@ -31,6 +31,15 @@ describe('birthday email', () => {
     expect(r.text).toContain('Open Cznnect: https://sabahatfaizan.github.io/cznnect/')
   })
 
+  it('shows a gift card only when a gift is set, and escapes it', () => {
+    expect(renderBirthday('Sam').html).not.toContain('A birthday gift for you')
+    const r = renderBirthday('Sam', { title: 'A free month of <Cznnect+>', code: 'BDAY-1' })
+    expect(r.html).toContain('A birthday gift for you')
+    expect(r.html).toContain('&lt;Cznnect+&gt;')
+    expect(r.html).toContain('BDAY-1')
+    expect(r.text).toContain('Code: BDAY-1')
+  })
+
   it('still reads well when there is no name', () => {
     expect(renderBirthday('  ').subject).toContain('friend')
   })

@@ -7,6 +7,8 @@
 // Secrets for this function (Supabase > Edge Functions > Secrets), besides the mail ones used by send-custom-email:
 //   CRON_SECRET          any long random text; the daily job sends the same text so only it can start this function
 //   BIRTHDAY_TIMEZONE    optional, for example Asia/Dhaka (the default). Decides what "today" means.
+//   BIRTHDAY_GIFT        optional. A present shown in the email, for example "A free month of Cznnect+". Nothing is shown if it is not set.
+//   BIRTHDAY_GIFT_DETAIL optional, one line of small print under the gift.   BIRTHDAY_GIFT_CODE  optional, a code to show with it.
 // Deploy WITHOUT the login check, because the daily job has no login:  supabase functions deploy send-birthday-emails --no-verify-jwt
 // Add ?dry=1 to the address to see who would get an email without sending anything.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -26,6 +28,8 @@ Deno.serve(async (req) => {
     if (!dry && !cfg.ready) return json({ error: 'Email sending is not set up yet (SMTP_HOST, SMTP_USER, SMTP_PASS, or RESEND_API_KEY and EMAIL_FROM).' }, 500)
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+    const giftTitle = (Deno.env.get('BIRTHDAY_GIFT') ?? '').trim()
+    const gift = giftTitle ? { title: giftTitle.slice(0, 120), detail: (Deno.env.get('BIRTHDAY_GIFT_DETAIL') ?? '').trim().slice(0, 200) || undefined, code: (Deno.env.get('BIRTHDAY_GIFT_CODE') ?? '').trim().slice(0, 40) || undefined } : undefined
     const today = todayIn(Deno.env.get('BIRTHDAY_TIMEZONE') || 'Asia/Dhaka')
 
     const everyone: Person[] = []
@@ -60,7 +64,7 @@ Deno.serve(async (req) => {
       // Claim this year first, so two runs at once cannot both send. If sending fails the claim is given back for the next run.
       const claim = await admin.from('birthday_email_log').insert({ user_id: p.id, year: today.year })
       if (claim.error) { skipped++; continue }
-      const mail = renderBirthday(name)
+      const mail = renderBirthday(name, gift)
       const out = await sendMail([{ to: email, subject: mail.subject, html: mail.html, text: mail.text }], cfg)
       if (out.sent) sent++
       else { failed++; await admin.from('birthday_email_log').delete().eq('user_id', p.id).eq('year', today.year) }

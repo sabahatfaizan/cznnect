@@ -1,7 +1,8 @@
 import { THEMES } from '../themes/catalog'
 import type { ThemePref } from '../theme'
 
-// The theme cards in Settings. Liquid Glass shows only for the owner.
+// The theme cards in Settings. Everyone has Light and Dark. Midnight and Dusk are shown only with Cznnect+, and Liquid Glass
+// only for the owner. Nothing is shown locked: an account without Cznnect+ simply has the two themes.
 export default function ThemePicker({
   theme,
   isOwner,
@@ -13,14 +14,13 @@ export default function ThemePicker({
   plus: boolean
   onPick: (id: ThemePref) => void
 }) {
-  const visible = THEMES.filter((t) => t.id !== 'glass' || isOwner)
+  const visible = THEMES.filter((t) => (t.id === 'glass' ? isOwner : t.badge === 'Cznnect+' ? plus : true))
 
   return (
     <div className="mt-3 grid grid-cols-2 gap-3">
       {visible.map((t, i) => {
         const p = t.preview
         const on = theme === t.id
-        const locked = t.badge === 'Cznnect+' && !plus
         return (
           <div key={t.id} style={{ ['--i' as string]: i }} className={`theme-card ${on ? 'theme-card-on' : ''}`}>
             <div className="p-2" style={{ background: p.page, color: p.ink }}>
@@ -46,10 +46,9 @@ export default function ThemePicker({
                 type="button"
                 aria-pressed={on}
                 className={`btn w-full !min-h-0 !px-2 !py-1.5 text-xs ${on ? 'btn-primary' : 'btn-plain'}`}
-                aria-disabled={locked}
                 onClick={() => onPick(t.id)}
               >
-                {on ? 'Selected' : locked ? 'Cznnect+' : 'Use theme'}
+                {on ? 'Selected' : 'Use theme'}
               </button>
             </div>
           </div>

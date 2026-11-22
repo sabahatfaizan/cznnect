@@ -1,9 +1,11 @@
-// App icon: the picture on the phone's Home Screen, the browser tab and new shortcuts. Light (pale square, blue mark)
-// and Dark (blue square, white mark) follow the app's light and dark themes and are free. The coloured icons are part of
-// Cznnect+ (the paid tier). The logo inside the app is not affected.
+// App icon: the picture on the phone's Home Screen, the browser tab and new shortcuts. Everyone gets Light (pale square,
+// blue mark) or Dark (blue square, white mark), and it follows the app's theme by itself: there is nothing to choose.
+// The coloured icons are part of Cznnect+ (the paid tier), and only an account with it can pick one. The logo inside the
+// app is not affected.
 // An icon that is already on a phone's Home Screen keeps its look until the app is removed and added again.
 import { setLauncherIcon } from './lib/native'
 import { PLUS_EVENT, cachedPlus } from './lib/plus'
+import { getThemePref, type ThemePref } from './theme'
 
 export type IconId = 'light' | 'dark' | 'sunset' | 'aurora' | 'orchid' | 'forest' | 'graphite'
 
@@ -51,9 +53,21 @@ function setLink(rel: string, href: string | null) {
   el.setAttribute('href', href ?? el.dataset.original)
 }
 
-export function applyIcon(wanted: IconId = getIconPref()) {
-  // The coloured icons are for Cznnect+; without it the Light icon is shown.
-  const id: IconId = isPlusIcon(wanted) && !cachedPlus() ? 'light' : wanted
+// The free icon that goes with a theme: Light for the Light theme, Dark for every dark one.
+export function iconForTheme(theme: ThemePref): IconId {
+  return theme === 'light' ? 'light' : 'dark'
+}
+
+// The icon this account shows right now. A coloured icon is only used by an account with Cznnect+ that has picked one;
+// otherwise it is the theme's own icon, so it changes by itself when the theme goes from Light to Dark. The saved pick is
+// kept (not erased) when Cznnect+ is off, so it comes back if the account gets Cznnect+ again.
+export function effectiveIcon(plus: boolean = cachedPlus(), theme: ThemePref = getThemePref()): IconId {
+  const pick = getIconPref()
+  return plus && isPlusIcon(pick) ? pick : iconForTheme(theme)
+}
+
+export function applyIcon(plus: boolean = cachedPlus()) {
+  const id = effectiveIcon(plus)
   if (id === 'light') {
     setLink('icon', null)
     setLink('apple-touch-icon', null)
@@ -63,15 +77,16 @@ export function applyIcon(wanted: IconId = getIconPref()) {
   }
   // In the Android app this also switches the launcher icon on the home screen.
   // The home screen label also reads "Cznnect+" for a Cznnect+ account (the app uses a second launcher entry for it).
-  setLauncherIcon(id, cachedPlus())
+  setLauncherIcon(id, plus)
 }
 if (typeof window !== 'undefined') window.addEventListener(PLUS_EVENT, () => applyIcon())
 
+// Saves the coloured icon an account with Cznnect+ picked ('light' means "follow the theme"), then shows it.
 export function setIconPref(id: IconId) {
   try {
     localStorage.setItem(KEY, id)
   } catch {
     // The icon still changes for this visit.
   }
-  applyIcon(id)
+  applyIcon()
 }

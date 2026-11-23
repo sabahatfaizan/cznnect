@@ -102,7 +102,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
         <div className="flex flex-col gap-1"><Logo /><h1 className="font-display text-3xl font-extrabold leading-tight">Stay connected.</h1></div>
         <form onSubmit={submit} className="card flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="font-display text-xl font-bold">{mode === 'in' ? 'Welcome back' : mode === 'reset' ? 'Reset your password' : step === 1 ? 'Create your account' : 'A little about you'}</h2>
+            <h2 className="font-display text-xl font-bold">{mode === 'in' ? 'Welcome back' : mode === 'reset' ? 'Reset your password' : step === 1 ? 'Create your account' : null}</h2>
             {signup && <span className="text-xs font-semibold text-muted">Step {step} of 2</span>}
           </div>
           {(!signup || step === 1) && <>

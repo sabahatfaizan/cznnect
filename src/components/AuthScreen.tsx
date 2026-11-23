@@ -114,8 +114,8 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
           {signup && step === 2 && <>
             <div><label className="label" htmlFor="birthday">Birthday</label><input id="birthday" type="date" className="input" value={birthday} min={BIRTHDAY_MIN} max={todayISO()} onChange={e => setBirthday(e.target.value)} autoComplete="bday" required /><p className="mt-1 text-xs text-muted">Your birthday is visible to members of your family on Cznnect.</p></div>
             <div className="flex flex-col gap-2 text-sm">
-              <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={terms} onChange={e => setTerms(e.target.checked)} /><span>I agree to the <a className="link inline min-h-0" href={import.meta.env.BASE_URL + 'terms'}>Terms &amp; Conditions</a>.</span></label>
-              <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={privacy} onChange={e => setPrivacy(e.target.checked)} /><span>I have read the <a className="link inline min-h-0" href={import.meta.env.BASE_URL + 'privacy'}>Privacy Policy</a>.</span></label>
+              <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={terms} onChange={e => setTerms(e.target.checked)} /><span>I agree to the <a className="link inline min-h-0" href={import.meta.env.BASE_URL + 'terms.html'}>Terms &amp; Conditions</a>.</span></label>
+              <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={privacy} onChange={e => setPrivacy(e.target.checked)} /><span>I have read the <a className="link inline min-h-0" href={import.meta.env.BASE_URL + 'privacy.html'}>Privacy Policy</a>.</span></label>
               <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={eligible} onChange={e => setEligible(e.target.checked)} /><span>I confirm my information is accurate and I am eligible to use Cznnect.</span></label>
             </div>
             <PromoEmailsCheck />

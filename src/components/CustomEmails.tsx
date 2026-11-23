@@ -8,12 +8,6 @@ import { shownName } from '../lib/avatars'
 // "Direct message" is different: one person, any message, sent whatever their email switches say, replies come to you.
 type U = { user_id: string; display_name: string; nickname: string | null; email: string | null }
 
-// The same colours the email uses for each kind, so the preview matches what people receive.
-const ACCENTS: Record<string, [string, string]> = {
-  important: ['#b91c1c', '#f87171'], updates: ['#1d4ed8', '#60a5fa'], events: ['#6d28d9', '#a78bfa'],
-  birthdays: ['#be185d', '#f9a8d4'], plus: ['#a16207', '#fbbf24'], direct: ['#0f766e', '#5eead4'],
-}
-
 export default function CustomEmails({ users, ownerId }: { users: U[] | null; ownerId: string }) {
   const [category, setCategory] = useState<EmailKind>('updates')
   const direct = category === DIRECT
@@ -46,7 +40,6 @@ export default function CustomEmails({ users, ownerId }: { users: U[] | null; ow
   const cat = direct
     ? { id: DIRECT, label: 'Direct message', hint: 'A personal message to one person', required: true }
     : EMAIL_CATEGORIES.find((c) => c.id === category)!
-  const accent = ACCENTS[cat.id] ?? ['#111827', '#4b5563']
   const person = direct && picked.size === 1 ? withEmail.find((u) => picked.has(u.user_id)) : undefined
 
   // A direct message has exactly one person: choosing someone replaces the last choice.

@@ -126,7 +126,15 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
           {signup && step === 2 && <button type="button" className="btn btn-plain w-full !min-h-10" onClick={() => { setStep(1); setMsg(null) }}>Back</button>}
         </form>
         <button type="button" className="btn btn-plain !min-h-10 w-full !text-sm" onClick={() => changeMode(nextAuthMode(mode))}>{mode === 'up' ? 'Already a member? Sign in' : mode === 'reset' ? 'Back to sign in' : 'New to Cznnect? Join Cznnect'}</button>
-        {apps && (apps.android || apps.ios) && <div className="flex items-center justify-center gap-4 text-sm"><span className="text-muted">Get the app</span>{apps.android && <a href={LATEST_APK_URL} download className="link">Android</a>}{apps.ios && <button type="button" className="link" onClick={apps.onIos}>iPhone</button>}</div>}
+        {apps && (apps.android || apps.ios) && (
+          <div className="flex flex-col gap-2">
+            <p className="text-center text-xs text-muted">Get the app</p>
+            <div className={`grid gap-3 ${apps.android && apps.ios ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {apps.android && <a href={LATEST_APK_URL} download className="btn btn-plain !min-h-11 gap-2 !text-sm no-underline" aria-label="Get the Android app"><AndroidIcon /><span>Android</span></a>}
+              {apps.ios && <button type="button" onClick={apps.onIos} className="btn btn-plain !min-h-11 gap-2 !text-sm" aria-label="iPhone: add Cznnect to your Home Screen"><AppleIcon /><span>iPhone</span></button>}
+            </div>
+          </div>
+        )}
         <p className="text-center text-xs text-muted">© 2026 Sabahat Faizan. All rights reserved.</p>
       </div>
     </main>

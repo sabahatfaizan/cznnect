@@ -35,9 +35,9 @@ jobs:
       - name: Deploy send-custom-email
         run: |
           set -o pipefail
-          supabase functions deploy send-custom-email --project-ref "$PROJECT_REF" --use-api 2>&1 | tee out.txt || { echo "::error title=send-custom-email deploy failed::$(grep -v '^$' out.txt | tail -n 12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+          supabase functions deploy send-custom-email --project-ref "$PROJECT_REF" --use-api --yes 2>&1 | tee out.txt || { echo "::error title=send-custom-email deploy failed::$(grep -v '^$' out.txt | tail -n 12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
       # No login check on this one: the daily job has no login, it sends a secret instead.
       - name: Deploy send-birthday-emails
         run: |
           set -o pipefail
-          supabase functions deploy send-birthday-emails --project-ref "$PROJECT_REF" --use-api --no-verify-jwt 2>&1 | tee out.txt || { echo "::error title=send-birthday-emails deploy failed::$(grep -v '^$' out.txt | tail -n 12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+          supabase functions deploy send-birthday-emails --project-ref "$PROJECT_REF" --use-api --yes --no-verify-jwt 2>&1 | tee out.txt || { echo "::error title=send-birthday-emails deploy failed::$(grep -v '^$' out.txt | tail -n 12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }

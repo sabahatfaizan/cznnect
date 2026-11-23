@@ -49,6 +49,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
   const [mode, setMode] = useState<AuthMode>('up')
   const [step, setStep] = useState<1 | 2>(1)
   const [birthday, setBirthday] = useState('')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [terms, setTerms] = useState(false)
@@ -73,7 +74,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
       if (mode === 'up') {
         const { data, error } = await withTimeout(supabase.auth.signUp({
           email: email.trim(), password,
-          options: { data: { birthday, terms_accepted: true, privacy_accepted: true, eligibility_confirmed: true, legal_version: '2026-11-23' } },
+          options: { data: { display_name: name.trim(), birthday, terms_accepted: true, privacy_accepted: true, eligibility_confirmed: true, legal_version: '2026-11-23' } },
         }))
         if (error) setMsg({ kind: 'error', text: error.message })
         else if (!data.session) {
@@ -97,7 +98,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
   const signup = mode === 'up'
   return (
     <main className="auth-viewport mx-auto flex w-full max-w-md flex-col justify-between px-5">
-      <div className="flex flex-col gap-3">
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
         <div className="flex flex-col gap-1"><Logo /><h1 className="font-display text-3xl font-extrabold leading-tight">Stay connected.</h1></div>
         <form onSubmit={submit} className="card flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
@@ -105,6 +106,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
             {signup && <span className="text-xs font-semibold text-muted">Step {step} of 2</span>}
           </div>
           {(!signup || step === 1) && <>
+            {signup && <div><label className="label" htmlFor="display-name">Name</label><input id="display-name" type="text" className="input" value={name} onChange={e => setName(e.target.value)} autoComplete="name" maxLength={80} required /></div>}
             <div><label className="label" htmlFor="email">Email</label><input id="email" type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required /></div>
             {mode !== 'reset' && <div><label className="label" htmlFor="password">Password</label><div className="relative">
               <input id="password" type={showPassword ? 'text' : 'password'} className="input pr-12" value={password} onChange={e => setPassword(e.target.value)} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} minLength={6} required />

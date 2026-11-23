@@ -96,7 +96,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
 
   const signup = mode === 'up'
   return (
-    <main className="auth-viewport mx-auto flex w-full max-w-md flex-col justify-center px-5">
+    <main className="auth-viewport mx-auto flex w-full max-w-md flex-col justify-between px-5">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1"><Logo /><h1 className="font-display text-3xl font-extrabold leading-tight">Stay connected.</h1></div>
         <form onSubmit={submit} className="card flex flex-col gap-3 p-4">
@@ -126,6 +126,8 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
           {signup && step === 2 && <button type="button" className="btn btn-plain w-full !min-h-10" onClick={() => { setStep(1); setMsg(null) }}>Back</button>}
         </form>
         <button type="button" className="btn btn-plain !min-h-10 w-full !text-sm" onClick={() => changeMode(nextAuthMode(mode))}>{mode === 'up' ? 'Already a member? Sign in' : mode === 'reset' ? 'Back to sign in' : 'New to Cznnect? Join Cznnect'}</button>
+      </div>
+      <footer className="mt-auto flex flex-col gap-3 pb-1 pt-4">
         {apps && (apps.android || apps.ios) && (
           <div className="flex flex-col gap-2">
             <p className="text-center text-xs text-muted">Get the app</p>
@@ -136,7 +138,7 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
           </div>
         )}
         <p className="text-center text-xs text-muted">© 2026 Sabahat Faizan. All rights reserved.</p>
-      </div>
+      </footer>
     </main>
   )
 }

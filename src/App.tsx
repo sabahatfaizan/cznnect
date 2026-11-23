@@ -56,7 +56,7 @@ function NetworkStatus() {
 }
 
 export default function App() {
-  const publicPath = window.location.pathname.replace(/\\/+$/, '')
+  const publicPath = window.location.pathname.replace(/\/+$/, '')
   if (publicPath.endsWith('/terms') || publicPath.endsWith('/privacy')) return <LegalPages />
   // An invite QR scanned with a plain camera app opens ?join=CODE. That page works with no account, no app and no sign-in.
   if (readPublicLink() && !isNativeApp()) return <PublicEvent />

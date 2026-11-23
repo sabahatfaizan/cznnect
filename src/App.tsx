@@ -6,7 +6,6 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { SUPABASE_URL, configured } from './config'
 import AuthScreen from './components/AuthScreen'
-import LegalPages from './components/LegalPages'
 import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
 import { ServiceNotice, InstallHelp } from './components/ServiceNotice'
@@ -56,8 +55,6 @@ function NetworkStatus() {
 }
 
 export default function App() {
-  const publicPath = window.location.pathname.replace(/\/+$/, '')
-  if (publicPath.endsWith('/terms') || publicPath.endsWith('/privacy')) return <LegalPages />
   // An invite QR scanned with a plain camera app opens ?join=CODE. That page works with no account, no app and no sign-in.
   if (readPublicLink() && !isNativeApp()) return <PublicEvent />
   return (

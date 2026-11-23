@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
     const mails: Mail[] = people.map((p) => {
       const s = (test ? '[Test] ' : '') + subj
-      const r = render(cat, s, text, p.name)
+      const r = render(cat, s, text, p.name, Deno.env.get('MAIL_ADDRESS') ?? '')
       return { to: p.email, subject: s, html: r.html, text: r.text, ...(direct && me.email ? { replyTo: me.email } : {}) }
     })
 

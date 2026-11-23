@@ -72,17 +72,17 @@ export function render(category: string, subject: string, body: string, name: st
     '</td></tr></table></td></tr></table></body></html>'
 
   const textAddress = postalAddress
-    ? '\\n' + postalAddress.split('|').map((line) => line.trim()).filter(Boolean).join('\\n')
+    ? '\n' + postalAddress.split('|').map((line) => line.trim()).filter(Boolean).join('\n')
     : ''
-  const text = 'Hi ' + (name || 'there') + ',\\n\\n' + subject + '\\n\\n' + body +
-    '\\n\\nOpen Cznnect: ' + SITE + '\\n\\n© ' + new Date().getFullYear() + ' Cznnect' +
-    textAddress + '\\n\\n' + reason + (category === 'direct' ? '\\nYou can reply directly to this email.' : '')
+  const text = 'Hi ' + (name || 'there') + ',\n\n' + subject + '\n\n' + body +
+    '\n\nOpen Cznnect: ' + SITE + '\n\n© ' + new Date().getFullYear() + ' Cznnect' +
+    textAddress + '\n\n' + reason + (category === 'direct' ? '\nYou can reply directly to this email.' : '')
   return { html, text }
 }
 
 function linkify(escaped: string): string {
-  return escaped.replace(/https?:\\/\\/[^\\s<]+/g, (match) => {
-    const tail = match.match(/[.,;:!?)\\]]+$/)?.[0] ?? ''
+  return escaped.replace(/https?:\/\/[^\s<]+/g, (match) => {
+    const tail = match.match(/[.,;:!?)\]]+$/)?.[0] ?? ''
     const url = tail ? match.slice(0, -tail.length) : match
     return '<a href="' + url + '" style="color:#1a56db;text-decoration:underline">' + url + '</a>' + tail
   })

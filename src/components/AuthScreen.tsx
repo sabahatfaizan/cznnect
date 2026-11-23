@@ -5,6 +5,7 @@ import Logo from './Logo'
 import { nextAuthMode, type AuthMode } from '../lib/auth'
 import { WEB_APP_URL, isNative } from '../lib/native'
 import PromoEmailsCheck from './PromoEmailsCheck'
+import { BIRTHDAY_MIN, checkBirthday, todayISO } from '../lib/birthdayInput'
 
 // Gives up after 20 seconds so the button never stays stuck.
 function withTimeout<T>(p: PromiseLike<T>, ms = 20000): Promise<T> {
@@ -47,6 +48,7 @@ function AppleIcon() {
 export default function AuthScreen({ apps }: { apps?: GetApps }) {
   const [mode, setMode] = useState<AuthMode>('up')
   const [name, setName] = useState('')
+  const [birthday, setBirthday] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -59,11 +61,17 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
     setMsg(null)
     try {
       if (mode === 'up') {
+        const problem = checkBirthday(birthday)
+        if (problem) {
+          setMsg({ kind: 'error', text: problem })
+          setBusy(false)
+          return
+        }
         const { data, error } = await withTimeout(
           supabase.auth.signUp({
             email: email.trim(),
             password,
-            options: { data: { display_name: name.trim() } },
+            options: { data: { display_name: name.trim(), birthday } },
           }),
         )
         if (error) setMsg({ kind: 'error', text: error.message })
@@ -132,6 +140,26 @@ export default function AuthScreen({ apps }: { apps?: GetApps }) {
               autoComplete="name"
               required
             />
+          </div>
+        )}
+
+        {mode === 'up' && (
+          <div>
+            <label className="label" htmlFor="birthday">
+              Birthday
+            </label>
+            <input
+              id="birthday"
+              type="date"
+              className="input"
+              value={birthday}
+              min={BIRTHDAY_MIN}
+              max={todayISO()}
+              onChange={(e) => setBirthday(e.target.value)}
+              autoComplete="bday"
+              required
+            />
+            <p className="mt-1 text-xs text-muted">Your family sees it, and you get a birthday wish from us.</p>
           </div>
         )}
 

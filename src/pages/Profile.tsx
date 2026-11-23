@@ -1,3 +1,4 @@
+import { BIRTHDAY_MIN, checkBirthday, todayISO } from '../lib/birthdayInput'
 import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../supabase'
 import Avatar from '../components/Avatar'
@@ -74,13 +75,18 @@ export default function Profile({ userId }: { userId: string }) {
 
   async function save(e: FormEvent) {
     e.preventDefault()
+    const problem = checkBirthday(birthday)
+    if (problem) {
+      setMsg({ kind: 'error', text: problem })
+      return
+    }
     setBusy(true)
     setMsg(null)
     const p = await supabase
       .from('profiles')
       .update({
         display_name: name.trim(),
-        birthday: birthday || null,
+        birthday,
         nickname: nickname.trim() || null,
         bio: bio.trim() || null,
         avatar: typo ? encodeTypoAvatar(typo) : symbol ? encodeAvatar({ symbol, color }) : null,
@@ -135,7 +141,7 @@ export default function Profile({ userId }: { userId: string }) {
             <label className="label" htmlFor="p-birthday">
               Birthday
             </label>
-            <input id="p-birthday" type="date" className="input" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
+            <input id="p-birthday" type="date" className="input" value={birthday} min={BIRTHDAY_MIN} max={todayISO()} onChange={(e) => setBirthday(e.target.value)} required />
           </div>
           <div>
             <p className="label">Email</p>

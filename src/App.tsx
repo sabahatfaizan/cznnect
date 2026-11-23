@@ -10,6 +10,7 @@ import PasswordRecoveryScreen from './components/PasswordRecoveryScreen'
 import Splash, { prefersReducedMotion } from './components/Splash'
 import { ServiceNotice, InstallHelp } from './components/ServiceNotice'
 import Authed from './Authed'
+import BirthdayGate from './components/BirthdayGate'
 import AdminApp from './AdminApp'
 import EntryChooser from './components/EntryChooser'
 import { setEntryMode, useEntryMode } from './lib/entryMode'
@@ -214,5 +215,5 @@ function AppInner() {
   // The owner chooses how to come in: as the Administrator or as a family member.
   if (isOwner && entryMode === null) return <><EntryChooser /><NetworkStatus /></>
   if (isOwner && entryMode === 'admin') return <><AdminApp userId={session.user.id} live={Boolean(session.access_token)} /><NetworkStatus /></>
-  return <Authed userId={session.user.id} email={session.user.email ?? ''} live={Boolean(session.access_token)} />
+  return <BirthdayGate userId={session.user.id} live={Boolean(session.access_token)}><Authed userId={session.user.id} email={session.user.email ?? ''} live={Boolean(session.access_token)} /></BirthdayGate>
 }

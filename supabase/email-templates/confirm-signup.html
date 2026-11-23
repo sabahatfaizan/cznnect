@@ -1,9 +1,29 @@
-<!-- Supabase > Authentication > Emails > Confirm signup. Subject: Welcome to Cznnect, from Sabahat Faizan -->
-<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
-  <h2 style="margin:0 0 12px">Welcome to Cznnect</h2>
-  <p>I built Cznnect to keep our family close: the tree, the places we have been, the plans we make and the events we share. I am really glad you are here.</p>
-  <p>Please confirm your email to finish setting up your account:</p>
-  <p><a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#111;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold">Confirm my email</a></p>
-  <p>If anything is confusing or broken, tell me and I will fix it.</p>
-  <p style="margin-top:24px"><strong>Sabahat Faizan</strong><br><span style="color:#666;font-size:13px">Creator of Cznnect</span></p>
+<!-- Supabase > Authentication > Emails > Confirm signup. Subject: Welcome to Cznnect -->
+<div style="background:#f4f5f7;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e3e5e8;border-radius:8px;">
+    <tr>
+      <td style="padding:28px 32px 0;font-size:16px;font-weight:bold;letter-spacing:0.3px;color:#202124;">Cznnect</td>
+    </tr>
+    <tr>
+      <td style="padding:24px 32px 8px;">
+        <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;font-weight:normal;color:#202124;">Let's get you Cznnected</h1>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3c4043;">Your Cznnect account is almost ready. Confirm your email address to finish setting it up.</p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3c4043;">Once confirmed, you can build your family tree, add relatives and keep your family's history in one place.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 32px 32px;">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#1a56db;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15px;padding:12px 24px;border-radius:6px;">Confirm email address</a>
+      </td>
+    </tr>
+    <tr><td style="padding:0 32px;"><div style="border-top:1px solid #e3e5e8;"></div></td></tr>
+    <tr>
+      <td style="padding:28px 32px 32px;text-align:center;font-size:12px;line-height:1.7;color:#80868b;">
+        <div style="font-size:15px;font-weight:bold;letter-spacing:0.3px;color:#80868b;margin-bottom:12px;">Cznnect</div>
+        &copy; 2026 Cznnect<br>
+        [Add your real postal address here]<br><br>
+        You have received this email because you created a Cznnect account.
+      </td>
+    </tr>
+  </table>
 </div>

@@ -1,7 +1,7 @@
 // "Send me news and updates by email": the small tick box shown to new people (on the permissions screen in the app, and on the
 // sign-up form on the website). It is asked before the account exists, so the choice waits on the device and is applied once
 // the new account signs in. Ticked (the default) changes nothing: promo emails flow, and the switches in Settings > Emails still
-// work. Unticked turns the four promo categories off for that account. Important notices and direct messages are not promo.
+// work. The box is unchecked by default; only an explicit opt-in enables these emails. Important notices and direct messages are not promo.
 export const PROMO_KEY = 'cznnect-promo-emails'
 export const PROMO_CATEGORIES = ['updates', 'events', 'birthdays', 'plus'] as const
 const NEW_ACCOUNT_MS = 2 * 24 * 60 * 60 * 1000
@@ -10,7 +10,7 @@ type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 const local = (): Store | null => { try { return localStorage } catch { return null } }
 
 export function readPromoChoice(store: Store | null = local()): boolean {
-  try { return store?.getItem(PROMO_KEY) !== '0' } catch { return true }
+  try { return store?.getItem(PROMO_KEY) === '1' } catch { return false }
 }
 
 export function savePromoChoice(on: boolean, store: Store | null = local()) {

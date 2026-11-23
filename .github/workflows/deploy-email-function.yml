@@ -2,6 +2,7 @@ name: Deploy email functions
 
 # Puts the email functions (send-custom-email and send-birthday-emails) on Supabase whenever their code changes on main (or when you press "Run workflow").
 # One-time setup: add a repository secret called SUPABASE_ACCESS_TOKEN (make it at supabase.com/dashboard/account/tokens).
+# (Needs a Supabase token that is allowed to write Edge Functions.)
 # The SMTP_* secrets live in Supabase itself (Edge Functions > Secrets), not here.
 
 on:

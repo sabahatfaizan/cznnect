@@ -8,11 +8,11 @@ const memory = () => {
 const justNow = () => new Date().toISOString()
 
 describe('promo email choice', () => {
-  it('is ticked by default and remembers a change', () => {
+  it('is unchecked by default and remembers an explicit opt-in', () => {
     const s = memory()
-    expect(readPromoChoice(s)).toBe(true)
-    savePromoChoice(false, s)
     expect(readPromoChoice(s)).toBe(false)
+    savePromoChoice(true, s)
+    expect(readPromoChoice(s)).toBe(true)
   })
 
   it('turns promo emails off for a new account that unticked the box, once', async () => {

@@ -2199,3 +2199,14 @@ html.static-page, html.static-page body { overflow: hidden; overscroll-behavior:
 
 /* Cznnect+: the + is as large as the letters and sits on the same line, so the name reads "Cznnect+". */
 .wordmark-plus { margin-left: 0.04em; font-size: 1em; line-height: 1; }
+
+
+/* The sign-in surface is deliberately viewport-locked so the app links remain visible without scrolling. */
+.auth-viewport {
+  height: 100dvh;
+  min-height: 100svh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}

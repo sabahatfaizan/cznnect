@@ -18,7 +18,7 @@ function footerText(category: string): string {
 // Each kind of email has a colour pair (strong, soft) and a small picture for the round badge at the top.
 export const ACCENTS: Record<string, [string, string]> = {
   important: ['#b91c1c', '#fde8e8'], updates: ['#2f4fd8', '#e6ebfb'], events: ['#6d3fd6', '#eee8fb'],
-  birthdays: ['#c2410c', '#ffeddc'], plus: ['#a16207', '#fdf1d3'], direct: ['#0f766e', '#dff5f2'],
+  birthdays: ['#0891b2', '#dcf4fa'], plus: ['#a16207', '#fdf1d3'], direct: ['#475569', '#eceff3'],
 }
 const BADGES: Record<string, string> = { important: '🔔', updates: '🚀', events: '🎉', birthdays: '🎂', plus: '⭐', direct: '✉️' }
 const BLUE = '#2f4fd8'

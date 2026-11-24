@@ -56,7 +56,7 @@ export function render(category: string, subject: string, body: string, name: st
   const link = 'color:#5f6368;text-decoration:underline;font-weight:bold'
   const links = [
     `<a href="${SITE}" style="${link}">Open Cznnect</a>`,
-    ...(switchable ? [`<a href="${PREFERENCES_URL}" style="${link}">Preferences</a>`, `<a href="${PREFERENCES_URL}" style="${link}">Unsubscribe</a>`] : []),
+    ...(switchable ? [`<a href="${PREFERENCES_URL}" style="${link}">Email settings</a>`] : []),
     `<a href="${PRIVACY_URL}" style="${link}">Privacy Policy</a>`,
   ].join(' &nbsp;&middot;&nbsp; ')
   const configuredAddress = postalAddress.split('|').map((line) => line.trim()).filter(Boolean)
@@ -97,7 +97,7 @@ ${brand(34, '#80868b')}
 ${esc(footer)}<br><br>${links}<br><br>
 &copy; ${year} Cznnect<br>${address}
 </td></tr></table></td></tr></table></td></tr></table></body></html>`
-  const textLinks = [`Open Cznnect: ${SITE}`, ...(switchable ? [`Preferences / unsubscribe: ${PREFERENCES_URL} (Settings, then Emails)`] : []), `Privacy Policy: ${PRIVACY_URL}`].join('\n')
+  const textLinks = [`Open Cznnect: ${SITE}`, ...(switchable ? [`Email settings: ${PREFERENCES_URL} (Settings, then Emails)`] : []), `Privacy Policy: ${PRIVACY_URL}`].join('\n')
   const text = `Hi ${name},\n\n${subject}\n\n${body}\n\nRegards,\nSabahat Faizan\nCreator of Cznnect\n\n${footer}\n\n© ${year} Cznnect\n${textAddress}\n\n${textLinks}`
   return { html, text }
 }

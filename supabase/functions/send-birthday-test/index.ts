@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Use POST to send a test email.' }, 405)
   try {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-    const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\\s+/i, '')
+    const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
     if (!jwt) return json({ error: 'Sign in first.' }, 401)
     const { data: auth, error: authError } = await admin.auth.getUser(jwt)
     const me = auth.user

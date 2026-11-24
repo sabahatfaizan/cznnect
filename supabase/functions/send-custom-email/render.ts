@@ -16,12 +16,11 @@ function footerText(category: string): string {
 }
 
 // Each kind of email has a colour pair (strong, soft) and a small picture for the round badge at the top.
-export const ACCENTS: Record<string, [string, string]> = {
-  important: ['#b91c1c', '#fde8e8'], updates: ['#2f4fd8', '#e6ebfb'], events: ['#6d3fd6', '#eee8fb'],
-  birthdays: ['#0891b2', '#dcf4fa'], plus: ['#a16207', '#fdf1d3'], direct: ['#475569', '#eceff3'],
-}
+export const ACCENTS: Record<string, [string, string]> = Object.fromEntries(
+  ['important', 'updates', 'events', 'birthdays', 'plus', 'direct'].map((k) => [k, ['#14285c', '#e8edf8']]),
+)
 const BADGES: Record<string, string> = { important: '🔔', updates: '🚀', events: '🎉', birthdays: '🎂', plus: '⭐', direct: '✉️' }
-const BLUE = '#2f4fd8'
+const BLUE = '#14285c'
 export const LOGO_URL = SITE + 'icons/icon-192.png'
 
 function linkify(escaped: string, colour: string): string {
@@ -45,7 +44,7 @@ export function render(category: string, subject: string, body: string, name: st
   const blocks = body.split(/\n{2,}/).map((block) => {
     const lines = block.split('\n')
     if (lines.length && lines.every((l) => /^\s*[-•*]\s+/.test(l))) {
-      const items = lines.map((l) => `<tr><td valign="top" style="padding:0 10px 8px 0;font-size:15px;line-height:1.6;font-weight:bold;color:${accent}">•</td><td class="txt" style="padding:0 0 8px;font-size:15px;line-height:1.6;color:#3c4043">${linkify(esc(l.replace(/^\s*[-•*]\s+/, '')), accent)}</td></tr>`).join('')
+      const items = lines.map((l) => `<tr><td class="lbl" valign="top" style="padding:0 10px 8px 0;font-size:15px;line-height:1.6;font-weight:bold;color:${accent}">•</td><td class="txt" style="padding:0 0 8px;font-size:15px;line-height:1.6;color:#3c4043">${linkify(esc(l.replace(/^\s*[-•*]\s+/, '')), accent)}</td></tr>`).join('')
       return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px">${items}</table>`
     }
     return `<p class="txt" style="${para}">${linkify(esc(block), accent).replace(/\n/g, '<br>')}</p>`
@@ -68,7 +67,7 @@ export function render(category: string, subject: string, body: string, name: st
 <style>
 @media (prefers-color-scheme: dark){
   .bg{background:#101214!important}.card{background:#1a1c1f!important}.panel{background:#23262b!important}
-  .band{background:#23262b!important}.txt{color:#d3d6db!important}.ink{color:#ffffff!important}.muted{color:#9aa0a6!important}
+  .band{background:#0b1a45!important}.lbl{color:#9db8ff!important}.panel a{color:#9db8ff!important}.btn{background:#2f4fd8!important}.txt{color:#d3d6db!important}.ink{color:#ffffff!important}.muted{color:#9aa0a6!important}
   .muted a{color:#9aa0a6!important}.rule{border-color:#2e3135!important}.badge{background:#2e3135!important;border-color:#1a1c1f!important}
 }
 @media (max-width:480px){.pad{padding-left:20px!important;padding-right:20px!important}.title{font-size:23px!important}}
@@ -79,10 +78,10 @@ export function render(category: string, subject: string, body: string, name: st
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;font-family:Arial,Helvetica,sans-serif;color:#202124">
 <tr><td class="card" style="background:#ffffff;border-radius:20px;overflow:hidden">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr><td class="band" align="center" bgcolor="${soft}" style="padding:26px 24px 62px;background:${soft};background-image:linear-gradient(135deg,${soft} 0%,#ffffff 140%)">${brand(44, '#14202b')}</td></tr>
+<tr><td class="band" align="center" bgcolor="#14285c" style="padding:28px 24px 64px;background:#14285c;background-image:linear-gradient(135deg,#0b1a45 0%,#1f3d8f 100%)">${brand(44, '#ffffff')}</td></tr>
 <tr><td align="center" style="padding:0 32px"><table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:-34px"><tr><td class="badge" align="center" width="68" height="68" bgcolor="${soft}" style="width:68px;height:68px;background:${soft};border:4px solid #ffffff;border-radius:50%;font-size:30px;line-height:68px;text-align:center">${badge}</td></tr></table></td></tr>
 <tr><td class="pad" align="center" style="padding:18px 36px 4px">
-<div style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${accent}">${esc(label)}</div>
+<div class="lbl" style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${accent}">${esc(label)}</div>
 <h1 class="title ink" style="margin:10px 0 14px;font-size:27px;line-height:1.25;font-weight:800;text-transform:uppercase;color:#14202b">${esc(subject)}</h1>
 <p class="txt" style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#3c4043">Hi ${esc(name)},</p>
 </td></tr>
@@ -90,7 +89,7 @@ export function render(category: string, subject: string, body: string, name: st
 ${blocks}
 <p class="txt" style="${para}">Regards,<br><strong class="ink" style="color:#14202b">Sabahat Faizan</strong><br><span class="muted" style="color:#80868b">Creator of Cznnect</span></p>
 </td></tr></table></td></tr>
-<tr><td align="center" style="padding:28px 32px 34px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" bgcolor="${accent}" style="background:${accent};border-radius:999px"><a href="${SITE}" style="display:inline-block;padding:15px 46px;color:#ffffff;font-size:14px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none">Open Cznnect</a></td></tr></table></td></tr>
+<tr><td align="center" style="padding:28px 32px 34px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td class="btn" align="center" bgcolor="${accent}" style="background:${accent};border-radius:999px"><a href="${SITE}" style="display:inline-block;padding:15px 46px;color:#ffffff;font-size:14px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none">Open Cznnect</a></td></tr></table></td></tr>
 <tr><td class="pad" style="padding:0 36px"><div class="rule" style="border-top:1px solid #e3e5e8"></div></td></tr>
 <tr><td class="pad muted" align="center" style="padding:26px 36px 32px;text-align:center;font-size:12px;line-height:1.7;color:#80868b">
 ${brand(34, '#80868b')}

@@ -17,11 +17,11 @@ function footerText(category: string): string {
 
 // Each kind of email has a colour pair (strong, soft) and a small picture for the round badge at the top.
 export const ACCENTS: Record<string, [string, string]> = {
-  important: ['#b91c1c', '#fde8e8'], updates: ['#3b82f6', '#e5f0ff'], events: ['#6d3fd6', '#eee8fb'],
+  important: ['#b91c1c', '#fde8e8'], updates: ['#2f4fd8', '#e6ebfb'], events: ['#6d3fd6', '#eee8fb'],
   birthdays: ['#0891b2', '#dcf4fa'], plus: ['#a16207', '#fdf1d3'], direct: ['#475569', '#eceff3'],
 }
 const BADGES: Record<string, string> = { important: '🔔', updates: '🚀', events: '🎉', birthdays: '🎂', plus: '⭐', direct: '✉️' }
-const BLUE = '#3b82f6'
+const BLUE = '#2f4fd8'
 export const LOGO_URL = SITE + 'icons/icon-192.png'
 
 function linkify(escaped: string, colour: string): string {
@@ -79,16 +79,16 @@ export function render(category: string, subject: string, body: string, name: st
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;font-family:Arial,Helvetica,sans-serif;color:#202124">
 <tr><td class="card" style="background:#ffffff;border-radius:20px;overflow:hidden">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr><td class="band" align="center" bgcolor="${soft}" style="padding:26px 24px 62px;background:${soft};background-image:linear-gradient(135deg,${soft} 0%,#ffffff 140%)">${brand(44, '#202124')}</td></tr>
+<tr><td class="band" align="center" bgcolor="${soft}" style="padding:26px 24px 62px;background:${soft};background-image:linear-gradient(135deg,${soft} 0%,#ffffff 140%)">${brand(44, '#14202b')}</td></tr>
 <tr><td align="center" style="padding:0 32px"><table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:-34px"><tr><td class="badge" align="center" width="68" height="68" bgcolor="${soft}" style="width:68px;height:68px;background:${soft};border:4px solid #ffffff;border-radius:50%;font-size:30px;line-height:68px;text-align:center">${badge}</td></tr></table></td></tr>
 <tr><td class="pad" align="center" style="padding:18px 36px 4px">
 <div style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${accent}">${esc(label)}</div>
-<h1 class="title ink" style="margin:10px 0 14px;font-size:27px;line-height:1.25;font-weight:800;text-transform:uppercase;color:#202124">${esc(subject)}</h1>
+<h1 class="title ink" style="margin:10px 0 14px;font-size:27px;line-height:1.25;font-weight:800;text-transform:uppercase;color:#14202b">${esc(subject)}</h1>
 <p class="txt" style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#3c4043">Hi ${esc(name)},</p>
 </td></tr>
 <tr><td class="pad" style="padding:0 28px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="panel" bgcolor="${soft}" style="background:${soft};border-radius:18px;padding:24px 26px 10px">
 ${blocks}
-<p class="txt" style="${para}">Regards,<br><strong class="ink" style="color:#202124">Sabahat Faizan</strong><br><span class="muted" style="color:#80868b">Creator of Cznnect</span></p>
+<p class="txt" style="${para}">Regards,<br><strong class="ink" style="color:#14202b">Sabahat Faizan</strong><br><span class="muted" style="color:#80868b">Creator of Cznnect</span></p>
 </td></tr></table></td></tr>
 <tr><td align="center" style="padding:28px 32px 34px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" bgcolor="${accent}" style="background:${accent};border-radius:999px"><a href="${SITE}" style="display:inline-block;padding:15px 46px;color:#ffffff;font-size:14px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none">Open Cznnect</a></td></tr></table></td></tr>
 <tr><td class="pad" style="padding:0 36px"><div class="rule" style="border-top:1px solid #e3e5e8"></div></td></tr>

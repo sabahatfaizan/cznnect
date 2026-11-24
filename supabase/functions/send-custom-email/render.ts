@@ -35,7 +35,7 @@ export function render(category: string, subject: string, body: string, name: st
   const blocks = body.split(/\n{2,}/).map((block) => {
     const lines = block.split('\n')
     if (lines.length && lines.every((l) => /^\s*[-•*]\s+/.test(l))) {
-      const items = lines.map((l) => `<tr><td valign="top" style="padding:0 10px 8px 0;font-size:15px;line-height:1.6;color:#3c4043">&bull;</td><td class="txt" style="padding:0 0 8px;font-size:15px;line-height:1.6;color:#3c4043">${linkify(esc(l.replace(/^\s*[-•*]\s+/, '')), BLUE)}</td></tr>`).join('')
+      const items = lines.map((l) => `<tr><td valign="top" style="padding:0 10px 8px 0;font-size:15px;line-height:1.6;color:#3c4043">•</td><td class="txt" style="padding:0 0 8px;font-size:15px;line-height:1.6;color:#3c4043">${linkify(esc(l.replace(/^\s*[-•*]\s+/, '')), BLUE)}</td></tr>`).join('')
       return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px">${items}</table>`
     }
     return `<p class="txt" style="${para}">${linkify(esc(block), BLUE).replace(/\n/g, '<br>')}</p>`

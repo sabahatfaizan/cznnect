@@ -44,3 +44,31 @@ describe('birthday email', () => {
     expect(renderBirthday('  ').subject).toContain('friend')
   })
 })
+
+
+describe('birthday email media', () => {
+  it('renders a photo, linked video poster, caption and video link in text', () => {
+    const media = {
+      imageUrl: 'https://example.com/birthday.jpg',
+      videoUrl: 'https://example.com/birthday.mp4',
+      posterUrl: 'https://example.com/poster.jpg',
+      caption: 'A little birthday message',
+    }
+    const result = renderBirthday('Sam', undefined, media)
+    expect(result.html).toContain('src="https://example.com/birthday.jpg"')
+    expect(result.html).toContain('href="https://example.com/birthday.mp4"')
+    expect(result.html).toContain('A little birthday message')
+    expect(result.text).toContain('Watch your birthday video: https://example.com/birthday.mp4')
+  })
+
+  it('does not render unsafe media URLs as HTML links', () => {
+    const result = renderBirthday('Sam', undefined, {
+      imageUrl: 'javascript:alert(1)',
+      videoUrl: 'javascript:alert(1)',
+      caption: '<script>bad</script>',
+    })
+    expect(result.html).not.toContain('javascript:')
+    expect(result.html).not.toContain('<script>bad</script>')
+    expect(result.html).toContain('&lt;script&gt;bad&lt;/script&gt;')
+  })
+})

@@ -45,3 +45,20 @@ describe('email footer rules', () => {
     expect(html).toContain('Settings, then Emails')
   })
 })
+
+
+describe('professional email footer', () => {
+  it('shows both postal addresses and the real privacy policy link by default', () => {
+    const { html, text } = render('updates', 'News', 'Hello', 'Sam')
+    expect(html).toContain('Chattogram 4217, Bangladesh')
+    expect(html).toContain('Brooklyn, NY 10018, USA')
+    expect(html).toContain('https://sabahatfaizan.github.io/cznnect/privacy.html')
+    expect(text).toContain('Chattogram 4217, Bangladesh')
+    expect(text).toContain('Brooklyn, NY 10018, USA')
+  })
+
+  it('uses the configured postal address when supplied by the function secret', () => {
+    const { html } = render('direct', 'Hello', 'Hi', 'Sam', 'Chattogram 4217, Bangladesh | Brooklyn, NY 10018, USA')
+    expect(html).toContain('Chattogram 4217, Bangladesh<br>Brooklyn, NY 10018, USA')
+  })
+})

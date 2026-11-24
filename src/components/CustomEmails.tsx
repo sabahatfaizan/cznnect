@@ -8,12 +8,6 @@ import { shownName } from '../lib/avatars'
 // "Direct message" is different: one person, any message, sent whatever their email switches say, replies come to you.
 type U = { user_id: string; display_name: string; nickname: string | null; email: string | null }
 
-// The same colours the email uses for each kind, so the preview matches what people receive.
-const ACCENTS: Record<string, [string, string]> = {
-  important: ['#b91c1c', '#f87171'], updates: ['#1d4ed8', '#60a5fa'], events: ['#6d28d9', '#a78bfa'],
-  birthdays: ['#be185d', '#f9a8d4'], plus: ['#a16207', '#fbbf24'], direct: ['#0f766e', '#5eead4'],
-}
-
 export default function CustomEmails({ users, ownerId }: { users: U[] | null; ownerId: string }) {
   const [category, setCategory] = useState<EmailKind>('updates')
   const direct = category === DIRECT
@@ -46,7 +40,6 @@ export default function CustomEmails({ users, ownerId }: { users: U[] | null; ow
   const cat = direct
     ? { id: DIRECT, label: 'Direct message', hint: 'A personal message to one person', required: true }
     : EMAIL_CATEGORIES.find((c) => c.id === category)!
-  const accent = ACCENTS[cat.id] ?? ['#111827', '#4b5563']
   const person = direct && picked.size === 1 ? withEmail.find((u) => picked.has(u.user_id)) : undefined
 
   // A direct message has exactly one person: choosing someone replaces the last choice.
@@ -158,20 +151,21 @@ export default function CustomEmails({ users, ownerId }: { users: U[] | null; ow
         <div className="flex justify-between text-xs text-muted"><span>Plain text only</span><span>{body.length}/5000</span></div>
         <button type="button" className="link self-start" onClick={() => setPreview((p) => !p)}>{preview ? 'Hide preview' : 'Preview'}</button>
         {preview && (
-          <div className="overflow-hidden rounded-2xl border border-line">
-            <div className="p-4 text-white" style={{ backgroundImage: `linear-gradient(135deg, ${accent[0]}, ${accent[1]})` }}>
-              <div className="flex items-center justify-between gap-2">
-                <p className="flex items-center gap-2 text-sm font-extrabold"><span className="grid h-7 w-7 place-items-center rounded-lg bg-white/25">C</span>Cznnect</p>
-                <p className="rounded-full bg-white/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest">{direct ? 'A message for you' : cat.label}</p>
-              </div>
-              <p className="mt-4 text-xl font-extrabold leading-tight">{subject.trim() || 'Subject'}</p>
+          <div className="overflow-hidden rounded-lg border border-line bg-white text-[#202124]">
+            <div className="px-6 pt-6 text-base font-bold tracking-wide">Cznnect</div>
+            <div className="px-6 pb-2 pt-6">
+              <h2 className="mb-4 text-2xl font-normal leading-tight">{subject.trim() || 'Subject'}</h2>
+              <p className="mb-4 text-sm leading-relaxed text-[#3c4043]">Hi {direct && person ? shownName(person) : 'Name'},</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#3c4043]">{body.trim() || 'Your message…'}</p>
             </div>
-            <div className="p-4">
-              <p className="text-base font-bold">Hi Name,</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm">{body.trim() || 'Your message…'}</p>
-              <p className="mt-4 inline-block rounded-xl bg-black px-5 py-2.5 text-sm font-bold text-white">Open Cznnect →</p>
-              <p className="mt-4 flex items-center gap-3 border-t border-line pt-3 text-sm"><span className="grid h-9 w-9 place-items-center rounded-full bg-black text-xs font-extrabold text-white">SF</span><span><strong>Sabahat Faizan</strong><br /><span className="text-xs text-muted">Creator of Cznnect</span></span></p>
-              <p className="mt-3 text-xs text-muted">{direct ? 'This message was sent to you personally from Cznnect. You can reply to this email.' : category === 'important' ? 'This is an important notice about your Cznnect account.' : `You get this because you are signed up for “${cat.label}” emails. Turn them off in Settings, then Emails.`}</p>
+            <div className="px-6 pb-8 pt-4">
+              <span className="inline-block rounded-md bg-[#1a56db] px-6 py-3 text-sm font-bold text-white">Open Cznnect</span>
+            </div>
+            <div className="mx-6 border-t border-[#e3e5e8]" />
+            <div className="px-6 py-7 text-center text-xs leading-relaxed text-[#80868b]">
+              <p className="mb-3 text-[15px] font-bold tracking-wide">Cznnect</p>
+              <p>© 2026 Cznnect</p>
+              <p className="mt-3">{direct ? 'You have received this email because someone at Cznnect sent you a personal message.' : category === 'important' ? 'You have received this mandatory service announcement because it contains important information about your Cznnect account.' : `You have received this email because you have a Cznnect account and are subscribed to ${cat.label} emails. You can manage your email preferences in Cznnect under Settings, then Emails.`}</p>
             </div>
           </div>
         )}

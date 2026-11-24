@@ -19,8 +19,9 @@ import { parseBuildFromNotes } from '../lib/updateGate'
 import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 import CustomEmails from '../components/CustomEmails'
+import BirthdayMedia from '../components/BirthdayMedia'
 
-type Section = 'app' | 'announcements' | 'downloads' | 'updates' | 'builds' | 'pages' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'share' | 'data' | 'emails'
+type Section = 'app' | 'announcements' | 'downloads' | 'updates' | 'builds' | 'pages' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'birthdaymedia' | 'share' | 'data' | 'emails'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
 type Overview = { members_count: number; devices_count: number; messages_total: number; messages_today: number }
 type Msg = { id: number; user_id: string; sender: string; body: string; created_at: string }
@@ -503,6 +504,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
     { id: 'family', icon: 'family', title: isOwner ? 'Users' : 'Family', hint: isOwner && users ? `${users.length} user${users.length === 1 ? '' : 's'} · family tools` : `${members.length} member${members.length === 1 ? '' : 's'} · invite code` },
     { id: 'previews', icon: 'search', title: 'Previews', hint: 'See what everyone sees: maintenance, banner, download' },
     { id: 'reminders', icon: 'cake', title: 'Test reminders', hint: 'Send a sample birthday reminder to this phone' },
+    { id: 'birthdaymedia', icon: 'cake', title: 'Birthday email media', hint: 'Add a photo or video to birthday emails' },
     { id: 'share', icon: 'share', title: 'Share the app', hint: 'A banner and pitch to send to anyone' },
     { id: 'emails', icon: 'send', title: 'Custom emails', hint: 'Send category-based emails to people you choose' },
     { id: 'notify', icon: 'bell', title: 'Notify', hint: 'Send a notification to every phone' },
@@ -668,7 +670,7 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
             {[
               { title: 'App & website', hint: 'What people see and how they get the app', ids: ['app', 'announcements', 'downloads', 'updates', 'previews', 'share'] as Section[] },
               { title: 'Builds & publishing', hint: 'Android APKs and the website', ids: ['builds', 'pages'] as Section[] },
-              { title: 'Family & messages', hint: 'People, chat, notifications and reminders', ids: ['family', 'messages', 'notify', 'emails', 'reminders'] as Section[] },
+              { title: 'Family & messages', hint: 'People, chat, notifications and reminders', ids: ['family', 'messages', 'notify', 'emails', 'birthdaymedia', 'reminders'] as Section[] },
               { title: 'Data', hint: 'Meetup history and points', ids: ['data'] as Section[] },
             ].map((group) => {
               const ids = group.ids.filter(matchesQuery)
@@ -783,6 +785,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
           ))}
         </section>
       )}
+
+      {isOwner && current === 'birthdaymedia' && <BirthdayMedia />}
 
       {isOwner && current === 'emails' && <CustomEmails users={users} ownerId={userId} />}
 

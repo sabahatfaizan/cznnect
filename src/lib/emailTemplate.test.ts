@@ -33,10 +33,10 @@ describe('custom email template', () => {
 
 
 describe('email footer rules', () => {
-  it('keeps mandatory notices free of unsubscribe language', () => {
+  it('keeps mandatory notices free of opt-out links', () => {
     const { html } = render('important', 'Service notice', 'A change is coming.', 'Sam')
     expect(html).toContain('mandatory service announcement')
-    expect(html).not.toContain('unsubscribe')
+    expect(html).not.toContain('Email settings')
   })
 
   it('explains how subscribers manage category preferences', () => {
@@ -60,5 +60,16 @@ describe('professional email footer', () => {
   it('uses the configured postal address when supplied by the function secret', () => {
     const { html } = render('direct', 'Hello', 'Hi', 'Sam', 'Chattogram 4217, Bangladesh | Brooklyn, NY 10018, USA')
     expect(html).toContain('Chattogram 4217, Bangladesh<br>Brooklyn, NY 10018, USA')
+  })
+})
+
+
+describe('email preference link wording', () => {
+  it('links to email settings without claiming the link unsubscribes immediately', () => {
+    const { html, text } = render('updates', 'An update', 'A new feature is here.', 'Sam')
+    expect(html).toContain('Email settings')
+    expect(html).not.toContain('>Unsubscribe</a>')
+    expect(text).toContain('Email settings:')
+    expect(text).toContain('Settings, then Emails')
   })
 })

@@ -13,7 +13,7 @@
 // Add ?dry=1 to the address to see who would get an email without sending anything.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { mailConfig, sendMail } from '../_shared/mailer.ts'
-import { birthdayIsToday, renderBirthday, todayIn } from '../_shared/birthday.ts'
+import { birthdayIsToday, renderBirthday, todayIn, type BirthdayMedia } from '../_shared/birthday.ts'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 type Person = { id: string; display_name: string | null; nickname: string | null; birthday: string | null }
@@ -30,6 +30,9 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
     const giftTitle = (Deno.env.get('BIRTHDAY_GIFT') ?? '').trim()
     const gift = giftTitle ? { title: giftTitle.slice(0, 120), detail: (Deno.env.get('BIRTHDAY_GIFT_DETAIL') ?? '').trim().slice(0, 200) || undefined, code: (Deno.env.get('BIRTHDAY_GIFT_CODE') ?? '').trim().slice(0, 40) || undefined } : undefined
+    // Optional media; a missing table (before the migration is run) leaves birthday emails text-only.
+    const { data: mediaRow } = await admin.from('birthday_media').select('image_url, video_url, poster_url, caption').eq('id', 1).maybeSingle()
+    const media: BirthdayMedia | undefined = mediaRow ? { imageUrl: mediaRow.image_url || undefined, videoUrl: mediaRow.video_url || undefined, posterUrl: mediaRow.poster_url || undefined, caption: mediaRow.caption || undefined } : undefined
     const today = todayIn(Deno.env.get('BIRTHDAY_TIMEZONE') || 'Asia/Dhaka')
 
     const everyone: Person[] = []
@@ -64,7 +67,7 @@ Deno.serve(async (req) => {
       // Claim this year first, so two runs at once cannot both send. If sending fails the claim is given back for the next run.
       const claim = await admin.from('birthday_email_log').insert({ user_id: p.id, year: today.year })
       if (claim.error) { skipped++; continue }
-      const mail = renderBirthday(name, gift)
+      const mail = renderBirthday(name, gift, media)
       const out = await sendMail([{ to: email, subject: mail.subject, html: mail.html, text: mail.text }], cfg)
       if (out.sent) sent++
       else { failed++; await admin.from('birthday_email_log').delete().eq('user_id', p.id).eq('year', today.year) }

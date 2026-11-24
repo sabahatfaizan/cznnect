@@ -24,6 +24,7 @@ export function birthdayIsToday(birthday: string | null | undefined, today: Day)
 }
 
 export const BIRTHDAY_FOOTER = 'You get this birthday message because birthday emails are on. You can turn them off any time in Cznnect: Settings, then Emails.'
+export const BIRTHDAY_POSTAL_ADDRESS = 'Chattogram 4217, Bangladesh | Brooklyn, NY 10018, USA'
 
 /** An optional present shown in its own card (set in the function's secrets). Nothing is invented: no gift set, no gift card. */
 export type Gift = { title: string; detail?: string; code?: string }
@@ -72,8 +73,8 @@ ${giftHtml}
 </td></tr>
 <tr><td class="pad" align="center" style="padding:26px 32px 30px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #263452"><tr><td align="center" style="padding-top:22px;line-height:1.5"><span style="font-size:15px;font-weight:800;color:#ffffff">Sabahat Faizan</span><br><span style="font-size:13px;color:#8997b3">Creator of Cznnect</span></td></tr></table></td></tr>
 </table></td></tr>
-<tr><td align="center" style="padding:20px 18px 0;font-size:12px;line-height:1.75;color:#8997b3">${esc(BIRTHDAY_FOOTER)}<br><a href="${SITE}" style="color:#cbd6eb;font-weight:700;text-decoration:underline">Open in the app</a></td></tr>
+<tr><td align="center" style="padding:20px 18px 0;font-size:12px;line-height:1.75;color:#8997b3">${esc(BIRTHDAY_FOOTER)}<br><br>&copy; ${new Date().getFullYear()} Cznnect<br>${esc(BIRTHDAY_POSTAL_ADDRESS).replace(/\|/g, '<br>')}<br><a href="${SITE}" style="color:#cbd6eb;font-weight:700;text-decoration:underline">Open in the app</a></td></tr>
 </table></td></tr></table></body></html>`
-  const text = `${headline}\n\nHappy birthday, ${first}!\n\n${lines.join('\n\n')}${gift?.title ? `\n\nA birthday gift for you: ${gift.title}${gift.detail ? `. ${gift.detail}` : ''}${gift.code ? `\nCode: ${gift.code}` : ''}` : ''}\n\nOpen Cznnect: ${SITE}\n\nSabahat Faizan\nCreator of Cznnect\n\n${BIRTHDAY_FOOTER}`
+  const text = `${headline}\n\nHappy birthday, ${first}!\n\n${lines.join('\n\n')}${gift?.title ? `\n\nA birthday gift for you: ${gift.title}${gift.detail ? `. ${gift.detail}` : ''}${gift.code ? `\nCode: ${gift.code}` : ''}` : ''}\n\nOpen Cznnect: ${SITE}\n\nSabahat Faizan\nCreator of Cznnect\n\n${BIRTHDAY_FOOTER}\n\n© ${new Date().getFullYear()} Cznnect\n${BIRTHDAY_POSTAL_ADDRESS.split('|').map((line) => line.trim()).join('\n')}`
   return { subject, html, text }
 }

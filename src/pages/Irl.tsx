@@ -128,14 +128,13 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           {focus && <IrlMeetupCard key={focus.id} meetup={focus} userId={userId} busy={busy} run={run} actions={actions} />}
 
-          <section className={`flex flex-col items-center gap-7 pb-3 pt-4 ${focus ? 'shrink-0' : 'min-h-0 flex-1 justify-center'}`} aria-label="Your link code">
-            <div className="grid w-full max-w-[19rem] grid-cols-1 gap-3">
-              <button className="qr-btn qr-btn-main" onClick={() => setScanning(true)}>
-                <span className="qr-btn-icon"><Icon name="camera" size={20} /></span>
-                Scan
-              </button>
-            </div>
+          <section className={`flex flex-col items-center gap-4 pb-3 pt-4 ${focus ? 'shrink-0' : 'min-h-0 flex-1 justify-center'}`} aria-label="Your link code">
             {!(focus && focus.kind === 'group' && (focus.status === 'open' || focus.status === 'locked')) && <IrlMyCode familyId={family.id} />}
+            {/* Scan is a small pill under the code: the code is the main thing here, scanning is the occasional action. */}
+            <button className="qr-btn qr-btn-main qr-btn-compact" onClick={() => setScanning(true)}>
+              <span className="qr-btn-icon"><Icon name="camera" size={16} /></span>
+              Scan
+            </button>
           </section>
 
         </>

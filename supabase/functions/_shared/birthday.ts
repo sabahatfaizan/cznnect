@@ -29,8 +29,29 @@ export const BIRTHDAY_POSTAL_ADDRESS = 'Chattogram 4217, Bangladesh | Brooklyn, 
 /** An optional present shown in its own card (set in the function's secrets). Nothing is invented: no gift set, no gift card. */
 export type Gift = { title: string; detail?: string; code?: string }
 
+/** Optional birthday photo/video; email clients link to video rather than playing it inline. */
+export type BirthdayMedia = { imageUrl?: string; videoUrl?: string; posterUrl?: string; caption?: string }
+const safeMediaUrl = (url?: string) => url && /^https:\/\/[^\s"'<>]+$/.test(url) ? url : ''
+function mediaBlock(media?: BirthdayMedia): string {
+  if (!media) return ''
+  const image = safeMediaUrl(media.imageUrl)
+  const video = safeMediaUrl(media.videoUrl)
+  const poster = safeMediaUrl(media.posterUrl)
+  const caption = (media.caption ?? '').trim().slice(0, 140)
+  const pic = (src: string, alt: string) => `<img src="${esc(src)}" alt="${esc(alt)}" width="504" style="display:block;width:100%;max-width:504px;height:auto;border:0;border-radius:14px">`
+  const wrap = (inner: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 0"><tr><td align="center">${inner}</td></tr></table>`
+  let out = ''
+  if (image) out += wrap(pic(image, 'Your birthday photo'))
+  if (video) {
+    out += wrap(poster ? `<a href="${esc(video)}" style="text-decoration:none">${pic(poster, 'Play your birthday video')}</a>` : `<a href="${esc(video)}" style="display:block;background:#172344;border:1px solid #e7c35a;border-radius:14px;padding:30px 18px;color:#e7c35a;font-size:17px;font-weight:800;text-decoration:none">&#9654;&nbsp; Watch your birthday video</a>`)
+    out += `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(video)}" style="color:#cbd6eb;text-decoration:underline">Watch the video</a></p>`
+  }
+  if (caption && out) out += `<p style="margin:12px 0 0;font-size:14px;line-height:1.5;color:#b9c4dc">${esc(caption)}</p>`
+  return out
+}
+
 /** The birthday email for one person: a dark navy and gold card, a warm headline, an optional gift card and a button. */
-export function renderBirthday(name: string, gift?: Gift) {
+export function renderBirthday(name: string, gift?: Gift, media?: BirthdayMedia) {
   const first = name.trim() || 'friend'
   const subject = `Happy birthday, ${first}! 🎂`
   const headline = 'Your birthday brings us special joy'
@@ -67,6 +88,7 @@ ${gift.code ? `<p style="margin:14px 0 0;display:inline-block;border:1px dashed 
 <h2 class="message-title" style="margin:0 0 18px;font-size:28px;line-height:1.2;font-weight:850;color:#ffffff">Your birthday brings us special joy</h2>
 <p style="margin:0 0 16px;font-size:17px;line-height:1.65;color:#d1d9e9">Like a family reunion where everyone finally shows up, today is better with you in it.</p>
 <p style="margin:0;font-size:17px;line-height:1.65;color:#d1d9e9">From all of us at Cznnect, and from the whole family: happy birthday, <strong style="color:#ffffff">${esc(first)}</strong>!</p>
+${mediaBlock(media)}
 ${giftHtml}
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:30px auto 8px"><tr><td align="center" style="background:${gold};border-radius:12px"><a href="${SITE}" style="display:inline-block;padding:16px 34px;color:#101a36;font-size:15px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;text-decoration:none">Open Cznnect</a></td></tr></table>
 <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#8997b3">Your people. Your memories. Your day.</p>
@@ -75,6 +97,6 @@ ${giftHtml}
 </table></td></tr>
 <tr><td align="center" style="padding:20px 18px 0;font-size:12px;line-height:1.75;color:#8997b3">${esc(BIRTHDAY_FOOTER)}<br><br>&copy; ${new Date().getFullYear()} Cznnect<br>${esc(BIRTHDAY_POSTAL_ADDRESS).replace(/\|/g, '<br>')}<br><a href="${SITE}" style="color:#cbd6eb;font-weight:700;text-decoration:underline">Open in the app</a></td></tr>
 </table></td></tr></table></body></html>`
-  const text = `${headline}\n\nHappy birthday, ${first}!\n\n${lines.join('\n\n')}${gift?.title ? `\n\nA birthday gift for you: ${gift.title}${gift.detail ? `. ${gift.detail}` : ''}${gift.code ? `\nCode: ${gift.code}` : ''}` : ''}\n\nOpen Cznnect: ${SITE}\n\nSabahat Faizan\nCreator of Cznnect\n\n${BIRTHDAY_FOOTER}\n\n© ${new Date().getFullYear()} Cznnect\n${BIRTHDAY_POSTAL_ADDRESS.split('|').map((line) => line.trim()).join('\n')}`
+  const text = `${headline}\n\nHappy birthday, ${first}!\n\n${lines.join('\n\n')}${gift?.title ? `\n\nA birthday gift for you: ${gift.title}${gift.detail ? `. ${gift.detail}` : ''}${gift.code ? `\nCode: ${gift.code}` : ''}` : ''}${media && safeMediaUrl(media.videoUrl) ? `\n\nWatch your birthday video: ${safeMediaUrl(media.videoUrl)}` : ''}\n\nOpen Cznnect: ${SITE}\n\nSabahat Faizan\nCreator of Cznnect\n\n${BIRTHDAY_FOOTER}\n\n© ${new Date().getFullYear()} Cznnect\n${BIRTHDAY_POSTAL_ADDRESS.split('|').map((line) => line.trim()).join('\n')}`
   return { subject, html, text }
 }

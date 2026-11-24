@@ -23,8 +23,11 @@ function footerText(category: string): string {
     (CATEGORIES[category] ?? 'Cznnect') + ' emails. You can manage your email preferences in Cznnect under Settings, then Emails.'
 }
 
+const DEFAULT_POSTAL_ADDRESS = 'Chattogram 4217, Bangladesh | Brooklyn, NY 10018, USA'
+
 function formatAddress(address: string): string {
-  return address.split('|').map((line) => esc(line.trim())).filter(Boolean).join('<br>')
+  const value = address.trim() || DEFAULT_POSTAL_ADDRESS
+  return value.split('|').map((line) => esc(line.trim())).filter(Boolean).join('<br>')
 }
 
 // Plain text in, safe HTML out. Blank lines create paragraphs; dash-led blocks become lists.

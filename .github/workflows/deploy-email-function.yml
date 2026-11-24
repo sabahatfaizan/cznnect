@@ -1,9 +1,7 @@
 name: Deploy email functions
 
-# Puts the email functions (send-custom-email and send-birthday-emails) on Supabase whenever their code changes on main (or when you press "Run workflow").
-# One-time setup: add a repository secret called SUPABASE_ACCESS_TOKEN (make it at supabase.com/dashboard/account/tokens).
-# (Needs a Supabase token that is allowed to write Edge Functions.)
-# The SMTP_* secrets live in Supabase itself (Edge Functions > Secrets), not here.
+# Deploys the custom, birthday-test and scheduled birthday email functions to Supabase.
+# Requires the repository secret SUPABASE_ACCESS_TOKEN. SMTP/Resend secrets live in Supabase Edge Function secrets.
 
 on:
   push:
@@ -30,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check the access token is set
-        run: test -n "$SUPABASE_ACCESS_TOKEN" || { echo "Add the repository secret SUPABASE_ACCESS_TOKEN first (see the note at the top of this file)."; exit 1; }
+        run: test -n "$SUPABASE_ACCESS_TOKEN" || { echo "Add the repository secret SUPABASE_ACCESS_TOKEN first."; exit 1; }
       - uses: supabase/setup-cli@v1
         with:
           version: latest
@@ -41,13 +39,8 @@ jobs:
       - name: Deploy send-birthday-test
         run: |
           set -o pipefail
-          supabase functions deploy send-birthday-test --project-ref "$PROJECT_REF" --use-api --yes 2>&1 | tee out.txt || { echo "::error title=send-birthday-test deploy failed::$(grep -v '^
-      - name: Deploy send-birthday-emails
-        run: |
-          set -o pipefail
-          supabase functions deploy send-birthday-emails --project-ref "$PROJECT_REF" --use-api --yes --no-verify-jwt 2>&1 | tee out.txt || { echo "::error title=send-birthday-emails deploy failed::$(grep -v '^$' out.txt | tail -n 12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
- out.txt | tail -n 12 | tr '\\n' ' ' | cut -c1-900)"; exit 1; }
-      # No login check on this one: the daily job has no login, it sends a secret instead.
+          supabase functions deploy send-birthday-test --project-ref "$PROJECT_REF" --use-api --yes 2>&1 | tee out.txt || { echo "::error title=send-birthday-test deploy failed::$(grep -v '^$' out.txt | tail -n 12 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+      # The scheduled birthday job authenticates with CRON_SECRET rather than a user JWT.
       - name: Deploy send-birthday-emails
         run: |
           set -o pipefail

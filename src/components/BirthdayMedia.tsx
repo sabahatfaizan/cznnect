@@ -79,6 +79,8 @@ export default function BirthdayMedia() {
   const [media, setMedia] = useState<Media>(EMPTY)
   const [caption, setCaption] = useState('')
   const [busy, setBusy] = useState(false)
+  const [testBusy, setTestBusy] = useState(false)
+  const [testNotice, setTestNotice] = useState('')
   const [notice, setNotice] = useState('')
 
   const load = useCallback(async () => {
@@ -112,6 +114,25 @@ export default function BirthdayMedia() {
     finally { setBusy(false) }
   }
 
+  const sendTestEmail = async () => {
+    if (testBusy || busy) return
+    setTestBusy(true)
+    setTestNotice('')
+    try {
+      const { data, error } = await supabase.functions.invoke('send-birthday-test', { body: {} })
+      if (error) {
+        const detail = data?.error || error.message
+        throw new Error(detail || 'Could not send the test email.')
+      }
+      if (data?.error) throw new Error(data.error)
+      setTestNotice(`Test email sent to ${data?.to ?? 'your account'}. Check your inbox and spam folder.`)
+    } catch (error) {
+      setTestNotice(error instanceof Error ? error.message : 'Could not send the test email.')
+    } finally {
+      setTestBusy(false)
+    }
+  }
+
   const choosePhoto = (file?: File) => file && void work(async () => {
     if (!file.type.startsWith('image/')) throw new Error('Choose a JPG, PNG or WebP picture.')
     if (file.size > 20 * 1024 * 1024) throw new Error('That picture is over 20 MB.')
@@ -128,6 +149,12 @@ export default function BirthdayMedia() {
 
   return (
     <section className="flex flex-col gap-3" aria-label="Birthday email media">
+      <div className="card flex flex-col gap-3">
+        <p className="eyebrow">Preview delivery</p>
+        <p className="text-sm text-muted">Send a private test to your owner account using the currently saved birthday photo, video preview and caption. This does not mark or send anyone’s birthday email.</p>
+        <button type="button" className="btn btn-primary" disabled={busy || testBusy} onClick={() => void sendTestEmail()}>{testBusy ? 'Sending test…' : 'Send test birthday email'}</button>
+        {testNotice && <p role="status" className="text-sm font-semibold">{testNotice}</p>}
+      </div>
       <div className="card flex flex-col gap-3">
         <p className="eyebrow">Birthday photo</p>
         {media.image_url && <img src={media.image_url} alt="Birthday email photo" className="max-h-56 w-full rounded-xl object-cover" />}

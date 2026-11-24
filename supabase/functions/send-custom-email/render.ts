@@ -50,7 +50,8 @@ export function render(category: string, subject: string, body: string, name: st
     ...(switchable ? [`<a href="${PREFERENCES_URL}" style="${link}">Preferences</a>`, `<a href="${PREFERENCES_URL}" style="${link}">Unsubscribe</a>`] : []),
     `<a href="${PRIVACY_URL}" style="${link}">Privacy Policy</a>`,
   ].join(' &nbsp;&middot;&nbsp; ')
-  const addressLines = postalAddress.trim() ? postalAddress.split('|').map((line) => line.trim()).filter(Boolean) : ADDRESS_LINES
+  const configuredAddress = postalAddress.split('|').map((line) => line.trim()).filter(Boolean)
+  const addressLines = [...new Set([...configuredAddress, ...ADDRESS_LINES])]
   const address = addressLines.map(esc).join('<br>')
   const textAddress = addressLines.join('\n')
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${esc(subject)}</title>

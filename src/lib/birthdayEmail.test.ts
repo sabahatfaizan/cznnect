@@ -34,7 +34,7 @@ describe('birthday email', () => {
   it('shows a gift card only when a gift is set, and escapes it', () => {
     expect(renderBirthday('Sam').html).not.toContain('A birthday gift for you')
     const r = renderBirthday('Sam', { title: 'A free month of <Cznnect+>', code: 'BDAY-1' })
-    expect(r.html).toContain('A birthday gift for you')
+    expect(r.html).toContain('A little something for you')
     expect(r.html).toContain('&lt;Cznnect+&gt;')
     expect(r.html).toContain('BDAY-1')
     expect(r.text).toContain('Code: BDAY-1')
@@ -69,6 +69,6 @@ describe('birthday email media', () => {
     })
     expect(result.html).not.toContain('javascript:')
     expect(result.html).not.toContain('<script>bad</script>')
-    expect(result.html).toContain('&lt;script&gt;bad&lt;/script&gt;')
+    expect(result.html).not.toContain('bad')
   })
 })

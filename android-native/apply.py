@@ -6,6 +6,9 @@
 3. Gives the app one launcher entry (an <activity-alias>) per app icon, so the icon on the phone's home screen
    can change. Only the "light" entry is on by default. The ones that are not in "active" are old icons that
    are no longer offered; they stay (showing the Light icon) so an update never leaves a phone without a launcher icon.
+4. Makes Android's own launch splash neutral (plain background, no logo). Its picture is fixed when the app is built and
+   cannot follow the app icon a Cznnect+ account picked, so the only logo shown while loading is the in-app one,
+   which does follow it (src/components/Splash.tsx).
 """
 import json, pathlib, re, shutil
 
@@ -60,6 +63,39 @@ plus_aliases = ''.join(f'''
             </intent-filter>
         </activity-alias>
 ''' for i in active)
+# Neutral Android launch splash: a new theme on top of Capacitor's launch theme (its parent keeps the post-splash theme),
+# with a blank icon and a plain background (light by default, dark when the phone is in dark mode).
+LAUNCH_THEME = '@style/AppTheme.NoActionBarLaunch'
+if LAUNCH_THEME in s:
+    s = s.replace(LAUNCH_THEME, '@style/CznnectLaunch')
+    res = ANDROID / 'res'
+    (res / 'values').mkdir(parents=True, exist_ok=True)
+    (res / 'values-night').mkdir(parents=True, exist_ok=True)
+    (res / 'drawable').mkdir(parents=True, exist_ok=True)
+    (res / 'values/cz_splash.xml').write_text('''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cz_splash_bg">#f3f5f8</color>
+    <style name="CznnectLaunch" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@color/cz_splash_bg</item>
+        <item name="android:windowBackground">@color/cz_splash_bg</item>
+        <item name="windowSplashScreenBackground">@color/cz_splash_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/cz_splash_blank</item>
+    </style>
+</resources>
+''', encoding='utf-8')
+    (res / 'values-night/cz_splash.xml').write_text('''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cz_splash_bg">#111318</color>
+</resources>
+''', encoding='utf-8')
+    (res / 'drawable/cz_splash_blank.xml').write_text('''<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <size android:width="1dp" android:height="1dp" />
+    <solid android:color="@android:color/transparent" />
+</shape>
+''', encoding='utf-8')
+else:
+    print('WARNING: launch theme not found in AndroidManifest.xml; the Android splash was left as it is')
 assert '</application>' in s
 s = s.replace('</application>', aliases + plus_aliases + '\n    </application>', 1)
 manifest_path.write_text(s, encoding='utf-8')

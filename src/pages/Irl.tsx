@@ -117,7 +117,7 @@ export default function Irl({ family, userId, onOpenScoreboard }: { family: Fami
 
   return (
     // One fixed screen (the document is locked while Convoy is open). With a meetup open, this box scrolls on its own so nothing overlaps.
-    <div className={`flex flex-col gap-3 max-h-[calc(100dvh-13rem)] ${focus ? 'overflow-y-auto pb-4' : 'overflow-hidden'}`}>
+    <div className={`-mx-4 flex flex-col gap-3 px-4 max-h-[calc(100dvh-13rem)] ${focus ? 'overflow-y-auto pb-4' : 'overflow-hidden'}`}>
       {notice && (
         <p role="status" className="rounded-[var(--radius-ctl)] bg-accent-soft px-3 py-2 text-sm font-bold text-accent-text">
           {notice}

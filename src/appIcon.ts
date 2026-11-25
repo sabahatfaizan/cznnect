@@ -18,6 +18,20 @@ export const ICONS: { id: IconId; label: string; group: string; mark: string; bg
   { id: 'forest', label: 'Forest', group: 'Cznnect+', mark: '#1d9a55', bg: '#ffffff' },
   { id: 'graphite', label: 'Graphite', group: 'Cznnect+', mark: '#4b5563', bg: '#ffffff' },
 ]
+// The gradient colours of each coloured icon's mark [top, middle, bottom, glow]. Same values as TILE in
+// android-native/gen-icons.mjs, so the loading screen's logo matches the icon on the home screen.
+const MARK_COLOURS: Partial<Record<IconId, [string, string, string, string]>> = {
+  sunset: ['#ff6a9a', '#f0286e', '#f2405f', '#ffb36b'],
+  aurora: ['#3dddbe', '#0fb89a', '#17a9b8', '#7bd7ff'],
+  orchid: ['#a56bff', '#8a3dff', '#7b4bff', '#e59bff'],
+  forest: ['#4cc27f', '#1d9a55', '#1e9b6b', '#cfe96b'],
+  graphite: ['#7a8596', '#4b5563', '#5a6272', '#a3b1c9'],
+}
+// CSS variables for the logo when a coloured icon is in use, or undefined to let the theme colour the logo.
+export function iconLogoVars(id: IconId): Record<string, string> | undefined {
+  const c = MARK_COLOURS[id]
+  return c ? { '--logo-hi': c[0], '--logo-a': c[1], '--logo-b': c[2], '--logo-glow': c[3] } : undefined
+}
 export const ICON_GROUPS = ['Style', 'Cznnect+']
 export const PLUS_GROUP = 'Cznnect+'
 export const isPlusIcon = (id: IconId): boolean => ICONS.find((i) => i.id === id)?.group === PLUS_GROUP

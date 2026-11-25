@@ -11,7 +11,7 @@
 // Set them with:  supabase secrets set SMTP_HOST=smtp.example.com SMTP_PORT=465 SMTP_USER=... SMTP_PASS=... EMAIL_FROM="Cznnect <hello@example.com>"
 // Deploy: supabase functions deploy send-custom-email
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { CATEGORIES, render } from './render.ts'
+import { CATEGORIES, renderCustom } from '../_shared/emailTemplate.ts'
 import { mailConfig, sendMail, type Mail } from '../_shared/mailer.ts'
 
 const OWNER_EMAIL = 'faizanplayz11@gmail.com' // same as src/owner.ts
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
     const mails: Mail[] = people.map((p) => {
       const s = (test ? '[Test] ' : '') + subj
-      const r = render(cat, s, text, p.name, Deno.env.get('MAIL_ADDRESS') ?? '')
+      const r = renderCustom(cat, s, text, p.name)
       return { to: p.email, subject: s, html: r.html, text: r.text, ...(direct && me.email ? { replyTo: me.email } : {}) }
     })
 

@@ -59,9 +59,9 @@ export const KINDS: Record<string, Kind> = {
     lines: (v) => [msg(v, 'There is an update about your Cznnect account.')], cta: (v) => open(v) },
 
   // Birthdays and personal notes
-  birthday: { group: 'optional', cat: 'birthdays', badge: '🎂', label: 'Birthday', subject: (v) => `Happy birthday, ${nm(v)}`, title: (v) => `Happy birthday, ${nm(v)}`,
+  birthday: { group: 'optional', cat: 'birthdays', badge: '', label: 'Birthday', subject: (v) => `Happy birthday, ${nm(v)}`, title: (v) => `Happy birthday, ${nm(v)}`,
     lines: (v) => ['Like a family reunion where everyone finally shows up, today is better with you in it.', `From all of us at Cznnect, and from the whole family: happy birthday, ${nm(v)}.`], cta: (v) => open(v) },
-  birthday_reminder: { group: 'optional', cat: 'birthdays', badge: '🎈', label: 'Birthday reminder', subject: (v) => `${who(v)}'s birthday is ${v.when || 'coming up'}`, title: (v) => `${who(v)}'s birthday is ${v.when || 'coming up'}`,
+  birthday_reminder: { group: 'optional', cat: 'birthdays', badge: '', label: 'Birthday reminder', subject: (v) => `${who(v)}'s birthday is ${v.when || 'coming up'}`, title: (v) => `${who(v)}'s birthday is ${v.when || 'coming up'}`,
     lines: (v) => [`A short message now is a thoughtful way to mark ${who(v)}'s birthday.`, 'You can find every upcoming birthday in the Birthdays section of the app.'], cta: (v) => open(v, 'Open Birthdays') },
   personal: { group: 'service', badge: '💌', label: 'A note for you', subject: (v) => v.subject || `A note for you, ${nm(v)}`, title: (v) => v.title || 'A note for you',
     lines: (v) => [msg(v, 'We have a personal note waiting for you in Cznnect.')], cta: (v) => open(v) },
@@ -109,7 +109,7 @@ export const KINDS: Record<string, Kind> = {
     lines: (v) => [msg(v, 'There is something new for Cznnect+ members.')], cta: (v) => open(v) },
 }
 
-const BADGES: Record<string, string> = { important: '🔔', updates: '🚀', events: '🎉', birthdays: '🎂', plus: '⭐', direct: '✉️' }
+const BADGES: Record<string, string> = { important: '🔔', updates: '🚀', events: '🎉', birthdays: '', plus: '⭐', direct: '✉️' }
 
 function footerText(group: Group, cat?: string): string {
   if (cat === 'important') return 'You have received this mandatory service announcement to update you about important changes to your Cznnect account.'
@@ -225,9 +225,9 @@ function build(o: Build): { subject: string; html: string; text: string } {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;font-family:Arial,Helvetica,sans-serif;color:#202124">
 <tr><td class="card" style="background:#ffffff;border-radius:20px;overflow:hidden">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr><td class="band" align="center" bgcolor="#14285c" style="padding:28px 24px 64px;background:#14285c;background-image:linear-gradient(135deg,#0b1a45 0%,#1f3d8f 100%)">${brand(44, '#ffffff')}</td></tr>
-<tr><td align="center" style="padding:0 32px"><table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:-34px"><tr><td class="badge" align="center" width="68" height="68" bgcolor="${soft}" style="width:68px;height:68px;background:${soft};border:4px solid #ffffff;border-radius:50%;font-size:30px;line-height:68px;text-align:center">${o.badge}</td></tr></table></td></tr>
-<tr><td class="pad" align="center" style="padding:18px 36px 4px">
+<tr><td class="band" align="center" bgcolor="#14285c" style="padding:28px 24px ${o.badge ? 64 : 34}px;background:#14285c;background-image:linear-gradient(135deg,#0b1a45 0%,#1f3d8f 100%)">${brand(44, '#ffffff')}</td></tr>
+${o.badge ? `<tr><td align="center" style="padding:0 32px"><table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:-34px"><tr><td class="badge" align="center" width="68" height="68" bgcolor="${soft}" style="width:68px;height:68px;background:${soft};border:4px solid #ffffff;border-radius:50%;font-size:30px;line-height:68px;text-align:center">${o.badge}</td></tr></table></td></tr>` : ''}
+<tr><td class="pad" align="center" style="padding:${o.badge ? 18 : 30}px 36px 4px">
 <div class="lbl" style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:${accent}">${esc(o.label)}</div>
 <h1 class="title ink" style="margin:10px 0 14px;font-size:27px;line-height:1.25;font-weight:800;color:#14202b">${esc(o.title)}</h1>
 <p class="txt" style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#3c4043">Hi ${esc(o.name)},</p>

@@ -173,7 +173,7 @@ export default function Shell({
       <>
           {t === 'home' && <Home family={family} userId={userId} onFamilyChanged={onFamilyChanged} />}
         {t === 'chat' && <Chat family={family} userId={userId} canDelete={familyRole === 'owner'} />}
-        {t === 'irl' && <Irl family={family} userId={userId} />}
+        {t === 'irl' && <Irl family={family} userId={userId} onOpenScoreboard={() => setTab('scoreboard')} />}
         {t === 'scoreboard' && <Scoreboard family={family} userId={userId} />}
         {t === 'birthdays' && (
           <Birthdays people={bday.people} loaded={bday.loaded} error={bday.error} reload={bday.reload} onOpenProfile={() => setTab('me')} />

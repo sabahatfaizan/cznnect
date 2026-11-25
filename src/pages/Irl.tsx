@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Family } from '../types'
-import type { Meetup } from '../lib/irl'
+import { rankRows, type Meetup } from '../lib/irl'
 import {
   confirmMeetup,
   declineMeetup,
@@ -8,6 +8,7 @@ import {
   lockGroup,
   mine,
   removePerson,
+  scoreboard,
 } from '../lib/irlApi'
 import IrlMyCode from '../components/IrlMyCode'
 import IrlMeetupCard from '../components/IrlMeetupCard'
@@ -16,13 +17,15 @@ import IrlGatherings from '../components/IrlGatherings'
 import { Icon } from '../components/Icons'
 
 // Convoy: your personal code, scanning a cousin, and confirming meetups. The scoreboard lives in the menu.
-export default function Irl({ family, userId }: { family: Family; userId: string }) {
+export default function Irl({ family, userId, onOpenScoreboard }: { family: Family; userId: string; onOpenScoreboard?: () => void }) {
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [scanning, setScanning] = useState(false)
+  // Your place on the scoreboard, shown in the bar next to Scan. null until it has loaded (or if it could not).
+  const [standing, setStanding] = useState<{ rank: number; points: number; of: number } | null>(null)
   const noticeTimer = useRef<number | undefined>(undefined)
   const seen = useRef<Map<string, string> | null>(null)
 
@@ -64,6 +67,18 @@ export default function Irl({ family, userId }: { family: Family; userId: string
     }, 5000)
     return () => window.clearInterval(id)
   }, [loadMeet])
+
+  // Refresh the standing on opening and whenever another meetup becomes verified (new points).
+  const verifiedCount = meetups.filter((m) => m.status === 'verified').length
+  useEffect(() => {
+    let alive = true
+    scoreboard(family.id).then((r) => {
+      if (!alive || !r.ok) return
+      const mineRow = rankRows(r.data).find((row) => row.user_id === userId)
+      if (mineRow) setStanding({ rank: mineRow.rank, points: mineRow.points, of: r.data.length })
+    })
+    return () => { alive = false }
+  }, [family.id, userId, verifiedCount])
 
   const run = useCallback(
     async (fn: () => Promise<{ ok: boolean; message?: string }>, success?: string) => {
@@ -130,11 +145,35 @@ export default function Irl({ family, userId }: { family: Family; userId: string
 
           <section className={`flex flex-col items-center gap-4 pb-3 pt-4 ${focus ? 'shrink-0' : 'min-h-0 flex-1 justify-center'}`} aria-label="Your link code">
             {!(focus && focus.kind === 'group' && (focus.status === 'open' || focus.status === 'locked')) && <IrlMyCode familyId={family.id} />}
-            {/* Scan is a small pill under the code: the code is the main thing here, scanning is the occasional action. */}
-            <button className="qr-btn qr-btn-main qr-btn-compact" onClick={() => setScanning(true)}>
-              <span className="qr-btn-icon"><Icon name="camera" size={16} /></span>
-              Scan
-            </button>
+            {/* Your standing runs from the left edge of the screen up to the Scan pill. Tap it for the scoreboard. */}
+            <div className="-ml-4 flex items-center gap-3 self-stretch">
+              <button
+                type="button"
+                onClick={onOpenScoreboard}
+                disabled={!onOpenScoreboard}
+                aria-label={standing ? `Scoreboard: rank ${standing.rank} of ${standing.of}, ${standing.points} points` : 'Scoreboard'}
+                className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-r-full border border-l-0 border-line bg-surface-2 py-1.5 pl-4 pr-3 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <span className="text-accent-text"><Icon name="trophy" size={20} /></span>
+                <span className="min-w-0 flex-1 truncate text-sm font-extrabold">
+                  {standing ? (
+                    <>
+                      #{standing.rank} <span className="font-semibold text-muted">of {standing.of}</span>
+                      <span className="mx-1.5 text-muted">·</span>
+                      {standing.points} <span className="font-semibold text-muted">{standing.points === 1 ? 'point' : 'points'}</span>
+                    </>
+                  ) : (
+                    <span className="font-semibold text-muted">Scoreboard</span>
+                  )}
+                </span>
+                <span className="text-muted"><Icon name="chevron" size={18} /></span>
+              </button>
+              {/* Scan is a small pill: the code is the main thing here, scanning is the occasional action. */}
+              <button className="qr-btn qr-btn-main qr-btn-compact shrink-0" onClick={() => setScanning(true)}>
+                <span className="qr-btn-icon"><Icon name="camera" size={16} /></span>
+                Scan
+              </button>
+            </div>
           </section>
 
         </>

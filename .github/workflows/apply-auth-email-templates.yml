@@ -1,0 +1,43 @@
+name: Apply sign-in email templates
+
+# Puts the Cznnect designs in docs/email-auth-templates into Supabase (Authentication > Emails): the confirm-your-email,
+# reset-password and password-changed emails. Those are sent by Supabase itself, not by an edge function, so they only
+# change when this runs. Start it from the Actions tab (Run workflow). Uses the same SUPABASE_ACCESS_TOKEN secret as the
+# email function deploy.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: quatnrlyzitmgsvqyzbi
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the access token is set
+        run: test -n "$SUPABASE_ACCESS_TOKEN" || { echo "Add the repository secret SUPABASE_ACCESS_TOKEN first."; exit 1; }
+      - name: Confirm email and reset password
+        run: |
+          D=docs/email-auth-templates
+          jq -n \
+            --arg cs "Confirm your email address for Cznnect" --rawfile ch "$D/confirm-signup.html" \
+            --arg rs "Reset your Cznnect password" --rawfile rh "$D/reset-password.html" \
+            '{mailer_subjects_confirmation:$cs, mailer_templates_confirmation_content:$ch, mailer_subjects_recovery:$rs, mailer_templates_recovery_content:$rh}' > body.json
+          code=$(curl -sS -o resp.txt -w '%{http_code}' -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" --data @body.json)
+          echo "HTTP $code"; head -c 400 resp.txt; echo
+          test "$code" -lt 300
+      # Separate and allowed to fail: older Supabase projects do not have the password-changed security email.
+      - name: Password changed email
+        continue-on-error: true
+        run: |
+          D=docs/email-auth-templates
+          jq -n --arg s "Your Cznnect password was changed" --rawfile h "$D/password-changed.html" \
+            '{mailer_notifications_password_changed_enabled:true, mailer_subjects_password_changed_notification:$s, mailer_templates_password_changed_notification_content:$h}' > body2.json
+          code=$(curl -sS -o resp2.txt -w '%{http_code}' -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" --data @body2.json)
+          echo "HTTP $code"; head -c 400 resp2.txt; echo
+          test "$code" -lt 300

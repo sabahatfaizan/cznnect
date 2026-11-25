@@ -1082,6 +1082,9 @@ input[type="checkbox"] {
   box-shadow: 0 0 0 999px rgb(0 0 0 / 0.35);
   pointer-events: none;
 }
+/* Full-screen scanner: the camera covers the screen, with a centred square frame to aim with. */
+.scan-view-fill { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; border: 0; border-radius: 0; }
+.scan-reticle-fill { --s: min(72vw, 22rem); inset: auto; top: calc(50% - var(--s) / 2 - 3rem); left: calc(50% - var(--s) / 2); width: var(--s); height: var(--s); box-shadow: 0 0 0 200vmax rgb(0 0 0 / 0.35); }
 .irl-me {
   border-color: var(--accent);
 }

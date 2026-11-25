@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState, type FormEvent } from 'react'
-import Sheet from './Sheet'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useBackClose } from '../lib/backStack'
 import QrScanner from './QrScanner'
 import { parseScanned } from '../lib/irl'
 import {
@@ -35,6 +35,23 @@ export default function IrlScanSheet({
   const [error, setError] = useState('')
   const handling = useRef(false)
   const lastIgnored = useRef(0)
+
+  // Full screen: Android's Back button (and Escape) closes it, and the page behind it does not scroll.
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+  useBackClose(() => closeRef.current())
+  useEffect(() => {
+    const before = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeRef.current()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = before
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [])
 
   const handle = useCallback(
     async (text: string) => {
@@ -107,41 +124,57 @@ export default function IrlScanSheet({
     onDone(r.data.existing ? 'You are already in that group' : 'You joined the group')
   }
 
-  return (
-    <Sheet title="Scan a code" onClose={onClose}>
-      <div key={step.name} className="step-in flex flex-col gap-4">
-        {step.name === 'scan' && (
-          <>
-            <QrScanner onText={handle} />
-            <p className="text-center text-sm text-muted">Point the camera at a cousin&apos;s code, or at a group meetup&apos;s code.</p>
-            {hint && (
-              <p role="status" className="text-center text-sm font-bold text-danger">
-                {hint}
-              </p>
-            )}
-            <form onSubmit={submitTyped} className="flex flex-col gap-2">
-              <label className="label" htmlFor="irl-typed">
-                Camera not working? Type their code
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="irl-typed"
-                  className="input font-mono uppercase"
-                  value={typed}
-                  placeholder="CZN1 XXXX XXXX ..."
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  onChange={(e) => setTyped(e.target.value)}
-                />
-                <button className="btn btn-primary !px-4" disabled={!typed.trim()}>
-                  Use
-                </button>
-              </div>
-            </form>
-          </>
-        )}
+  const scanning = step.name === 'scan'
 
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Scan a code" className={`fixed inset-0 z-50 flex flex-col text-ink ${scanning ? 'bg-black' : 'bg-page'}`}>
+      {scanning && <QrScanner fill onText={handle} />}
+
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Back"
+        className={`absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex h-11 w-11 items-center justify-center rounded-full ${scanning ? 'bg-black/55 text-white' : 'border border-line bg-surface-2 text-ink'}`}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {scanning && (
+        <div className="absolute inset-x-0 bottom-0 z-10 mx-auto flex w-full max-w-xl flex-col gap-3 rounded-t-[var(--radius-card)] border-t border-line bg-page p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <p className="text-center text-sm text-muted">Point the camera at a cousin&apos;s code, or at a group meetup&apos;s code.</p>
+          {hint && (
+            <p role="status" className="text-center text-sm font-bold text-danger">
+              {hint}
+            </p>
+          )}
+          <form onSubmit={submitTyped} className="flex flex-col gap-2">
+            <label className="label" htmlFor="irl-typed">
+              Camera not working? Type their code
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="irl-typed"
+                className="input font-mono uppercase"
+                value={typed}
+                placeholder="CZN1 XXXX XXXX ..."
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                onChange={(e) => setTyped(e.target.value)}
+              />
+              <button className="btn btn-primary !px-4" disabled={!typed.trim()}>
+                Use
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {!scanning && (
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.75rem))]">
+      <div key={step.name} className="step-in mx-auto flex w-full max-w-xl flex-col gap-4">
         {step.name === 'checking' && <p className="py-10 text-center font-semibold text-muted">Checking the code...</p>}
 
         {step.name === 'problem' && (
@@ -219,6 +252,8 @@ export default function IrlScanSheet({
           </div>
         )}
       </div>
-    </Sheet>
+      </div>
+      )}
+    </div>
   )
 }

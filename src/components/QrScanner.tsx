@@ -3,7 +3,8 @@ import jsQR from 'jsqr'
 
 // Opens the back camera and looks for a QR code about 8 times a second.
 // Nothing is recorded or uploaded: frames are read in the browser and thrown away.
-export default function QrScanner({ onText }: { onText: (text: string) => void }) {
+// With `fill`, the camera covers its whole container (used for the full-screen scanner) instead of a rounded square.
+export default function QrScanner({ onText, fill = false }: { onText: (text: string) => void; fill?: boolean }) {
   const video = useRef<HTMLVideoElement>(null)
   const grab = useRef<HTMLCanvasElement>(null)
   const callback = useRef(onText)
@@ -81,10 +82,10 @@ export default function QrScanner({ onText }: { onText: (text: string) => void }
   }, [])
 
   return (
-    <div className="scan-view">
+    <div className={`scan-view ${fill ? 'scan-view-fill' : ''}`}>
       <video ref={video} muted playsInline className="h-full w-full object-cover" aria-label="Camera view" />
       <canvas ref={grab} className="hidden" />
-      {!problem && <div className="scan-reticle" aria-hidden="true" />}
+      {!problem && <div className={`scan-reticle ${fill ? 'scan-reticle-fill' : ''}`} aria-hidden="true" />}
       {(starting || problem) && (
         <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm font-bold text-white" role={problem ? 'alert' : 'status'}>
           {problem || 'Starting the camera...'}

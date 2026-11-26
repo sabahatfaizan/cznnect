@@ -145,16 +145,16 @@ export default function Irl({ family, userId, onOpenScoreboard }: { family: Fami
 
           <section className={`flex flex-col items-center gap-4 pb-3 pt-4 ${focus ? 'shrink-0' : 'min-h-0 flex-1 justify-center'}`} aria-label="Your link code">
             {!(focus && focus.kind === 'group' && (focus.status === 'open' || focus.status === 'locked')) && <IrlMyCode familyId={family.id} />}
-            {/* Your standing runs from the left edge of the screen up to the Scan pill. Tap it for the scoreboard. */}
-            <div className="-ml-4 flex items-center gap-3 self-stretch">
+            {/* Your standing: a full pill (both ends rounded) that sits close to the left edge and fills the row up to Scan. Tap it for the scoreboard. */}
+            <div className="-ml-2 flex items-center gap-3 self-stretch">
               <button
                 type="button"
                 onClick={onOpenScoreboard}
                 disabled={!onOpenScoreboard}
                 aria-label={standing ? `Scoreboard: rank ${standing.rank} of ${standing.of}, ${standing.points} points` : 'Scoreboard'}
-                className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-r-full border border-l-0 border-line bg-surface-2 py-1.5 pl-4 pr-3 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-full border border-line bg-surface-2 py-1 pl-1.5 pr-4 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
               >
-                <span className="text-accent-text"><Icon name="trophy" size={20} /></span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-text"><Icon name="trophy" size={18} /></span>
                 <span className="min-w-0 flex-1 truncate text-sm font-extrabold">
                   {standing ? (
                     <>

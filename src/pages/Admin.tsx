@@ -20,6 +20,7 @@ import { useApkDownload } from '../lib/apkDownload'
 import ApkStatus from '../components/ApkStatus'
 import CustomEmails from '../components/CustomEmails'
 import BirthdayMedia from '../components/BirthdayMedia'
+import { exportFileName, loadUsersForExport, saveCsv, usersToCsv } from '../lib/userExport'
 
 type Section = 'app' | 'announcements' | 'downloads' | 'updates' | 'builds' | 'pages' | 'family' | 'messages' | 'notify' | 'previews' | 'reminders' | 'birthdaymedia' | 'share' | 'data' | 'emails'
 type Preview = 'maintenance' | 'download' | 'update' | 'banner'
@@ -146,6 +147,8 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [resetting, setResetting] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportNote, setExportNote] = useState('')
   const [maintMessage, setMaintMessage] = useState('')
   const [announceText, setAnnounceText] = useState('')
   const [minBuildInput, setMinBuildInput] = useState('')
@@ -301,6 +304,24 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
     } catch { setNotice('Could not copy. Select the code and copy it by hand.') }
+  }
+
+  // Downloads every account with its details as a spreadsheet (CSV). Needs supabase/35_admin_users_export.sql for
+  // the full details; without it the file has the basic columns only.
+  async function downloadUsers() {
+    setExporting(true)
+    setExportNote('')
+    try {
+      const { rows, basic } = await loadUsersForExport()
+      if (rows.length === 0) { setExportNote('No users to download yet.'); return }
+      const msg = await saveCsv(usersToCsv(rows), exportFileName())
+      setExportNote(basic ? `${msg} Run supabase/35_admin_users_export.sql in Supabase to include phone, birthday and Cznnect+.` : msg)
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      setExportNote(e instanceof Error ? e.message : 'Could not download the list.')
+    } finally {
+      setExporting(false)
+    }
   }
 
   // Sends the person Supabase's own "reset your password" email. They choose the new password themselves; the owner never sees it.
@@ -1112,6 +1133,12 @@ export default function Admin({ family, userId, isOwner, onFamilyChanged }: { fa
               })}
               {users && users.length === 0 && <p className="text-sm text-muted">No users yet.</p>}
               <button type="button" className="btn btn-plain" onClick={() => void loadUsers()}>Refresh</button>
+              <button type="button" className="btn btn-plain inline-flex items-center justify-center gap-2" disabled={exporting} onClick={() => void downloadUsers()}>
+                <Icon name="download" size={18} />
+                {exporting ? 'Preparing…' : 'Download user list'}
+              </button>
+              <p className="text-xs text-muted">A spreadsheet (CSV) of every account: name, emails, phone, birthday, families, {PLUS_NAME}, join and last sign-in dates. It includes private contact details, so keep it safe.</p>
+              {exportNote && <p role="status" className="text-sm font-semibold">{exportNote}</p>}
             </section>
           )}
           {isOwner && (

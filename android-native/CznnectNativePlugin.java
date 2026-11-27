@@ -27,7 +27,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-/** Native bits the web view can't do: the Android share sheet, switching the launcher icon, downloading the app update, and the phone's push (Firebase) token. */
+/** Native bits the web view can't do: the Android share sheet, saving files to Downloads, switching the launcher icon, downloading the app update, and the phone's push (Firebase) token. */
 @CapacitorPlugin(name = "CznnectNative")
 public class CznnectNativePlugin extends Plugin {
     // Keep in step with android-native/icons.json (and the aliases apply.py adds to the manifest).
@@ -97,6 +97,50 @@ public class CznnectNativePlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("Could not share the picture");
+        }
+    }
+
+    /** Saves a file the web code made (base64) to Downloads/Cznnect, e.g. the Admin user list. Android 10 or newer. */
+    @PluginMethod
+    public void saveFile(PluginCall call) {
+        String b64 = call.getString("base64");
+        String name = call.getString("name");
+        String mime = call.getString("mime");
+        if (b64 == null || b64.isEmpty()) {
+            call.reject("Nothing to save");
+            return;
+        }
+        if (Build.VERSION.SDK_INT < 29) {
+            call.reject("Saving a file needs Android 10 or newer");
+            return;
+        }
+        if (name == null || name.isEmpty()) name = "cznnect-" + System.currentTimeMillis();
+        name = name.replaceAll("[\\\\/:*?\"<>|]", "_");
+        if (mime == null || mime.isEmpty()) mime = "application/octet-stream";
+        try {
+            byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            android.content.ContentResolver cr = getContext().getContentResolver();
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, name);
+            v.put(android.provider.MediaStore.Downloads.MIME_TYPE, mime);
+            v.put(android.provider.MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Cznnect");
+            Uri uri = cr.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (uri == null) {
+                call.reject("Could not save the file");
+                return;
+            }
+            java.io.OutputStream out = cr.openOutputStream(uri);
+            if (out == null) {
+                call.reject("Could not save the file");
+                return;
+            }
+            out.write(bytes);
+            out.close();
+            JSObject res = new JSObject();
+            res.put("uri", uri.toString());
+            call.resolve(res);
+        } catch (Exception e) {
+            call.reject("Could not save the file");
         }
     }
 
